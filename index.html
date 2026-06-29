@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prof. Dr. Jonathan Sousa · Filosofia & Teologia</title>
+  <style>
+    /* ── TOKENS · DARK ── */
+    :root {
+      --bg:       #0C0E14;
+      --surface:  #13161F;
+      --surface2: #181C28;
+      --border:   #1E2235;
+      --text:     #E4E6EF;
+      --muted:    #5A6080;
+      --accent:   #7C6AF0;
+      --accent2:  #A78BFA;
+      --accent-bg:     rgba(124,106,240,0.10);
+      --accent-border: rgba(124,106,240,0.25);
+      --green:    #22C55E;
+      --navbar-bg: rgba(12,14,20,0.92);
+      --hero-from: #0F1224;
+      --hero-to:   #1A1040;
+      --tag-bg:    rgba(124,106,240,0.15);
+      --divider:   #1E2235;
+    }
+
+    /* ── TOKENS · LIGHT ── */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:       #F4F5F7;
+        --surface:  #FFFFFF;
+        --surface2: #F0F1F4;
+        --border:   #DDE0EA;
+        --text:     #1A1D2E;
+        --muted:    #7A80A0;
+        --accent:   #5B50D6;
+        --accent2:  #7C6AF0;
+        --accent-bg:     rgba(91,80,214,0.08);
+        --accent-border: rgba(91,80,214,0.20);
+        --green:    #16A34A;
+        --navbar-bg: rgba(244,245,247,0.92);
+        --hero-from: #EEF2FF;
+        --hero-to:   #E0E7FF;
+        --tag-bg:    rgba(91,80,214,0.10);
+        --divider:   #DDE0EA;
+      }
+    }
+
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LANG TOGGLE ── */
+    .lang-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--navbar-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .lang-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+      letter-spacing: .5px;
+      transition: color .15s, border-color .15s;
+    }
+    .lang-pill.active {
+      color: var(--accent2);
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .lang-pill:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(160deg, var(--hero-from) 0%, var(--hero-to) 60%, var(--bg) 100%);
+      padding: 52px 20px 40px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .photo-wrap {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      overflow: hidden;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 0 6px var(--accent-bg);
+    }
+    .photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .hero-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.15;
+    }
+    .hero-title {
+      font-size: 13px;
+      color: var(--accent2);
+      margin-top: 6px;
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+    .hero-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .hero-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--tag-bg);
+      color: var(--accent2);
+      border: 1px solid var(--accent-border);
+      letter-spacing: .3px;
+    }
+
+    /* ── CONTACT BUTTONS ── */
+    .contact-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .contact-btn:hover {
+      color: var(--accent2);
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 16px 48px;
+    }
+
+    /* ── SECTIONS ── */
+    .section { margin-top: 36px; }
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    /* ── SUMMARY ── */
+    .summary-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── EXPERIENCE / EDU items ── */
+    .item {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .item-date {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 80px;
+      padding-top: 3px;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+    .item-body { flex: 1; }
+    .item-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .item-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+    .item-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+      line-height: 1.6;
+    }
+    .item-desc ul {
+      padding-left: 16px;
+      margin-top: 4px;
+    }
+    .item-desc li { margin-bottom: 3px; }
+
+    /* ── BADGE ATUAL ── */
+    .badge-atual {
+      display: inline-block;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.25);
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: .3px;
+    }
+
+    /* ── COMPETÊNCIAS ── */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 500px) { .skills-grid { grid-template-columns: 1fr; } }
+    .skill-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .skill-card-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 6px;
+    }
+    .skill-card-text {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── PUBLICAÇÃO ── */
+    .pub-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .pub-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .pub-text em { color: var(--text); font-style: normal; font-weight: 600; }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: var(--divider); margin: 8px 0; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .hero-name { font-size: 20px; }
+      .item { flex-direction: column; gap: 4px; }
+      .item-date { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="index.html"    class="lang-pill active">🇧🇷 PT</a>
+  <a href="index-en.html" class="lang-pill">🇺🇸 EN</a>
+</div>
+
+<div class="hero">
+  <div class="photo-wrap">
+    <img src="foto.jpg" alt="Prof. Dr. Jonathan Sousa">
+  </div>
+  <div class="hero-name">Prof. Dr. Jonathan Sousa</div>
+  <div class="hero-title">Doutor em Filosofia · UFRJ</div>
+  <div class="hero-sub">
+    Filosofia · Teologia · Docência<br>
+    Rio de Janeiro, RJ
+  </div>
+  <div class="hero-tags">
+    <span class="hero-tag">Ética</span>
+    <span class="hero-tag">Epistemologia</span>
+    <span class="hero-tag">Filosofia da Religião</span>
+    <span class="hero-tag">Lutero & Spinoza</span>
+    <span class="hero-tag">Metodologias Ativas</span>
+  </div>
+  <div class="contact-row">
+    <a href="mailto:profjonathansousa@gmail.com" class="contact-btn">✉ E-mail</a>
+    <a href="https://wa.me/5521975782205" class="contact-btn" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <a href="https://www.linkedin.com/in/profjonathansousa" class="contact-btn" target="_blank" rel="noopener">in LinkedIn</a>
+    <a href="http://lattes.cnpq.br/3359579613869303" class="contact-btn" target="_blank" rel="noopener">📋 Lattes</a>
+    <a href="https://orcid.org/0000-0002-6035-464X" class="contact-btn" target="_blank" rel="noopener">🔬 ORCID</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- RESUMO -->
+  <div class="section">
+    <div class="section-label">Resumo</div>
+    <p class="summary-text">
+      Doutor em Filosofia pela UFRJ, com estágio de seis meses na Northwestern University (EUA) e mais de dez anos de experiência acadêmica. Professor de Filosofia no Ensino Médio e Superior, com especialidade em metodologias ativas, tecnologias educacionais e preparação para o ENEM e vestibulares. Pesquisador nas áreas de ética, epistemologia e filosofia da religião, com foco em Lutero e Spinoza.
+    </p>
+  </div>
+
+  <!-- EXPERIÊNCIA -->
+  <div class="section">
+    <div class="section-label">Experiência Profissional</div>
+
+    <div class="item">
+      <div class="item-date">2026 – presente</div>
+      <div class="item-body">
+        <div class="item-title">Professor de Filosofia <span class="badge-atual">atual</span></div>
+        <div class="item-sub">C.E. Professor Joel de Oliveira · SEEDUC-RJ · Rio de Janeiro</div>
+        <div class="item-desc">
+          Professor contratado de Filosofia para turmas do Ensino Médio (1º, 2º e 3º anos), com cronogramas, materiais e avaliações próprias alinhadas ao modelo ENEM e às diretrizes da SEEDUC.
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2024 – 2025</div>
+      <div class="item-body">
+        <div class="item-title">Professor de Filosofia</div>
+        <div class="item-sub">Colégio Pedro II · Rio de Janeiro</div>
+        <div class="item-desc">
+          Filosofia para turmas do Ensino Médio com temas contemporâneos — redes sociais, comportamento digital e cultura crítica. Desenvolvimento de atividades que conectam filosofia clássica e desafios da cultura digital.
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2018 – presente</div>
+      <div class="item-body">
+        <div class="item-title">Professor de Filosofia e Teologia <span class="badge-atual">atual</span></div>
+        <div class="item-sub">Instituto Bíblico das Assembleias de Deus · Rio de Janeiro</div>
+        <div class="item-desc">
+          Múltiplas disciplinas em Filosofia e Teologia com metodologias inclusivas e participativas, estimulando debate crítico e diálogo interdisciplinar.
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2021 – 2022</div>
+      <div class="item-body">
+        <div class="item-title">Professor Conteudista de Teologia</div>
+        <div class="item-sub">Faculdade Católica Paulista · Marília – SP</div>
+        <div class="item-desc">
+          Produção de material didático autoral e videoaulas para cursos on-line de Teologia.
+        </div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2022</div>
+      <div class="item-body">
+        <div class="item-title">Professor Voluntário de Filosofia</div>
+        <div class="item-sub">Instituto Ação Social · Rio de Janeiro</div>
+        <div class="item-desc">
+          Filosofia em curso pré-vestibular com foco em argumentação, análise textual e preparação para o ENEM.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FORMAÇÃO -->
+  <div class="section">
+    <div class="section-label">Formação Acadêmica</div>
+
+    <div class="item">
+      <div class="item-date">2025</div>
+      <div class="item-body">
+        <div class="item-title">Doutorado em Filosofia</div>
+        <div class="item-sub">Universidade Federal do Rio de Janeiro · com estágio na Northwestern University, EUA</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2023</div>
+      <div class="item-body">
+        <div class="item-title">Pós-Graduação · Ciências Humanas Aplicadas e Mundo do Trabalho</div>
+        <div class="item-sub">Universidade Federal do Piauí</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2022</div>
+      <div class="item-body">
+        <div class="item-title">Licenciatura em Filosofia</div>
+        <div class="item-sub">Universidade Federal do Rio de Janeiro</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2019</div>
+      <div class="item-body">
+        <div class="item-title">Mestrado em Filosofia</div>
+        <div class="item-sub">Universidade Federal do Rio de Janeiro</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2011</div>
+      <div class="item-body">
+        <div class="item-title">Pós-Graduação · Filosofia Moderna e Contemporânea</div>
+        <div class="item-sub">Colégio São Benedito · Rio de Janeiro</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <div class="item-date">2010</div>
+      <div class="item-body">
+        <div class="item-title">Bacharelado em Teologia</div>
+        <div class="item-sub">Faculdade das Assembleias de Deus · Rio de Janeiro</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COMPETÊNCIAS -->
+  <div class="section">
+    <div class="section-label">Competências</div>
+    <div class="skills-grid">
+      <div class="skill-card">
+        <div class="skill-card-label">Metodologias Pedagógicas</div>
+        <div class="skill-card-text">Metodologias Ativas · PBL · Sala de Aula Invertida · Gamificação</div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-card-label">Tecnologias Educacionais</div>
+        <div class="skill-card-text">Moodle · Google Classroom · Produção de Videoaulas · Ferramentas Multimídia</div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-card-label">Avaliações</div>
+        <div class="skill-card-text">Preparação para ENEM e Vestibulares · Simulados · Correção com foco em Argumentação</div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-card-label">Habilidades Interpessoais</div>
+        <div class="skill-card-text">Oratória · Condução de Debates · Comunicação Interdisciplinar · Mediação em Sala</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUBLICAÇÕES -->
+  <div class="section">
+    <div class="section-label">Publicações Selecionadas</div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        ALVES FERREIRA DE SOUSA, J. Entre bruxas e cruzes ou sobre como Lutero lidou com a "prostituta grega".
+        <em>Numen</em>, v. 28, n. 2, p. 273–294, 2025.
+        DOI: 10.34019/2236-6296.2025.v28.45885
+      </div>
+    </div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        __________. Eternidade da mente e "o remédio das paixões" na Ética de Spinoza.
+        <em>Revista Seiscentos</em>, Rio de Janeiro, n° 4, 2024, f50142.
+      </div>
+    </div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        __________. Mudando o Jogo: A Relação da Mente Consigo Mesma como Chave para a Beatitude.
+        <em>ANALÓGOS</em>, v. 19, p. 378–399, 2019.
+        DOI: 10.17771/PUCRio.ANA.38200
+      </div>
+    </div>
+
+    <p style="font-size:11px; color:var(--muted); margin-top:10px;">
+      Lista completa disponível no
+      <a href="http://lattes.cnpq.br/3359579613869303" target="_blank" rel="noopener" style="color:var(--accent2);">Currículo Lattes</a>
+      e no <a href="https://orcid.org/0000-0002-6035-464X" target="_blank" rel="noopener" style="color:var(--accent2);">ORCID</a>.
+    </p>
+  </div>
+
+</div><!-- /container -->
+
+</body>
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jonathan Sousa · Curriculum Vitae</title>
+  <style>
+    /* ── TOKENS · DARK ── */
+    :root {
+      --bg:       #0C0E14;
+      --surface:  #13161F;
+      --surface2: #181C28;
+      --border:   #1E2235;
+      --text:     #E4E6EF;
+      --muted:    #5A6080;
+      --accent:   #7C6AF0;
+      --accent2:  #A78BFA;
+      --accent-bg:     rgba(124,106,240,0.10);
+      --accent-border: rgba(124,106,240,0.25);
+      --green:    #22C55E;
+      --navbar-bg: rgba(12,14,20,0.92);
+      --hero-from: #0F1224;
+      --hero-to:   #1A1040;
+      --tag-bg:    rgba(124,106,240,0.15);
+      --divider:   #1E2235;
+    }
+
+    /* ── TOKENS · LIGHT ── */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg:       #F4F5F7;
+        --surface:  #FFFFFF;
+        --surface2: #F0F1F4;
+        --border:   #DDE0EA;
+        --text:     #1A1D2E;
+        --muted:    #7A80A0;
+        --accent:   #5B50D6;
+        --accent2:  #7C6AF0;
+        --accent-bg:     rgba(91,80,214,0.08);
+        --accent-border: rgba(91,80,214,0.20);
+        --green:    #16A34A;
+        --navbar-bg: rgba(244,245,247,0.92);
+        --hero-from: #EEF2FF;
+        --hero-to:   #E0E7FF;
+        --tag-bg:    rgba(91,80,214,0.10);
+        --divider:   #DDE0EA;
+      }
+    }
+
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LANG TOGGLE ── */
+    .lang-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--navbar-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .lang-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+      letter-spacing: .5px;
+      transition: color .15s, border-color .15s;
+    }
+    .lang-pill.active {
+      color: var(--accent2);
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .lang-pill:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(160deg, var(--hero-from) 0%, var(--hero-to) 60%, var(--bg) 100%);
+      padding: 52px 20px 40px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .photo-wrap {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      overflow: hidden;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 0 6px var(--accent-bg);
+    }
+    .photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .hero-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1.15;
+    }
+    .hero-title {
+      font-size: 13px;
+      color: var(--accent2);
+      margin-top: 6px;
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+    .hero-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+    .hero-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--tag-bg);
+      color: var(--accent2);
+      border: 1px solid var(--accent-border);
+      letter-spacing: .3px;
+    }
+
+    /* ── CONTACT BUTTONS ── */
+    .contact-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 20px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--surface);
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .contact-btn:hover {
+      color: var(--accent2);
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 16px 48px;
+    }
+
+    /* ── SECTIONS ── */
+    .section { margin-top: 36px; }
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    /* ── TABLE STYLE (Academic Positions, Degrees, etc.) ── */
+    .cv-table { width: 100%; border-collapse: collapse; }
+    .cv-table tr { border-bottom: 1px solid var(--border); }
+    .cv-table tr:last-child { border-bottom: none; }
+    .cv-table td {
+      padding: 10px 0;
+      font-size: 12px;
+      color: var(--muted);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+    .cv-table td:first-child {
+      font-weight: 700;
+      color: var(--accent);
+      width: 90px;
+      padding-right: 16px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .cv-table td strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .badge-atual {
+      display: inline-block;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.25);
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: .3px;
+    }
+
+    /* ── PUBLICAÇÕES ── */
+    .pub-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .pub-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .pub-text em { color: var(--text); font-style: italic; }
+
+    /* ── LECTURES ── */
+    .lec-item {
+      display: flex;
+      gap: 14px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .lec-item:last-child { border-bottom: none; }
+    .lec-year {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 42px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .lec-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .hero-name { font-size: 20px; }
+      .cv-table td:first-child { width: 64px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <a href="index.html"    class="lang-pill">🇧🇷 PT</a>
+  <a href="index-en.html" class="lang-pill active">🇺🇸 EN</a>
+</div>
+
+<div class="hero">
+  <div class="photo-wrap">
+    <img src="foto.jpg" alt="Jonathan Alves Ferreira de Sousa">
+  </div>
+  <div class="hero-name">Jonathan Alves Ferreira de Sousa</div>
+  <div class="hero-title">Ph.D. in Philosophy · Federal University of Rio de Janeiro</div>
+  <div class="hero-sub">
+    Philosophy · Theology · Teaching<br>
+    Rio de Janeiro, RJ — Brazil
+  </div>
+  <div class="hero-tags">
+    <span class="hero-tag">Ethics</span>
+    <span class="hero-tag">Epistemology</span>
+    <span class="hero-tag">Philosophy of Religion</span>
+    <span class="hero-tag">Luther &amp; Spinoza</span>
+    <span class="hero-tag">Early Modern Philosophy</span>
+  </div>
+  <div class="contact-row">
+    <a href="mailto:profjonathansousa@gmail.com" class="contact-btn">✉ E-mail</a>
+    <a href="https://wa.me/5521975782205" class="contact-btn" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <a href="https://www.linkedin.com/in/profjonathansousa" class="contact-btn" target="_blank" rel="noopener">in LinkedIn</a>
+    <a href="http://lattes.cnpq.br/3359579613869303" class="contact-btn" target="_blank" rel="noopener">📋 Lattes</a>
+    <a href="https://orcid.org/0000-0002-6035-464X" class="contact-btn" target="_blank" rel="noopener">🔬 ORCID</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ACADEMIC POSITIONS -->
+  <div class="section">
+    <div class="section-label">Academic Positions</div>
+    <table class="cv-table">
+      <tr>
+        <td>2026–present</td>
+        <td><strong>Professor of Philosophy</strong> <span class="badge-atual">current</span><br>
+        C.E. Professor Joel de Oliveira · SEEDUC-RJ · Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2024–2025</td>
+        <td><strong>Professor of Philosophy</strong><br>Colégio Pedro II · Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2022</td>
+        <td><strong>Professor of Philosophy (Volunteer)</strong><br>Instituto Ação Social · Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2021–2022</td>
+        <td><strong>Content Professor of Theology</strong><br>Faculdade Católica Paulista · Marília – São Paulo</td>
+      </tr>
+      <tr>
+        <td>2018–present</td>
+        <td><strong>Professor of Philosophy and Theology</strong> <span class="badge-atual">current</span><br>
+        Biblical Institute of the Assemblies of God · Rio de Janeiro</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- DEGREES -->
+  <div class="section">
+    <div class="section-label">Degrees</div>
+    <table class="cv-table">
+      <tr>
+        <td>2025</td>
+        <td><strong>Ph.D. (Philosophy)</strong><br>Federal University of Rio de Janeiro · with research stay at Northwestern University, USA</td>
+      </tr>
+      <tr>
+        <td>2023</td>
+        <td><strong>Graduate Certificate</strong> (Applied Human Sciences and the World of Work)<br>Federal University of Piauí</td>
+      </tr>
+      <tr>
+        <td>2022</td>
+        <td><strong>B.A. (Philosophy)</strong><br>Federal University of Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2019</td>
+        <td><strong>M.A. (Philosophy)</strong><br>Federal University of Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2011</td>
+        <td><strong>Graduate Certificate</strong> (Modern and Contemporary Philosophy)<br>College of Saint Benedict · Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2010</td>
+        <td><strong>B.A. (Theology)</strong><br>College of the Assemblies of God · Rio de Janeiro</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- SCHOLARSHIPS -->
+  <div class="section">
+    <div class="section-label">Scholarships</div>
+    <table class="cv-table">
+      <tr>
+        <td>2023–2024</td>
+        <td><strong>Ph.D. Scholarship</strong> — Coordination for the Improvement of Higher Education Personnel (CAPES)</td>
+      </tr>
+      <tr>
+        <td>2022–2023</td>
+        <td><strong>Ph.D. Scholarship</strong> — National Council for Scientific and Technological Development (CNPq)</td>
+      </tr>
+      <tr>
+        <td>2017–2019</td>
+        <td><strong>M.A. Scholarship</strong> — Coordination for the Improvement of Higher Education Personnel (CAPES)</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ADDITIONAL STUDIES -->
+  <div class="section">
+    <div class="section-label">Additional Studies</div>
+    <table class="cv-table">
+      <tr>
+        <td>2022</td>
+        <td>Certificate in Training in Educational Technologies, Pedagogical Learning and Innovation — Federal University of Ceará</td>
+      </tr>
+      <tr>
+        <td>2022</td>
+        <td>Certificate in Christian Philosophers — College of Saint Basílio Magno, PR</td>
+      </tr>
+      <tr>
+        <td>2021</td>
+        <td>Certificate in Pentecostalism and Theology in Reformation — College of the Assemblies of God, Rio de Janeiro</td>
+      </tr>
+      <tr>
+        <td>2021</td>
+        <td>Certificate in <em>Descartes n'a pas dit</em> — State University of West of Paraná</td>
+      </tr>
+      <tr>
+        <td>2020</td>
+        <td>Certificate in Introduction to Spinoza's Ethics — Federal University of Rio de Janeiro</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- PUBLICATIONS -->
+  <div class="section">
+    <div class="section-label">Publications</div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        ALVES FERREIRA DE SOUSA, J. Entre bruxas e cruzes ou sobre como Lutero lidou com a "prostituta grega".
+        <em>Numen</em>, v. 28, n. 2, p. 273–294, 2025.
+        DOI: 10.34019/2236-6296.2025.v28.45885
+      </div>
+    </div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        __________. Eternidade da mente e "o remédio das paixões" na Ética de Spinoza.
+        <em>Revista Seiscentos</em>, Rio de Janeiro, n° 4, 2024, f50142.
+      </div>
+    </div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        __________. A Filosofia de Lutero: Estruturando a Base do Pensamento Moderno. In:
+        Panorama da Filosofia da Religião no Brasil, São Paulo, 2022.
+        Summary published in proceedings of conferences.
+      </div>
+    </div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        __________. Mudando o Jogo: A Relação da Mente Consigo Mesma como Chave para a Beatitude.
+        <em>ANALÓGOS</em>, v. 19, p. 378–399, 2019.
+        DOI: 10.17771/PUCRio.ANA.38200
+      </div>
+    </div>
+
+    <div class="pub-item">
+      <div class="pub-text">
+        __________. Liberdade e Responsabilidade Moral em Spinoza. In:
+        Caderno de Resumos, Niterói, 2017.
+        Summary published in proceedings of conferences.
+      </div>
+    </div>
+
+    <p style="font-size:11px; color:var(--muted); margin-top:10px;">
+      Full list available at
+      <a href="http://lattes.cnpq.br/3359579613869303" target="_blank" rel="noopener" style="color:var(--accent2);">Lattes</a>
+      and <a href="https://orcid.org/0000-0002-6035-464X" target="_blank" rel="noopener" style="color:var(--accent2);">ORCID</a>.
+    </p>
+  </div>
+
+  <!-- LECTURES -->
+  <div class="section">
+    <div class="section-label">Lectures</div>
+    <div class="lec-item">
+      <div class="lec-year">2024</div>
+      <div class="lec-text">Philosophy and Reform in the Sixteenth Century: Contemporary Readings — Congress on Gender, Theology and Politics in Modern Philosophy, Federal University of Rio de Janeiro</div>
+    </div>
+    <div class="lec-item">
+      <div class="lec-year">2022</div>
+      <div class="lec-text">Luther's Philosophy: Structuring the Basis of Modern Thought — Congress of the Brazilian Association of Philosophy of Religion, Federal University of São Paulo</div>
+    </div>
+    <div class="lec-item">
+      <div class="lec-year">2021</div>
+      <div class="lec-text">Luther between realists and nominalists — Workshop on Philosophy of Religion, Federal University of Rio de Janeiro</div>
+    </div>
+    <div class="lec-item">
+      <div class="lec-year">2018</div>
+      <div class="lec-text">The mind-mind relationship in part V of <em>Ethics</em> — XVII Congress of the National Association of Graduate Studies in Philosophy</div>
+    </div>
+    <div class="lec-item">
+      <div class="lec-year">2018</div>
+      <div class="lec-text">Temporal Language in the Timeless Discourse of Part V of Spinoza's <em>Ethics</em> — Congress of Philosophy, Pontifical Catholic University of Rio de Janeiro</div>
+    </div>
+    <div class="lec-item">
+      <div class="lec-year">2017</div>
+      <div class="lec-text">Changing the Game: The Mind's Relationship to Itself as a Key to Beatitude in Spinoza — Federal University of Rio de Janeiro</div>
+    </div>
+    <div class="lec-item">
+      <div class="lec-year">2017</div>
+      <div class="lec-text">Freedom and Moral Responsibility in Spinoza — Federal Fluminense University</div>
+    </div>
+  </div>
+
+  <!-- OTHER PRODUCTION -->
+  <div class="section">
+    <div class="section-label">Other Technical Production</div>
+    <table class="cv-table">
+      <tr>
+        <td>2021</td>
+        <td>Mereology — Podcast interview with Rhamon Nunes</td>
+      </tr>
+      <tr>
+        <td>2021</td>
+        <td>Philosophy of Mind — Podcast interview with Roberto Horácio</td>
+      </tr>
+      <tr>
+        <td>2021</td>
+        <td>Podcast Edition — Graduate Program in Logic and Metaphysics, Federal University of Rio de Janeiro</td>
+      </tr>
+    </table>
+  </div>
+
+</div><!-- /container -->
+
+</body>
+</html>
