@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filosofia · C.E. Prof. Joel de Oliveira · 2026</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --accent:  #7C6AF0;
+      --accent2: #A78BFA;
+      --accent-bg: rgba(124,106,240,0.10);
+      --accent-border: rgba(124,106,240,0.20);
+      --header-from: #0F1224;
+      --header-to:   #1A1040;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 16px;
+      margin-top: 14px;
+    }
+    .info-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .info-box-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; }
+    .info-box-val   { font-size: 13px; font-weight: 700; color: var(--text); }
+    .info-box-sub   { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .proximas-section { padding: 18px 16px 0; }
+    .prox-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: var(--surface);
+      border-radius: 10px;
+      margin-bottom: 5px;
+      border-left: 3px solid var(--border);
+    }
+    .prox-item.verde { border-left-color: #10B981; }
+    .prox-item.azul  { border-left-color: #0EA5E9; }
+    .prox-item.roxo  { border-left-color: #7C6AF0; }
+    .prox-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+    .prox-dot.verde { background: #10B981; }
+    .prox-dot.azul  { background: #0EA5E9; }
+    .prox-dot.roxo  { background: #7C6AF0; }
+    .prox-body { flex: 1; }
+    .prox-date  { font-size: 10px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+    .prox-title { font-size: 12px; color: var(--text); }
+    .prox-turma { font-size: 10px; color: var(--muted); }
+    .turma-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 18px 16px 0;
+    }
+    @media (max-width: 400px) { .turma-grid { grid-template-columns: 1fr; } }
+    .turma-card {
+      display: block;
+      text-decoration: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 14px;
+      transition: transform .15s, border-color .15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .turma-card::before {
+      content: attr(data-glyph);
+      position: absolute;
+      right: 8px; bottom: -10px;
+      font-size: 64px;
+      opacity: .06;
+      pointer-events: none;
+      font-style: italic;
+    }
+    .turma-card:hover { transform: translateY(-2px); }
+    .turma-card.em1 { border-top: 3px solid #10B981; }
+    .turma-card.em1:hover { border-color: #10B981; }
+    .turma-card.em2 { border-top: 3px solid #0EA5E9; }
+    .turma-card.em2:hover { border-color: #0EA5E9; }
+    .turma-card.em3 { border-top: 3px solid #7C6AF0; }
+    .turma-card.em3:hover { border-color: #7C6AF0; }
+    .turma-ano  { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+    .turma-nome { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .turma-cod  { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
+    .turma-info { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .turma-tema { font-size: 10px; margin-top: 8px; font-style: italic; color: var(--muted); }
+    .turma-arrow { font-size: 18px; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); opacity: .3; }
+    .em1 .turma-ano { color: #10B981; }
+    .em1 .turma-cod { color: #10B981; }
+    .em2 .turma-ano { color: #0EA5E9; }
+    .em2 .turma-cod { color: #0EA5E9; }
+    .em3 .turma-ano { color: #7C6AF0; }
+    .em3 .turma-cod { color: #A78BFA; }
+    .index-hero {
+      background: linear-gradient(160deg, #071020 0%, #0A1428 60%, var(--bg) 100%);
+      padding: 36px 18px 28px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .index-hero .school { font-size: 9px; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+    .index-hero h1      { font-size: 28px; font-weight: 900; color: var(--text); line-height: 1.1; }
+    .index-hero h1 span { color: #7C6AF0; }
+    .index-hero .sub    { font-size: 13px; color: var(--muted); margin-top: 8px; }
+    .index-hero .year   { display: inline-block; margin-top: 14px; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px; border: 1px solid #1E2235; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">🎓 Filosofia · Joel 2026</a>
+  <div class="navbar-links">
+    <a href="em1_quinta.html"      class="nav-pill em1">EM1 · 5ª</a>
+    <a href="em2_quinta.html"      class="nav-pill em2">EM2 · 5ª</a>
+    <a href="em3_3003_quinta.html" class="nav-pill em3">3003 · 5ª</a>
+    <a href="em3_3006_quinta.html" class="nav-pill em3">3006 · 5ª</a>
+    <a href="em3_3001_sexta.html"  class="nav-pill em3">3001 · 6ª</a>
+    <a href="em3_3002_sexta.html"  class="nav-pill em3">3002 · 6ª</a>
+  </div>
+</nav>
+
+<div class="index-hero">
+  <div class="school">C.E. Professor Joel de Oliveira · SEEDUC-RJ</div>
+  <h1>Portal de <span>Filosofia</span></h1>
+  <div class="sub">Cronogramas, avaliações e materiais · 2º e 3º Trimestres 2026</div>
+  <span class="year">📅 2026 · 6 turmas · Quintas e Sextas</span>
+</div>
+
+<div class="section" style="margin-top:6px;">
+  <div class="section-label">Selecione sua turma</div>
+</div>
+
+<div class="turma-grid">
+
+  <a href="em1_quinta.html" class="turma-card em1" data-glyph="?">
+    <div class="turma-ano">1º Ano</div>
+    <div class="turma-nome">EM1 · Quinta</div>
+    <div class="turma-cod">IMAT_CN_1002</div>
+    <div class="turma-info">10h35 – 12h15</div>
+    <div class="turma-tema">Mito e Filosofia</div>
+    <div class="turma-arrow">→</div>
+  </a>
+
+  <a href="em2_quinta.html" class="turma-card em2" data-glyph="∴">
+    <div class="turma-ano">2º Ano</div>
+    <div class="turma-nome">EM2 · Quinta</div>
+    <div class="turma-cod">IF_SE_2001</div>
+    <div class="turma-info">08h40 – 10h20</div>
+    <div class="turma-tema">Instrumentos do Pensar</div>
+    <div class="turma-arrow">→</div>
+  </a>
+
+  <a href="em3_3003_quinta.html" class="turma-card em3" data-glyph="φ">
+    <div class="turma-ano">3º Ano · Quinta</div>
+    <div class="turma-nome">Turma 3003</div>
+    <div class="turma-cod">IF_SE_3003</div>
+    <div class="turma-info">07h00 – 08h40</div>
+    <div class="turma-tema">A Dimensão Ética</div>
+    <div class="turma-arrow">→</div>
+  </a>
+
+  <a href="em3_3006_quinta.html" class="turma-card em3" data-glyph="φ">
+    <div class="turma-ano">3º Ano · Quinta</div>
+    <div class="turma-nome">Turma 3006</div>
+    <div class="turma-cod">IT_GD_3006</div>
+    <div class="turma-info">12h45 – 14h25</div>
+    <div class="turma-tema">A Dimensão Ética</div>
+    <div class="turma-arrow">→</div>
+  </a>
+
+  <a href="em3_3001_sexta.html" class="turma-card em3" data-glyph="φ">
+    <div class="turma-ano">3º Ano · Sexta</div>
+    <div class="turma-nome">Turma 3001</div>
+    <div class="turma-cod">IF_SE_3001</div>
+    <div class="turma-info">07h00 – 08h40</div>
+    <div class="turma-tema">A Dimensão Ética</div>
+    <div class="turma-arrow">→</div>
+  </a>
+
+  <a href="em3_3002_sexta.html" class="turma-card em3" data-glyph="φ">
+    <div class="turma-ano">3º Ano · Sexta</div>
+    <div class="turma-nome">Turma 3002</div>
+    <div class="turma-cod">IT_GD_3002</div>
+    <div class="turma-info">08h40 – 10h20</div>
+    <div class="turma-tema">A Dimensão Ética</div>
+    <div class="turma-arrow">→</div>
+  </a>
+
+</div>
+
+<div class="info-grid">
+  <div class="info-box">
+    <div class="info-box-label">Trimestre atual</div>
+    <div class="info-box-val">2º Trimestre</div>
+    <div class="info-box-sub">Unidade 1 em andamento</div>
+  </div>
+  <div class="info-box">
+    <div class="info-box-label">Próximas férias</div>
+    <div class="info-box-val">16–24 jul</div>
+    <div class="info-box-sub">Retorno: 30 jul (5ª) · 31 jul (6ª)</div>
+  </div>
+</div>
+
+<div class="proximas-section">
+  <div class="section-label" style="margin-bottom:10px;">Próximas avaliações</div>
+
+  <div class="prox-item verde">
+    <div class="prox-dot verde"></div>
+    <div class="prox-body">
+      <div class="prox-date">06 ago · quinta-feira</div>
+      <div class="prox-title">⚑ Av. de Meio — Exposição comentada</div>
+      <div class="prox-turma">EM1 · IMAT_CN_1002 · 2,0 pts</div>
+    </div>
+  </div>
+
+  <div class="prox-item azul">
+    <div class="prox-dot azul"></div>
+    <div class="prox-body">
+      <div class="prox-date">06 ago · quinta-feira</div>
+      <div class="prox-title">⚑ Av. de Meio — Mapa conceitual</div>
+      <div class="prox-turma">EM2 · IF_SE_2001 · 2,0 pts</div>
+    </div>
+  </div>
+
+  <div class="prox-item roxo">
+    <div class="prox-dot roxo"></div>
+    <div class="prox-body">
+      <div class="prox-date">06 ago · quinta-feira</div>
+      <div class="prox-title">⚑ Av. de Meio — Debate filosófico</div>
+      <div class="prox-turma">EM3 · 3003 e 3006 · 2,0 pts</div>
+    </div>
+  </div>
+
+  <div class="prox-item roxo">
+    <div class="prox-dot roxo"></div>
+    <div class="prox-body">
+      <div class="prox-date">07 ago · sexta-feira</div>
+      <div class="prox-title">⚑ Av. de Meio — Debate filosófico</div>
+      <div class="prox-turma">EM3 · 3001 e 3002 · 2,0 pts</div>
+    </div>
+  </div>
+
+  <div class="prox-item verde">
+    <div class="prox-dot verde"></div>
+    <div class="prox-body">
+      <div class="prox-date">Semana de Provas · 20/08 a 26/08</div>
+      <div class="prox-title">⚠ Avaliação Final U1 — todas as turmas</div>
+      <div class="prox-turma">Calendário SEEDUC · verificar programação oficial</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="divider" style="margin-top:18px;"></div>
+
+<div class="section">
+  <div class="section-label">Professor</div>
+  <div class="prof-card">
+    <div class="prof-avatar">👨‍🏫</div>
+    <div>
+      <div class="prof-name">Prof. Dr. Jonathan Sousa</div>
+      <div class="prof-sub">Filosofia · C.E. Professor Joel de Oliveira</div>
+      <div class="prof-sub" style="margin-top:3px;">✉ jonathan.51763826@prof.educa.rj.gov.br</div>
+    </div>
+  </div>
+</div>
+
+<div class="spacer"></div>
+</body>
+</html>
