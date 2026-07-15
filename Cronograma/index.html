@@ -132,11 +132,17 @@
   .foot{margin-top:34px;text-align:center;font-size:11px;color:var(--muted);letter-spacing:.03em;}
   .foot button{background:none;border:none;color:var(--muted);text-decoration:underline;font-size:11px;cursor:pointer;font-family:var(--sans);}
 
+
+  #ptr{position:fixed;top:0;left:0;right:0;text-align:center;padding:12px;font-size:12px;
+    color:var(--muted);background:var(--paper-2);transform:translateY(-100%);transition:transform .15s;
+    z-index:100;border-bottom:1px solid var(--line);letter-spacing:.03em;}
+  #ptr.show{transform:translateY(0);}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
   :focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px;}
 </style>
 </head>
 <body>
+<div id="ptr">Puxe para atualizar</div>
 <div class="wrap">
   <div class="ordo" id="ordo" aria-label="Fase do mês"></div>
   <div class="switch" role="tablist">
@@ -147,11 +153,13 @@
   <main id="view-semana" hidden></main>
   <div class="foot">
     <span id="phase-note"></span><br>
-    <button onclick="limparHoje()">Limpar o que marquei hoje</button>
+    <button onclick="limparHoje()">Limpar o que marquei hoje</button><br>
+    <span id="ver"></span>
   </div>
 </div>
 
 <script>
+const APP_VERSION = "2026-07-15-01";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -167,7 +175,7 @@ const DIAS = {
      ], uber:"Cowork quando der. Na fase de sprint: Momento 1 da EBD aqui"},
   3:{nome:"Quarta", eixo:"Preparo Joel de Oliveira", anchors:[],
      tasks:[
-       {id:"qua-aula", t:"Preparar aulas", n:"O preparo de quinta já cobre a sexta (as duas turmas são 3º ano)", tag:"exclusivo"},
+       {id:"qua-aula", t:"Preparar aulas do 3º ano", n:"O preparo de quinta já cobre a sexta (as duas turmas são 3º ano)", tag:"exclusivo"},
        {id:"qua-aval", t:"Preparar e revisar avaliações", n:"Correções, provas, o que vence na semana"},
        {id:"qua-outras", t:"Revisar EM1 / EM2 se houver", n:"Só o que a semana pedir"},
        {id:"qua-toefl", t:"TOEFL", n:"Bloco curto", tag:"pulverizado"}
@@ -361,7 +369,37 @@ function setView(v){const hoje=v==="hoje";
   document.getElementById("tab-semana").classList.toggle("active",!hoje);}
 function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
 
+
+/* ---- Atualização automática + puxar para atualizar ---- */
+function baseUrl(){return location.pathname;}
+async function checkUpdate(){
+  try{
+    const res = await fetch(baseUrl()+"?ping="+Date.now(), {cache:"no-store"});
+    const txt = await res.text();
+    const m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    if(m && m[1] !== APP_VERSION){ location.replace(baseUrl()+"?v="+m[1]); }
+  }catch(e){/* sem rede: segue com a versão atual */}
+}
+(function pullToRefresh(){
+  let startY=null, armed=false;
+  const ptr=document.getElementById("ptr");
+  window.addEventListener("touchstart",e=>{ startY = (window.scrollY<=0)? e.touches[0].clientY : null; },{passive:true});
+  window.addEventListener("touchmove",e=>{
+    if(startY===null || window.scrollY>0){return;}
+    const dy=e.touches[0].clientY-startY;
+    if(dy>70){ ptr.classList.add("show"); ptr.textContent="Solte para atualizar"; armed=true; }
+    else{ ptr.classList.remove("show"); armed=false; }
+  },{passive:true});
+  window.addEventListener("touchend",()=>{
+    if(armed){ ptr.textContent="Atualizando…"; location.replace(baseUrl()+"?v="+Date.now()); }
+    startY=null; armed=false;
+  });
+})();
+document.getElementById("ver").textContent = "v"+APP_VERSION;
+
 renderOrdo(); renderHoje(); renderSemana();
+checkUpdate();
+
 </script>
 </body>
 </html>
