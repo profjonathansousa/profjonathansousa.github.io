@@ -163,7 +163,7 @@
 </div>
 
 <script>
-const APP_VERSION = "2026-07-15-03";
+const APP_VERSION = "2026-07-15-04";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -312,7 +312,7 @@ function renderHoje(){
       ${tag(t.tag)}</li>`;
   });
   html+=`</ul>`;
-  html+=`<div class="rule"><b>No Uber:</b> ${d.uber}. <s>TOEFL no trajeto não funciona</s> — o TOEFL fica nos blocos curtos fora do carro.</div>`;
+  html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
 
   html+=`<div class="shead">Metas do mês <span class="sub">${now.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</span></div><div id="metas"></div>`;
   html+=`<div class="shead">Datas importantes</div><div id="eventos"></div>`;
