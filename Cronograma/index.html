@@ -143,6 +143,24 @@
     background:#F6EFDD;border-radius:11px;font-size:12.5px;color:var(--ink-soft);}
   .toefl-fase b{font-family:var(--display);color:var(--gold);}
   .toefl-fase span{display:block;margin-top:2px;color:var(--muted);}
+  .tguia{border:1px solid var(--gold-soft);border-radius:12px;margin:14px 0 0;background:#F6EFDD;overflow:hidden;}
+  .tguia summary{list-style:none;cursor:pointer;padding:12px 15px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+  .tguia summary::-webkit-details-marker{display:none;}
+  .tguia .g-t{font-family:var(--display);font-size:14px;font-weight:600;color:var(--gold);}
+  .tguia .g-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;}
+  .tguia .g-body{padding:0 15px 14px;}
+  .tguia .g-meta{font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin:0 0 8px;}
+  .tguia .g-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid rgba(169,124,30,.18);cursor:pointer;}
+  .tguia .g-item:first-of-type{border-top:none;}
+  .tguia .g-item .box{width:20px;height:20px;margin-top:1px;}
+  .tguia .g-item.on .box{background:var(--gold);border-color:var(--gold);}
+  .tguia .g-item.on .box svg{opacity:1;transform:scale(1);}
+  .tguia .g-x{font-size:13px;line-height:1.4;}
+  .tguia .g-item.on .g-x{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  .tguia .g-links{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+  .tguia .g-links a{font-size:12.5px;color:var(--ink);text-decoration:none;border:1px solid var(--gold-soft);
+    background:var(--card);border-radius:9px;padding:9px 11px;}
+  .tguia .g-links a:active{background:#EFEDE2;}
 </style>
 </head>
 <body>
@@ -163,7 +181,7 @@
 </div>
 
 <script>
-const APP_VERSION = "2026-07-15-04";
+const APP_VERSION = "2026-07-15-05";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -276,6 +294,84 @@ function toeflFase(){
   }catch(e){ return null; }
 }
 
+/* Guia TOEFL — conteúdo por fase, marcável e com links (persistido) */
+const TOEFL_GUIA = {
+  f1:{
+    titulo:"Fase 1 · Fundamentos",
+    meta:"Objetivo até 16/08: dominar o formato 2026, ter um template por tarefa (Speaking e Writing), um método de notas de Listening, o Anki rodando e saber quais 2 seções puxam a nota para baixo.",
+    itens:[
+      "Criar conta gratuita no TestReady",
+      "Fazer a experiência oficial de 40 min (formato 2026)",
+      "Ler as rubricas de Speaking e Writing",
+      "Simulado-diagnóstico completo e cronometrado (anotar as 4 notas)",
+      "Instalar o Anki + baralho Academic Word List",
+      "Montar template de Writing: Write an Email + Academic Discussion",
+      "Definir o método de notas de Listening",
+      "Montar roteiro de Speaking: Listen and Repeat + Take an Interview"
+    ],
+    links:[
+      {t:"TestReady — portal oficial da ETS", u:"https://testready.ets.org"},
+      {t:"Sample oficial de 40 min", u:"https://www.ets.org/toefl/test-takers/ibt/prepare/sample-test.html"},
+      {t:"Simulado grátis no formato 2026 (Magoosh)", u:"https://magoosh.com/toefl/toefl-practice-test/"},
+      {t:"PDF de prova 2026 (TST Prep)", u:"https://tstprep.com/articles/toefl/complete-practice-test-for-the-toefl-test/"}
+    ]
+  },
+  f2:{
+    titulo:"Fase 2 · Drilagem dirigida",
+    meta:"17/08 a 25/10: volume focado nas 2 seções mais fracas. Alvo: subir Reading e Writing para 24+ e firmar Listening.",
+    itens:[
+      "Reading: drills cronometrados + revisar cada erro por tipo",
+      "Writing: 2 tarefas por semana, cronometradas, com feedback",
+      "Listening: 1 set por dia com notas ativas",
+      "Speaking: gravar e comparar com exemplares (sábado)",
+      "1 simulado a cada 2–3 semanas",
+      "Anki diário"
+    ],
+    links:[
+      {t:"TestReady — Section Practice (feedback + exemplos)", u:"https://testready.ets.org"},
+      {t:"Simulado grátis 2026 (Magoosh)", u:"https://magoosh.com/toefl/toefl-practice-test/"},
+      {t:"Estratégias por seção (TST Prep)", u:"https://tstprep.com/articles/toefl/complete-practice-test-for-the-toefl-test/"}
+    ]
+  },
+  f3:{
+    titulo:"Fase 3 · Simulados & refino",
+    meta:"26/10 a 29/11: provas completas, ritmo e feedback. Reserve a última semana para taper (revisão leve e descanso).",
+    itens:[
+      "1 simulado completo por semana no formato 2026",
+      "Revisar cada simulado por tipo de erro",
+      "Speaking e Writing: buscar feedback externo (tutor)",
+      "Fixar o timing de cada seção",
+      "Semana final: revisão leve + descanso (sem simulado pesado na véspera)"
+    ],
+    links:[
+      {t:"TestReady — provas oficiais (TPO)", u:"https://testready.ets.org"},
+      {t:"Simulado grátis 2026 (Magoosh)", u:"https://magoosh.com/toefl/toefl-practice-test/"}
+    ]
+  }
+};
+function currentFaseId(){
+  const P=TOEFL_PLANO; if(diasAte(P.prova)<0) return null;
+  const h=ymd(now); return h<P.fase2?"f1":(h<P.fase3?"f2":"f3");
+}
+function guiaChecks(fid){return LS("cron:toefl-guia:"+fid, {});}
+function toggleGuia(fid,i){const s=guiaChecks(fid);s[i]=!s[i];save("cron:toefl-guia:"+fid,s);renderHoje();}
+function renderGuia(){
+  const fid=currentFaseId(); if(!fid) return "";
+  const g=TOEFL_GUIA[fid]; if(!g) return "";
+  const st=guiaChecks(fid), aberto=LS("cron:toefl-guia-open", false);
+  let h=`<details class="tguia" ${aberto?"open":""} ontoggle="save('cron:toefl-guia-open', this.open)">
+    <summary><span class="g-t">Guia TOEFL · ${g.titulo}</span><span class="g-sub">como começar</span></summary>
+    <div class="g-body"><p class="g-meta">${g.meta}</p>`;
+  g.itens.forEach((it,i)=>{
+    h+=`<div class="g-item ${st[i]?'on':''}" onclick="toggleGuia('${fid}',${i})">
+      <span class="box">${CHK}</span><span class="g-x">${it}</span></div>`;
+  });
+  h+=`<div class="g-links">`;
+  g.links.forEach(l=>{ h+=`<a href="${l.u}" target="_blank" rel="noopener">${l.t} ↗</a>`; });
+  h+=`</div></div></details>`;
+  return h;
+}
+
 function renderHoje(){
   const d=DIAS[todayIdx];
   const dateStr=now.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
@@ -312,6 +408,7 @@ function renderHoje(){
       ${tag(t.tag)}</li>`;
   });
   html+=`</ul>`;
+  html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
 
   html+=`<div class="shead">Metas do mês <span class="sub">${now.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</span></div><div id="metas"></div>`;
