@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Candidaturas — Doutorado</title>
+<style>
+  :root{
+    --ink:#1b2b2d; --paper:#f6f5f1; --surface:#fffefb; --rule:#d9d6cc;
+    --muted:#6a6d66; --hi:#2e6e5a; --med:#bd8a2c; --lo:#a6443b; --none:#8f9a97;
+    --shadow:0 1px 0 rgba(27,43,45,.04),0 8px 24px -18px rgba(27,43,45,.35);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.45; font-size:15px;
+  }
+  .wrap{max-width:940px; margin:0 auto; padding:22px 16px 80px}
+  header h1{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-weight:600; font-size:26px; letter-spacing:-.01em; margin:0 0 2px;
+  }
+  header .sub{color:var(--muted); font-size:13.5px; margin:0 0 16px}
+  .panel{
+    background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+    padding:13px 14px; margin-bottom:14px; box-shadow:var(--shadow); font-size:13px;
+  }
+  .panel h2{font-size:12px; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); margin:0 0 8px; font-weight:700}
+  .legend{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center}
+  .chip{display:inline-flex; align-items:center; gap:6px; font-size:12.5px}
+  .dot{width:10px; height:10px; border-radius:50%; display:inline-block}
+  .d-hi{background:var(--hi)} .d-med{background:var(--med)}
+  .d-lo{background:var(--lo)} .d-none{background:var(--none)}
+  .caveat{color:var(--ink); background:#fbf4e8; border-left:3px solid var(--med);
+    padding:8px 11px; border-radius:0 6px 6px 0; margin-top:10px; font-size:12.5px}
+  .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    justify-content:space-between; margin-bottom:12px}
+  .toolbar .left{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  label.sortlbl{font-size:12px; color:var(--muted)}
+  select,input,textarea{font-family:inherit; color:var(--ink)}
+  select#sort{border:1px solid var(--rule); background:var(--surface);
+    border-radius:7px; padding:5px 8px; font-size:13px}
+  button.ghost{border:1px solid var(--rule); background:var(--surface);
+    color:var(--muted); border-radius:7px; padding:5px 10px; font-size:12.5px; cursor:pointer}
+  button.ghost:hover{color:var(--ink)}
+  .count{font-size:12px; color:var(--muted)}
+
+  .card{background:var(--surface); border:1px solid var(--rule); border-radius:11px;
+    margin-bottom:11px; box-shadow:var(--shadow); overflow:hidden}
+  .head{display:grid; grid-template-columns:34px 1fr auto; gap:11px;
+    align-items:center; padding:12px 14px; cursor:pointer}
+  .rank{font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:15px;
+    color:var(--muted); text-align:center}
+  .who .uni{font-family:"Iowan Old Style",Palatino,Georgia,serif; font-size:17px; font-weight:600}
+  .who .meta{font-size:12.5px; color:var(--muted); margin-top:1px}
+  .tag{display:inline-block; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; border:1px solid var(--rule); border-radius:20px;
+    padding:1px 7px; margin-left:6px; color:var(--muted); vertical-align:1px}
+  .probwrap{min-width:118px; text-align:right}
+  .probval{font-family:ui-monospace,Menlo,monospace; font-size:15px; font-weight:600}
+  .probval small{font-size:10px; color:var(--muted); font-weight:400; letter-spacing:.03em}
+  .meter{height:6px; border-radius:4px; background:#eceae3; margin-top:5px; overflow:hidden}
+  .meter span{display:block; height:100%; border-radius:4px; transition:width .3s ease}
+
+  .body{border-top:1px solid var(--rule); padding:0 14px; display:none}
+  .card.open .body{display:block; padding:13px 14px}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px 16px}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+  .field label{display:block; font-size:11px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--muted); margin-bottom:3px; font-weight:600}
+  .field input, .field textarea{
+    width:100%; border:1px solid var(--rule); border-radius:7px; padding:6px 8px;
+    font-size:13px; background:#fffefb;
+  }
+  .field textarea{resize:vertical; min-height:38px}
+  .field .why{font-size:13px; color:var(--ink)}
+  .adv{border-top:1px dashed var(--rule); margin-top:12px; padding-top:11px}
+  .adv h3{font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--muted); margin:0 0 8px; font-weight:700}
+  .advrow{display:grid; grid-template-columns:1fr 1fr 88px 122px; gap:7px;
+    align-items:center; margin-bottom:7px}
+  @media(max-width:620px){.advrow{grid-template-columns:1fr 1fr}}
+  .advrow input{border:1px solid var(--rule); border-radius:6px; padding:5px 7px; font-size:12.5px; width:100%}
+  .contacted{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted)}
+  .contacted input{width:15px; height:15px}
+  .resp{border:1px solid var(--rule); border-radius:6px; padding:5px 6px; font-size:12.5px; background:#fffefb; width:100%}
+  .notes{margin-top:12px}
+  footer{color:var(--muted); font-size:11.5px; text-align:center; margin-top:24px; line-height:1.6}
+  .banner{background:#fff5f2; border:1px solid #e7c3b8; color:#8a3a2f;
+    padding:9px 12px; border-radius:8px; font-size:12.5px; margin-bottom:14px; display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Registro de candidaturas — Doutorado</h1>
+    <p class="sub">Programas de religião / teologia / ética ranqueados por fit inicial. A régua ajusta a probabilidade conforme a resposta do orientador ao seu contato.</p>
+  </header>
+
+  <div id="banner" class="banner"></div>
+
+  <div class="panel">
+    <h2>Régua de probabilidade</h2>
+    <div class="legend">
+      <span class="chip"><span class="dot d-hi"></span>Alta — orientador respondeu com interesse claro</span>
+      <span class="chip"><span class="dot d-med"></span>Média — resposta morna / fit inicial forte</span>
+      <span class="chip"><span class="dot d-lo"></span>Baixa — resposta negativa, genérica ou sem retorno</span>
+      <span class="chip"><span class="dot d-none"></span>Inicial — ainda sem contato (só fit)</span>
+    </div>
+    <div class="caveat">A probabilidade parte do <b>fit inicial</b> (overlap de pesquisa, financiamento, abertura a internacional, TOEFL que você alcança) e é ajustada pela <b>melhor resposta</b> entre os 3 orientadores: boa +35, média +10, ruim −20, contatado sem resposta −10. Nos EUA, lembre do <b>visto F-2</b>: cônjuge de estudante não pode trabalhar — pesa no orçamento de uma família de 4.</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="left">
+      <label class="sortlbl" for="sort">Ordenar por</label>
+      <select id="sort">
+        <option value="prob">Probabilidade (maior → menor)</option>
+        <option value="fit">Fit inicial</option>
+        <option value="uni">Universidade (A→Z)</option>
+        <option value="col">Custo de vida (menor → maior)</option>
+      </select>
+      <span class="count" id="count"></span>
+    </div>
+    <button class="ghost" id="reset">Limpar minhas marcações</button>
+  </div>
+
+  <main id="list"></main>
+
+  <footer>
+    Dados de semente = ponto de partida a verificar. Stipend, TOEFL, documentos e e-mails são campos editáveis — preencha à medida que confirmar em fonte oficial.<br>
+    Suas marcações (contato, resposta, notas, campos preenchidos) ficam salvas neste dispositivo entre sessões.
+  </footer>
+</div>
+
+<script>
+// ---------- SEMENTE (28 programas; ranqueados por fit inicial) ----------
+// col: Alto/Médio/Baixo (família de 4).  fam: estimativa "sustenta família de 4?"
+// tier: Alta/Média/Baixa (fit inicial).  lang: idioma de trabalho.
+const SEED = [
+ {id:"nwu", uni:"Northwestern University", area:"Religious Studies (PhD)", city:"Evanston / Chicago, IL — EUA", lang:"EN", col:"Alto", fam:"Apertado (COL alto)", tier:"Média",
+  link:"https://religious-studies.northwestern.edu/graduate/",
+  stipend:"Integral, mín. 5 anos; ~US$ 46.356/ano (2025-26) + auxílio-creche + saúde",
+  toefl:"Sem piso único; padrão da Grad School iBT 90-100 (Ciência Política exige 100). Mire ≥100 (seu atual: 83)",
+  docs:"Academic + Personal Statement; writing sample 20-30 pp espaço duplo; CV; históricos; 2 (idealmente 3) cartas; TOEFL. GRE opcional. Taxa US$ 95. Proibido IA generativa nos ensaios. Fall 2027 abre meados set/2026",
+  why:"Vínculo institucional via Helmer, mas ela já declinou orientar; sem ela o encaixe do depto cai (por isso rebaixado a Média). Alznauer (moderna/ética) é o mais forte que resta; Helmer ainda pode ser banca ou carta.",
+  adv:[{n:"Mark Alznauer — filosofia moderna, Hegel, ética/política", email:"m-alznauer@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/affiliated-faculty/mark-alznauer.html"},{n:"Elizabeth Shakman Hurd — religião e política, secularismo", email:"eshurd@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/tenure-track-faculty/elizabeth-hurd.html"},{n:"Barbara Newman — cristianismo medieval, mística", email:"bjnewman@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/affiliated-faculty/barbara-newman.html"}]},
+ {id:"nd", uni:"University of Notre Dame", area:"Department of Theology (PhD)", city:"South Bend, IN — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, funded)", tier:"Alta",
+  link:"https://theology.nd.edu/graduate/phd/",
+  stipend:"Bolsa departamental: tuition integral + stipend anual + saúde (fellowships premier dão mais). Valor atual não publicado — confirmar (a cifra de US$ 19k que circula é de 2014)",
+  toefl:"Exigido; número não publicado — confirmar em gradapp@nd.edu",
+  docs:"Statement of intent 600-800 palavras (máx 3 pp); CV; históricos; 3 cartas + Waiver of Access; writing sample ~15-20 pp; TOEFL. GRE dispensado (você já tem doutorado). Exige mestrado em teologia OU equivalente — confirmar. Prazo 15/dez",
+  why:"Encaixe forte e financiado. O'Regan (idealismo alemão) e McKenny (ética protestante + Barth, dialoga com sua monografia sobre Barth) quase sob medida. Atenção à exigência de mestrado em teologia ou equivalente.",
+  adv:[{n:"Cyril O'Regan — sistemática + filosofia continental (idealismo alemão, Hegel, Balthasar)", email:"", cv:"https://theology.nd.edu/people/cyril-o-regan/"},{n:"John R. Betz — pensamento alemão, Hamann, analogia", email:"", cv:"https://theology.nd.edu/people/john-betz/"},{n:"Gerald McKenny — ética protestante, Karl Barth, teologia política, lei moral", email:"", cv:"https://theology.nd.edu/people/gerald-mckenny/"}]},
+ {id:"baylor", uni:"Baylor University", area:"Department of Religion (PhD) — Theological/Bioethical Studies", city:"Waco, TX — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, funded)", tier:"Alta",
+  link:"https://religion.artsandsciences.baylor.edu/graduate/prospective-students/program-and-curriculum/description-phd-program",
+  stipend:"Integral (tuition + stipend + saúde); Baylor vem elevando stipends (estratégia R1) — confirmar em ReligionGraduateStudies@baylor.edu",
+  toefl:"Confirmar; mínimo geral da Baylor Graduate School ~iBT 80",
+  docs:"Statement (área + peregrinação acadêmica + agenda de pesquisa); paper recente 12-15 pp no tema da área; cartas; históricos; GRE opcional. Theological Studies exige alemão + francês (você já lê). Taxa isenta p/ 80 primeiros. Prazo 15/dez",
+  why:"Forte e financiado; COL baixo favorece família. Ética (Martens), teologia política (Harvey), filosofia da religião (Yadav). Sem luterólogo dedicado, mas forte no seu lado ético/sistemático; e exige alemão+francês, que você já lê.",
+  adv:[{n:"Paul Martens — ética cristã (Kierkegaard, Yoder), teologia e ética", email:"", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"},{n:"Barry Harvey — Bonhoeffer, teologia política, igreja e cultura", email:"", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"},{n:"Sameer Yadav — filosofia da religião, teologia analítica", email:"", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"}]},
+ {id:"uchicago", uni:"University of Chicago", area:"Divinity School (PhD) — Theology / Philosophy of Religions", city:"Chicago, IL — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Alta",
+  link:"https://divinity.uchicago.edu/academics/committees-and-areas-study/theology",
+  stipend:"Integral garantido por toda a duração (tuition + stipend + saúde); mínimo da universidade ~US$ 38-45 mil/ano conforme divisão (Divinity = Humanities) — confirmar",
+  toefl:"Mínimo institucional ~iBT 90 (com avaliação interna de inglês se speaking/listening ≥23) — confirmar",
+  docs:"Candidate statement (programa de pesquisa, preparação, influências, objetivos, por que a Divinity); writing sample; históricos; cartas; TOEFL. Exige mestrado (você tem). GRE não exigido. Taxa US$ 75. Prazo em dez, decisões meados de março",
+  why:"Com Notre Dame, o encaixe intelectual mais forte: Hector é quase sob medida (Lutero/idealismo alemão/filosofia da religião). Schweiker (ética+hermenêutica) se aposenta e não pega novos alunos — fora.",
+  adv:[{n:"Kevin Hector — teologia + filosofia da religião; idealismo alemão (Hegel), teologia pós-metafísica", email:"", cv:"https://divinity.uchicago.edu/directory/kevin-hector"},{n:"Ryan Coyne — filosofia da religião + teologia; Heidegger, fenomenologia, Agostinho", email:"", cv:"https://divinity.uchicago.edu/directory/ryan-coyne"},{n:"Willemien Otten — teologia + história do cristianismo; Agostinho, Eriugena", email:"", cv:"https://divinity.uchicago.edu/directory/willemien-otten"}]},
+ {id:"marquette", uni:"Marquette University", area:"PhD in Religious Studies (Dept. of Theology)", city:"Milwaukee, WI — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  link:"https://www.marquette.edu/theology/graduate-program-overview.php",
+  stipend:"Fellowships/assistantships da Graduate School (tuition + stipend) — confirmar valor",
+  toefl:"Mínimo geral Marquette ~iBT 80 — confirmar",
+  docs:"Confirmar em marquette.edu/grad/programs-phd-religious-studies.php (Admission Requirements, Deadline, Aid). Prazo tipicamente início de janeiro",
+  why:"Forte em ética/lei natural (Andrew Kim = hit direto no recorte lei natural) e sistemática. Sem luterólogo dedicado desde a saída de Mickey Mattox — encaixe via ética + sistemática, não Reforma (por isso Média).",
+  adv:[{n:"Andrew Kim — ética teológica, virtude, lei natural tomista", email:"andrew.kim@marquette.edu", cv:"https://www.marquette.edu/theology/directory/"},{n:"Ryan G. Duns, S.J. — teologia sistemática; Blondel, filosofia da religião", email:"ryan.duns@marquette.edu", cv:"https://www.marquette.edu/theology/directory/"},{n:"Conor M. Kelly — ética teológica e social", email:"conor.kelly@marquette.edu", cv:"https://www.marquette.edu/theology/directory/"}]},
+ {id:"emory", uni:"Emory University", area:"Graduate Division of Religion (Laney)", city:"Atlanta, GA — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
+  link:"https://gdr.emory.edu/",
+  stipend:"Laney Graduate School financia integralmente (tuition + stipend ~US$ 34 mil + saúde, ~5 anos)",
+  toefl:"Exigido; mínimo ~iBT 100 (Laney) — confirmar",
+  docs:"Application online; cartas; 1 histórico por instituição; statement + writing sample; TOEFL. GRE não exigido. Prazo 1º/dez",
+  why:"Premier e financiado; Jackson (amor/justiça) é hit direto no recorte Gálatas; Strom cobre Reforma alemã (virou Dean em 2024, disponibilidade a confirmar). Muito seletivo (~7%: 151 candidatos, 11 admitidos em 2025).",
+  adv:[{n:"Timothy P. Jackson — ética cristã; ágape, amor e justiça (hit no recorte Gálatas)", email:"", cv:"https://candler.emory.edu/faculty-profiles/"},{n:"Ian McFarland — teologia sistemática, cristologia, redenção", email:"", cv:"https://candler.emory.edu/faculty-profiles/"},{n:"Jonathan Strom — Reforma/pós-Reforma alemã, pietismo (Dean de Candler desde 2024)", email:"", cv:"https://candler.emory.edu/faculty-profiles/jonathan-strom/"}]},
+ {id:"kuleuven", uni:"KU Leuven", area:"Faculty of Theology & Religious Studies (+ Institute of Philosophy)", city:"Leuven — Bélgica", lang:"EN", col:"Médio", fam:"Possível (posição assalariada)", tier:"Alta",
+  why:"Programas de doutorado em inglês; forte em filosofia da religião e teologia; financiamento via posições/FWO.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"tubingen", uni:"Universität Tübingen", area:"Evangelische Theologie (Reforma) + Philosophie", city:"Tübingen — Alemanha", lang:"DE", col:"Médio", fam:"Possível (posição/salário)", tier:"Alta",
+  why:"Coração da teologia da Reforma; sem mensalidade; financiamento por posições/bolsas. Exige alemão de leitura sólida.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"standrews", uni:"University of St Andrews", area:"School of Divinity — teologia sistemática / analítica, filosofia da religião", city:"St Andrews — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
+  why:"Referência em teologia filosófica e filosofia da religião. Barreira: visto de trabalho / custo do RU.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"duke", uni:"Duke University", area:"Graduate Program in Religion + Divinity (ThD)", city:"Durham, NC — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Teologia e ética fortes; funded; COL moderado.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"yale", uni:"Yale University", area:"Religious Studies (PhD)", city:"New Haven, CT — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Média",
+  why:"Elite, funded, amplo. Muito competitivo; COL alto.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"princeton", uni:"Princeton University", area:"Department of Religion (secular)", city:"Princeton, NJ — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Média",
+  why:"Fit de Polo B (estudo crítico da religião); funded; muito competitivo.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"pts", uni:"Princeton Theological Seminary", area:"PhD — teologia reformada / Reforma", city:"Princeton, NJ — EUA", lang:"EN", col:"Alto", fam:"Apertado (funded)", tier:"Média",
+  why:"Forte em Reforma e teologia reformada; bolsas robustas. Distinto da Universidade de Princeton.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"uva", uni:"University of Virginia", area:"Religious Studies — Theology, Ethics & Culture", city:"Charlottesville, VA — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Linha de ética teológica reconhecida; funded; COL moderado.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"vanderbilt", uni:"Vanderbilt University", area:"Graduate Department of Religion", city:"Nashville, TN — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Teologia e ética; funded; COL moderado.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"bc", uni:"Boston College", area:"Theology (PhD)", city:"Chestnut Hill / Boston, MA — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Média",
+  why:"Teologia jesuíta forte; funded. Barreira: COL de Boston para família.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"fordham", uni:"Fordham University", area:"Theology + Philosophy", city:"Bronx / Nova York, NY — EUA", lang:"EN", col:"Alto", fam:"Não sustenta sem 2ª renda", tier:"Média",
+  why:"Forte em filosofia da religião e medieval/moderna. Barreira dura: COL de NY para 4 pessoas.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"slu", uni:"Saint Louis University", area:"Theological Studies (e Philosophy, filosofia da religião)", city:"St. Louis, MO — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo)", tier:"Média",
+  why:"Católica, forte em filosofia da religião e medieval; COL baixo favorece família.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"harvard", uni:"Harvard University", area:"Committee on the Study of Religion (PhD)", city:"Cambridge, MA — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Média",
+  why:"Elite, funded. Extremamente competitivo; COL alto.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"smu", uni:"Southern Methodist University", area:"Graduate Program in Religious Studies (Perkins)", city:"Dallas, TX — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Programa financiado em estudos religiosos; teologia/ética.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"erlangen", uni:"Universität Erlangen-Nürnberg (FAU)", area:"Evangelische Theologie (luterana)", city:"Erlangen — Alemanha", lang:"DE", col:"Baixo", fam:"Possível (posição/salário)", tier:"Média",
+  why:"Tradição luterana forte; sem mensalidade; COL baixo. Exige alemão.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"toronto", uni:"University of Toronto", area:"Study of Religion + Toronto School of Theology", city:"Toronto — Canadá", lang:"EN", col:"Alto", fam:"Apertado", tier:"Média",
+  why:"Amplo e forte, inclui Reforma e filosofia da religião; funded (moderado); Canadá facilita família.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"mcgill", uni:"McGill University", area:"School of Religious Studies", city:"Montreal, QC — Canadá", lang:"EN/FR", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Estudos religiosos sólidos; cidade francófona (bônus para seu francês); COL moderado.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"edinburgh", uni:"University of Edinburgh", area:"School of Divinity (New College)", city:"Edimburgo — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Teologia sistemática e histórica fortes. Barreira: custo do RU / visto.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"durham", uni:"Durham University", area:"Department of Theology and Religion", city:"Durham — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"Teologia e religião de alto nível; COL menor que grandes cidades do RU.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"aberdeen", uni:"University of Aberdeen", area:"Divinity — teologia sistemática", city:"Aberdeen — Reino Unido", lang:"EN", col:"Baixo", fam:"Apertado (COL menor)", tier:"Baixa",
+  why:"Teologia sistemática de tradição forte; COL mais baixo no RU. Financiamento a confirmar.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"strasbourg", uni:"Université de Strasbourg", area:"Faculté de théologie protestante", city:"Estrasburgo — França", lang:"FR", col:"Médio", fam:"Possível (posição/bolsa)", tier:"Baixa",
+  why:"Rara faculdade pública de teologia protestante; encaixe de nicho em francês. Financiamento competitivo/variável.",
+  adv:[{n:""},{n:""},{n:""}]},
+ {id:"claremont", uni:"Claremont Graduate University", area:"Religion — filosofia da religião", city:"Claremont, CA — EUA", lang:"EN", col:"Alto", fam:"Difícil (funding variável)", tier:"Baixa",
+  why:"Tradição em filosofia da religião, mas financiamento costuma ser menos generoso — verificar antes de investir.",
+  adv:[{n:""},{n:""},{n:""}]}
+];
+
+const TIER_BASE = {Alta:55, "Média":35, Baixa:18};
+const RESP_ADJ = {boa:35, "média":10, ruim:-20, sem:-10, "":0};
+const COL_ORD = {Baixo:0, "Médio":1, Alto:2};
+const KEY = "phd_tracker_v1";
+
+let STATE = {ov:{}, sort:"prob"};
+const $ = s => document.querySelector(s);
+const banner = $("#banner");
+
+async function load(){
+  try{
+    const r = await window.storage.get(KEY);
+    if(r && r.value){ const p = JSON.parse(r.value); STATE.ov = p.ov||{}; STATE.sort = p.sort||"prob"; }
+  }catch(e){ /* chave ainda não existe ou storage indisponível */ }
+}
+let saveT;
+function save(){
+  clearTimeout(saveT);
+  saveT = setTimeout(async ()=>{
+    try{ await window.storage.set(KEY, JSON.stringify(STATE)); }
+    catch(e){ banner.style.display="block";
+      banner.textContent="Não foi possível salvar neste ambiente — suas marcações valem só nesta sessão. (Rode como artifact no app do Claude para persistir.)"; }
+  }, 300);
+}
+
+function eff(p){ return Object.assign({}, p, STATE.ov[p.id]||{}); }
+function setField(id, field, val){
+  STATE.ov[id] = Object.assign({}, STATE.ov[id]||{}, {[field]:val}); save();
+}
+function setAdv(id, i, key, val){
+  const cur = STATE.ov[id]||{}; const adv = (cur.adv? cur.adv.map(a=>Object.assign({},a)) : [ {},{},{} ]);
+  adv[i] = Object.assign({}, adv[i], {[key]:val});
+  STATE.ov[id] = Object.assign({}, cur, {adv}); save();
+}
+function advState(p, i){
+  const o = (STATE.ov[p.id]&&STATE.ov[p.id].adv&&STATE.ov[p.id].adv[i])||{};
+  const s = (p.adv&&p.adv[i])||{};
+  return Object.assign({n:"", email:"", cv:"", contacted:false, resp:""}, s, o);
+}
+function bestResp(p){
+  let best="", bestScore=-999;
+  for(let i=0;i<3;i++){
+    const a = advState(p,i);
+    let key = a.resp || (a.contacted? "sem" : "");
+    if(!a.contacted && !a.resp) key="";
+    const sc = RESP_ADJ[key]!==undefined?RESP_ADJ[key]:0;
+    if(sc>bestScore){bestScore=sc; best=key;}
+  }
+  return best;
+}
+function prob(p){
+  const e = eff(p);
+  const base = TIER_BASE[e.tier]!==undefined?TIER_BASE[e.tier]:30;
+  const key = bestResp(p);
+  const adj = RESP_ADJ[key]!==undefined?RESP_ADJ[key]:0;
+  let v = Math.max(3, Math.min(97, base+adj));
+  return {v, contacted: key!=="", key};
+}
+function probColor(v, contacted){
+  if(!contacted) return "var(--none)";
+  if(v>=55) return "var(--hi)";
+  if(v>=32) return "var(--med)";
+  return "var(--lo)";
+}
+
+function sorted(){
+  const arr = SEED.slice();
+  const s = STATE.sort;
+  arr.sort((a,b)=>{
+    if(s==="uni") return eff(a).uni.localeCompare(eff(b).uni);
+    if(s==="col") return (COL_ORD[eff(a).col]??1)-(COL_ORD[eff(b).col]??1);
+    if(s==="fit") return TIER_BASE[eff(b).tier]-TIER_BASE[eff(a).tier];
+    return prob(b).v - prob(a).v; // prob
+  });
+  return arr;
+}
+
+function fieldInput(id, field, val, ph){
+  return `<input data-id="${id}" data-f="${field}" value="${(val||"").replace(/"/g,'&quot;')}" placeholder="${ph}">`;
+}
+
+function render(){
+  const list = $("#list"); const arr = sorted();
+  $("#count").textContent = arr.length + " programas";
+  $("#sort").value = STATE.sort;
+  list.innerHTML = arr.map((p,idx)=>{
+    const e = eff(p);
+    const pr = prob(p);
+    const col = probColor(pr.v, pr.contacted);
+    const stateLbl = pr.contacted ? ({boa:"Alta",["média"]:"Média",ruim:"Baixa",sem:"Baixa"}[pr.key]||"—") : "Inicial";
+    const advHTML = [0,1,2].map(i=>{
+      const a = advState(p,i);
+      return `<div class="advrow">
+        <input data-adv="${p.id}" data-i="${i}" data-k="n" value="${(a.n||"").replace(/"/g,'&quot;')}" placeholder="Orientador ${i+1} — nome">
+        <input data-adv="${p.id}" data-i="${i}" data-k="email" value="${(a.email||"").replace(/"/g,'&quot;')}" placeholder="e-mail (verificar)">
+        <label class="contacted"><input type="checkbox" data-adv="${p.id}" data-i="${i}" data-k="contacted" ${a.contacted?"checked":""}>contatado</label>
+        <select class="resp" data-adv="${p.id}" data-i="${i}" data-k="resp">
+          <option value="" ${a.resp===""?"selected":""}>resposta —</option>
+          <option value="boa" ${a.resp==="boa"?"selected":""}>boa</option>
+          <option value="média" ${a.resp==="média"?"selected":""}>média</option>
+          <option value="ruim" ${a.resp==="ruim"?"selected":""}>ruim</option>
+          <option value="sem" ${a.resp==="sem"?"selected":""}>sem retorno</option>
+        </select>
+        <input data-adv="${p.id}" data-i="${i}" data-k="cv" value="${(a.cv||"").replace(/"/g,'&quot;')}" placeholder="link do currículo (verificar)" style="grid-column:1/-1">
+      </div>`;
+    }).join("");
+    return `<div class="card" data-card="${p.id}">
+      <div class="head" data-toggle="${p.id}">
+        <div class="rank">${idx+1}</div>
+        <div class="who">
+          <div class="uni">${e.uni}<span class="tag">${e.lang}</span><span class="tag">fit ${e.tier}</span></div>
+          <div class="meta">${e.area} · ${e.city} · custo ${e.col}</div>
+        </div>
+        <div class="probwrap">
+          <div class="probval" style="color:${col}">${pr.v}% <small>${stateLbl}</small></div>
+          <div class="meter"><span style="width:${pr.v}%; background:${col}"></span></div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="field" style="margin-bottom:10px"><label>Por que está aqui (fit)</label><div class="why">${e.why}</div></div>
+        <div class="grid">
+          <div class="field"><label>Link do programa</label>${fieldInput(p.id,"link",e.link,"colar URL oficial do programa")}</div>
+          <div class="field"><label>Stipend / bolsa</label>${fieldInput(p.id,"stipend",e.stipend,"valor anual (verificar)")}</div>
+          <div class="field"><label>TOEFL exigido</label>${fieldInput(p.id,"toefl",e.toefl,"nota mínima (verificar)")}</div>
+          <div class="field"><label>Sustenta família de 4?</label>${fieldInput(p.id,"fam",e.fam,"")}</div>
+          <div class="field" style="grid-column:1/-1"><label>Documentos exigidos (com links de modelo)</label>${fieldInput(p.id,"docs",e.docs,"writing sample, cartas, SoP, transcript… (verificar + links)")}</div>
+        </div>
+        <div class="adv">
+          <h3>Orientadores potenciais — contato & resposta</h3>
+          ${advHTML}
+        </div>
+        <div class="field notes"><label>Notas</label><textarea data-id="${p.id}" data-f="notes" placeholder="prazos, observações, próximo passo…">${(e.notes||"")}</textarea></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ---------- eventos ----------
+document.addEventListener("click", ev=>{
+  const t = ev.target.closest("[data-toggle]");
+  if(t && !ev.target.closest("input,select,textarea,label")){
+    $(`[data-card="${t.dataset.toggle}"]`).classList.toggle("open");
+  }
+});
+document.addEventListener("input", ev=>{
+  const el = ev.target;
+  if(el.dataset.f){ setField(el.dataset.id, el.dataset.f, el.value); }
+  else if(el.dataset.adv){
+    const k = el.dataset.k;
+    const val = (el.type==="checkbox")? el.checked : el.value;
+    setAdv(el.dataset.adv, +el.dataset.i, k, val);
+    if(k==="contacted"||k==="resp"){ // recomputa e re-ordena
+      const openIds = [...document.querySelectorAll(".card.open")].map(c=>c.dataset.card);
+      render();
+      openIds.forEach(id=>{ const c=$(`[data-card="${id}"]`); if(c) c.classList.add("open"); });
+    }
+  }
+});
+document.addEventListener("change", ev=>{
+  if(ev.target.id==="sort"){ STATE.sort = ev.target.value; save(); render(); }
+});
+$("#reset").addEventListener("click", async ()=>{
+  if(!confirm("Limpar todas as suas marcações e campos preenchidos? A lista de programas continua.")) return;
+  STATE.ov = {}; save(); render();
+});
+
+(async function init(){ await load(); render(); })();
+</script>
+</body>
+</html>
