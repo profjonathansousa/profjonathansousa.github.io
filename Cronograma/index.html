@@ -103,8 +103,14 @@
   .add-row:active{background:#EAE7DC;}
 
   /* Bloco técnico */
-  .shead.tec-suave{color:var(--muted);border-top:1px dashed var(--line);padding-top:14px;}
-  .shead.tec-suave .sub{font-style:italic;}
+  .tecbloco{border:1px solid var(--line);border-radius:12px;margin:20px 0 0;background:var(--paper-2);overflow:hidden;}
+  .tecbloco summary{list-style:none;cursor:pointer;padding:12px 15px;display:flex;flex-direction:column;gap:3px;}
+  .tecbloco summary::-webkit-details-marker{display:none;}
+  .tecbloco .tb-t{font-family:var(--display);font-size:15px;font-weight:600;color:var(--ink);letter-spacing:.02em;}
+  .tecbloco .tb-t::before{content:"›";display:inline-block;margin-right:9px;color:var(--muted);transition:transform .18s;}
+  .tecbloco[open] .tb-t::before{transform:rotate(90deg);}
+  .tecbloco .tb-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;padding-left:19px;}
+  .tecbloco .tb-body{padding:0 13px 12px;}
   .proj{border:1px solid var(--line);border-radius:12px;background:var(--card);
     padding:11px 12px 8px;margin-bottom:9px;box-shadow:var(--shadow);}
   .proj.ativo{border-color:var(--gold-line);box-shadow:0 0 0 1px var(--gold-soft) inset, var(--shadow);}
@@ -209,7 +215,7 @@
 </div>
 
 <script>
-const APP_VERSION = "2026-07-18-03";
+const APP_VERSION = "2026-07-18-05";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -269,17 +275,39 @@ const METAS_DEFAULT = [
 // Bloco técnico: projetos de médio/longo prazo. Estado persiste entre dias (chave sem data).
 // Cada subtarefa tem st: 0=a fazer, 1=em andamento, 2=concluída.
 const TECNICO_DEFAULT = [
-  {id:"p1", t:"CV & sites", subs:[
-    {id:"s11", t:"Atualizar index-en (publicações e palestras)", st:0},
-    {id:"s12", t:"Revisar toggle PT/EN e botões de contato", st:0}
+  {id:"p1", t:"Sites", subs:[
+    {id:"s11", t:"Revisar índex principal", st:0},
+    {id:"s12", t:"Revisar cronograma", st:0},
+    {id:"s13", t:"Revisar Joel de Oliveira", st:0},
+    {id:"s14", t:"Criar novos", st:0}
   ]},
   {id:"p2", t:"Canais dark (YouTube)", subs:[
     {id:"s21", t:"Definir linha editorial do Canal 1", st:0},
     {id:"s22", t:"Primeiro roteiro-piloto", st:0}
   ]},
-  {id:"p3", t:"Instituto (IBTRADCA)", subs:[
-    {id:"s31", t:"arquivarDisciplina() + aba Historico_Consolidado", st:0},
-    {id:"s32", t:"Grupo 2 — Notas N01–N05", st:0}
+  {id:"p3", t:"Ordo App", subs:[
+    {id:"s31", t:"Liberar espaço em disco (~15–20 GB livres)", st:0},
+    {id:"s32", t:"Instalar ferramentas base (Node.js + pnpm) e criar a pasta", st:0},
+    {id:"s33", t:"Criar contas gratuitas (GitHub, Supabase, Vercel)", st:0},
+    {id:"s34", t:"Montar o esqueleto (Next.js) e publicar \"olá mundo\" no ar", st:0},
+    {id:"s35", t:"Criar o banco de dados com isolamento (RLS)", st:0},
+    {id:"s36", t:"Login e cadastro de instituto (multi-tenant)", st:0},
+    {id:"s37", t:"Configurações do instituto (critérios ajustáveis)", st:0},
+    {id:"s38", t:"Cadastros — alunos, disciplinas, professores", st:0},
+    {id:"s39", t:"Presença — link público + registro", st:0},
+    {id:"s3a", t:"Fechar aula e consolidar frequência", st:0},
+    {id:"s3b", t:"Notas e situação/resultado final", st:0},
+    {id:"s3c", t:"Arquivar disciplina e histórico do aluno", st:0},
+    {id:"s3d", t:"Dashboard", st:0},
+    {id:"s3e", t:"Testar de ponta a ponta simulando um instituto real", st:0}
+  ]},
+  {id:"p4", t:"Workshop (estudos bíblicos com IA)", subs:[
+    {id:"s41", t:"Definir plataforma (pagamento + Meet + Forms)", st:0},
+    {id:"s42", t:"Escrever texto de divulgação", st:0},
+    {id:"s43", t:"Montar kit de prompts (PDF 1 página)", st:0},
+    {id:"s44", t:"Montar checklist de verificação doutrinária", st:0},
+    {id:"s45", t:"Montar folha do aluno", st:0},
+    {id:"s46", t:"Definir data e abrir inscrições (turma piloto)", st:0}
   ]}
 ];
 
@@ -454,7 +482,11 @@ function renderHoje(){
   const subhead = d.tecnico
     ? `projetos · prioridade de hoje`
     : `se sobrar tempo · dar andamento a 1 projeto`;
-  html+=`<div class="shead${d.tecnico?"":" tec-suave"}">Bloco técnico <span class="sub">${subhead}</span></div><div id="tecnico"></div>`;
+  const tecAberto = d.tecnico ? LS("cron:tecnico-open", true) : LS("cron:tecnico-open", false);
+  html+=`<details class="tecbloco" ${tecAberto?"open":""} ontoggle="save('cron:tecnico-open', this.open)">
+    <summary><span class="tb-t">Bloco técnico</span><span class="tb-sub">${subhead}</span></summary>
+    <div class="tb-body"><div id="tecnico"></div></div>
+  </details>`;
   html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
 
@@ -644,6 +676,14 @@ async function checkUpdate(){
   });
 })();
 document.getElementById("ver").textContent = "v"+APP_VERSION;
+
+/* Reset único do bloco técnico para a nova lista de 4 projetos.
+   Roda uma só vez: grava a marca da seed e não sobrescreve edições futuras. */
+const TEC_SEED = "2026-07-18-4projetos";
+if(LS("cron:tecnico-seed", null) !== TEC_SEED){
+  setTec(JSON.parse(JSON.stringify(TECNICO_DEFAULT)));
+  save("cron:tecnico-seed", TEC_SEED);
+}
 
 renderOrdo(); renderHoje(); renderSemana();
 checkUpdate();
