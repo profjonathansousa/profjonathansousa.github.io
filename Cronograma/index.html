@@ -26,7 +26,6 @@
     -webkit-font-smoothing:antialiased;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
   .wrap{max-width:560px;margin:0 auto;padding:20px 18px 64px;}
-
   .ordo{display:flex;gap:6px;margin-bottom:22px;}
   .ordo-seg{flex:1;text-align:center;padding:7px 4px 8px;border:1px solid var(--line);
     border-radius:8px;background:var(--paper-2);font-family:var(--display);color:var(--ink-soft);
@@ -39,23 +38,19 @@
   .ordo-seg.now{background:var(--ink);border-color:var(--ink);color:var(--gold-soft);box-shadow:var(--shadow);}
   .ordo-seg.now .lbl{color:var(--gold-line);}
   .ordo-seg.now.sprint{background:#3A2230;border-color:#3A2230;}
-
   .switch{display:flex;background:var(--paper-2);border:1px solid var(--line);
     border-radius:10px;padding:3px;margin-bottom:18px;}
   .switch button{flex:1;border:none;background:transparent;font-family:var(--sans);font-size:13px;
     font-weight:600;letter-spacing:.02em;color:var(--muted);padding:8px;border-radius:7px;cursor:pointer;transition:.15s;}
   .switch button.active{background:var(--ink);color:var(--paper);box-shadow:var(--shadow);}
-
   .plate-eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;}
   .plate-day{font-family:var(--display);font-size:40px;line-height:1.02;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;}
   .plate-eixo{font-family:var(--display);font-style:italic;font-size:17px;color:var(--gold);margin:0 0 4px;}
   .plate-date{font-size:12.5px;color:var(--muted);margin-bottom:20px;}
-
   .anchor{display:flex;align-items:baseline;gap:10px;padding:11px 14px;margin-bottom:8px;
     background:var(--ink);color:var(--paper);border-radius:10px;}
   .anchor .t{font-family:var(--display);font-size:13px;font-weight:600;color:var(--gold-soft);white-space:nowrap;letter-spacing:.02em;}
   .anchor .n{font-size:13.5px;line-height:1.35;}
-
   .tasks{list-style:none;margin:14px 0 0;padding:0;}
   .task{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;margin-bottom:8px;
     background:var(--card);border:1px solid var(--line);border-radius:11px;cursor:pointer;transition:background .15s;}
@@ -73,12 +68,10 @@
   .task.done .task-note{opacity:.7;}
   .task .tag{flex:none;align-self:center;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
     color:var(--gold);border:1px solid var(--gold-soft);padding:2px 7px;border-radius:20px;background:#F6EFDD;}
-
   .shead{font-family:var(--display);font-size:13px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--ink-soft);margin:30px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line);
     display:flex;justify-content:space-between;align-items:baseline;}
   .shead .sub{font-family:var(--sans);font-size:11px;letter-spacing:0;text-transform:none;color:var(--muted);}
-
   .sprint-card{background:#F3E7DC;border:1px solid var(--crimson-soft);border-radius:12px;padding:15px 16px;margin-bottom:8px;}
   .sprint-card .lead{font-family:var(--display);font-style:italic;color:var(--crimson);font-size:15px;margin-bottom:9px;}
   .momento{display:flex;gap:11px;padding:8px 0;border-top:1px solid rgba(138,58,58,.16);}
@@ -87,7 +80,6 @@
   .momento .m-t{font-size:13px;color:var(--ink);}
   .momento .m-t b{font-weight:600;}
   .momento .m-t span{display:block;font-size:11.5px;color:var(--muted);margin-top:1px;}
-
   .goal{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;margin-bottom:7px;
     background:var(--card);border:1px solid var(--line);border-radius:11px;}
   .goal .box{cursor:pointer;}
@@ -101,7 +93,6 @@
     border:1px dashed var(--line-strong);border-radius:11px;color:var(--muted);
     font-family:var(--sans);font-size:13px;cursor:pointer;text-align:left;}
   .add-row:active{background:#EAE7DC;}
-
   /* Bloco técnico */
   .tecbloco{border:1px solid var(--line);border-radius:12px;margin:20px 0 0;background:var(--paper-2);overflow:hidden;}
   .tecbloco summary{list-style:none;cursor:pointer;padding:12px 15px;display:flex;flex-direction:column;gap:3px;}
@@ -132,19 +123,16 @@
   .sub-text{flex:1;font-size:13.5px;line-height:1.4;color:var(--ink);outline:none;}
   .sub.st-1 .sub-text{color:var(--ink);font-weight:600;}
   .sub.st-2 .sub-text{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong);}
-
   .count{display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--paper);
     border-radius:12px;padding:15px 16px;margin-bottom:10px;}
   .count .num{font-family:var(--display);font-size:34px;font-weight:600;line-height:1;color:var(--gold-soft);min-width:44px;text-align:center;}
   .count .meta .c-t{font-size:14px;font-weight:600;}
   .count .meta .c-s{font-size:12px;color:#B9C0CE;margin-top:2px;}
-
   .ev{display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;
     background:var(--card);border:1px solid var(--line);border-radius:10px;}
   .ev .ev-d{font-family:var(--display);font-weight:700;color:var(--gold);font-size:14px;min-width:40px;text-align:center;flex:none;}
   .ev .ev-t{flex:1;font-size:13.5px;outline:none;min-width:0;}
   .ev input[type=date]{border:none;background:transparent;font-family:var(--sans);font-size:11px;color:var(--muted);width:112px;flex:none;}
-
   .wday{border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:var(--paper-2);overflow:hidden;}
   .wday summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
   .wday summary::-webkit-details-marker{display:none;}
@@ -154,16 +142,12 @@
   .wday .w-body{padding:0 15px 13px;font-size:13px;color:var(--ink-soft);}
   .wday .w-body div{padding:4px 0;border-top:1px solid var(--line);}
   .wday .w-body div:first-child{border-top:none;}
-
   .rule{margin-top:14px;padding:13px 15px;border:1px solid var(--line);border-radius:11px;
     background:var(--paper-2);font-size:12.5px;color:var(--ink-soft);}
   .rule b{color:var(--ink);font-family:var(--display);}
   .rule s{color:var(--muted);}
-
   .foot{margin-top:34px;text-align:center;font-size:11px;color:var(--muted);letter-spacing:.03em;}
   .foot button{background:none;border:none;color:var(--muted);text-decoration:underline;font-size:11px;cursor:pointer;font-family:var(--sans);margin:0 6px;line-height:2.2;}
-
-
   #ptr{position:fixed;top:0;left:0;right:0;text-align:center;padding:12px;font-size:12px;
     color:var(--muted);background:var(--paper-2);transform:translateY(-100%);transition:transform .15s;
     z-index:100;border-bottom:1px solid var(--line);letter-spacing:.03em;}
@@ -213,46 +197,45 @@
     <span id="ver"></span>
   </div>
 </div>
-
 <script>
-const APP_VERSION = "2026-07-18-05";
+const APP_VERSION = "2026-07-20-06";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
        {id:"seg-min", t:"Manutenção ministerial", n:"Pendências da igreja, mensagens, o que ficou aberto"},
        {id:"seg-plan", t:"Planejar a semana", n:"Definir a tarefa principal de cada dia antes que a semana comece", tag:"âncora"},
-       {id:"seg-acad", t:"Produção acadêmica leve", n:"Reabrir o artigo, uma ideia, um parágrafo"}
+       {id:"seg-acad", t:"Produção acadêmica leve", n:"Reabrir o artigo, uma ideia, um parágrafo"},
+       {id:"seg-toefl", t:"TOEFL · Reading", n:"Bloco curto, fora do Uber. Drills cronometrados + revisar cada erro por tipo de questão (formato 2026). Ler rápido — leitura eficiente sobra tempo de resposta", tag:"pulverizado"}
      ], uber:"Cowork quando der, nas duas janelas (~6–7h e ~14h30)"},
   2:{nome:"Terça", eixo:"Internacionalização — produção", anchors:[],
      tasks:[
        {id:"ter-art", t:"Artigo: escrever e expandir", n:"Bloco principal do dia. Aumentar páginas do recorte ativo"},
        {id:"ter-pos", t:"Pós-doc", n:"Research statement, candidaturas, prazos"},
-       {id:"ter-toefl", t:"TOEFL · Reading", n:"Bloco curto, fora do Uber. Drills cronometrados + revisar cada erro por tipo de questão (formato 2026)", tag:"pulverizado"}
+       {id:"ter-toefl", t:"TOEFL · Listening", n:"Bloco curto. 1 set com o método dos 4 quadrantes: Q1 Ideia central · Q2 Dados (números, nomes) · Q3 Guinada (but/however) · Q4 Tom do falante. Regra de ouro: só escreva o que a memória vai perder", tag:"pulverizado"}
      ], uber:"Cowork quando der. Na fase de sprint: Momento 1 da EBD aqui"},
   3:{nome:"Quarta", eixo:"Preparo Joel de Oliveira", anchors:[],
      tasks:[
        {id:"qua-aula", t:"Preparar aulas", n:"O preparo de quinta já cobre a sexta (as duas turmas são 3º ano)", tag:"exclusivo"},
        {id:"qua-aval", t:"Preparar e revisar avaliações", n:"Correções, provas, o que vence na semana"},
        {id:"qua-outras", t:"Revisar EM1 / EM2 se houver", n:"Só o que a semana pedir"},
-       {id:"qua-toefl", t:"TOEFL · Listening", n:"Bloco curto. 1 set com notas ativas: ideia central, exemplos, atitude do falante, transições", tag:"pulverizado"}
+       {id:"qua-toefl", t:"TOEFL · Vocabulário + shadowing", n:"O bloco mais leve: Anki (Academic Word List) + 10 min de shadowing. Protocolo: ouça a frase, repita reproduzindo ritmo e entonação (não só as palavras), grave-se e compare. Só se houver energia", tag:"pulverizado"}
      ], uber:"Cowork quando der."},
   4:{nome:"Quinta", eixo:"Aula no Joel de Oliveira",
      anchors:[{t:"7h–14h30", n:"Aula no C.E. Prof. Joel de Oliveira"}],
      tasks:[
        {id:"qui-rec", t:"Livre a partir das 16h", n:"Uber da tarde, descanso ou uma tarefa leve já definida"},
-       {id:"qui-toefl", t:"TOEFL · Vocabulário + shadowing", n:"O bloco mais leve: Anki (Academic Word List) + 10 min de shadowing. Só se houver energia", tag:"pulverizado"}
+       {id:"qui-toefl", t:"TOEFL · Writing", n:"Bloco curto. 1 tarefa cronometrada, alternar Write an Email (saudação → contexto → pedido → checklist de pontos → fechamento → despedida) e Academic Discussion (posição na 1ª frase → 1 razão → 1 exemplo), depois autocorreção. Uma ideia por frase, sem parênteses", tag:"pulverizado"}
      ], uber:"Só à tarde/noite (a manhã é aula). Cowork curto"},
   5:{nome:"Sexta", eixo:"Aula + escrita acadêmica",
      anchors:[{t:"7h–10h30", n:"Aula no Joel (3º ano) — preparada na quarta"}],
      tasks:[
        {id:"sex-esc", t:"Escrita acadêmica", n:"Na janela livre 11h30–15h00. O artigo é o dono do dia até sair", tag:"âncora"},
-       {id:"sex-toefl", t:"TOEFL · Writing", n:"Bloco curto. 1 tarefa cronometrada, alternar Write an Email e Academic Discussion, depois autocorreção", tag:"pulverizado"}
+       {id:"sex-toefl", t:"TOEFL · Speaking + simulado", n:"Bloco maior. Esqueleto PREP no Take an Interview: Posição na 1ª frase → Razão única → Exemplo concreto → fechamento natural. Se travar, não recomece — termine a frase mesmo assim. Gravar e comparar com modelos. A cada 2–3 semanas, trocar por 1 simulado no formato 2026", tag:"pulverizado"}
      ], uber:"Depois das 15h. Cowork quando der"},
   6:{nome:"Sábado", eixo:"Consolidação, pós-doc & técnico", anchors:[], tecnico:true,
      tasks:[
        {id:"sab-agentes", t:"Processar o que os agentes trouxeram", n:"Chamadas de publicação, vagas de pós-doc e concursos da semana"},
-       {id:"sab-consol", t:"Consolidar a semana", n:"O que andou, o que fica para a próxima"},
-       {id:"sab-toefl", t:"TOEFL · Speaking + simulado", n:"Bloco maior. Gravar respostas e comparar com modelos. A cada 2–3 semanas, trocar por 1 simulado no formato 2026", tag:"pulverizado"}
+       {id:"sab-consol", t:"Consolidar a semana", n:"O que andou, o que fica para a próxima"}
      ], uber:"Cowork quando der, nas duas janelas"},
   0:{nome:"Domingo", eixo:"EBD, igreja & descanso",
      anchors:[{t:"9h00", n:"Escola Bíblica Dominical — IBFC"}],
@@ -262,7 +245,6 @@ const DIAS = {
      ], uber:"Descanso. Sem Uber, sem TOEFL"}
 };
 const ORDEM_SEMANA = [1,2,3,4,5,6,0];
-
 const EVENTOS_DEFAULT = [{id:"e1", t:"Projeto Acolher — evento de casais", data:"2026-08-22"},{id:"e-toefl", t:"Prova TOEFL", data:"2026-11-30"}];
 const METAS_DEFAULT = [
   {id:"m1", t:"Artigo \"Patriotismo Cristão\": ajustar e expandir páginas", done:false},
@@ -310,23 +292,18 @@ const TECNICO_DEFAULT = [
     {id:"s46", t:"Definir data e abrir inscrições (turma piloto)", st:0}
   ]}
 ];
-
 const now = new Date();
 const todayIdx = now.getDay();
 const dateKey = ymd(now);
 const monthKey = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function LS(k,def){try{const v=localStorage.getItem(k);return v===null?def:JSON.parse(v);}catch(e){return def;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-
 let checks = LS("cron:checks:"+dateKey, {});
 function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,checks);renderHoje();}
-
 function weekOfMonth(d){return Math.min(4, Math.ceil(d.getDate()/7));}
 const wom = weekOfMonth(now);
 const phase = wom<=2 ? "livre" : (wom===3 ? "ebd1" : "ebd2");
-
 function renderOrdo(){
   const romans=["I","II","III","IV"], labels=["livre","livre","EBD","EBD"];
   document.getElementById("ordo").innerHTML = romans.map((r,i)=>{
@@ -341,10 +318,8 @@ function renderOrdo(){
   };
   document.getElementById("phase-note").textContent=notes[phase];
 }
-
 function tag(t){return t?`<span class="tag">${t}</span>`:"";}
 const CHK='<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>';
-
 /* Plano TOEFL — edite estas 4 datas para recalibrar as janelas */
 const TOEFL_PLANO = {
   inicio: "2026-07-20",   // começo do preparo
@@ -364,7 +339,6 @@ function toeflFase(){
     return {dias, sem: Math.max(0, Math.ceil(dias/7)), fase, foco};
   }catch(e){ return null; }
 }
-
 /* Guia TOEFL — conteúdo por fase, marcável e com links (persistido) */
 const TOEFL_GUIA = {
   f1:{
@@ -442,7 +416,6 @@ function renderGuia(){
   h+=`</div></div></details>`;
   return h;
 }
-
 function renderHoje(){
   const d=DIAS[todayIdx];
   const dateStr=now.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
@@ -451,9 +424,7 @@ function renderHoje(){
   html+=`<h1 class="plate-day">${d.nome}</h1>`;
   html+=`<p class="plate-eixo">${d.eixo}</p>`;
   html+=`<p class="plate-date">${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</p>`;
-
   d.anchors.forEach(a=>{html+=`<div class="anchor"><span class="t">${a.t}</span><span class="n">${a.n}</span></div>`;});
-
   if(phase!=="livre"){
     html+=`<div class="sprint-card"><div class="lead">Sprint EBD — material do próximo mês</div>`;
     if(phase==="ebd1"){
@@ -465,7 +436,6 @@ function renderHoje(){
     }
     html+=`</div>`;
   }
-
   const temToefl = d.tasks.some(t=>/toefl/i.test(t.id));
   if(temToefl){ const f=toeflFase(); if(f){
     html+=`<div class="toefl-fase">TOEFL · faltam ${f.dias} dia${f.dias===1?"":"s"} (~${f.sem} sem) · <b>${f.fase}</b><span>${f.foco}</span></div>`;
@@ -489,14 +459,11 @@ function renderHoje(){
   </details>`;
   html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
-
   html+=`<div class="shead">Metas do mês <span class="sub">${now.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</span></div><div id="metas"></div>`;
   html+=`<div class="shead">Datas importantes</div><div id="eventos"></div>`;
-
   document.getElementById("view-hoje").innerHTML=html;
   renderMetas(); renderEventos(); renderTecnico();
 }
-
 function getMetas(){return LS("cron:metas:"+monthKey, JSON.parse(JSON.stringify(METAS_DEFAULT)));}
 function setMetas(m){save("cron:metas:"+monthKey,m);}
 function renderMetas(){
@@ -516,7 +483,6 @@ function editMeta(i,t){const m=getMetas();m[i].t=t.trim()||m[i].t;setMetas(m);}
 function delMeta(i){const m=getMetas();m.splice(i,1);setMetas(m);renderMetas();}
 function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(),t:"",done:false});setMetas(m);renderMetas();
   const b=document.querySelectorAll("#metas .goal-text");if(b.length)b[b.length-1].focus();}
-
 function getEventos(){return LS("cron:eventos", JSON.parse(JSON.stringify(EVENTOS_DEFAULT)));}
 function setEventos(e){save("cron:eventos",e);}
 function diasAte(iso){const [y,m,dd]=iso.split("-").map(Number);
@@ -553,7 +519,6 @@ function dateEv(i,v){const ref=sortedRef(i);const e=getEventos();const j=e.findI
   if(j>-1&&v){e[j].data=v;setEventos(e);renderEventos();}}
 function delEv(i){const ref=sortedRef(i);const e=getEventos().filter(x=>x.id!==ref.id);setEventos(e);renderEventos();}
 function addEv(){const e=getEventos();e.push({id:"e"+Date.now(),t:"",data:ymd(now)});setEventos(e);renderEventos();}
-
 /* ---- Bloco técnico: projetos com estado persistente (sem data) ---- */
 function getTec(){return LS("cron:tecnico", JSON.parse(JSON.stringify(TECNICO_DEFAULT)));}
 function setTec(p){save("cron:tecnico",p);}
@@ -590,7 +555,6 @@ function renderTecnico(){
   h+=`<button class="add-row" onclick="addProj()">+ Novo projeto técnico</button>`;
   box.innerHTML=h;
 }
-
 function renderSemana(){
   let html=`<p class="plate-eyebrow">Visão geral</p><h1 class="plate-day" style="font-size:30px;margin-bottom:16px;">A semana</h1>`;
   ORDEM_SEMANA.forEach(idx=>{
@@ -603,7 +567,6 @@ function renderSemana(){
   });
   document.getElementById("view-semana").innerHTML=html;
 }
-
 function escapeHtml(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function setView(v){const hoje=v==="hoje";
   document.getElementById("view-hoje").hidden=!hoje;
@@ -611,7 +574,6 @@ function setView(v){const hoje=v==="hoje";
   document.getElementById("tab-hoje").classList.toggle("active",hoje);
   document.getElementById("tab-semana").classList.toggle("active",!hoje);}
 function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
-
 /* ---- Backup: exportar / importar todos os dados cron: ---- */
 function coletarDados(){
   const d={};
@@ -648,8 +610,6 @@ function importarDados(input){
   };
   reader.readAsText(file);
 }
-
-
 /* ---- Atualização automática + puxar para atualizar ---- */
 function baseUrl(){return location.pathname;}
 async function checkUpdate(){
@@ -676,7 +636,6 @@ async function checkUpdate(){
   });
 })();
 document.getElementById("ver").textContent = "v"+APP_VERSION;
-
 /* Reset único do bloco técnico para a nova lista de 4 projetos.
    Roda uma só vez: grava a marca da seed e não sobrescreve edições futuras. */
 const TEC_SEED = "2026-07-18-4projetos";
@@ -684,10 +643,8 @@ if(LS("cron:tecnico-seed", null) !== TEC_SEED){
   setTec(JSON.parse(JSON.stringify(TECNICO_DEFAULT)));
   save("cron:tecnico-seed", TEC_SEED);
 }
-
 renderOrdo(); renderHoje(); renderSemana();
 checkUpdate();
-
 </script>
 </body>
 </html>
