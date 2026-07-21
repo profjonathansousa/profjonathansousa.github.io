@@ -34,6 +34,7 @@
   .dot{width:10px; height:10px; border-radius:50%; display:inline-block}
   .d-hi{background:var(--hi)} .d-med{background:var(--med)}
   .d-lo{background:var(--lo)} .d-none{background:var(--none)}
+  .legend2{display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin-top:9px}
   .caveat{color:var(--ink); background:#fbf4e8; border-left:3px solid var(--med);
     padding:8px 11px; border-radius:0 6px 6px 0; margin-top:10px; font-size:12.5px}
   .toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center;
@@ -59,6 +60,12 @@
   .tag{display:inline-block; font-size:10.5px; text-transform:uppercase;
     letter-spacing:.05em; border:1px solid var(--rule); border-radius:20px;
     padding:1px 7px; margin-left:6px; color:var(--muted); vertical-align:1px}
+  .colbadge{display:inline-block; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; border-radius:20px; padding:1px 7px; margin-left:6px;
+    vertical-align:1px; font-weight:600}
+  .col-lo{background:#e8f1ec; color:#2e6e5a; border:1px solid #bcd8cb}
+  .col-mid{background:#fbf4e8; color:#8a6410; border:1px solid #e6d3a8}
+  .col-hi{background:#fbeeea; color:#a6443b; border:1px solid #e7c3b8}
   .probwrap{min-width:118px; text-align:right}
   .probval{font-family:ui-monospace,Menlo,monospace; font-size:15px; font-weight:600}
   .probval small{font-size:10px; color:var(--muted); font-weight:400; letter-spacing:.03em}
@@ -97,20 +104,26 @@
 <div class="wrap">
   <header>
     <h1>Registro de candidaturas — Doutorado</h1>
-    <p class="sub">Programas de religião / teologia / ética ranqueados por fit inicial. A régua ajusta a probabilidade conforme a resposta do orientador ao seu contato.</p>
+    <p class="sub">Programas ranqueados por <b>probabilidade pragmática de aceitação</b>. Duas barreiras duras: <b>língua</b> e <b>custo de vida</b> (família de 4). Assume writing sample sob medida por aplicação. A régua ajusta a probabilidade conforme a resposta do orientador ao seu contato.</p>
   </header>
 
   <div id="banner" class="banner"></div>
 
   <div class="panel">
-    <h2>Régua de probabilidade</h2>
+    <h2>Régua de probabilidade de aceitação</h2>
     <div class="legend">
       <span class="chip"><span class="dot d-hi"></span>Alta — orientador respondeu com interesse claro</span>
-      <span class="chip"><span class="dot d-med"></span>Média — resposta morna / fit inicial forte</span>
+      <span class="chip"><span class="dot d-med"></span>Média — resposta morna / faixa-base forte</span>
       <span class="chip"><span class="dot d-lo"></span>Baixa — resposta negativa, genérica ou sem retorno</span>
-      <span class="chip"><span class="dot d-none"></span>Inicial — ainda sem contato (só fit)</span>
+      <span class="chip"><span class="dot d-none"></span>Inicial — ainda sem contato (só faixa-base)</span>
     </div>
-    <div class="caveat">A probabilidade parte do <b>fit inicial</b> (overlap de pesquisa, financiamento, abertura a internacional, TOEFL que você alcança) e é ajustada pela <b>melhor resposta</b> entre os 3 orientadores: boa +35, média +10, ruim −20, contatado sem resposta −10. Nos EUA, lembre do <b>visto F-2</b>: cônjuge de estudante não pode trabalhar — pesa no orçamento de uma família de 4.</div>
+    <div class="legend2">
+      <span class="chip"><b>Faixa-base:</b></span>
+      <span class="chip">Altíssima</span><span class="chip">Alta</span><span class="chip">Média</span><span class="chip">Reach</span><span class="chip">Bloqueada (língua)</span>
+      <span class="chip" style="margin-left:6px"><b>Custo:</b></span>
+      <span class="colbadge col-lo">barato</span><span class="colbadge col-mid">médio</span><span class="colbadge col-hi">caro</span>
+    </div>
+    <div class="caveat">A faixa-base é uma <b>P(aceitação) pragmática</b>: combina o fit-para-o-projeto (Lutero dos dois reinos como diagnóstico normativo da política contemporânea, com <b>orientador teólogo/eticista</b>, não historiador nem cientista social), a seletividade do programa, e as duas barreiras duras — <b>língua</b> e <b>custo p/ família de 4</b>. Assume-se <b>writing sample sob medida por aplicação</b> (por isso TOEFL e o "gênero" da amostra deixam de penalizar). A faixa é então ajustada pela <b>melhor resposta</b> entre os orientadores: boa +35, média +10, ruim −20, contatado sem resposta −10. O selo de custo mostra o COL bruto; "caro" com stipend alto ou moradia subsidiada é absorvido e <b>não</b> rebaixa (Yale, PTS, Princeton).</div>
   </div>
 
   <div class="toolbar">
@@ -118,7 +131,7 @@
       <label class="sortlbl" for="sort">Ordenar por</label>
       <select id="sort">
         <option value="prob">Probabilidade (maior → menor)</option>
-        <option value="fit">Fit inicial</option>
+        <option value="fit">P(aceitação) base</option>
         <option value="uni">Universidade (A→Z)</option>
         <option value="col">Custo de vida (menor → maior)</option>
       </select>
@@ -136,212 +149,213 @@
 </div>
 
 <script>
-// ---------- SEMENTE (28 programas; ranqueados por fit inicial) ----------
+// ---------- SEMENTE (28 programas; ranqueados por P(aceitação) pragmática) ----------
 // col: Alto/Médio/Baixo (família de 4).  fam: estimativa "sustenta família de 4?"
-// tier: Alta/Média/Baixa (fit inicial).  lang: idioma de trabalho.
+// tier: faixa-base de P(aceitação): Altíssima/Alta/Média/Reach/Bloqueada.  lang: idioma de trabalho.
 const SEED = [
- {id:"nwu", uni:"Northwestern University", area:"Religious Studies (PhD)", city:"Evanston / Chicago, IL — EUA", lang:"EN", col:"Alto", fam:"Apertado (COL alto)", tier:"Média",
-  link:"https://religious-studies.northwestern.edu/graduate/",
-  stipend:"Integral, mín. 5 anos; ~US$ 46.356/ano (2025-26) + auxílio-creche + saúde",
-  toefl:"Sem piso único; padrão da Grad School iBT 90-100 (Ciência Política exige 100). Mire ≥100 (seu atual: 83)",
-  docs:"Academic + Personal Statement; writing sample 20-30 pp espaço duplo; CV; históricos; 2 (idealmente 3) cartas; TOEFL. GRE opcional. Taxa US$ 95. Proibido IA generativa nos ensaios. Fall 2027 abre meados set/2026",
-  why:"Vínculo institucional via Helmer, mas ela já declinou orientar; sem ela o encaixe do depto cai (por isso rebaixado a Média). Alznauer (moderna/ética) é o mais forte que resta; Helmer ainda pode ser banca ou carta.",
-  adv:[{n:"Mark Alznauer — filosofia moderna, Hegel, ética/política", email:"m-alznauer@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/affiliated-faculty/mark-alznauer.html"},{n:"Elizabeth Shakman Hurd — religião e política, secularismo", email:"eshurd@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/tenure-track-faculty/elizabeth-hurd.html"},{n:"Barbara Newman — cristianismo medieval, mística", email:"bjnewman@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/affiliated-faculty/barbara-newman.html"}]},
- {id:"nd", uni:"University of Notre Dame", area:"Department of Theology (PhD)", city:"South Bend, IN — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, funded)", tier:"Alta",
-  link:"https://theology.nd.edu/graduate/phd/",
-  stipend:"Bolsa departamental: tuition integral + stipend anual + saúde (fellowships premier dão mais). Valor atual não publicado — confirmar (a cifra de US$ 19k que circula é de 2014)",
-  toefl:"Exigido; número não publicado — confirmar em gradapp@nd.edu",
-  docs:"Statement of intent 600-800 palavras (máx 3 pp); CV; históricos; 3 cartas + Waiver of Access; writing sample ~15-20 pp; TOEFL. GRE dispensado (você já tem doutorado). Exige mestrado em teologia OU equivalente — confirmar. Prazo 15/dez",
-  why:"Encaixe forte e financiado. O'Regan (idealismo alemão) e McKenny (ética protestante + Barth, dialoga com sua monografia sobre Barth) quase sob medida. Atenção à exigência de mestrado em teologia ou equivalente.",
-  adv:[{n:"Cyril O'Regan — sistemática + filosofia continental (idealismo alemão, Hegel, Balthasar)", email:"", cv:"https://theology.nd.edu/people/cyril-o-regan/"},{n:"John R. Betz — pensamento alemão, Hamann, analogia", email:"", cv:"https://theology.nd.edu/people/john-betz/"},{n:"Gerald McKenny — ética protestante, Karl Barth, teologia política, lei moral", email:"", cv:"https://theology.nd.edu/people/gerald-mckenny/"}]},
- {id:"baylor", uni:"Baylor University", area:"Department of Religion (PhD) — Theological/Bioethical Studies", city:"Waco, TX — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, funded)", tier:"Alta",
+ {id:"baylor", uni:"Baylor University", area:"Department of Religion (PhD) — Theological / Historical Studies", city:"Waco, TX — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, funded)", tier:"Altíssima",
   link:"https://religion.artsandsciences.baylor.edu/graduate/prospective-students/program-and-curriculum/description-phd-program",
   stipend:"Integral (tuition + stipend + saúde); Baylor vem elevando stipends (estratégia R1) — confirmar em ReligionGraduateStudies@baylor.edu",
-  toefl:"Confirmar; mínimo geral da Baylor Graduate School ~iBT 80",
-  docs:"Statement (área + peregrinação acadêmica + agenda de pesquisa); paper recente 12-15 pp no tema da área; cartas; históricos; GRE opcional. Theological Studies exige alemão + francês (você já lê). Taxa isenta p/ 80 primeiros. Prazo 15/dez",
-  why:"Forte e financiado; COL baixo favorece família. Ética (Martens), teologia política (Harvey), filosofia da religião (Yadav). Sem luterólogo dedicado, mas forte no seu lado ético/sistemático; e exige alemão+francês, que você já lê.",
-  adv:[{n:"Paul Martens — ética cristã (Kierkegaard, Yoder), teologia e ética", email:"", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"},{n:"Barry Harvey — Bonhoeffer, teologia política, igreja e cultura", email:"", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"},{n:"Sameer Yadav — filosofia da religião, teologia analítica", email:"", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"}]},
- {id:"uchicago", uni:"University of Chicago", area:"Divinity School (PhD) — Theology / Philosophy of Religions", city:"Chicago, IL — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Alta",
+  toefl:"Mínimo geral da Baylor Graduate School ~iBT 80 — seu 83 atual já passa o piso",
+  docs:"Statement (área + peregrinação acadêmica + agenda de pesquisa); paper recente 12-15 pp no tema da área; cartas; históricos; GRE opcional. Área Theological/Bioethical exige alemão + francês (você já lê). Taxa isenta p/ 80 primeiros. Prazo 15/dez",
+  why:"O alvo sob medida: SoP e artigo já engajam Harvey (teologia política/idolatria) e Yadav (epistemologia teológica) nominalmente e pelas obras reais. Whitford cobre as Reformas do séc. XVI — corrige o antigo 'sem luterólogo'. Chaves DECLINOU orientar (vê o projeto como mais metodológico que historiográfico/etiológico, que é o centro dele): fica como banca/recurso, não principal. Financiado, Waco barato, e das poucas onde seu TOEFL atual já passa. Maior P(aceitação) da lista.",
+  adv:[{n:"Barry Harvey — teologia política, eclesiologia, idolatria (Bonhoeffer, McCabe) — PRINCIPAL", email:"Barry_Harvey@baylor.edu", cv:"https://religion.artsandsciences.baylor.edu/person/barry-harvey-phd"},{n:"Sameer Yadav — filosofia da religião, epistemologia teológica, método — PRINCIPAL", email:"Sameer_Yadav@baylor.edu", cv:"https://religion.artsandsciences.baylor.edu/person/sameer-yadav-thd"},{n:"David Whitford — Reformas europeias do séc. XVI, Lutero (âncora de Reforma). Chaves = banca/recurso, não principal", email:"David_Whitford@baylor.edu", cv:"https://religion.artsandsciences.baylor.edu/our-faculty"}]},
+ {id:"aberdeen", uni:"University of Aberdeen", area:"Centre for Protestant Theology — Divinity", city:"Aberdeen — Reino Unido", lang:"EN", col:"Baixo", fam:"Possível (COL mais baixo do RU)", tier:"Altíssima",
+  link:"https://www.abdn.ac.uk/divinity/research/degrees/",
+  stipend:"Taxas internacionais ~£21.700/ano; financiamento competitivo via Elphinstone Scholarships (isenta taxas + bolsa de manutenção)",
+  toefl:"IELTS ~6.5-7.0 / TOEFL iBT ~90-100 — confirmar",
+  docs:"SoP, writing sample, cartas, históricos. Contato prévio com orientador fortemente recomendado",
+  why:"Encaixe de MÉTODO mais próximo do artigo fora de Baylor: Brock trabalha explicitamente a ética da tradição luterana e a ética política; Ziegler liga justificação e política. Centre for Protestant Theology sob medida. Admissão orientador-gated (se o supervisor topa, você entra) e a cidade mais barata do RU. Gate residual: Elphinstone competitivo — custo, não fit.",
+  adv:[{n:"Brian Brock — ética da tradição LUTERANA, ética política", email:"", cv:"https://www.abdn.ac.uk/people/brian.brock"},{n:"Paul Nimmo — King's Chair Systematic Theology; reformada, Karl Barth, Schleiermacher", email:"paul.nimmo@abdn.ac.uk", cv:"https://www.abdn.ac.uk/people/paul.nimmo"},{n:"Philip Ziegler — dogmática: justificação e eleição, ética e política, Barth/Bonhoeffer/Kierkegaard", email:"p.ziegler@abdn.ac.uk", cv:"https://www.abdn.ac.uk/people/p.ziegler"}]},
+ {id:"pts", uni:"Princeton Theological Seminary", area:"PhD — Reforma / teologia reformada", city:"Princeton, NJ — EUA", lang:"EN", col:"Alto", fam:"Possível (moradia familiar subsidiada)", tier:"Altíssima",
+  link:"https://www.ptsem.edu/academics/doctor-of-philosophy",
+  stipend:"US$ 25.000/ano (Princeton Doctoral Fellowship, 5 anos, 1 monitoria/ano) + tuition integral + APARTAMENTO DE CAMPUS GARANTIDO p/ você e a família por até 5 anos (~US$ 6-19 mil/ano de subsídio) — um dos melhores perfis para família da lista inteira",
+  toefl:"Exigido p/ internacionais; ~iBT 100 — confirmar",
+  docs:"Confirmar no portal apply.ptsem.edu. GRE não exigido",
+  why:"Appold é o luterólogo mais forte da lista (Dr.theol.habil. Halle-Wittenberg); Bowlin cobre lei natural como principal normativo. Seminário: gênero nativo ao seu diagnóstico luterano. Custo nominalmente Alto, mas a moradia de campus garantida p/ família absorve o gate — melhor perfil custo-família da lista. Admissão bem menos loteria que os seculares de elite. (Barreto, World Christianity, brasileiro, é recurso p/ o eixo transnacional.)",
+  adv:[{n:"Kenneth G. Appold — Reforma, Lutero, início da modernidade (Dr.theol.habil. Halle-Wittenberg)", email:"", cv:"https://www.ptsem.edu/directory"},{n:"John Bowlin — lei natural, virtude, Aquino (principal normativo)", email:"", cv:"https://www.ptsem.edu/directory"},{n:"Raimundo Barreto — World Christianity, religião brasileira (recurso p/ eixo transnacional)", email:"", cv:"https://www.ptsem.edu/directory"}]},
+ {id:"durham", uni:"Durham University", area:"Department of Theology and Religion", city:"Durham — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Altíssima",
+  link:"https://www.durham.ac.uk/departments/academic/theology-and-religion/postgraduate/",
+  stipend:"Financiamento competitivo (Durham Doctoral Studentships, Northern Bridge/AHRC). Taxas internacionais ~£24-28 mil/ano sem bolsa",
+  toefl:"IELTS 7.0 (nada abaixo de 7.0) / TOEFL iBT 102 (writing 27) — piso alto, mas irrelevante se você fizer 100+ com folga",
+  docs:"SoP, writing sample, cartas, históricos. Entrada aceita MA cognato (Filosofia serve). Prazo depto ~início de dezembro",
+  why:"Roteie por Kilby (paradoxo e graça — dialoga com seu método) e Oliver (teologia filosófica), com Ryrie (FBA, Reforma) de suporte histórico. Admissão supervisor-gated, cidade pequena e barata. Gate: financiamento competitivo.",
+  adv:[{n:"Karen Kilby — sistemática, Rahner, paradoxo e graça (dialoga com seu método)", email:"", cv:"https://www.durham.ac.uk/staff/karen-kilby/"},{n:"Simon Oliver — teologia filosófica, teologia natural, Aquino", email:"", cv:"https://www.durham.ac.uk/staff/simon-oliver/"},{n:"Alec Ryrie (FBA) — Reforma e protestantismo, séc. XVI-XVII (suporte histórico)", email:"", cv:"https://www.durham.ac.uk/staff/alec-ryrie/"}]},
+ {id:"slu", uni:"Saint Louis University", area:"Theological Studies (PhD)", city:"St. Louis, MO — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, todos financiados)", tier:"Altíssima",
+  link:"https://www.slu.edu/arts-and-sciences/academics/degrees/graduate/theology-phd.php",
+  stipend:"TODOS os doutorandos entram com assistantship: US$ 22.500 (contrato 9 meses) / US$ 25.000 (10 meses) + tuition remission (54h) + saúde",
+  toefl:"iBT 80 (mínimo institucional)",
+  docs:"SoP, históricos, cartas. Prioridade de bolsa até 1º/jan. Equivalência do seu MA em Filosofia a confirmar",
+  why:"A aposta mais segura para pai de família: todos os doutorandos entram financiados, COL baixo, coorte acessível. Kaplan (fé-razão, teologia alemã moderna) dialoga com seu eixo. Menos prestígio que o topo secular, mas a conversão fit→oferta é alta.",
+  adv:[{n:"Grant Kaplan — teologia fundamental, fé e razão, teologia alemã moderna", email:"", cv:"https://www.slu.edu/arts-and-sciences/theological-studies/faculty.php"},{n:"Anne Carpenter — sistemática, Balthasar", email:"", cv:"https://www.slu.edu/arts-and-sciences/theological-studies/faculty.php"},{n:"Emily Dumler-Winckler — ética da virtude", email:"", cv:"https://www.slu.edu/arts-and-sciences/theological-studies/faculty.php"}]},
+ {id:"nd", uni:"University of Notre Dame", area:"Department of Theology (PhD)", city:"South Bend, IN — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, funded)", tier:"Alta",
+  link:"https://theology.nd.edu/graduate/phd/",
+  stipend:"Bolsa departamental: tuition integral + stipend anual + saúde (fellowships premier dão mais). Valor atual não publicado — confirmar",
+  toefl:"Exigido; número não publicado — confirmar em gradapp@nd.edu",
+  docs:"Statement of intent 600-800 palavras (máx 3 pp); CV; históricos; 3 cartas + Waiver of Access; writing sample ~15-20 pp; TOEFL. GRE dispensado. Exige mestrado em teologia OU equivalente — confirmar. Prazo 15/dez",
+  why:"McKenny é o perfil de orientador que você precisa: ética protestante, Barth, teologia política, lei moral. COL baixo, família possível. Seria Altíssima, não fosse a exigência de MTh/equivalente a confirmar (risco de admissão) + a competitividade. Sexto do núcleo racional, seguro logo abaixo do topo.",
+  adv:[{n:"Gerald McKenny — ética protestante, Karl Barth, teologia política, lei moral (PRINCIPAL ideal)", email:"", cv:"https://theology.nd.edu/people/gerald-mckenny/"},{n:"Cyril O'Regan — sistemática + filosofia continental (idealismo alemão, Hegel, Balthasar)", email:"", cv:"https://theology.nd.edu/people/cyril-o-regan/"},{n:"John R. Betz — pensamento alemão, Hamann, analogia", email:"", cv:"https://theology.nd.edu/people/john-betz/"}]},
+ {id:"standrews", uni:"University of St Andrews", area:"School of Divinity (PhD)", city:"St Andrews — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
+  link:"https://www.st-andrews.ac.uk/divinity/prospective/pgr/",
+  stipend:"Financiamento NÃO automático — bolsas competitivas (School / St Leonard's / externas); sem bolsa, taxas internacionais do RU são altas. Visto de estudante do RU",
+  toefl:"Exigido p/ internacionais; tipicamente IELTS 7.0 / TOEFL iBT ~100 — confirmar",
+  docs:"PhD 3-4 anos, tese ≤80.000 palavras. Entrada: mín. mestrado 2.1 (você tem doutorado). Candidatura a qualquer tempo; contato prévio com orientador encorajado; o comitê designa o orientador. Prazos de bolsa costumam ser cedo (jan)",
+  why:"UK orientador-gated como Aberdeen/Durham: Wolfe (sistemática/filosófica, tradição continental) como principal + Crisp (teologia analítica, filosofia da religião, teoria jurídica e teologia — dialoga com lei natural→lei civil). Admissão atingível via contato prévio; o comitê designa o orientador. Gate: financiamento competitivo + taxas do RU sem bolsa (custo, não fit).",
+  adv:[{n:"Judith Wolfe — teologia sistemática e filosófica (tradição europeia/continental), moderna, escatologia (principal)", email:"", cv:"https://www.st-andrews.ac.uk/divinity/people/jw240"},{n:"Oliver Crisp — teologia analítica, filosofia da religião, teoria jurídica e teologia (aceita candidatos de PhD)", email:"", cv:"https://www.st-andrews.ac.uk/divinity/people/odc"},{n:"Stephen R. Holmes — teologia sistemática, batista, doutrina (confirmar na staff list)", email:"", cv:"https://theology.wp.st-andrews.ac.uk/people/staff/"}]},
+ {id:"mcgill", uni:"McGill University", area:"School of Religious Studies", city:"Montreal, QC — Canadá", lang:"EN/FR", col:"Médio", fam:"Possível (Montreal barata, tese em EN ou FR)", tier:"Alta",
+  link:"https://www.mcgill.ca/religiousstudies/graduate/phd",
+  stipend:"Bolsas da School + externas (McCall MacBain integral, muito competitiva). Taxas internacionais ~CAD 18.900/ano (anos 1-4, caem p/ ~CAD 4.700 depois)",
+  toefl:"iBT 86 (mín. 20/banda) / IELTS 6.5 — folga com sobra se você fizer 100+",
+  docs:"SoP, writing sample, cartas, históricos. GRE não exigido. Tese pode ser escrita em inglês OU francês",
+  why:"Farrow (teologia política/lei natural/igreja-Estado) como principal normativo forte, + Kirby (Reforma) e Green (idealismo alemão) — trio verificado. Bilíngue, Montreal de custo moderado, admissão atingível. Um dos encaixes mais completos que também é viável.",
+  adv:[{n:"Douglas Farrow — teologia política, lei natural, igreja-Estado (principal)", email:"", cv:"https://www.mcgill.ca/religiousstudies/douglas-farrow"},{n:"W.J. Torrance Kirby — Reforma, teologia política do início da modernidade", email:"", cv:"https://www.mcgill.ca/religiousstudies/wj-torrance-kirby"},{n:"Garth Green — filosofia da religião, idealismo alemão", email:"", cv:"https://www.mcgill.ca/religiousstudies/garth-w-green"}]},
+ {id:"uva", uni:"University of Virginia", area:"Religious Studies — Theology, Ethics & Culture", city:"Charlottesville, VA — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
+  link:"https://religiousstudies.as.virginia.edu/graduate-program",
+  stipend:"US$ 37.080/ano (12 meses) + tuition/taxas + saúde, mín. 5 anos",
+  toefl:"Exigido; sem piso rígido publicado, ~iBT 90 (GSAS) — confirmar",
+  docs:"SoP, writing sample, cartas, históricos, CV. GRE não considerado. Prazo 15/dez",
+  why:"Mathewes (teologia política/ética/Agostinho) e Jones (sistemática, Barth — dialoga c/ sua monografia) são principais normativos sólidos. Financiado, competitividade média.",
+  adv:[{n:"Charles Mathewes — teologia política, ética religiosa, Agostinho", email:"", cv:"https://religiousstudies.as.virginia.edu/people"},{n:"Paul Dafydd Jones — sistemática, Karl Barth", email:"", cv:"https://religiousstudies.as.virginia.edu/people"},{n:"3º orientador a confirmar", email:"", cv:"https://religiousstudies.as.virginia.edu/people"}]},
+ {id:"vanderbilt", uni:"Vanderbilt University", area:"Graduate Department of Religion", city:"Nashville, TN — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
+  link:"https://www.vanderbilt.edu/gdr/",
+  stipend:"US$ 34.000-38.000/ano (conforme área) + tuition (~US$ 43 mil) + saúde, 5 anos",
+  toefl:"iBT 88-89 / IELTS ~7.0",
+  docs:"SoP, writing sample 30-35 pp, cartas, históricos. GRE não exigido. Prazo 1º/dez. Mestrado admite entrada direta no PhD",
+  why:"Rieger (teologia política, alemão, Marx e teologia) + range de método que serve à migração metodológica. Financiado, TOEFL historicamente acessível, admissão média. DeHart (Jüngel) reforça o lado filosófico.",
+  adv:[{n:"Joerg Rieger — teologia política, alemão, Marx e teologia", email:"", cv:"https://www.vanderbilt.edu/gdr/faculty/"},{n:"Paul DeHart — teologia filosófica/sistemática, Jüngel", email:"", cv:"https://www.vanderbilt.edu/gdr/faculty/"},{n:"3º orientador a confirmar", email:"", cv:"https://www.vanderbilt.edu/gdr/faculty/"}]},
+ {id:"uchicago", uni:"University of Chicago", area:"Divinity School (PhD) — Theology / Philosophy of Religions", city:"Chicago, IL — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Média",
   link:"https://divinity.uchicago.edu/academics/committees-and-areas-study/theology",
-  stipend:"Integral garantido por toda a duração (tuition + stipend + saúde); mínimo da universidade ~US$ 38-45 mil/ano conforme divisão (Divinity = Humanities) — confirmar",
-  toefl:"Mínimo institucional ~iBT 90 (com avaliação interna de inglês se speaking/listening ≥23) — confirmar",
-  docs:"Candidate statement (programa de pesquisa, preparação, influências, objetivos, por que a Divinity); writing sample; históricos; cartas; TOEFL. Exige mestrado (você tem). GRE não exigido. Taxa US$ 75. Prazo em dez, decisões meados de março",
-  why:"Com Notre Dame, o encaixe intelectual mais forte: Hector é quase sob medida (Lutero/idealismo alemão/filosofia da religião). Schweiker (ética+hermenêutica) se aposenta e não pega novos alunos — fora.",
+  stipend:"Integral garantido por toda a duração (tuition + stipend + saúde); mínimo da universidade ~US$ 38-45 mil/ano — confirmar",
+  toefl:"Mínimo institucional ~iBT 90 — confirmar",
+  docs:"Candidate statement (programa de pesquisa, preparação, influências, objetivos, por que a Divinity); writing sample; históricos; cartas; TOEFL. Exige mestrado (você tem). GRE não exigido. Taxa US$ 75. Prazo em dez",
+  why:"Hector é quase sob medida (Lutero/idealismo alemão/filosofia da religião) e a Divinity lê seu diagnóstico nativamente. CAI da faixa alta por custo: Chicago com família de 4 e sem subsídio é a penalidade dura. Fit altíssimo, viabilidade-família média.",
   adv:[{n:"Kevin Hector — teologia + filosofia da religião; idealismo alemão (Hegel), teologia pós-metafísica", email:"", cv:"https://divinity.uchicago.edu/directory/kevin-hector"},{n:"Ryan Coyne — filosofia da religião + teologia; Heidegger, fenomenologia, Agostinho", email:"", cv:"https://divinity.uchicago.edu/directory/ryan-coyne"},{n:"Willemien Otten — teologia + história do cristianismo; Agostinho, Eriugena", email:"", cv:"https://divinity.uchicago.edu/directory/willemien-otten"}]},
  {id:"marquette", uni:"Marquette University", area:"PhD in Religious Studies (Dept. of Theology)", city:"Milwaukee, WI — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
   link:"https://www.marquette.edu/theology/graduate-program-overview.php",
   stipend:"Fellowships/assistantships da Graduate School (tuition + stipend) — confirmar valor",
   toefl:"Mínimo geral Marquette ~iBT 80 — confirmar",
   docs:"Confirmar em marquette.edu/grad/programs-phd-religious-studies.php (Admission Requirements, Deadline, Aid). Prazo tipicamente início de janeiro",
-  why:"Forte em ética/lei natural (Andrew Kim = hit direto no recorte lei natural) e sistemática. Sem luterólogo dedicado desde a saída de Mickey Mattox — encaixe via ética + sistemática, não Reforma (por isso Média).",
+  why:"Kim é acerto direto no recorte lei natural; sistemática ao redor. Acessível, mas fit parcial (sem luterólogo dedicado desde Mattox) e católico — encaixe via ética, não Reforma.",
   adv:[{n:"Andrew Kim — ética teológica, virtude, lei natural tomista", email:"andrew.kim@marquette.edu", cv:"https://www.marquette.edu/theology/directory/"},{n:"Ryan G. Duns, S.J. — teologia sistemática; Blondel, filosofia da religião", email:"ryan.duns@marquette.edu", cv:"https://www.marquette.edu/theology/directory/"},{n:"Conor M. Kelly — ética teológica e social", email:"conor.kelly@marquette.edu", cv:"https://www.marquette.edu/theology/directory/"}]},
- {id:"emory", uni:"Emory University", area:"Graduate Division of Religion (Laney)", city:"Atlanta, GA — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
+ {id:"duke", uni:"Duke University", area:"Graduate Program in Religion", city:"Durham, NC — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  link:"https://gradreligion.duke.edu/",
+  stipend:"US$ 31.160/ano (12 meses), 5 anos + verba de verão/línguas/congressos; tuition integral + saúde",
+  toefl:"Mínimo Graduate School iBT 90 / IELTS 7 (confirmar exigência do depto)",
+  docs:"SoP, writing sample, cartas, históricos, CV. GRE não exigido. TOEFL/IELTS internacionais",
+  why:"Bem financiado e Rittgers cobre Lutero — mas como HISTORIADOR, não teólogo político; é o risco 'Chaves' repetido: um principal que pode ver seu projeto como fora da área dele. Fit-de-orientação frágil apesar do nome forte.",
+  adv:[{n:"Ronald K. Rittgers — Reforma/Lutero (historiador — risco de fit-de-orientação)", email:"rrittgers@div.duke.edu", cv:"https://gradreligion.duke.edu/"},{n:"Kevin Hart — fenomenologia, filosofia da religião", email:"khart@div.duke.edu", cv:"https://gradreligion.duke.edu/"},{n:"Janet Soskice — teologia filosófica, linguagem", email:"janet.soskice@duke.edu", cv:"https://gradreligion.duke.edu/"}]},
+ {id:"emory", uni:"Emory University", area:"Graduate Division of Religion (Laney)", city:"Atlanta, GA — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
   link:"https://gdr.emory.edu/",
   stipend:"Laney Graduate School financia integralmente (tuition + stipend ~US$ 34 mil + saúde, ~5 anos)",
   toefl:"Exigido; mínimo ~iBT 100 (Laney) — confirmar",
   docs:"Application online; cartas; 1 histórico por instituição; statement + writing sample; TOEFL. GRE não exigido. Prazo 1º/dez",
-  why:"Premier e financiado; Jackson (amor/justiça) é hit direto no recorte Gálatas; Strom cobre Reforma alemã (virou Dean em 2024, disponibilidade a confirmar). Muito seletivo (~7%: 151 candidatos, 11 admitidos em 2025).",
+  why:"Jackson (ágape/amor e justiça) é acerto direto no recorte Gálatas e Laney financia integral. O que puxa a P(aceitação) para baixo é a seletividade brutal (~7%: 11 de 151 em 2025), não o fit. Fit alto, odds média-baixa. Strom (Reforma alemã) virou Dean — disponibilidade a confirmar.",
   adv:[{n:"Timothy P. Jackson — ética cristã; ágape, amor e justiça (hit no recorte Gálatas)", email:"", cv:"https://candler.emory.edu/faculty-profiles/"},{n:"Ian McFarland — teologia sistemática, cristologia, redenção", email:"", cv:"https://candler.emory.edu/faculty-profiles/"},{n:"Jonathan Strom — Reforma/pós-Reforma alemã, pietismo (Dean de Candler desde 2024)", email:"", cv:"https://candler.emory.edu/faculty-profiles/jonathan-strom/"}]},
- {id:"kuleuven", uni:"KU Leuven", area:"Faculty of Theology & Religious Studies (PhD, inglês)", city:"Leuven — Bélgica", lang:"EN", col:"Médio", fam:"Possível (posição assalariada)", tier:"Alta",
-  link:"https://theo.kuleuven.be/en/doctorate/",
-  stipend:"NÃO é automático: via bolsas (FWO, BOF, faculdade) ou posição assalariada (~€2.500/mês, sustenta família) — competitivo. Contato de bolsas: Prof. Stephan van Erp",
-  toefl:"Inglês exigido (salvo diploma em inglês / país anglófono); tipicamente TOEFL iBT ~94 / IELTS 7 — confirmar",
-  docs:"Proposta de projeto + promotor numa unidade de pesquisa; sem Research Master da KU Leuven, precisa de aprovação prévia do Comitê de Admissões (seu MA em Filosofia). Nota mín. da tese de mestrado 14/20. 3 cartas. GRE não exigido. Prazos = datas do Comitê Doutoral",
-  why:"Doutorado em inglês, ~600 anos de tradição; van Erp (teologia fundamental/política, fé e razão) é o promotor mais forte. Você propõe projeto + promotor; financiamento NÃO é automático (o gargalo real).",
-  adv:[{n:"Stephan van Erp — teologia fundamental/filosófica, fé e razão, teologia política", email:"", cv:"https://theo.kuleuven.be/en/research/researchers/00098212"},{n:"Yves De Maeseneer — ética teológica fundamental", email:"", cv:"https://theo.kuleuven.be/en/research/researchers/00034350"},{n:"Marianne Moyaert — hermenêutica inter-religiosa, teologia comparada (chair da unidade de Sistemática)", email:"", cv:"https://theo.kuleuven.be/en/research/research_units/ru_systematic"}]},
- {id:"tubingen", uni:"Universität Tübingen", area:"Evangelisch-Theologische Fakultät", city:"Tübingen — Alemanha", lang:"DE", col:"Médio", fam:"Possível (posição/salário)", tier:"Média",
-  link:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/",
-  stipend:"Sem mensalidade (só taxa semestral ~€170); financiamento NÃO automático — bolsas (DAAD, Studienstiftung, Landesgraduiertenförderung, eclesiásticas) ou posição de Mitarbeiter. Competitivo",
-  toefl:"N/A (programa alemão). Exige ALEMÃO fluente (+ Latinum/Graecum/Hebraicum) — barreira real: seu alemão é de leitura, não fluente",
-  docs:"Promotion: encontrar Doktorvater/mutter + registrar (Promotionsordnung). Sem ciclo fixo — negocia-se com o orientador. O idioma e as línguas clássicas são o filtro",
-  why:"Berço da teologia da Reforma; Hermanni (filosofia da religião + idealismo alemão) e Witt (Reforma) são encaixes fortes; sem mensalidade. GARGALO: exige alemão fluente + línguas clássicas — por isso rebaixado a Média na sua situação.",
-  adv:[{n:"Friedrich Hermanni — sistemática: teologia fundamental e filosofia da religião (Schelling, idealismo alemão, teodiceia)", email:"", cv:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/lehrstuehle-und-institute/systematische-theologie.html"},{n:"Christian Witt — história da Igreja: Reforma e Idade Média", email:"", cv:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/"},{n:"Volker Henning Drecoll — história da Igreja: Igreja Antiga (Agostinho)", email:"", cv:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/"}]},
- {id:"standrews", uni:"University of St Andrews", area:"School of Divinity (PhD)", city:"St Andrews — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
-  link:"https://www.st-andrews.ac.uk/divinity/prospective/pgr/",
-  stipend:"Financiamento NÃO automático — bolsas competitivas (School / St Leonard's / externas); sem bolsa, taxas internacionais do RU são altas. Visto de estudante do RU",
-  toefl:"Exigido p/ internacionais; tipicamente IELTS 7.0 / TOEFL iBT ~100 — confirmar",
-  docs:"PhD 3-4 anos, tese ≤80.000 palavras. Entrada: mín. mestrado 2.1 (você tem doutorado). Candidatura a qualquer tempo; contato prévio com orientador encorajado; o comitê designa o orientador. Prazos de bolsa costumam ser cedo (jan)",
-  why:"Encaixe intelectual excelente: Crisp (teologia analítica + filosofia da religião + teoria jurídica e teologia, dialoga com lei natural→lei civil) e Wolfe (teologia filosófica europeia/continental, moderna). GARGALO: financiamento competitivo + taxas altas do RU sem bolsa.",
-  adv:[{n:"Oliver Crisp — teologia analítica, filosofia da religião, sistemática/histórica, teoria jurídica e teologia (aceita candidatos de PhD)", email:"", cv:"https://www.st-andrews.ac.uk/divinity/people/odc"},{n:"Judith Wolfe — teologia sistemática e filosófica (tradição europeia/continental), moderna, escatologia", email:"", cv:"https://www.st-andrews.ac.uk/divinity/people/jw240"},{n:"Stephen R. Holmes — teologia sistemática, batista, doutrina (confirmar na staff list)", email:"", cv:"https://theology.wp.st-andrews.ac.uk/people/staff/"}]},
- {id:"duke", uni:"Duke University", area:"Graduate Program in Religion", city:"Durham, NC — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
-  link:"https://gradreligion.duke.edu/",
-  stipend:"US$ 31.160/ano (12 meses), 5 anos + verba de verão/línguas/congressos; tuition integral + saúde",
-  toefl:"Mínimo Graduate School iBT 90 / IELTS 7 (confirmar exigência específica do depto)",
-  docs:"SoP, writing sample, cartas, históricos, CV. GRE não exigido. TOEFL/IELTS internacionais",
-  why:"Correção importante: Duke TEM titular de Reforma (Rittgers), que eu tinha deixado passar. Bretherton (teologia política) saiu p/ Oxford, Jennings p/ Yale — mas o trio atual é sólido.",
-  adv:[{n:"Ronald K. Rittgers — Reforma/Lutero", email:"rrittgers@div.duke.edu", cv:"https://gradreligion.duke.edu/"},{n:"Kevin Hart — fenomenologia, filosofia da religião", email:"khart@div.duke.edu", cv:"https://gradreligion.duke.edu/"},{n:"Janet Soskice — teologia filosófica, linguagem", email:"janet.soskice@duke.edu", cv:"https://gradreligion.duke.edu/"}]},
- {id:"yale", uni:"Yale University", area:"Religious Studies (PhD)", city:"New Haven, CT — EUA", lang:"EN", col:"Alto", fam:"Possível (stipend alto + subsídio familiar)", tier:"Alta",
-  link:"https://rlst.yale.edu/graduate",
-  stipend:"US$ 50.777/ano (12 meses, 2025-26), tuition integral, 5+ anos, saúde cobre cônjuge e filhos, subsídio familiar p/ filhos menores de 18 — um dos melhores perfis para família da lista",
-  toefl:"Exigido p/ internacionais; GRE NÃO aceito; nota não fixada nestas páginas — confirmar",
-  docs:"SoP, writing sample, cartas, históricos, CV. GRE não aceito",
-  why:"SOBE para Alta: Nancy Levene é especialista em Spinoza — encaixe quase perfeito. Pittard cobre filosofia da religião/epistemologia. Leppin (Lutero) migrou de Tübingen p/ Yale Divinity — confirmar se ainda orienta neste programa.",
-  adv:[{n:"Nancy Levene — Spinoza, religião e modernidade", email:"nancy.levene@yale.edu", cv:"https://rlst.yale.edu/people/nancy-levene"},{n:"John Pittard — filosofia da religião, epistemologia", email:"john.pittard@yale.edu", cv:"https://rlst.yale.edu/people/john-pittard"},{n:"Jennifer Herdt — ética cristã", email:"", cv:"https://rlst.yale.edu/"}]},
- {id:"princeton", uni:"Princeton University", area:"Department of Religion (secular)", city:"Princeton, NJ — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto, mas stipend alto)", tier:"Alta",
-  link:"https://religion.princeton.edu/graduate/",
-  stipend:"Acima de US$ 47.000 (10 meses) + verão, 5 anos, financiamento integral",
-  toefl:"Sem piso fixo publicado; média dos admitidos ~iBT 108 — gap real frente ao seu 83 atual",
-  docs:"SoP, writing sample, cartas, históricos, CV. Prazo Religion: 30/dez",
-  why:"SOBE para Alta: Gregory (amor/justiça + lei e religião) bate em dois recortes de uma vez; Chignell (moderna/filosofia da religião); Batnitzky (hermenêutica). Cross-reg. com Garber (Spinoza) na Filosofia. Gregory e Chignell em licença 2025-26 — confirmar retorno.",
-  adv:[{n:"Eric Gregory — ética, teologia política, amor e justiça, lei e religião (em licença 25-26)", email:"", cv:"https://religion.princeton.edu/people/eric-gregory/"},{n:"Andrew Chignell — filosofia moderna, filosofia da religião, Kant (em licença 25-26)", email:"", cv:"https://religion.princeton.edu/people/andrew-chignell/"},{n:"Leora Batnitzky — hermenêutica, teologia política", email:"", cv:"https://religion.princeton.edu/people/leora-batnitzky/"}]},
- {id:"pts", uni:"Princeton Theological Seminary", area:"PhD — Reforma / teologia reformada", city:"Princeton, NJ — EUA", lang:"EN", col:"Alto", fam:"Possível (moradia familiar subsidiada)", tier:"Alta",
-  link:"https://www.ptsem.edu/academics/doctor-of-philosophy",
-  stipend:"US$ 25.000/ano (Princeton Doctoral Fellowship, 5 anos, 1 monitoria/ano) + tuition integral + APARTAMENTO DE CAMPUS GARANTIDO p/ você e a família por até 5 anos (~US$ 6-19 mil/ano de subsídio) — um dos melhores perfis para família da lista inteira",
-  toefl:"Exigido p/ internacionais; ~iBT 100 — confirmar",
-  docs:"Confirmar no portal apply.ptsem.edu. GRE não exigido",
-  why:"SOBE para Alta: Kenneth Appold tem Dr.theol.habil. pela Univ. Martin-Luther de Halle-Wittenberg, especialista em Lutero — o encaixe de Reforma mais forte da lista inteira. Bowlin cobre lei natural. Moradia familiar subsidiada muda o cálculo de custo.",
-  adv:[{n:"Kenneth G. Appold — Reforma, Lutero, início da modernidade (Dr.theol.habil. Halle-Wittenberg)", email:"", cv:"https://www.ptsem.edu/directory"},{n:"John Bowlin — lei natural, virtude, Aquino", email:"", cv:"https://www.ptsem.edu/directory"},{n:"Hanna Reichel — teologia sistemática (confirmar)", email:"", cv:"https://www.ptsem.edu/directory"}]},
- {id:"uva", uni:"University of Virginia", area:"Religious Studies — Theology, Ethics & Culture", city:"Charlottesville, VA — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
-  link:"https://religiousstudies.as.virginia.edu/graduate-program",
-  stipend:"US$ 37.080/ano (12 meses) + tuition/taxas + saúde, mín. 5 anos",
-  toefl:"Exigido; sem piso rígido publicado, ~iBT 90 (GSAS) — confirmar",
-  docs:"SoP, writing sample, cartas, históricos, CV. GRE não considerado. Prazo 15/dez",
-  why:"Mathewes (teologia política/ética/Agostinho) e Jones (sistemática, Barth — dialoga c/ sua monografia) são fits sólidos. Kevin Hart saiu p/ Duke.",
-  adv:[{n:"Charles Mathewes — teologia política, ética religiosa, Agostinho", email:"", cv:"https://religiousstudies.as.virginia.edu/people"},{n:"Paul Dafydd Jones — sistemática, Karl Barth", email:"", cv:"https://religiousstudies.as.virginia.edu/people"},{n:"3º orientador a confirmar", email:"", cv:"https://religiousstudies.as.virginia.edu/people"}]},
- {id:"vanderbilt", uni:"Vanderbilt University", area:"Graduate Department of Religion", city:"Nashville, TN — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
-  link:"https://www.vanderbilt.edu/gdr/",
-  stipend:"US$ 34.000-38.000/ano (conforme área) + tuition (~US$ 43 mil) + saúde, 5 anos",
-  toefl:"iBT 88-89 / IELTS ~7.0",
-  docs:"SoP, writing sample 30-35 pp, cartas, históricos. GRE não exigido. Prazo 1º/dez. Mestrado admite entrada direta no PhD",
-  why:"DeHart (teologia filosófica, Jüngel) e Rieger (teologia política, alemão) são bons fits. Paul Lim (Reforma) saiu p/ University of Florida — a força específica em Reforma esvaziou.",
-  adv:[{n:"Paul DeHart — teologia filosófica/sistemática, Jüngel", email:"", cv:"https://www.vanderbilt.edu/gdr/faculty/"},{n:"Joerg Rieger — teologia política, alemão, Marx e teologia", email:"", cv:"https://www.vanderbilt.edu/gdr/faculty/"},{n:"3º orientador a confirmar", email:"", cv:"https://www.vanderbilt.edu/gdr/faculty/"}]},
  {id:"bc", uni:"Boston College", area:"Theology (PhD, Morrissey)", city:"Chestnut Hill / Boston, MA — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto)", tier:"Média",
   link:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/graduate/phd.html",
-  stipend:"Tuition integral + stipend plurianual (base não publicada de forma limpa; fellowships Presidential +US$ 5k e de diversidade +US$ 4k somam). ATENÇÃO: os US$ 38.500/4 anos que circulam são de OUTRO programa (Theology & Education/CSTM), não do Morrissey — confirmar valor real",
+  stipend:"Tuition integral + stipend plurianual; fellowships Presidential +US$ 5k e de diversidade +US$ 4k somam. ATENÇÃO: os US$ 38.500/4 anos que circulam são de OUTRO programa (CSTM), não do Morrissey — confirmar valor real",
   toefl:"iBT 100 / IELTS 7.0",
   docs:"SoP, writing sample, cartas, históricos. Prazo início de janeiro",
-  why:"Stephen Pope é encaixe DUPLO: lei natural em Aquino + amor e justiça — bate nos seus dois recortes centrais. Aceita mestrado em filosofia como base. Barreira dura: custo de Boston.",
-  adv:[{n:"Stephen Pope — lei natural (Aquino), amor e justiça, ética cristã", email:"", cv:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/people.html"},{n:"Lisa Sowle Cahill — ética cristã", email:"", cv:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/people.html"},{n:"Brian Robinette — sistemática", email:"", cv:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/people.html"}]},
- {id:"fordham", uni:"Fordham University", area:"Theology (PhD)", city:"Bronx / Nova York, NY — EUA", lang:"EN", col:"Alto", fam:"Não sustenta sem 2ª renda", tier:"Média",
-  link:"https://www.fordham.edu/academics/departments/theology/prospective-graduate-students/phd-in-theology/",
-  stipend:"Financiamento integral 5 anos (tuition remission + stipend); valor-base não publicado de forma limpa (~US$ 30 mil, confirmar); fellowships da GSAS somam ~+US$ 5 mil",
-  toefl:"Exigido (ETS code 2259); nota não fixada nestas páginas, ~iBT 100 (GSAS) — confirmar",
-  docs:"SoP, writing sample, cartas, históricos, CV. Prazo início de janeiro",
-  why:"Hinze (sistemática/teologia política), Firer Hinze (ética social), Papanikolaou (teologia política ortodoxa). Barreira dura: custo de NYC para família de 4.",
-  adv:[{n:"Bradford Hinze — sistemática, teologia política", email:"", cv:"https://www.fordham.edu/academics/departments/theology/faculty--staff/"},{n:"Christine Firer Hinze — ética social cristã", email:"", cv:"https://www.fordham.edu/academics/departments/theology/faculty--staff/"},{n:"Aristotle Papanikolaou — teologia política ortodoxa", email:"", cv:"https://www.fordham.edu/academics/departments/theology/faculty--staff/"}]},
- {id:"slu", uni:"Saint Louis University", area:"Theological Studies (PhD)", city:"St. Louis, MO — EUA", lang:"EN", col:"Baixo", fam:"Possível (COL baixo, todos financiados)", tier:"Média",
-  link:"https://www.slu.edu/arts-and-sciences/academics/degrees/graduate/theology-phd.php",
-  stipend:"TODOS os doutorandos entram com assistantship: US$ 22.500 (contrato 9 meses) / US$ 25.000 (10 meses) + tuition remission (54h) + saúde",
-  toefl:"iBT 80 (mínimo institucional)",
-  docs:"SoP, históricos, cartas. Prioridade de bolsa até 1º/jan. Equivalência do seu MA em Filosofia a confirmar",
-  why:"Grant Kaplan (fé-razão, teologia alemã moderna, estudou em Tübingen/Fribourg) dialoga direto com seu eixo. Custo de vida baixo — o mais amigável à família entre os católicos americanos.",
-  adv:[{n:"Grant Kaplan — teologia fundamental, fé e razão, teologia alemã moderna", email:"", cv:"https://www.slu.edu/arts-and-sciences/theological-studies/faculty.php"},{n:"Anne Carpenter — sistemática, Balthasar", email:"", cv:"https://www.slu.edu/arts-and-sciences/theological-studies/faculty.php"},{n:"Emily Dumler-Winckler — ética da virtude", email:"", cv:"https://www.slu.edu/arts-and-sciences/theological-studies/faculty.php"}]},
- {id:"harvard", uni:"Harvard University", area:"Committee on the Study of Religion (PhD)", city:"Cambridge, MA — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto, mas stipend alto)", tier:"Média",
-  link:"https://gsas.harvard.edu/program/religion",
-  stipend:"≥ US$ 50.000/ano (12 meses, sobe todo 1º/jul) + tuition integral + saúde/odonto/transporte",
-  toefl:"iBT 105 (speaking 23) / IELTS 7.5 — a barreira de idioma MAIS ALTA da lista. GRE não aceito",
-  docs:"SoP (máx. 1.000 palavras), cartas, históricos, CV, writing sample. ~5-6% de admissão. Eméritos NÃO podem orientar como principais (regra formal da GSAS)",
-  why:"Sanchez (teologia construtiva, Calvino), Lamberth (filosofia da religião), Hollywood (histórico/místico) — confirmar disponibilidade. TOEFL 105 é um gap grande frente ao seu 83.",
-  adv:[{n:"Michelle Sanchez — teologia construtiva, Calvino, teologia e filosofia", email:"msanchez@hds.harvard.edu", cv:"https://hds.harvard.edu/faculty-research/faculty-directory"},{n:"David Lamberth — filosofia da religião, modernidade", email:"david_lamberth@harvard.edu", cv:"https://hds.harvard.edu/faculty-research/faculty-directory"},{n:"Amy Hollywood — cristianismo histórico, mística", email:"ahollywood@hds.harvard.edu", cv:"https://hds.harvard.edu/faculty-research/faculty-directory"}]},
- {id:"smu", uni:"Southern Methodist University", area:"Graduate Program in Religious Studies (Perkins)", city:"Dallas, TX — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
-  link:"https://www.smu.edu/dedman/academics/departments/religious-studies/graduate",
-  stipend:"Financiado (valor exato não publicado nestas páginas, ~US$ 26-30 mil — confirmar)",
-  toefl:"iBT 79-80 mínimo (preferem 100) — seu 83 atual passa no piso",
-  docs:"SoP, cartas, históricos. AINDA EXIGE GRE (~310+ combinado, dispensável mediante pedido ao Dr. Roy Heller, diretor). Apenas 4-6 admitidos/ano de ~70 candidatos",
-  why:"Marshall (sistemática, justificação, diálogo luterano-católico) e Long (ética/teologia política, veio de Marquette) — confirmar disponibilidade. Dois alertas: GRE ainda exigido e turma minúscula.",
-  adv:[{n:"Bruce D. Marshall — sistemática, Aquino, justificação, diálogo luterano-católico", email:"", cv:"https://www.smu.edu/perkins/perkins-directory"},{n:"D. Stephen Long — ética teológica, teologia política", email:"", cv:"https://www.smu.edu/perkins/perkins-directory"},{n:"3º orientador a confirmar", email:"", cv:"https://www.smu.edu/perkins/perkins-directory"}]},
- {id:"erlangen", uni:"Universität Erlangen-Nürnberg (FAU)", area:"Evangelische Theologie (luterana)", city:"Erlangen — Alemanha", lang:"DE", col:"Baixo", fam:"Possível (posição/salário)", tier:"Média",
-  link:"https://www.theologie.fau.de/",
-  stipend:"Sem mensalidade (só taxa semestral). Financiamento NÃO automático — bolsas (DAAD, Studienstiftung, Landesgraduiertenförderung) ou posição de Mitarbeiter",
-  toefl:"N/A — programa em alemão. Exige ALEMÃO FLUENTE + Latinum/Graecum/Hebraicum — mesmo gargalo de Tübingen",
-  docs:"Promotion: encontrar Doktorvater/mutter + registrar. Sem ciclo fixo",
-  why:"16 cátedras, tradição luterana forte, sem mensalidade. Titulares individuais das cátedras de Kirchengeschichte (Reforma) e Dogmatik não expostos nesta busca — confirmar em theologie.fau.de/person antes de contato. GARGALO: alemão fluente.",
-  adv:[{n:"Cátedra de Kirchengeschichte (Reforma) — titular a confirmar", email:"", cv:"https://www.theologie.fau.de/personen/"},{n:"Cátedra de Systematische Theologie/Dogmatik — titular a confirmar", email:"", cv:"https://www.theologie.fau.de/personen/"},{n:"Cátedra de Ethik — titular a confirmar", email:"", cv:"https://www.theologie.fau.de/personen/"}]},
+  why:"Pope é acerto DUPLO (lei natural em Aquino + amor/justiça), aceita mestrado em filosofia como base. Sem a penalidade de idioma agora, mas Boston reintroduz o gate de custo p/ família. Competitiva; fit forte, viabilidade média.",
+  adv:[{n:"Stephen Pope — lei natural (Aquino), amor e justiça, ética cristã (acerto duplo)", email:"", cv:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/people.html"},{n:"Lisa Sowle Cahill — ética cristã", email:"", cv:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/people.html"},{n:"Brian Robinette — sistemática", email:"", cv:"https://www.bc.edu/bc-web/schools/mcas/departments/theology/people.html"}]},
  {id:"toronto", uni:"University of Toronto", area:"Study of Religion (DSR) + Toronto School of Theology", city:"Toronto — Canadá", lang:"EN", col:"Alto", fam:"Apertado (COL alto)", tier:"Média",
   link:"https://religion.utoronto.ca/graduate/phd-program/",
   stipend:"~CA$ 40 mil (pacote-base, inclui tuition) ou mín. ~CA$ 31 mil + tuition, 5 anos",
   toefl:"iBT 93 (writing 22, speaking 22) / IELTS 7.0 — a DSR pode exigir mais",
   docs:"SoP, writing sample, cartas, históricos. DSR prefere MA em estudo da religião — seu MA em Filosofia entra como cognato, a confirmar; MDiv não é considerado equivalente",
-  why:"Dois caminhos distintos: DSR (secular, seu Polo B — diretório em religion.utoronto.ca/people) e TST/Wycliffe (confessional, Polo A, tem concentração em Estudos Reformados — Mangina, Radner a confirmar). Custo de Toronto alto para família.",
-  adv:[{n:"DSR — diretório completo de docentes", email:"", cv:"https://religion.utoronto.ca/people/directories/all-faculty/"},{n:"Wycliffe College (TST) — via Reformada, Mangina/Radner a confirmar", email:"", cv:"https://www.wycliffecollege.ca/about/faculty"},{n:"3º orientador a confirmar", email:"", cv:"https://religion.utoronto.ca/people/directories/all-faculty/"}]},
- {id:"mcgill", uni:"McGill University", area:"School of Religious Studies", city:"Montreal, QC — Canadá", lang:"EN/FR", col:"Médio", fam:"Possível (Montreal barata, tese em EN ou FR)", tier:"Alta",
-  link:"https://www.mcgill.ca/religiousstudies/graduate/phd",
-  stipend:"Bolsas da School + externas (McCall MacBain integral, muito competitiva). Taxas internacionais ~CAD 18.900/ano (anos 1-4, caem p/ ~CAD 4.700 depois)",
-  toefl:"iBT 86 (mín. 20/banda) / IELTS 6.5 — o MAIS ACESSÍVEL dos programas 'Alta': seu 83 atual está quase lá",
-  docs:"SoP, writing sample, cartas, históricos. GRE não exigido. Tese pode ser escrita em inglês OU francês",
-  why:"SOBE para Alta — um dos encaixes mais completos da lista: Farrow (teologia política/lei natural/igreja-Estado), Kirby (Reforma/moderna), Green (filosofia da religião/idealismo alemão) — os três verificados na página oficial. Montreal francófona, custo moderado.",
-  adv:[{n:"Douglas Farrow — teologia política, lei natural, igreja-Estado", email:"", cv:"https://www.mcgill.ca/religiousstudies/douglas-farrow"},{n:"W.J. Torrance Kirby — Reforma, teologia política do início da modernidade", email:"", cv:"https://www.mcgill.ca/religiousstudies/wj-torrance-kirby"},{n:"Garth Green — filosofia da religião, idealismo alemão", email:"", cv:"https://www.mcgill.ca/religiousstudies/garth-w-green"}]},
- {id:"edinburgh", uni:"University of Edinburgh", area:"School of Divinity (New College)", city:"Edimburgo — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  why:"DSR (secular, forte em método — serve a migração metodológica) ou Wycliffe (via reformada). Cai por custo alto + funding mais magro que os pares, e caveat de preferência por MA em RS. Fit bom, viabilidade média.",
+  adv:[{n:"DSR — diretório completo de docentes (método serve à migração)", email:"", cv:"https://religion.utoronto.ca/people/directories/all-faculty/"},{n:"Wycliffe College (TST) — via Reformada, Mangina/Radner a confirmar", email:"", cv:"https://www.wycliffecollege.ca/about/faculty"},{n:"3º orientador a confirmar", email:"", cv:"https://religion.utoronto.ca/people/directories/all-faculty/"}]},
+ {id:"smu", uni:"Southern Methodist University", area:"Graduate Program in Religious Studies (Perkins)", city:"Dallas, TX — EUA", lang:"EN", col:"Médio", fam:"Apertado", tier:"Média",
+  link:"https://www.smu.edu/dedman/academics/departments/religious-studies/graduate",
+  stipend:"Financiado (valor exato não publicado, ~US$ 26-30 mil — confirmar)",
+  toefl:"iBT 79-80 mínimo (preferem 100)",
+  docs:"SoP, cartas, históricos. AINDA EXIGE GRE (~310+ combinado, dispensável mediante pedido ao Dr. Roy Heller). Apenas 4-6 admitidos/ano de ~70 candidatos",
+  why:"Marshall (diálogo luterano-católico) e Long (ética/teologia política) dão bom fit — mas coorte minúscula (4-6 de ~70) e GRE ainda exigido esmagam a odds apesar do encaixe. Fit bom, aceitação difícil por estrutura.",
+  adv:[{n:"Bruce D. Marshall — sistemática, Aquino, justificação, diálogo luterano-católico", email:"", cv:"https://www.smu.edu/perkins/perkins-directory"},{n:"D. Stephen Long — ética teológica, teologia política", email:"", cv:"https://www.smu.edu/perkins/perkins-directory"},{n:"3º orientador a confirmar", email:"", cv:"https://www.smu.edu/perkins/perkins-directory"}]},
+ {id:"kuleuven", uni:"KU Leuven", area:"Faculty of Theology & Religious Studies (PhD, inglês)", city:"Leuven — Bélgica", lang:"EN", col:"Médio", fam:"Possível (posição assalariada)", tier:"Média",
+  link:"https://theo.kuleuven.be/en/doctorate/",
+  stipend:"NÃO é automático: via bolsas (FWO, BOF, faculdade) ou posição assalariada (~€2.500/mês, sustenta família) — competitivo. Contato de bolsas: Prof. Stephan van Erp",
+  toefl:"Inglês exigido (salvo diploma em inglês); tipicamente TOEFL iBT ~94 / IELTS 7 — confirmar",
+  docs:"Proposta de projeto + promotor numa unidade de pesquisa; sem Research Master da KU Leuven, precisa de aprovação prévia do Comitê de Admissões (seu MA em Filosofia). Nota mín. da tese de mestrado 14/20. 3 cartas",
+  why:"van Erp (teologia fundamental/política) é principal forte e a admissão em inglês é plausível. Com custo fora do cálculo como gate, o gargalo que resta é o financiamento NÃO automático (bolsa/posição competitiva). Fit bom, entrada média.",
+  adv:[{n:"Stephan van Erp — teologia fundamental/filosófica, fé e razão, teologia política", email:"", cv:"https://theo.kuleuven.be/en/research/researchers/00098212"},{n:"Yves De Maeseneer — ética teológica fundamental", email:"", cv:"https://theo.kuleuven.be/en/research/researchers/00034350"},{n:"Marianne Moyaert — hermenêutica inter-religiosa, teologia comparada", email:"", cv:"https://theo.kuleuven.be/en/research/research_units/ru_systematic"}]},
+ {id:"princeton", uni:"Princeton University", area:"Department of Religion (secular)", city:"Princeton, NJ — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto, mas stipend alto)", tier:"Reach",
+  link:"https://religion.princeton.edu/graduate/",
+  stipend:"Acima de US$ 47.000 (10 meses) + verão, 5 anos, financiamento integral",
+  toefl:"Sem piso fixo publicado; média dos admitidos ~iBT 108",
+  docs:"SoP, writing sample, cartas, históricos, CV. Prazo Religion: 30/dez",
+  why:"Gregory encaixa lindamente no artigo (teologia política + amor/justiça + lei e religião) e o sample sob medida resolve o 'gênero'. O que trava é a odds de admissão de elite + as licenças 25-26. Custo alto absorvido pelo stipend. Reach por seletividade, não por fit.",
+  adv:[{n:"Eric Gregory — ética, teologia política, amor e justiça, lei e religião (em licença 25-26)", email:"", cv:"https://religion.princeton.edu/people/eric-gregory/"},{n:"Andrew Chignell — filosofia moderna, filosofia da religião, Kant (em licença 25-26)", email:"", cv:"https://religion.princeton.edu/people/andrew-chignell/"},{n:"Leora Batnitzky — hermenêutica, teologia política", email:"", cv:"https://religion.princeton.edu/people/leora-batnitzky/"}]},
+ {id:"yale", uni:"Yale University", area:"Religious Studies (PhD)", city:"New Haven, CT — EUA", lang:"EN", col:"Alto", fam:"Possível (stipend alto + subsídio familiar)", tier:"Reach",
+  link:"https://rlst.yale.edu/graduate",
+  stipend:"US$ 50.777/ano (12 meses, 2025-26), tuition integral, 5+ anos, saúde cobre cônjuge e filhos, subsídio familiar p/ filhos menores de 18 — um dos melhores perfis para família da lista",
+  toefl:"Exigido p/ internacionais; GRE NÃO aceito; nota não fixada — confirmar",
+  docs:"SoP, writing sample, cartas, históricos, CV. GRE não aceito",
+  why:"Re-eixado FORA do Spinoza: entrada por Herdt (ética cristã) + Pittard (epistemologia — casa com seu fio joano/epistêmico); Leppin (Lutero) migrou p/ Yale Divinity, confirmar se orienta aqui. Levene/Spinoza vira bônus, não âncora (Spinoza te puxa p/ a filosofia, não p/ religious studies). Melhor financiamento-família da lista, mas admissão selvagem: Reach.",
+  adv:[{n:"Jennifer Herdt — ética cristã (principal)", email:"jennifer.herdt@yale.edu", cv:"https://rlst.yale.edu/"},{n:"John Pittard — filosofia da religião, epistemologia (casa com o fio epistêmico)", email:"john.pittard@yale.edu", cv:"https://rlst.yale.edu/people/john-pittard"},{n:"Volker Leppin — Lutero/Reforma (Yale Divinity; confirmar orientação). Levene/Spinoza = bônus, não âncora", email:"volker.leppin@yale.edu", cv:"https://rlst.yale.edu/"}]},
+ {id:"harvard", uni:"Harvard University", area:"Committee on the Study of Religion (PhD)", city:"Cambridge, MA — EUA", lang:"EN", col:"Alto", fam:"Difícil (COL alto, mas stipend alto)", tier:"Reach",
+  link:"https://gsas.harvard.edu/program/religion",
+  stipend:"≥ US$ 50.000/ano (12 meses, sobe todo 1º/jul) + tuition integral + saúde/odonto/transporte",
+  toefl:"iBT 105 (speaking 23) / IELTS 7.5 — deixa de ser o problema se você fizer 100+, mas era a barreira mais alta. GRE não aceito",
+  docs:"SoP (máx. 1.000 palavras), cartas, históricos, CV, writing sample. ~5-6% de admissão. Eméritos NÃO podem orientar como principais (regra formal da GSAS)",
+  why:"Com o TOEFL resolvido, o idioma some — mas resta ~5-6% de admissão, a regra de que eméritos não orientam como principais, e o Committee secular lendo teologia construtiva. Sanchez/Lamberth como fit possível. Stipend absorve o custo. Reach por odds.",
+  adv:[{n:"Michelle Sanchez — teologia construtiva, Calvino, teologia e filosofia", email:"msanchez@hds.harvard.edu", cv:"https://hds.harvard.edu/faculty-research/faculty-directory"},{n:"David Lamberth — filosofia da religião, modernidade", email:"david_lamberth@harvard.edu", cv:"https://hds.harvard.edu/faculty-research/faculty-directory"},{n:"Amy Hollywood — cristianismo histórico, mística", email:"ahollywood@hds.harvard.edu", cv:"https://hds.harvard.edu/faculty-research/faculty-directory"}]},
+ {id:"edinburgh", uni:"University of Edinburgh", area:"School of Divinity (New College)", city:"Edimburgo — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Reach",
   link:"https://www.ed.ac.uk/divinity/postgraduate/research",
   stipend:"Financiamento competitivo: School of Divinity PhD Scholarships (tuition + stipend taxa UKRI, 3 anos) + AHRC. Taxas internacionais ~£25-27 mil/ano sem bolsa",
   toefl:"IELTS 7.0 (mín. 6.0/banda) / TOEFL iBT 100 (mín. 20/banda). Prazo de bolsa ~2/fev",
   docs:"SoP, writing sample, cartas, históricos",
-  why:"Escola forte, mas dois encaixes-chave saíram de cena: Hardman Moore (Reforma/puritanismo) é agora EMÉRITA (ainda acolhe consultas, não orienta como principal) e Schmiedel (teologia política) foi p/ Lund em 2024. Restam Muers (sistemática/ética) e Grumett.",
+  why:"Muers (Chair, sistemática/ética) e Grumett seguram o fit, mas os encaixes-chave saíram (Hardman Moore emérita; Schmiedel p/ Lund). Admissão atingível, financiamento competitivo; fit afinado o bastante p/ virar reach.",
   adv:[{n:"Rachel Muers — Chair of Divinity, sistemática e ética", email:"", cv:"https://www.ed.ac.uk/divinity/about-us/staff-profiles"},{n:"David Grumett — teologia e ética", email:"", cv:"https://www.ed.ac.uk/divinity/about-us/staff-profiles"},{n:"Susan Hardman Moore — Reforma/puritanismo (emérita, acolhe consultas, não orienta como principal)", email:"", cv:"https://www.ed.ac.uk/divinity/about-us/staff-profiles"}]},
- {id:"durham", uni:"Durham University", area:"Department of Theology and Religion", city:"Durham — Reino Unido", lang:"EN", col:"Médio", fam:"Apertado", tier:"Alta",
-  link:"https://www.durham.ac.uk/departments/academic/theology-and-religion/postgraduate/",
-  stipend:"Financiamento competitivo (Durham Doctoral Studentships, Northern Bridge/AHRC). Taxas internacionais ~£24-28 mil/ano sem bolsa",
-  toefl:"IELTS 7.0 (nada abaixo de 7.0 em nenhuma banda) / TOEFL iBT 102 (writing 27) — barreira alta, bem acima do seu 83 atual",
-  docs:"SoP, writing sample, cartas, históricos. Entrada aceita MA cognato (Filosofia serve). Prazo depto ~início de dezembro",
-  why:"SOBE para Alta: Ryrie FBA (Reforma/protestantismo, historiador de primeira linha), Oliver (teologia filosófica/natural, Aquino), Kilby (sistemática, paradoxo e graça — dialoga com seu método do paradoxo). Custo de Durham moderado (cidade pequena).",
-  adv:[{n:"Alec Ryrie (FBA) — Reforma e protestantismo, séc. XVI-XVII", email:"", cv:"https://www.durham.ac.uk/staff/alec-ryrie/"},{n:"Simon Oliver — teologia filosófica, teologia natural, Aquino", email:"", cv:"https://www.durham.ac.uk/staff/simon-oliver/"},{n:"Karen Kilby — sistemática, Rahner, paradoxo e graça", email:"", cv:"https://www.durham.ac.uk/staff/karen-kilby/"}]},
- {id:"aberdeen", uni:"University of Aberdeen", area:"Centre for Protestant Theology — Divinity", city:"Aberdeen — Reino Unido", lang:"EN", col:"Baixo", fam:"Possível (COL mais baixo do RU)", tier:"Alta",
-  link:"https://www.abdn.ac.uk/divinity/research/degrees/",
-  stipend:"Taxas internacionais ~£21.700/ano; financiamento competitivo via Elphinstone Scholarships (isenta taxas + bolsa de manutenção)",
-  toefl:"IELTS ~6.5-7.0 / TOEFL iBT ~90-100 — confirmar",
-  docs:"SoP, writing sample, cartas, históricos. Contato prévio com orientador fortemente recomendado",
-  why:"GRANDE upgrade (Baixa→Alta): abriga o Centre for Protestant Theology (2017), fundado no 500º da Reforma — casa institucional sob medida. Brock trabalha EXPLICITAMENTE a ética da tradição luterana. Nimmo (Barth) e Ziegler (justificação/eleição) fecham um trio quase perfeito. Aberdeen é a cidade mais barata do RU na lista.",
-  adv:[{n:"Brian Brock — ética da tradição LUTERANA, ética política", email:"", cv:"https://www.abdn.ac.uk/people/brian.brock"},{n:"Paul Nimmo — King's Chair Systematic Theology; reformada, Karl Barth, Schleiermacher", email:"paul.nimmo@abdn.ac.uk", cv:"https://www.abdn.ac.uk/people/paul.nimmo"},{n:"Philip Ziegler — dogmática: justificação e eleição, ética e política, Barth/Bonhoeffer/Kierkegaard", email:"p.ziegler@abdn.ac.uk", cv:"https://www.abdn.ac.uk/people/p.ziegler"}]},
- {id:"strasbourg", uni:"Université de Strasbourg", area:"Faculté de théologie protestante", city:"Estrasburgo — França", lang:"FR", col:"Médio", fam:"Possível (posição/bolsa, custo moderado)", tier:"Média",
+ {id:"northwestern", uni:"Northwestern University", area:"Religious Studies (PhD)", city:"Evanston / Chicago, IL — EUA", lang:"EN", col:"Alto", fam:"Apertado (COL alto)", tier:"Reach",
+  link:"https://religious-studies.northwestern.edu/graduate/",
+  stipend:"Integral, mín. 5 anos; ~US$ 46.356/ano (2025-26) + auxílio-creche + saúde",
+  toefl:"Sem piso único; padrão da Grad School iBT 90-100. Mire ≥100",
+  docs:"Academic + Personal Statement; writing sample 20-30 pp espaço duplo; CV; históricos; 2 (idealmente 3) cartas; TOEFL. GRE opcional. Proibido IA generativa nos ensaios. Fall 2027 abre meados set/2026",
+  why:"Sem orientador luterano PRINCIPAL depois de Helmer declinar; sobra Hurd (religião e política/secularismo), que serve o TEMA mas não orienta o núcleo luterano. Dupla penalidade: fit-de-orientação fraco + Chicago caro. Reach. (Helmer/Alznauer ainda podem ser banca ou carta.)",
+  adv:[{n:"Elizabeth Shakman Hurd — religião e política, secularismo (serve o tema, não o núcleo luterano)", email:"eshurd@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/tenure-track-faculty/elizabeth-hurd.html"},{n:"Mark Alznauer — filosofia moderna, Hegel, ética/política (possível carta/banca)", email:"m-alznauer@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/affiliated-faculty/mark-alznauer.html"},{n:"Barbara Newman — cristianismo medieval, mística", email:"bjnewman@northwestern.edu", cv:"https://religious-studies.northwestern.edu/people/faculty/affiliated-faculty/barbara-newman.html"}]},
+ {id:"fordham", uni:"Fordham University", area:"Theology (PhD)", city:"Bronx / Nova York, NY — EUA", lang:"EN", col:"Alto", fam:"Não sustenta sem 2ª renda", tier:"Reach",
+  link:"https://www.fordham.edu/academics/departments/theology/prospective-graduate-students/phd-in-theology/",
+  stipend:"Financiamento integral 5 anos (tuition remission + stipend); valor-base ~US$ 30 mil (confirmar); fellowships da GSAS somam ~+US$ 5 mil",
+  toefl:"Exigido (ETS code 2259); ~iBT 100 (GSAS) — confirmar",
+  docs:"SoP, writing sample, cartas, históricos, CV. Prazo início de janeiro",
+  why:"Hinze/Firer Hinze/Papanikolaou dão fit MÉDIO (teologia política). Afunda pelo pior COL da lista p/ família de 4 (NYC) somado a um encaixe apenas mediano. Reach de baixa prioridade.",
+  adv:[{n:"Bradford Hinze — sistemática, teologia política", email:"", cv:"https://www.fordham.edu/academics/departments/theology/faculty--staff/"},{n:"Christine Firer Hinze — ética social cristã", email:"", cv:"https://www.fordham.edu/academics/departments/theology/faculty--staff/"},{n:"Aristotle Papanikolaou — teologia política ortodoxa", email:"", cv:"https://www.fordham.edu/academics/departments/theology/faculty--staff/"}]},
+ {id:"claremont", uni:"Claremont Graduate University", area:"Religion — filosofia da religião", city:"Claremont, CA — EUA", lang:"EN", col:"Alto", fam:"Difícil (financiamento fraco + COL alto)", tier:"Reach",
+  link:"https://www.cgu.edu/program/religion/",
+  stipend:"FRACO/PARCIAL — 85% dos alunos recebem algum fellowship, mas não é pacote integral garantido; combina-se fontes. Tuition ~US$ 36 mil/ano",
+  toefl:"iBT ~85-95 (abaixo de 95 exige International Scholars Program obrigatório)",
+  docs:"SoP, cartas, históricos. Confirmar com finaid@cgu.edu",
+  why:"Dalferth (o encaixe ideal — luterano, filósofo da religião) está EMÉRITO desde 2020 e não orienta como principal: a área ficou magra. Financiamento fraco + Califórnia cara. A menor prioridade fora das bloqueadas por língua.",
+  adv:[{n:"Ingolf Dalferth — filosofia da religião luterana (emérito desde 2020, não orienta como principal)", email:"ingolf.dalferth@cgu.edu", cv:"https://www.cgu.edu/program/religion/"},{n:"Orientador atual a identificar", email:"", cv:"https://www.cgu.edu/program/religion/"},{n:"Orientador atual a identificar", email:"", cv:"https://www.cgu.edu/program/religion/"}]},
+ {id:"tubingen", uni:"Universität Tübingen", area:"Evangelisch-Theologische Fakultät", city:"Tübingen — Alemanha", lang:"DE", col:"Médio", fam:"Possível (posição/salário)", tier:"Bloqueada",
+  link:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/",
+  stipend:"Sem mensalidade (só taxa semestral ~€170); financiamento NÃO automático — bolsas (DAAD, Studienstiftung, Landesgraduiertenförderung) ou posição de Mitarbeiter",
+  toefl:"N/A (programa alemão). Exige ALEMÃO fluente (+ Latinum/Graecum/Hebraicum) — barreira dura: seu alemão é de leitura",
+  docs:"Promotion: encontrar Doktorvater/mutter + registrar (Promotionsordnung). Sem ciclo fixo",
+  why:"Hermanni (filosofia da religião/idealismo) e Witt (Reforma) seriam encaixes fortes e não há mensalidade — mas exige alemão FLUENTE + Latinum/Graecum/Hebraicum. BLOQUEADA pela barreira dura de língua enquanto o alemão for de leitura.",
+  adv:[{n:"Friedrich Hermanni — sistemática: teologia fundamental e filosofia da religião (Schelling, idealismo alemão)", email:"", cv:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/lehrstuehle-und-institute/systematische-theologie.html"},{n:"Christian Witt — história da Igreja: Reforma e Idade Média", email:"", cv:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/"},{n:"Volker Henning Drecoll — história da Igreja: Igreja Antiga (Agostinho)", email:"", cv:"https://uni-tuebingen.de/fakultaeten/evangelisch-theologische-fakultaet/"}]},
+ {id:"erlangen", uni:"Universität Erlangen-Nürnberg (FAU)", area:"Evangelische Theologie (luterana)", city:"Erlangen — Alemanha", lang:"DE", col:"Baixo", fam:"Possível (posição/salário)", tier:"Bloqueada",
+  link:"https://www.theologie.fau.de/",
+  stipend:"Sem mensalidade (só taxa semestral). Financiamento NÃO automático — bolsas (DAAD, Studienstiftung, Landesgraduiertenförderung) ou posição de Mitarbeiter",
+  toefl:"N/A — programa em alemão. Exige ALEMÃO FLUENTE + Latinum/Graecum/Hebraicum — mesmo gargalo de Tübingen",
+  docs:"Promotion: encontrar Doktorvater/mutter + registrar. Sem ciclo fixo",
+  why:"Tradição luterana forte, 16 cátedras, sem mensalidade — mas mesmo gargalo de língua de Tübingen (alemão fluente + línguas clássicas). BLOQUEADA pela barreira dura. Titulares das cátedras a confirmar em theologie.fau.de/personen.",
+  adv:[{n:"Cátedra de Kirchengeschichte (Reforma) — titular a confirmar", email:"", cv:"https://www.theologie.fau.de/personen/"},{n:"Cátedra de Systematische Theologie/Dogmatik — titular a confirmar", email:"", cv:"https://www.theologie.fau.de/personen/"},{n:"Cátedra de Ethik — titular a confirmar", email:"", cv:"https://www.theologie.fau.de/personen/"}]},
+ {id:"strasbourg", uni:"Université de Strasbourg", area:"Faculté de théologie protestante", city:"Estrasburgo — França", lang:"FR", col:"Médio", fam:"Possível (posição/bolsa, custo moderado)", tier:"Bloqueada",
   link:"https://theopro.unistra.fr/",
   stipend:"Mensalidade baixíssima (~€380/ano). Financiamento via contrats doctoraux (competitivo, ~€1.700-2.000/mês) ou autofinanciado",
   toefl:"N/A — programa em francês. GARGALO: tese e defesa em francês (você lê francês, mas produzir em nível de tese é o filtro)",
   docs:"Doutorado via École Doctorale 270: encontrar um directeur de thèse + registrar",
-  why:"SOBE para Média: única faculdade pública de teologia protestante da França, na cidade da Reforma. Matthieu Arnold é um dos principais luterólogos franceses. Frey cobre hermenêutica (Ricœur/Gadamer) — bate no seu interesse metodológico. Alsácia tem custo moderado.",
-  adv:[{n:"Matthieu Arnold — história do cristianismo moderno, Lutero e a Reforma", email:"", cv:"https://theopro.unistra.fr/faculte/enseignants"},{n:"Daniel Frey — filosofia da religião, hermenêutica (Ricœur, Gadamer)", email:"", cv:"https://theopro.unistra.fr/faculte/enseignants"},{n:"Karsten Lehmkühler ou Marc Vial — dogmática/ética ou sistemática", email:"", cv:"https://theopro.unistra.fr/faculte/enseignants"}]},
- {id:"claremont", uni:"Claremont Graduate University", area:"Religion — filosofia da religião", city:"Claremont, CA — EUA", lang:"EN", col:"Alto", fam:"Difícil (financiamento fraco + COL alto)", tier:"Baixa",
-  link:"https://www.cgu.edu/program/religion/",
-  stipend:"FRACO/PARCIAL — 85% dos alunos recebem algum fellowship, mas não é pacote integral garantido; combina-se fontes. Tuition ~US$ 36 mil/ano",
-  toefl:"iBT ~85-95 (abaixo de 95 exige International Scholars Program obrigatório antes de matricular)",
-  docs:"SoP, cartas, históricos. Confirmar com finaid@cgu.edu",
-  why:"Permanece Baixa: Ingolf Dalferth (luterano, filósofo da religião, seria o encaixe ideal) está EMÉRITO desde 2020 — a área ficou magra sem ele. Financiamento é o pior perfil da lista, e Califórnia é cara. Opção de menor prioridade.",
-  adv:[{n:"Ingolf Dalferth — filosofia da religião luterana (emérito desde 2020, não orienta como principal)", email:"ingolf.dalferth@cgu.edu", cv:"https://www.cgu.edu/program/religion/"},{n:"Orientador atual a identificar", email:"", cv:"https://www.cgu.edu/program/religion/"},{n:"Orientador atual a identificar", email:"", cv:"https://www.cgu.edu/program/religion/"}]}
+  why:"Arnold (um dos principais luterólogos franceses) e Frey (hermenêutica: Ricœur/Gadamer, bate no seu método) seriam ótimos — mas tese e defesa em francês. BLOQUEADA pela língua enquanto o francês for de leitura.",
+  adv:[{n:"Matthieu Arnold — história do cristianismo moderno, Lutero e a Reforma", email:"", cv:"https://theopro.unistra.fr/faculte/enseignants"},{n:"Daniel Frey — filosofia da religião, hermenêutica (Ricœur, Gadamer)", email:"", cv:"https://theopro.unistra.fr/faculte/enseignants"},{n:"Karsten Lehmkühler ou Marc Vial — dogmática/ética ou sistemática", email:"", cv:"https://theopro.unistra.fr/faculte/enseignants"}]}
 ];
 
-const TIER_BASE = {Alta:55, "Média":35, Baixa:18};
+const TIER_BASE = {"Altíssima":72, Alta:55, "Média":38, Reach:18, Bloqueada:6};
 const RESP_ADJ = {boa:35, "média":10, ruim:-20, sem:-10, "":0};
 const COL_ORD = {Baixo:0, "Médio":1, Alto:2};
-const KEY = "phd_tracker_v1";
+const COL_BADGE = {Baixo:{c:"col-lo",t:"barato"}, "Médio":{c:"col-mid",t:"médio"}, Alto:{c:"col-hi",t:"caro"}};
+const KEY = "phd_tracker_v2";
 
 let STATE = {ov:{}, sort:"prob"};
 const $ = s => document.querySelector(s);
@@ -427,6 +441,7 @@ function render(){
     const e = eff(p);
     const pr = prob(p);
     const col = probColor(pr.v, pr.contacted);
+    const cb = COL_BADGE[e.col]||{c:"col-mid",t:e.col};
     const stateLbl = pr.contacted ? ({boa:"Alta",["média"]:"Média",ruim:"Baixa",sem:"Baixa"}[pr.key]||"—") : "Inicial";
     const advHTML = [0,1,2].map(i=>{
       const a = advState(p,i);
@@ -448,7 +463,7 @@ function render(){
       <div class="head" data-toggle="${p.id}">
         <div class="rank">${idx+1}</div>
         <div class="who">
-          <div class="uni">${e.uni}<span class="tag">${e.lang}</span><span class="tag">fit ${e.tier}</span></div>
+          <div class="uni">${e.uni}<span class="tag">${e.lang}</span><span class="tag">P ${e.tier}</span><span class="colbadge ${cb.c}">${cb.t}</span></div>
           <div class="meta">${e.area} · ${e.city} · custo ${e.col}</div>
         </div>
         <div class="probwrap">
@@ -457,7 +472,7 @@ function render(){
         </div>
       </div>
       <div class="body">
-        <div class="field" style="margin-bottom:10px"><label>Por que está aqui (fit)</label><div class="why">${e.why}</div></div>
+        <div class="field" style="margin-bottom:10px"><label>Por que está aqui (P de aceitação)</label><div class="why">${e.why}</div></div>
         <div class="grid">
           <div class="field"><label>Link do programa</label>${fieldInput(p.id,"link",e.link,"colar URL oficial do programa")}</div>
           <div class="field"><label>Stipend / bolsa</label>${fieldInput(p.id,"stipend",e.stipend,"valor anual (verificar)")}</div>
