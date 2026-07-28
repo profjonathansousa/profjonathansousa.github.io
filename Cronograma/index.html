@@ -93,6 +93,34 @@
     border:1px dashed var(--line-strong);border-radius:11px;color:var(--muted);
     font-family:var(--sans);font-size:13px;cursor:pointer;text-align:left;}
   .add-row:active{background:#EAE7DC;}
+  .mes-sel{font-family:var(--sans);font-size:11px;letter-spacing:0;text-transform:none;
+    color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:7px;
+    padding:3px 6px;margin-left:8px;max-width:62%;}
+  .offmonth{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 13px;margin-bottom:9px;border:1px dashed var(--gold-line);border-radius:10px;
+    background:rgba(231,213,162,0.22);font-size:12.5px;line-height:1.4;color:var(--ink-soft);}
+  .voltar{background:none;border:none;padding:0;font-size:12.5px;color:var(--gold);
+    text-decoration:underline;cursor:pointer;font-family:var(--sans);}
+  .carry{padding:11px 13px;margin-bottom:10px;border:1px solid var(--gold-line);
+    border-radius:11px;background:var(--card);box-shadow:var(--shadow);}
+  .carry-h{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    font-family:var(--display);font-size:13px;color:var(--ink);margin-bottom:7px;}
+  .carry-x{background:none;border:none;color:var(--line-strong);font-size:20px;
+    line-height:1;padding:0 2px;cursor:pointer;}
+  .carry-i{display:flex;align-items:flex-start;gap:8px;padding:5px 0;
+    border-top:1px solid var(--line);font-size:13px;line-height:1.35;}
+  .carry-m{flex:none;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--crimson);padding-top:2px;min-width:52px;}
+  .carry-t{flex:1;color:var(--ink-soft);}
+  .carry-b{flex:none;background:none;border:none;padding:0;font-size:12px;color:var(--gold);
+    text-decoration:underline;cursor:pointer;font-family:var(--sans);}
+  .carry-all{width:100%;margin-top:9px;padding:9px;background:var(--paper-2);
+    border:1px solid var(--line);border-radius:9px;font-family:var(--sans);
+    font-size:12.5px;color:var(--ink-soft);cursor:pointer;}
+  .tag-de{flex:none;align-self:center;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--crimson);border:1px solid var(--crimson-soft);border-radius:5px;padding:2px 5px;}
+  .vazio{padding:14px;margin-bottom:7px;border:1px dashed var(--line);border-radius:11px;
+    text-align:center;font-size:13px;color:var(--muted);}
   /* Bloco técnico */
   .tecbloco{border:1px solid var(--line);border-radius:12px;margin:20px 0 0;background:var(--paper-2);overflow:hidden;}
   .tecbloco summary{list-style:none;cursor:pointer;padding:12px 15px;display:flex;flex-direction:column;gap:3px;}
@@ -198,7 +226,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-07-20-06";
+const APP_VERSION = "2026-07-28-02";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -459,30 +487,101 @@ function renderHoje(){
   </details>`;
   html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
-  html+=`<div class="shead">Metas do mês <span class="sub">${now.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</span></div><div id="metas"></div>`;
+  html+=`<div id="metas-wrap"></div>`;
   html+=`<div class="shead">Datas importantes</div><div id="eventos"></div>`;
   document.getElementById("view-hoje").innerHTML=html;
   renderMetas(); renderEventos(); renderTecnico();
 }
-function getMetas(){return LS("cron:metas:"+monthKey, JSON.parse(JSON.stringify(METAS_DEFAULT)));}
-function setMetas(m){save("cron:metas:"+monthKey,m);}
+/* ---- Metas: navegação por mês, meses novos nascem vazios ---- */
+const MES_INICIO = "2026-07";
+let mesAtivo = monthKey;
+function mesLabel(k){const [y,m]=k.split("-").map(Number);
+  return new Date(y,m-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});}
+function mesCurto(k){const [y,m]=k.split("-").map(Number);
+  return new Date(y,m-1,1).toLocaleDateString("pt-BR",{month:"long"});}
+function mesSoma(k,n){const [y,m]=k.split("-").map(Number);const d=new Date(y,m-1+n,1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+function listaMeses(){
+  const out=[];let k=MES_INICIO;const fim=mesSoma(monthKey,18);
+  while(k<=fim){out.push(k);k=mesSoma(k,1);}
+  return out;
+}
+function getMetas(k){k=k||mesAtivo;
+  return LS("cron:metas:"+k, k===MES_INICIO ? JSON.parse(JSON.stringify(METAS_DEFAULT)) : []);}
+function setMetas(m,k){save("cron:metas:"+(k||mesAtivo),m);}
+function pendencias(){
+  const out=[];let k=MES_INICIO;
+  while(k<monthKey){
+    getMetas(k).forEach(function(m){if(!m.done && m.t.trim()) out.push({mes:k,meta:m});});
+    k=mesSoma(k,1);
+  }
+  return out;
+}
 function renderMetas(){
-  const box=document.getElementById("metas"); if(!box)return;
-  const metas=getMetas(); let h="";
-  metas.forEach((m,i)=>{
-    h+=`<div class="goal ${m.done?'done':''}">
+  const wrap=document.getElementById("metas-wrap"); if(!wrap)return;
+  const corrente = mesAtivo===monthKey;
+  let h=`<div class="shead">Metas do mês
+    <select class="mes-sel" onchange="trocarMes(this.value)">`;
+  listaMeses().forEach(function(k){
+    h+=`<option value="${k}" ${k===mesAtivo?"selected":""}>${mesLabel(k)}${k===monthKey?" (atual)":""}</option>`;
+  });
+  h+=`</select></div>`;
+  if(!corrente) h+=`<div class="offmonth">Você está ${mesAtivo<monthKey?"revendo":"planejando"} ${mesLabel(mesAtivo)}. O mês atual é ${mesLabel(monthKey)}.
+    <button class="voltar" onclick="trocarMes('${monthKey}')">voltar ao atual</button></div>`;
+  if(corrente) h+=renderPendencias();
+  const metas=getMetas(); let g="";
+  metas.forEach(function(m,i){
+    g+=`<div class="goal ${m.done?'done':''}">
       <span class="box" onclick="toggleMeta(${i})">${CHK}</span>
       <div class="goal-text" contenteditable="true" onblur="editMeta(${i},this.innerText)">${escapeHtml(m.t)}</div>
+      ${m.de?`<span class="tag-de">${escapeHtml(mesCurto(m.de))}</span>`:""}
       <button class="del" onclick="delMeta(${i})" aria-label="Remover">&times;</button></div>`;
   });
-  h+=`<button class="add-row" onclick="addMeta()">+ Nova meta do mês</button>`;
-  box.innerHTML=h;
+  if(!metas.length) g+=`<div class="vazio">Nenhuma meta para ${mesLabel(mesAtivo)}.</div>`;
+  g+=`<button class="add-row" onclick="addMeta()">+ Nova meta para ${mesCurto(mesAtivo)}</button>`;
+  wrap.innerHTML=h+g;
 }
+function renderPendencias(){
+  const p=pendencias(); if(!p.length) return "";
+  if(LS("cron:metas-aviso:"+monthKey,false)) return "";
+  let h=`<div class="carry"><div class="carry-h">${p.length} meta${p.length>1?"s":""} em aberto de meses anteriores
+    <button class="carry-x" onclick="dispensarAviso()" aria-label="Dispensar">&times;</button></div>`;
+  p.forEach(function(o,i){
+    h+=`<div class="carry-i"><span class="carry-m">${escapeHtml(mesCurto(o.mes))}</span>
+      <span class="carry-t">${escapeHtml(o.meta.t)}</span>
+      <button class="carry-b" onclick="trazerMeta(${i})">trazer</button></div>`;
+  });
+  h+=`<button class="carry-all" onclick="trazerTodas()">Trazer todas para ${mesCurto(monthKey)}</button></div>`;
+  return h;
+}
+function trazerMeta(i){
+  const o=pendencias()[i]; if(!o)return;
+  const destino=getMetas(monthKey);
+  destino.push({id:"m"+Date.now(), t:o.meta.t, done:false, de:o.mes});
+  setMetas(destino,monthKey);
+  const origem=getMetas(o.mes).filter(function(m){return m.id!==o.meta.id;});
+  setMetas(origem,o.mes);
+  renderMetas();
+}
+function trazerTodas(){
+  const p=pendencias(); const destino=getMetas(monthKey); const porMes={};
+  p.forEach(function(o,n){
+    destino.push({id:"m"+Date.now()+"-"+n, t:o.meta.t, done:false, de:o.mes});
+    (porMes[o.mes]=porMes[o.mes]||[]).push(o.meta.id);
+  });
+  setMetas(destino,monthKey);
+  Object.keys(porMes).forEach(function(k){
+    setMetas(getMetas(k).filter(function(m){return porMes[k].indexOf(m.id)<0;}),k);
+  });
+  renderMetas();
+}
+function dispensarAviso(){save("cron:metas-aviso:"+monthKey,true);renderMetas();}
+function trocarMes(k){mesAtivo=k;renderMetas();}
 function toggleMeta(i){const m=getMetas();m[i].done=!m[i].done;setMetas(m);renderMetas();}
 function editMeta(i,t){const m=getMetas();m[i].t=t.trim()||m[i].t;setMetas(m);}
 function delMeta(i){const m=getMetas();m.splice(i,1);setMetas(m);renderMetas();}
-function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(),t:"",done:false});setMetas(m);renderMetas();
-  const b=document.querySelectorAll("#metas .goal-text");if(b.length)b[b.length-1].focus();}
+function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:false});setMetas(m);renderMetas();
+  const b=document.querySelectorAll("#metas-wrap .goal-text");if(b.length)b[b.length-1].focus();}
 function getEventos(){return LS("cron:eventos", JSON.parse(JSON.stringify(EVENTOS_DEFAULT)));}
 function setEventos(e){save("cron:eventos",e);}
 function diasAte(iso){const [y,m,dd]=iso.split("-").map(Number);
@@ -636,12 +735,54 @@ async function checkUpdate(){
   });
 })();
 document.getElementById("ver").textContent = "v"+APP_VERSION;
-/* Reset único do bloco técnico para a nova lista de 4 projetos.
-   Roda uma só vez: grava a marca da seed e não sobrescreve edições futuras. */
-const TEC_SEED = "2026-07-18-4projetos";
+/* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
+   Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
+const TEC_SEED = "2026-07-28-limpa";
 if(LS("cron:tecnico-seed", null) !== TEC_SEED){
-  setTec(JSON.parse(JSON.stringify(TECNICO_DEFAULT)));
+  let atual = getTec().filter(function(p){return p.id !== "p5" && p.id !== "p6";});
+  const base = JSON.parse(JSON.stringify(TECNICO_DEFAULT));
+  base.forEach(function(pNovo){
+    const pAtual = atual.find(function(p){return p.id === pNovo.id;});
+    if(!pAtual){ atual.push(pNovo); return; }
+    pNovo.subs.forEach(function(sNovo){
+      if(!pAtual.subs.find(function(s){return s.id === sNovo.id;})) pAtual.subs.push(sNovo);
+    });
+  });
+  setTec(atual);
   save("cron:tecnico-seed", TEC_SEED);
+}
+/* Seed do roteiro de escrita nas metas mensais.
+   Só grava num mês que ainda não existe no aparelho. Nunca sobrescreve. */
+const METAS_SEED = "2026-07-28-axial";
+const ROTEIRO = {
+  "2026-08":["Berggruen: decidir o ciclo (2026 ou 2027)",
+             "Ler os 8 ensaios-modelo do edital e fichar o gênero",
+             "Escrever a tese em 1 parágrafo e o argumento em 1 página"],
+  "2026-09":["Fixar e testar o conceito próprio (deslocamento axial)",
+             "Artigo 1 (conatus e predição algorítmica): tese + periódico-alvo"],
+  "2026-10":["Levantar fontes primárias sobre pentecostalismo no Sul global",
+             "Ensaio: redigir movimentos 1 e 2 (diagnóstico + modelo luterano)"],
+  "2026-12":["Ensaio: redigir movimento 3 (deslocamento do eixo)",
+             "Artigo 1: levantamento bibliográfico no padrão Conatus Filosófico"],
+  "2027-01":["Ensaio: redigir movimentos 4 e 5 (dois reinos + assentamento imanente)",
+             "Artigo 1: redigir Janela 1"],
+  "2027-02":["Ensaio: cortar para 8.000 palavras em registro ensaístico",
+             "Artigo 1: redigir Janelas 2 e 3"],
+  "2027-03":["Definir tradutor humano para o inglês e orçar",
+             "Confirmar a referência exigida pelo formulário (nome + e-mail)"],
+  "2027-04":["Tradução e revisão de estilo em inglês",
+             "Artigo 1: submeter"],
+  "2027-05":["Montar PDF cego (sem dados pessoais, máx. 1 MB) + declaração de IA"],
+  "2027-06":["Submeter o ensaio ao Berggruen"]
+};
+if(LS("cron:metas-seed", null) !== METAS_SEED){
+  Object.keys(ROTEIRO).forEach(function(k){
+    if(localStorage.getItem("cron:metas:"+k) !== null) return;
+    save("cron:metas:"+k, ROTEIRO[k].map(function(t,i){
+      return {id:"seed-"+k+"-"+i, t:t, done:false};
+    }));
+  });
+  save("cron:metas-seed", METAS_SEED);
 }
 renderOrdo(); renderHoje(); renderSemana();
 checkUpdate();
