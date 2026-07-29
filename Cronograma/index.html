@@ -204,6 +204,43 @@
   .tguia .g-links a{font-size:12.5px;color:var(--ink);text-decoration:none;border:1px solid var(--gold-soft);
     background:var(--card);border-radius:9px;padding:9px 11px;}
   .tguia .g-links a:active{background:#EFEDE2;}
+  /* Paineis: esteira, leituras, candidatura, concursos, tecnico */
+  details.proj{padding:0;}
+  details.proj > summary{list-style:none;cursor:pointer;padding:11px 12px;}
+  details.proj > summary::-webkit-details-marker{display:none;}
+  details.proj .proj-head{margin-bottom:0;}
+  details.proj .proj-name::before{content:"\203A";display:inline-block;margin-right:8px;
+    color:var(--muted);transition:transform .18s;}
+  details.proj[open] .proj-name::before{transform:rotate(90deg);}
+  .proj-body{padding:0 12px 8px;}
+  .proj-note{font-size:11.5px;line-height:1.45;color:var(--muted);
+    border-top:1px solid var(--line);padding:8px 0 2px;}
+  .del-proj{display:block;width:100%;text-align:left;background:none;border:none;
+    color:var(--line-strong);font-family:var(--sans);font-size:11px;padding:2px 2px 2px 30px;cursor:pointer;}
+  .del-proj:active{color:var(--crimson);}
+  .task-live{font-size:12px;color:var(--gold);font-family:var(--display);font-style:italic;margin-top:5px;}
+  .trilho-nota{font-size:12.5px;line-height:1.45;color:var(--ink-soft);background:var(--paper-2);
+    border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:16px;}
+  .trilho-nota b{font-family:var(--display);color:var(--ink);}
+  .ptr{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:4px 9px;
+    background:var(--paper-2);border:1px solid var(--line);border-radius:20px;
+    font-family:var(--sans);font-size:11px;color:var(--ink-soft);cursor:pointer;}
+  .ptr:active{background:#EAE7DC;}
+  .ptr .seta{color:var(--gold);font-size:12px;line-height:1;}
+  .realce{animation:pisca 1.6s ease-out;}
+  @keyframes pisca{0%,55%{box-shadow:0 0 0 2px var(--gold-line), var(--shadow);}
+    100%{box-shadow:var(--shadow);}}
+  .reg-mes{font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-soft);margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line);}
+  .reg-mes:first-child{margin-top:2px;}
+  .reg-i{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px;line-height:1.4;}
+  .reg-i:first-of-type{border-top:none;}
+  .reg-d{flex:none;font-family:var(--display);font-weight:700;color:var(--gold);min-width:22px;text-align:right;}
+  .reg-t{flex:1;color:var(--ink);}
+  .reg-t span{display:block;font-size:11px;color:var(--muted);margin-top:1px;}
+  .reg-t i{font-style:normal;color:var(--crimson);}
+  .backup-aviso{margin-top:8px;font-size:11px;color:var(--muted);}
+  .backup-aviso.velho{color:var(--crimson);}
 </style>
 </head>
 <body>
@@ -213,32 +250,36 @@
   <div class="switch" role="tablist">
     <button id="tab-hoje" class="active" onclick="setView('hoje')" role="tab">Hoje</button>
     <button id="tab-semana" onclick="setView('semana')" role="tab">Semana</button>
+    <button id="tab-trilhos" onclick="setView('trilhos')" role="tab">Trilhos</button>
   </div>
   <main id="view-hoje"></main>
   <main id="view-semana" hidden></main>
+  <main id="view-trilhos" hidden></main>
   <div class="foot">
     <span id="phase-note"></span><br>
     <button onclick="limparHoje()">Limpar o que marquei hoje</button><br>
     <button onclick="exportarDados()">Exportar backup</button>
     <button onclick="document.getElementById('importFile').click()">Importar backup</button>
     <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importarDados(this)"><br>
+    <span class="backup-aviso" id="backup-aviso"></span><br>
     <span id="ver"></span>
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-07-28-02";
+const APP_VERSION = "2026-07-29-02";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
        {id:"seg-min", t:"Manutenção ministerial", n:"Pendências da igreja, mensagens, o que ficou aberto"},
        {id:"seg-plan", t:"Planejar a semana", n:"Definir a tarefa principal de cada dia antes que a semana comece", tag:"âncora"},
-       {id:"seg-acad", t:"Produção acadêmica leve", n:"Reabrir o artigo, uma ideia, um parágrafo"},
+       {id:"seg-acad", t:"Produção acadêmica leve", n:"Reabrir o artigo, uma ideia, um parágrafo", link:"leituras"},
        {id:"seg-toefl", t:"TOEFL · Reading", n:"Use o TestReady, seção Reading Practice. Aproximadamente 20 min", tag:"pulverizado"}
      ], uber:"Cowork quando der, nas duas janelas (~6–7h e ~14h30)"},
   2:{nome:"Terça", eixo:"Internacionalização — produção", anchors:[],
      tasks:[
-       {id:"ter-art", t:"Artigo: escrever e expandir", n:"Bloco principal do dia. Aumentar páginas do recorte ativo"},
-       {id:"ter-pos", t:"Pós-doc", n:"Research statement, candidaturas, prazos"},
+       {id:"ter-art", t:"Artigo: escrever e expandir", n:"Bloco principal do dia. Aumentar páginas do recorte ativo", link:"pipeline"},
+       {id:"ter-phd", t:"PhD no exterior", n:"Alvos por polo, SOP, writing sample, cartas, contato com docentes", link:"candidatura"},
+       {id:"ter-pos", t:"Pós-doutorado", n:"FAPERJ (janela de dezembro a janeiro), FAPESP e exterior", link:"posdoc"},
        {id:"ter-toefl", t:"TOEFL · Listening", n:"Use o TestReady, seção Listening Practice, com o método dos 4 quadrantes. Aproximadamente 20 min", tag:"pulverizado"}
      ], uber:"Cowork quando der. Na fase de sprint: Momento 1 da EBD aqui"},
   3:{nome:"Quarta", eixo:"Preparo Joel de Oliveira", anchors:[],
@@ -257,13 +298,14 @@ const DIAS = {
   5:{nome:"Sexta", eixo:"Aula + escrita acadêmica",
      anchors:[{t:"7h–10h30", n:"Aula no Joel (3º ano) — preparada na quarta"}],
      tasks:[
-       {id:"sex-esc", t:"Escrita acadêmica", n:"Na janela livre 11h30–15h00. O artigo é o dono do dia até sair", tag:"âncora"},
+       {id:"sex-esc", t:"Escrita acadêmica", n:"Na janela livre 11h30–15h00. O artigo é o dono do dia até sair", tag:"âncora", link:"pipeline"},
        {id:"sex-toefl", t:"TOEFL · Speaking + simulado", n:"Use o TestReady, seção Speaking Practice (esqueleto PREP). A cada 2–3 semanas, troque por 1 simulado completo no Magoosh. Aproximadamente 30 min", tag:"pulverizado"}
      ], uber:"Depois das 15h. Cowork quando der"},
   6:{nome:"Sábado", eixo:"Consolidação, pós-doc & técnico", anchors:[], tecnico:true,
      tasks:[
-       {id:"sab-agentes", t:"Processar o que os agentes trouxeram", n:"Chamadas de publicação, vagas de pós-doc e concursos da semana"},
-       {id:"sab-consol", t:"Consolidar a semana", n:"O que andou, o que fica para a próxima"}
+       {id:"sab-agentes", t:"Processar o que os agentes trouxeram", n:"Chamadas de publicação, vagas de pós-doc e concursos da semana", link:"concursos"},
+       {id:"sab-consol", t:"Consolidar a semana", n:"O que andou, o que fica para a próxima", link:"pipeline"},
+       {id:"sab-tec", t:"Bloco técnico", n:"Dar andamento a 1 projeto: Sites, Canais dark, Ordo App, Workshop", link:"tecnico"}
      ], uber:"Cowork quando der, nas duas janelas"},
   0:{nome:"Domingo", eixo:"EBD, igreja & descanso",
      anchors:[{t:"9h00", n:"Escola Bíblica Dominical — IBFC"}],
@@ -319,6 +361,256 @@ const TECNICO_DEFAULT = [
     {id:"s45", t:"Montar folha do aluno", st:0},
     {id:"s46", t:"Definir data e abrir inscrições (turma piloto)", st:0}
   ]}
+];
+const PIPELINE_DEFAULT = [
+  {id:"a01", t:"Ago · A consciência em Lutero e Spinoza", mes:"2026-08", n:"JAAR ou MTSR. Writing sample do Polo B. Obriga Asad, Mahmood, Sullivan e Hurd.", subs:[
+    {id:"a01-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a01-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a01-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a01-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a01-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a01-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a02", t:"Set · A categoria de \"religião\" e a primeira modernidade", mes:"2026-09", n:"MTSR ou Numen (Brill). Spinoza e Hobbes. Obriga Nongbri, Masuzawa, Harrison e J. Z. Smith.", subs:[
+    {id:"a02-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a02-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a02-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a02-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a02-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a02-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a03", t:"Out · A genealogia do secular e a Reforma", mes:"2026-10", n:"Religion ou JAAR. Taylor lido a partir de Lutero. Obriga Taylor e Casanova.", subs:[
+    {id:"a03-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a03-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a03-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a03-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a03-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a03-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a04", t:"Nov · O método exegético em Lutero", mes:"2026-11", n:"MTSR ou Síntese. Mês do TOEFL e das submissões: peça sem leitura nova. Também é carta de entrevista.", subs:[
+    {id:"a04-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a04-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a04-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a04-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a04-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a04-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a05", t:"Dez · Interpretação bíblica em Lutero e Spinoza", mes:"2026-12", n:"Religion ou Journal of Early Modern Studies. Obriga Sheehan.", subs:[
+    {id:"a05-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a05-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a05-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a05-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a05-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a05-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a06", t:"Jan · Tolerância e libertas philosophandi", mes:"2027-01", n:"JAAR ou Intellectual History Review. Crítica da liberdade religiosa.", subs:[
+    {id:"a06-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a06-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a06-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a06-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a06-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a06-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a07", t:"Fev · Spinoza, eco do luteranismo?", mes:"2027-02", n:"JAAR ou Kriterion. Em chave genealogica, não de influência. Schmitt, Blumenberg e Löwith.", subs:[
+    {id:"a07-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a07-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a07-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a07-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a07-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a07-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a08", t:"Mar · Aspectos ético-políticos do comentário aos Gálatas", mes:"2027-03", n:"Journal of Religious Ethics. Herdt, Stout e Schweiker. Embrião do pós-doc. Absorve \"a questão ética no luteranismo\".", subs:[
+    {id:"a08-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a08-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a08-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a08-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a08-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a08-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a09", t:"Abr · A teologia da glória como crítica da ideologia", mes:"2027-04", n:"Numen ou International Journal of Public Theology. Dobradinha com o ensaio Berggruen, que está nas metas do mês.", subs:[
+    {id:"a09-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a09-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a09-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a09-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a09-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a09-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a10", t:"Mai · Ebeling: a palavra como evento e os atos de fala", mes:"2027-05", n:"Síntese ou Estudos Teológicos. Absorve a ideia de \"proclamação\".", subs:[
+    {id:"a10-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a10-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a10-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a10-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a10-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a10-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a11", t:"Jun · As faculdades da alma de Aristóteles em Lutero", mes:"2027-06", n:"Cadernos de Filosofia Alemã ou Analytica.", subs:[
+    {id:"a11-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a11-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a11-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a11-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a11-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a11-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a12", t:"Jul · Spinoza, um filósofo do processo (E1p34)", mes:"2027-07", n:"Cadernos Espinosanos ou Journal of Early Modern Studies. Absorve \"conatus e agência\".", subs:[
+    {id:"a12-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a12-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a12-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a12-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a12-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a12-6", t:"Pronto para submeter", st:0}
+  ]}
+];
+const LEITURAS_DEFAULT = [
+  {id:"l1", t:"A · Clássicos fundadores", n:"Leitura seletiva e boas sínteses. Servem de pano de fundo que a virada crítica problematiza.", subs:[
+    {id:"l1-1", t:"Durkheim · As formas elementares da vida religiosa", st:0},
+    {id:"l1-2", t:"Weber · A ética protestante; Sociologia da religião (ponte natural)", st:0},
+    {id:"l1-3", t:"Otto · O sagrado", st:0},
+    {id:"l1-4", t:"James · As variedades da experiência religiosa", st:0},
+    {id:"l1-5", t:"Eliade · O sagrado e o profano (e por que é criticado)", st:0},
+    {id:"l1-6", t:"W. C. Smith · The Meaning and End of Religion", st:0}
+  ]},
+  {id:"l2", t:"B · A virada crítica", n:"Prioridade máxima. Se o tempo for escasso, é aqui que ele deve ser investido.", subs:[
+    {id:"l2-1", t:"J. Z. Smith · Imagining Religion; Map Is Not Territory (inegociável)", st:0},
+    {id:"l2-2", t:"Asad · Genealogies of Religion + introdução de Formations (inegociável)", st:0},
+    {id:"l2-3", t:"Masuzawa · The Invention of World Religions", st:0},
+    {id:"l2-4", t:"Nongbri · Before Religion", st:0},
+    {id:"l2-5", t:"McCutcheon · Manufacturing Religion; Critics, Not Caretakers", st:0},
+    {id:"l2-6", t:"Geertz · Religion as a Cultural System (dominar o debate Geertz–Asad)", st:0}
+  ]},
+  {id:"l3", t:"C · O debate sobre o secular", n:"Sua ponte mais forte: é onde Lutero e Spinoza rendem de imediato.", subs:[
+    {id:"l3-1", t:"Taylor · A Secular Age, ao menos introdução e partes I e V (inegociável)", st:0},
+    {id:"l3-2", t:"Casanova · Public Religions in the Modern World", st:0},
+    {id:"l3-3", t:"Mahmood · Politics of Piety; Religious Difference in a Secular Age", st:0},
+    {id:"l3-4", t:"Harrison · The Territories of Science and Religion", st:0}
+  ]},
+  {id:"l4", t:"D · Ética religiosa", n:"Lar disciplinar do pós-doc. Periódico próprio: Journal of Religious Ethics.", subs:[
+    {id:"l4-1", t:"Stout · Ethics After Babel; Democracy and Tradition", st:0},
+    {id:"l4-2", t:"Herdt · Putting On Virtue", st:0},
+    {id:"l4-3", t:"Schweiker · ética teológica comparada", st:0},
+    {id:"l4-4", t:"Stalnaker · Overcoming Our Evil", st:0}
+  ]},
+  {id:"l5", t:"E · Correntes contemporâneas", n:"Panorama, leitura leve. Reconhecer os contornos para não soar datado.", subs:[
+    {id:"l5-1", t:"Orsi · religião vivida", st:0},
+    {id:"l5-2", t:"Morgan · cultura material e visual da religião", st:0},
+    {id:"l5-3", t:"Boyer · Religion Explained", st:0},
+    {id:"l5-4", t:"Chidester e Richard King · crítica pós-colonial do campo", st:0},
+    {id:"l5-5", t:"Douglas e Turner · vocabulário ritual básico", st:0}
+  ]},
+  {id:"l6", t:"F · Infraestrutura e periódicos", n:"Contínuo e em paralelo a tudo.", subs:[
+    {id:"l6-1", t:"Guide to the Study of Religion (Braun e McCutcheon)", st:0},
+    {id:"l6-2", t:"Critical Terms for Religious Studies (Mark C. Taylor)", st:0},
+    {id:"l6-3", t:"Sharpe · Comparative Religion: A History", st:0},
+    {id:"l6-4", t:"Acompanhar sumários e resenhas: JAAR, MTSR, Religion e JRE", st:0}
+  ]}
+];
+const CANDIDATURA_DEFAULT = [
+  {id:"c1", t:"Alvos e fit", n:"A decisão não é do comitê, é dos docentes da área. Fit é correspondência concreta, não retórica.", subs:[
+    {id:"c1-1", t:"Montar lista de 5 a 8 alvos, marcando cada um como Polo A ou Polo B", st:0},
+    {id:"c1-2", t:"Identificar a área ou subcampo correto em cada programa", st:0},
+    {id:"c1-3", t:"Listar 2 a 4 docentes por área e ler 2 a 3 textos recentes de cada", st:0},
+    {id:"c1-4", t:"Identificar o tema transversal que clica com vários docentes ao mesmo tempo", st:0}
+  ]},
+  {id:"c2", t:"Statement of Purpose", n:"Documento decisivo. Coerência entre biografia e interesse acadêmico, com pergunta fresh.", subs:[
+    {id:"c2-1", t:"Reduzir a uma pergunta central nítida, no primeiro terço da carta", st:0},
+    {id:"c2-2", t:"Reforçar o enquadramento \"expansão, não repetição\"", st:0},
+    {id:"c2-3", t:"Garantir what + why para cada docente citado", st:0},
+    {id:"c2-4", t:"Decidir o caso Whitford (ler o livro ou rebaixar a menção)", st:0},
+    {id:"c2-5", t:"Derivar a segunda versão da SOP para o Polo B, mais analítica", st:0}
+  ]},
+  {id:"c3", t:"Writing sample", n:"Quase tão decisivo quanto a SOP. Precisa tratar do mesmo tema da carta.", subs:[
+    {id:"c3-1", t:"Polo A: Christian Patriotism from Luther (coerente com a SOP da Baylor)", st:0},
+    {id:"c3-2", t:"Polo B: A consciência em Lutero e Spinoza (peça de agosto na esteira)", st:0},
+    {id:"c3-3", t:"Revisão profissional nativa de inglês (eliminário na prática)", st:0}
+  ]},
+  {id:"c4", t:"Cartas de recomendação", n:"De quem pode avaliar capacidade de pesquisa, não vocação ministerial.", subs:[
+    {id:"c4-1", t:"Solicitar a Christine Helmer com antecedência (recomendante-chave)", st:0},
+    {id:"c4-2", t:"Selecionar mais 2 que atestem pesquisa (UFRJ e UERJ)", st:0},
+    {id:"c4-3", t:"Evitar que o conjunto dependa de cartas eclesiásticas", st:0}
+  ]},
+  {id:"c5", t:"Contato prévio", n:"É você, candidato, quem toma a iniciativa de escrever.", subs:[
+    {id:"c5-1", t:"Escrever a docentes-alvo mencionando o vínculo com Helmer e o Logic & Luther", st:0},
+    {id:"c5-2", t:"Avaliar visita a campus onde for viável", st:0}
+  ]},
+  {id:"c6", t:"Itens formais", n:"Confirmar programa a programa. Nada aqui é genérico.", subs:[
+    {id:"c6-1", t:"Confirmar exigência e nota mínima de TOEFL por programa", st:0},
+    {id:"c6-2", t:"Verificar CV, transcripts, número de cartas e taxas em cada portal", st:0},
+    {id:"c6-3", t:"Revisão profissional final de todos os textos submetidos", st:0}
+  ]},
+  {id:"c7", t:"Entrevista", n:"Três perguntas já pegaram você na Baylor. Falta formulação ensaiada, não conteúdo.", subs:[
+    {id:"c7-1", t:"Ensaiar em inglês a defesa do segundo doutorado, com a versão de uma frase", st:0},
+    {id:"c7-2", t:"Preparar 2 a 3 leituras para discutir a fundo (Asad ou Taylor; Chaves; Yadav)", st:0},
+    {id:"c7-3", t:"Formular o programa coerente que reúne artigo, pós-doc e Lutero–Spinoza", st:0},
+    {id:"c7-4", t:"Preparar 2 a 3 perguntas para fazer aos entrevistadores", st:0}
+  ]}
+];
+const CONCURSOS_DEFAULT = [
+  {id:"k1", t:"Provas", n:"Prontidão contínua, não calendário: os editais surgem em datas imprevisíveis.", subs:[
+    {id:"k1-1", t:"Treinar dissertação cronometrada de 4h (a escrita é o portão eliminatório)", st:0},
+    {id:"k1-2", t:"Montar 3 a 4 aulas de 50 a 60 min nas subareas (didática, peso 3)", st:0},
+    {id:"k1-3", t:"Preparar a arguição: defender memorial e plano de trabalho", st:0}
+  ]},
+  {id:"k2", t:"Documentação", n:"Títulos têm peso 3, e a produção dos últimos 8 anos tem peso 4, o mais alto do edital.", subs:[
+    {id:"k2-1", t:"Montar memorial em PDF único (o edital não aceita links alteráveis)", st:0},
+    {id:"k2-2", t:"Organizar a documentação integral de títulos", st:0},
+    {id:"k2-3", t:"Documentar vínculos a grupos e eventos (Colóquio UERJ; Leibniz e Spinoza UFRJ)", st:0}
+  ]},
+  {id:"k3", t:"Plano de trabalho", n:"O conteúdo muda a cada edital; o que se reaproveita é a estrutura.", subs:[
+    {id:"k3-1", t:"Montar a versão-base, seções 2 a 5", st:0},
+    {id:"k3-2", t:"Deixar a seção 1 e as ementas para re-sintonizar por edital", st:0},
+    {id:"k3-3", t:"Enviar o modelo detalhado para refinar o template", st:0}
+  ]},
+  {id:"k4", t:"Livro da tese", n:"O edital pontua livros e capítulos, e a tese já é a matéria-prima.", subs:[
+    {id:"k4-1", t:"Avaliar a conversão da tese em livro", st:0},
+    {id:"k4-2", t:"Definir editora e prazo", st:0}
+  ]}
+];
+const POSDOC_DEFAULT = [
+  {id:"pd1", t:"FAPERJ · Pós-doutorado Nota 10 (PDR-10)", n:"Via principal. Chamada anual: em 2025 o lançamento foi em 10/12, com submissão até 19/01/26 e resultado final a partir de 21/05/26. Bolsa de R$ 6.500 mais R$ 1.000 de bancada, 12 meses renováveis. Seu vínculo temporário na SEEDUC está entre as exceções do edital, e os dois artigos publicados como primeiro autor cumprem a elegibilidade.", subs:[
+    {id:"pd1-1", t:"Conferir o edital novo quando sair (dezembro): datas e limite de titulação", st:0},
+    {id:"pd1-2", t:"Identificar supervisor elegível: vínculo no RJ, PPG conceito 4 a 7, e PQ 1, 2 ou Sênior do CNPq ou Cientista do Nosso Estado", st:0},
+    {id:"pd1-3", t:"Fechar acordo com o supervisor (é ele quem submete no SisFAPERJ)", st:0},
+    {id:"pd1-4", t:"Separar os dois artigos de primeiro autor e anotar os DOI", st:0},
+    {id:"pd1-5", t:"Atualizar o Lattes (a avaliação cobre os últimos 5 anos)", st:0},
+    {id:"pd1-6", t:"Redigir o projeto no formato do edital: resumo, abstract, introdução, justificativa, objetivos, método, resultados esperados, bibliografia", st:0},
+    {id:"pd1-7", t:"Carta de anuência do coordenador do PPG", st:0},
+    {id:"pd1-8", t:"Termo de anuência do dirigente máximo da instituição (Anexo 4)", st:0},
+    {id:"pd1-9", t:"Declaração de responsabilidade (Anexo 3), marcando o vínculo docente temporário", st:0},
+    {id:"pd1-10", t:"Cadastro no SisFAPERJ atualizado", st:0},
+    {id:"pd1-11", t:"Ata de defesa ou diploma digitalizado", st:0},
+    {id:"pd1-12", t:"Submeter dentro da janela", st:0}
+  ]},
+  {id:"pd2", t:"FAPESP · Bolsa de Pós-Doutorado (condicional)", n:"Fluxo contínuo o ano todo, análise de cerca de 75 dias. Mas a bolsa exige dedicação exclusiva sem vínculo empregatício, e supervisor e instituição sede em São Paulo. Só é viável com licença e mudança de estado. Decida a viabilidade antes de escrever qualquer coisa.", subs:[
+    {id:"pd2-1", t:"Decidir se licença e mudança de estado são viáveis (porta de entrada)", st:0},
+    {id:"pd2-2", t:"Identificar supervisor com vínculo empregatício em instituição de São Paulo", st:0},
+    {id:"pd2-3", t:"Escolher grupo distinto do da UFRJ (conta como prioridade no desempate)", st:0},
+    {id:"pd2-4", t:"Súmula curricular no modelo FAPESP", st:0},
+    {id:"pd2-5", t:"Histórico escolar oficial do doutorado", st:0},
+    {id:"pd2-6", t:"Plano de Gestão de Dados (até 2 páginas)", st:0},
+    {id:"pd2-7", t:"Plano de desenvolvimento do pós-doutorado (modelo do SAGe)", st:0},
+    {id:"pd2-8", t:"Prever estágio BEPE no exterior (quesito positivo; casa com Helmer)", st:0},
+    {id:"pd2-9", t:"Cadastro no SAGe atualizado", st:0}
+  ]},
+  {id:"pd3", t:"Pós-doc no exterior", n:"Cresce do embrião de Gálatas, que é a peça de março de 2027 na esteira. Escreve-se o projeto uma vez e ele serve aos dois lados.", subs:[
+    {id:"pd3-1", t:"Extrair o projeto do artigo de Gálatas (amor, lei e justiça)", st:0},
+    {id:"pd3-2", t:"Mapear programas e supervisores em religious ethics", st:0},
+    {id:"pd3-3", t:"Alinhar aos interlocutores: Herdt, Stout e Schweiker", st:0},
+    {id:"pd3-4", t:"Confirmar o Journal of Religious Ethics como veículo do artigo", st:0}
+  ]},
+  {id:"pd4", t:"Documentos comuns", n:"Servem aos três caminhos e também ao memorial de concurso.", subs:[
+    {id:"pd4-1", t:"Lattes atualizado e revisado", st:0},
+    {id:"pd4-2", t:"Currículo em inglês", st:0},
+    {id:"pd4-3", t:"Ata de defesa e diploma digitalizados", st:0},
+    {id:"pd4-4", t:"Projeto de pesquisa em versão português e inglesa", st:0},
+    {id:"pd4-5", t:"Lista de publicações com DOI", st:0}
+  ]}
+];
+const PAINEIS = [
+  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"12 peças · ago/26 a jul/27", seed:PIPELINE_DEFAULT,   aberto:true},
+  {id:"leituras",   key:"cron:leituras",   titulo:"Leituras · religious studies", sub:"mapa do campo", seed:LEITURAS_DEFAULT,   aberto:false},
+  {id:"candidatura",key:"cron:candidatura",titulo:"Doutorado no exterior (PhD)", sub:"dossê, cartas e entrevista", seed:CANDIDATURA_DEFAULT, aberto:false},
+  {id:"posdoc",     key:"cron:posdoc",     titulo:"Pós-doutorado",       sub:"FAPERJ, FAPESP e exterior", seed:POSDOC_DEFAULT, aberto:false},
+  {id:"concursos",  key:"cron:concursos",  titulo:"Concursos no Brasil",  sub:"prontidão contínua", seed:CONCURSOS_DEFAULT,  aberto:false},
+  {id:"tecnico",    key:"cron:tecnico",    titulo:"Bloco técnico",       sub:"projetos", seed:TECNICO_DEFAULT,    aberto:false}
 ];
 const now = new Date();
 const todayIdx = now.getDay();
@@ -469,28 +761,30 @@ function renderHoje(){
     html+=`<div class="toefl-fase">TOEFL · faltam ${f.dias} dia${f.dias===1?"":"s"} (~${f.sem} sem) · <b>${f.fase}</b><span>${f.foco}</span></div>`;
   }}
   html+=`<ul class="tasks">`;
+  const pc=pecaDoMes();
   d.tasks.forEach(t=>{
     const done=!!checks[t.id];
+    let extra="";
+    if(t.link==="pipeline" && pc){
+      extra=`<div class="task-live">${pc.proxima?"a seguir \u00b7 ":""}${escapeHtml(pc.curto)} \u00b7 ${escapeHtml(pc.etapa)}</div>`;
+    }
+    if(t.link){
+      const P=painelDef(t.link);
+      const alvo=(t.link==="pipeline"&&pc)?`'${pc.id}'`:"null";
+      extra+=`<button class="ptr" onclick="event.stopPropagation();irAoTrilho('${t.link}',${alvo})">${P?P.titulo:t.link}<span class="seta">\u203A</span></button>`;
+    }
     html+=`<li class="task ${done?'done':''}" onclick="toggleCheck('${t.id}')">
       <span class="box">${CHK}</span>
-      <div class="task-body"><div class="task-title">${t.t}</div>${t.n?`<div class="task-note">${t.n}</div>`:""}</div>
+      <div class="task-body"><div class="task-title">${t.t}</div>${t.n?`<div class="task-note">${t.n}</div>`:""}${extra}</div>
       ${tag(t.tag)}</li>`;
   });
   html+=`</ul>`;
-  const subhead = d.tecnico
-    ? `projetos · prioridade de hoje`
-    : `se sobrar tempo · dar andamento a 1 projeto`;
-  const tecAberto = d.tecnico ? LS("cron:tecnico-open", true) : LS("cron:tecnico-open", false);
-  html+=`<details class="tecbloco" ${tecAberto?"open":""} ontoggle="save('cron:tecnico-open', this.open)">
-    <summary><span class="tb-t">Bloco técnico</span><span class="tb-sub">${subhead}</span></summary>
-    <div class="tb-body"><div id="tecnico"></div></div>
-  </details>`;
   html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
   html+=`<div id="metas-wrap"></div>`;
   html+=`<div class="shead">Datas importantes</div><div id="eventos"></div>`;
   document.getElementById("view-hoje").innerHTML=html;
-  renderMetas(); renderEventos(); renderTecnico();
+  renderMetas(); renderEventos();
 }
 /* ---- Metas: navegação por mês, meses novos nascem vazios ---- */
 const MES_INICIO = "2026-07";
@@ -618,41 +912,140 @@ function dateEv(i,v){const ref=sortedRef(i);const e=getEventos();const j=e.findI
   if(j>-1&&v){e[j].data=v;setEventos(e);renderEventos();}}
 function delEv(i){const ref=sortedRef(i);const e=getEventos().filter(x=>x.id!==ref.id);setEventos(e);renderEventos();}
 function addEv(){const e=getEventos();e.push({id:"e"+Date.now(),t:"",data:ymd(now)});setEventos(e);renderEventos();}
-/* ---- Bloco técnico: projetos com estado persistente (sem data) ---- */
-function getTec(){return LS("cron:tecnico", JSON.parse(JSON.stringify(TECNICO_DEFAULT)));}
-function setTec(p){save("cron:tecnico",p);}
+/* ---- Painéis de projetos: estado persistente, sem data ---- */
+function painelDef(pid){ for(var i=0;i<PAINEIS.length;i++){ if(PAINEIS[i].id===pid) return PAINEIS[i]; } return null; }
+function getProjs(pid){ var P=painelDef(pid); return LS(P.key, JSON.parse(JSON.stringify(P.seed))); }
+function setProjs(pid,v){ save(painelDef(pid).key, v); }
+function getTec(){return getProjs("tecnico");}
+function setTec(p){setProjs("tecnico",p);}
 const ST_LBL=["A fazer","Em andamento","Concluída"];
-function cycleSub(pi,si){const p=getTec();const s=p[pi].subs[si];s.st=(s.st+1)%3;setTec(p);renderTecnico();}
-function editProj(i,t){const p=getTec();p[i].t=t.trim()||p[i].t;setTec(p);}
-function editSub(pi,si,t){const p=getTec();p[pi].subs[si].t=t.trim()||p[pi].subs[si].t;setTec(p);}
-function delProj(i){const p=getTec();p.splice(i,1);setTec(p);renderTecnico();}
-function delSub(pi,si){const p=getTec();p[pi].subs.splice(si,1);setTec(p);renderTecnico();}
-function addProj(){const p=getTec();p.push({id:"p"+Date.now(),t:"",subs:[]});setTec(p);renderTecnico();
-  const b=document.querySelectorAll("#tecnico .proj-name");if(b.length)b[b.length-1].focus();}
-function addSub(pi){const p=getTec();p[pi].subs.push({id:"s"+Date.now(),t:"",st:0});setTec(p);renderTecnico();
-  const b=document.querySelectorAll(`#tecnico .proj[data-pi="${pi}"] .sub-text`);if(b.length)b[b.length-1].focus();}
-function renderTecnico(){
-  const box=document.getElementById("tecnico"); if(!box)return;
-  const projs=getTec(); let h="";
-  projs.forEach((p,pi)=>{
-    const total=p.subs.length, feitas=p.subs.filter(s=>s.st===2).length;
-    const emAnd=p.subs.some(s=>s.st===1);
-    h+=`<div class="proj${emAnd?" ativo":""}" data-pi="${pi}">
-      <div class="proj-head">
-        <div class="proj-name" contenteditable="true" onblur="editProj(${pi},this.innerText)">${escapeHtml(p.t)}</div>
-        <span class="proj-prog">${feitas}/${total}</span>
-        <button class="del" onclick="delProj(${pi})" aria-label="Remover projeto">&times;</button>
-      </div>`;
-    p.subs.forEach((s,si)=>{
-      h+=`<div class="sub st-${s.st}">
-        <span class="st-dot" onclick="cycleSub(${pi},${si})" title="${ST_LBL[s.st]}"></span>
-        <div class="sub-text" contenteditable="true" onblur="editSub(${pi},${si},this.innerText)">${escapeHtml(s.t)}</div>
-        <button class="del" onclick="delSub(${pi},${si})" aria-label="Remover subtarefa">&times;</button></div>`;
-    });
-    h+=`<button class="add-sub" onclick="addSub(${pi})">+ subtarefa</button></div>`;
+function abertos(){return LS("cron:paineis-open",{});}
+function projAberto(pid,id,emAnd){var a=abertos(),k=pid+"/"+id;return (k in a)?a[k]:emAnd;}
+function setProjAberto(pid,id,v){var a=abertos();a[pid+"/"+id]=v;save("cron:paineis-open",a);}
+function cycleSub(pid,pi,si){
+  var p=getProjs(pid),x=p[pi].subs[si];
+  x.st=(x.st+1)%3;
+  setProjs(pid,p);
+  logar(p[pi].t, x.t, x.st);
+  renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
+}
+/* ---- Registro: histórico datado, só cresce ---- */
+function getReg(){return LS("cron:registro", []);}
+function logar(proj, sub, st){
+  if(st===0) return;                       // voltar para "a fazer" não vira histórico
+  var r=getReg();
+  r.push({d:ymd(now), p:proj, s:sub, st:st});
+  if(r.length>600) r=r.slice(-600);
+  save("cron:registro", r);
+}
+function renderRegistro(){
+  var box=document.getElementById("registro"); if(!box) return;
+  var r=getReg();
+  if(!r.length){ box.innerHTML='<div class="vazio">Nada registrado ainda. Cada etapa que voc\u00ea fechar entra aqui com a data.</div>'; return; }
+  var porMes={}, ordem=[];
+  r.slice().reverse().forEach(function(o){
+    var mk=o.d.slice(0,7);
+    if(!porMes[mk]){porMes[mk]=[];ordem.push(mk);}
+    porMes[mk].push(o);
   });
-  h+=`<button class="add-row" onclick="addProj()">+ Novo projeto técnico</button>`;
+  var h="";
+  ordem.forEach(function(mk){
+    h+='<div class="reg-mes">'+mesLabel(mk)+'</div>';
+    porMes[mk].forEach(function(o){
+      h+='<div class="reg-i"><span class="reg-d">'+Number(o.d.slice(8,10))+'</span>'+
+         '<span class="reg-t">'+escapeHtml(o.p)+
+         '<span>'+escapeHtml(o.s)+' \u00b7 '+(o.st===2?'conclu\u00edda':'<i>em andamento</i>')+'</span></span></div>';
+    });
+  });
   box.innerHTML=h;
+}
+/* ---- Navegação: da tarefa do dia para o item certo do trilho ---- */
+function irAoTrilho(pid, projId){
+  save("cron:painel-open:"+pid, true);
+  if(projId) setProjAberto(pid, projId, true);
+  setView("trilhos");
+  setTimeout(function(){
+    var sel = projId ? '#view-trilhos [data-proj="'+pid+'/'+projId+'"]' : '#painel-'+pid;
+    var alvo = document.querySelector(sel) || document.getElementById("painel-"+pid);
+    if(!alvo) return;
+    try{ alvo.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){ alvo.scrollIntoView(); }
+    alvo.classList.add("realce");
+    setTimeout(function(){ alvo.classList.remove("realce"); }, 1700);
+  }, 80);
+}
+function editProj(pid,i,t){var p=getProjs(pid);p[i].t=t.trim()||p[i].t;setProjs(pid,p);}
+function editSub(pid,pi,si,t){var p=getProjs(pid);p[pi].subs[si].t=t.trim()||p[pi].subs[si].t;setProjs(pid,p);}
+function delProj(pid,i){if(!confirm("Remover este item e tudo o que est\u00e1 dentro dele?"))return;
+  var p=getProjs(pid);p.splice(i,1);setProjs(pid,p);renderPainel(pid);sincronizarHoje(pid);}
+function delSub(pid,pi,si){var p=getProjs(pid);p[pi].subs.splice(si,1);setProjs(pid,p);renderPainel(pid);sincronizarHoje(pid);}
+function addProj(pid){var p=getProjs(pid);p.push({id:"p"+Date.now(),t:"",subs:[]});setProjs(pid,p);renderPainel(pid);
+  var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj-name');if(b.length)b[b.length-1].focus();}
+function addSub(pid,pi){var p=getProjs(pid);p[pi].subs.push({id:"s"+Date.now(),t:"",st:0});setProjs(pid,p);renderPainel(pid);
+  var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-pi="'+pi+'"] .sub-text');if(b.length)b[b.length-1].focus();}
+function sincronizarHoje(pid){ if(pid==="pipeline") renderHoje(); }
+function renderPainel(pid){
+  var alvos=document.querySelectorAll('[data-painel="'+pid+'"]');
+  if(!alvos.length) return;
+  var projs=getProjs(pid), h="";
+  projs.forEach(function(p,pi){
+    var total=p.subs.length, feitas=p.subs.filter(function(x){return x.st===2;}).length;
+    var emAnd=p.subs.some(function(x){return x.st===1;});
+    var ab=projAberto(pid,p.id,emAnd);
+    h+='<details class="proj'+(emAnd?" ativo":"")+'" data-pi="'+pi+'" data-proj="'+pid+'/'+p.id+'" '+(ab?"open":"")+
+       ' ontoggle="setProjAberto(\''+pid+'\',\''+p.id+'\',this.open)">'+
+       '<summary class="proj-head">'+
+       '<div class="proj-name" contenteditable="true" onclick="event.stopPropagation()" '+
+       'onblur="editProj(\''+pid+'\','+pi+',this.innerText)">'+escapeHtml(p.t)+'</div>'+
+       '<span class="proj-prog">'+feitas+'/'+total+'</span></summary><div class="proj-body">';
+    if(p.n) h+='<div class="proj-note">'+escapeHtml(p.n)+'</div>';
+    p.subs.forEach(function(x,si){
+      h+='<div class="sub st-'+x.st+'">'+
+         '<span class="st-dot" onclick="cycleSub(\''+pid+'\','+pi+','+si+')" title="'+ST_LBL[x.st]+'"></span>'+
+         '<div class="sub-text" contenteditable="true" onblur="editSub(\''+pid+'\','+pi+','+si+',this.innerText)">'+escapeHtml(x.t)+'</div>'+
+         '<button class="del" onclick="delSub(\''+pid+'\','+pi+','+si+')" aria-label="Remover subtarefa">&times;</button></div>';
+    });
+    h+='<button class="add-sub" onclick="addSub(\''+pid+'\','+pi+')">+ subtarefa</button>'+
+       '<button class="del-proj" onclick="delProj(\''+pid+'\','+pi+')">remover este item</button>'+
+       '</div></details>';
+  });
+  h+='<button class="add-row" onclick="addProj(\''+pid+'\')">+ Novo item</button>';
+  alvos.forEach(function(el){el.innerHTML=h;});
+}
+function renderTecnico(){renderPainel("tecnico");}
+/* Peça do mês corrente na esteira, com a etapa em que ela está */
+function pecaDoMes(){
+  var projs=getProjs("pipeline"), p=null, proxima=false;
+  for(var i=0;i<projs.length;i++){ if(projs[i].mes===monthKey){p=projs[i];break;} }
+  if(!p){ for(var i=0;i<projs.length;i++){ if(projs[i].mes>monthKey){p=projs[i];proxima=true;break;} } }
+  if(!p) return null;
+  var etapa=null;
+  for(var j=0;j<p.subs.length;j++){ if(p.subs[j].st!==2){etapa=p.subs[j].t;break;} }
+  return {id:p.id, curto:p.t.replace(/^[^\u00b7]*\u00b7\s*/,""), mes:p.mes, proxima:proxima,
+          etapa: etapa || "pronta para submeter"};
+}
+function renderTrilhos(){
+  var h='<p class="plate-eyebrow">Trilhos</p>'+
+        '<h1 class="plate-day" style="font-size:30px;margin-bottom:6px;">A esteira</h1>'+
+        '<p class="plate-eixo">Uma pe\u00e7a pronta para submeter por m\u00eas</p>'+
+        '<p class="plate-date">Ler e fichar nas semanas III e IV do m\u00eas anterior. Redigir nas semanas I e II.</p>';
+  var pc=pecaDoMes();
+  if(pc) h+='<div class="anchor"><span class="t">'+(pc.proxima?"a seguir":mesCurto(pc.mes))+'</span>'+
+            '<span class="n">'+escapeHtml(pc.curto)+'<br><span style="color:#B9C0CE;font-size:12px;">'+escapeHtml(pc.etapa)+'</span></span></div>';
+  h+='<div class="trilho-nota"><b>Como usar.</b> Toque no ponto para girar a etapa entre a fazer, em andamento e conclu\u00edda. '+
+     'Mantenha no m\u00e1ximo duas pe\u00e7as em andamento ao mesmo tempo.</div>';
+  PAINEIS.forEach(function(P){
+    var ab=LS("cron:painel-open:"+P.id, P.aberto);
+    h+='<details class="tecbloco" id="painel-'+P.id+'" '+(ab?"open":"")+' ontoggle="save(\'cron:painel-open:'+P.id+'\', this.open)">'+
+       '<summary><span class="tb-t">'+P.titulo+'</span><span class="tb-sub">'+P.sub+'</span></summary>'+
+       '<div class="tb-body"><div data-painel="'+P.id+'"></div></div></details>';
+  });
+  h+='<details class="tecbloco" id="painel-registro" '+(LS("cron:painel-open:registro",false)?"open":"")+
+     ' ontoggle="save(\'cron:painel-open:registro\', this.open)">'+
+     '<summary><span class="tb-t">Registro</span><span class="tb-sub">o que voc\u00ea fechou, por data</span></summary>'+
+     '<div class="tb-body"><div id="registro"></div></div></details>';
+  document.getElementById("view-trilhos").innerHTML=h;
+  PAINEIS.forEach(function(P){renderPainel(P.id);});
+  renderRegistro();
 }
 function renderSemana(){
   let html=`<p class="plate-eyebrow">Visão geral</p><h1 class="plate-day" style="font-size:30px;margin-bottom:16px;">A semana</h1>`;
@@ -667,11 +1060,13 @@ function renderSemana(){
   document.getElementById("view-semana").innerHTML=html;
 }
 function escapeHtml(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function setView(v){const hoje=v==="hoje";
-  document.getElementById("view-hoje").hidden=!hoje;
-  document.getElementById("view-semana").hidden=hoje;
-  document.getElementById("tab-hoje").classList.toggle("active",hoje);
-  document.getElementById("tab-semana").classList.toggle("active",!hoje);}
+function setView(v){
+  ["hoje","semana","trilhos"].forEach(function(k){
+    document.getElementById("view-"+k).hidden = (k!==v);
+    document.getElementById("tab-"+k).classList.toggle("active", k===v);
+  });
+  if(v==="trilhos") renderTrilhos();
+  try{window.scrollTo(0,0);}catch(e){}}
 function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
 /* ---- Backup: exportar / importar todos os dados cron: ---- */
 function coletarDados(){
@@ -683,6 +1078,8 @@ function coletarDados(){
   return d;
 }
 function exportarDados(){
+  save("cron:ultimo-backup", ymd(new Date()));
+  renderBackupAviso();
   const payload={_app:"Cronograma", _versao:APP_VERSION, _data:new Date().toISOString(), dados:coletarDados()};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob);
@@ -734,6 +1131,15 @@ async function checkUpdate(){
     startY=null; armed=false;
   });
 })();
+function renderBackupAviso(){
+  var el=document.getElementById("backup-aviso"); if(!el) return;
+  var u=LS("cron:ultimo-backup", null);
+  if(!u){ el.textContent="Voc\u00ea ainda n\u00e3o exportou nenhum backup."; el.className="backup-aviso velho"; return; }
+  var dias=-diasAte(u);
+  el.textContent = dias<=0 ? "Backup exportado hoje." : "\u00daltimo backup h\u00e1 "+dias+" dia"+(dias===1?"":"s")+".";
+  el.className = "backup-aviso"+(dias>30?" velho":"");
+}
+renderBackupAviso();
 document.getElementById("ver").textContent = "v"+APP_VERSION;
 /* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
    Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
@@ -751,40 +1157,39 @@ if(LS("cron:tecnico-seed", null) !== TEC_SEED){
   setTec(atual);
   save("cron:tecnico-seed", TEC_SEED);
 }
-/* Seed do roteiro de escrita nas metas mensais.
-   Só grava num mês que ainda não existe no aparelho. Nunca sobrescreve. */
-const METAS_SEED = "2026-07-28-axial";
+/* Seed das entregas mensais.
+   Acrescenta por id ausente (n\u00e3o pula o m\u00eas inteiro) e remove o roteiro antigo,
+   que fatiava o ensaio Berggruen em v\u00e1rios meses. */
+const METAS_SEED = "2027-07-esteira-12";
 const ROTEIRO = {
-  "2026-08":["Berggruen: decidir o ciclo (2026 ou 2027)",
-             "Ler os 8 ensaios-modelo do edital e fichar o gênero",
-             "Escrever a tese em 1 parágrafo e o argumento em 1 página"],
-  "2026-09":["Fixar e testar o conceito próprio (deslocamento axial)",
-             "Artigo 1 (conatus e predição algorítmica): tese + periódico-alvo"],
-  "2026-10":["Levantar fontes primárias sobre pentecostalismo no Sul global",
-             "Ensaio: redigir movimentos 1 e 2 (diagnóstico + modelo luterano)"],
-  "2026-12":["Ensaio: redigir movimento 3 (deslocamento do eixo)",
-             "Artigo 1: levantamento bibliográfico no padrão Conatus Filosófico"],
-  "2027-01":["Ensaio: redigir movimentos 4 e 5 (dois reinos + assentamento imanente)",
-             "Artigo 1: redigir Janela 1"],
-  "2027-02":["Ensaio: cortar para 8.000 palavras em registro ensaístico",
-             "Artigo 1: redigir Janelas 2 e 3"],
-  "2027-03":["Definir tradutor humano para o inglês e orçar",
-             "Confirmar a referência exigida pelo formulário (nome + e-mail)"],
-  "2027-04":["Tradução e revisão de estilo em inglês",
-             "Artigo 1: submeter"],
-  "2027-05":["Montar PDF cego (sem dados pessoais, máx. 1 MB) + declaração de IA"],
-  "2027-06":["Submeter o ensaio ao Berggruen"]
+  "2026-08":["Entrega de agosto: A consciência em Lutero e Spinoza, pronta para submeter (JAAR/MTSR)"],
+  "2026-09":["Entrega de setembro: A categoria de \"religião\" e a primeira modernidade, pronta para submeter (MTSR/Numen)"],
+  "2026-10":["Entrega de outubro: A genealogia do secular e a Reforma, pronta para submeter (Religion/JAAR)"],
+  "2026-11":["Entrega de novembro: O método exegético em Lutero, pronto para submeter (MTSR/Síntese)"],
+  "2026-12":["Entrega de dezembro: Interpretação bíblica em Lutero e Spinoza, pronta para submeter (Religion/JEMS)"],
+  "2027-01":["Entrega de janeiro: Tolerância e libertas philosophandi, pronta para submeter (JAAR/IHR)"],
+  "2027-02":["Entrega de fevereiro: Spinoza, eco do luteranismo?, pronta para submeter (JAAR/Kriterion)"],
+  "2027-03":["Entrega de março: Gálatas ético-político, pronto para submeter (Journal of Religious Ethics)"],
+  "2027-04":["Entrega de abril: A teologia da glória como crítica da ideologia, pronta para submeter (Numen/IJPT)",
+           "Ensaio Berggruen: escrever e submeter (meta única do mês)"],
+  "2027-05":["Entrega de maio: Ebeling, a palavra como evento e os atos de fala, pronto para submeter (Síntese/Estudos Teológicos)"],
+  "2027-06":["Entrega de junho: As faculdades da alma de Aristóteles em Lutero, pronto para submeter (Cad. de Filosofia Alemã/Analytica)"],
+  "2027-07":["Entrega de julho: Spinoza, um filósofo do processo (E1p34), pronto para submeter (Cadernos Espinosanos/JEMS)"]
 };
 if(LS("cron:metas-seed", null) !== METAS_SEED){
   Object.keys(ROTEIRO).forEach(function(k){
-    if(localStorage.getItem("cron:metas:"+k) !== null) return;
-    save("cron:metas:"+k, ROTEIRO[k].map(function(t,i){
-      return {id:"seed-"+k+"-"+i, t:t, done:false};
-    }));
+    var atual = LS("cron:metas:"+k, []).filter(function(m){
+      return String(m.id).indexOf("seed-") !== 0;   // limpa o seed antigo, preserva o que voc\u00ea escreveu
+    });
+    ROTEIRO[k].forEach(function(t,i){
+      var id = "art-"+k+"-"+i;
+      if(!atual.some(function(m){return m.id===id;})) atual.push({id:id, t:t, done:false});
+    });
+    save("cron:metas:"+k, atual);
   });
   save("cron:metas-seed", METAS_SEED);
 }
-renderOrdo(); renderHoje(); renderSemana();
+renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();
 checkUpdate();
 </script>
 </body>
