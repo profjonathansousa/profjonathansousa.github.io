@@ -255,6 +255,54 @@
   .reg-t i{font-style:normal;color:var(--crimson);}
   .backup-aviso{margin-top:8px;font-size:11px;color:var(--muted);}
   .backup-aviso.velho{color:var(--crimson);}
+
+  /* ===== Passo 4 — aba Vagas. Prefixo vg- para nao colidir com nada. ===== */
+  .vg-topo{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:12px;}
+  .vg-titulo{font-family:var(--display);font-size:21px;letter-spacing:.2px;}
+  .vg-resumo{font-size:12.5px;color:var(--muted);}
+  .vg-atualizado{font-size:11px;color:var(--muted);margin-left:auto;}
+  .vg-filtros{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;
+              -webkit-overflow-scrolling:touch;}
+  .vg-filtros button{flex:none;background:var(--paper-2);border:1px solid var(--line);
+    color:var(--ink-soft);border-radius:999px;padding:7px 13px;font-size:12.5px;
+    font-family:var(--sans);cursor:pointer;white-space:nowrap;}
+  .vg-filtros button.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2);}
+  .vg-bloco{margin-top:18px;}
+  .vg-bloco > h3{font-family:var(--display);font-size:14px;font-weight:600;color:var(--ink-soft);
+    margin:0 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .vg-bloco > h3 span{font-family:var(--sans);font-size:11px;color:var(--muted);font-weight:400;}
+  .vg-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold-line);
+    border-radius:10px;padding:11px 12px;margin-bottom:9px;box-shadow:var(--shadow);}
+  .vg-card.st-1{border-left-color:var(--gold);}
+  .vg-card.st-2{opacity:.45;border-left-color:var(--line-strong);}
+  .vg-card.st-2 .vg-t{text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  .vg-card.vencida{opacity:.55;border-left-color:var(--crimson);}
+  .vg-card.st-3{display:none;}
+  .vg-t{font-size:14.5px;line-height:1.35;font-weight:600;margin-bottom:2px;}
+  .vg-t a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-strong);}
+  .vg-inst{font-size:12.5px;color:var(--ink-soft);margin-bottom:7px;}
+  .vg-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
+  .vg-tag{font-size:10.5px;line-height:1;padding:4px 7px;border-radius:999px;
+    border:1px solid var(--line);color:var(--muted);background:var(--paper-2);
+    font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .vg-tag.prazo{border-color:var(--gold-line);color:var(--gold);}
+  .vg-tag.urgente{border-color:var(--crimson);color:var(--crimson);font-weight:600;}
+  .vg-tag.venceu{border-color:var(--crimson);background:var(--crimson-soft);color:var(--crimson);font-weight:600;}
+  .vg-tag.nicho{border-color:var(--gold);color:var(--gold);font-weight:600;}
+  .vg-tag.duvida{border-style:dashed;}
+  .vg-tag.novo{border-color:var(--ink);color:var(--ink);font-weight:600;}
+  .vg-acoes{display:flex;gap:6px;}
+  .vg-acoes button{flex:1;background:var(--paper-2);border:1px solid var(--line);color:var(--ink-soft);
+    border-radius:8px;padding:9px 6px;font-size:12.5px;font-family:var(--sans);cursor:pointer;
+    min-height:38px;}
+  .vg-acoes button:active{transform:translateY(1px);}
+  .vg-acoes button.on-sim{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600;}
+  .vg-acoes button.on-nao{background:var(--ink-soft);border-color:var(--ink-soft);color:var(--paper-2);}
+  .vg-vazio{background:var(--paper-2);border:1px dashed var(--line-strong);border-radius:10px;
+    padding:22px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
+  .vg-vazio b{display:block;color:var(--ink-soft);font-family:var(--display);font-size:15px;
+    margin-bottom:6px;font-weight:600;}
 </style>
 </head>
 <body>
@@ -265,10 +313,12 @@
     <button id="tab-hoje" class="active" onclick="setView('hoje')" role="tab">Hoje</button>
     <button id="tab-semana" onclick="setView('semana')" role="tab">Semana</button>
     <button id="tab-trilhos" onclick="setView('trilhos')" role="tab">Trilhos</button>
+    <button id="tab-vagas" onclick="setView('vagas')" role="tab">Vagas</button>
   </div>
   <main id="view-hoje"></main>
   <main id="view-semana" hidden></main>
   <main id="view-trilhos" hidden></main>
+  <main id="view-vagas" hidden></main>
   <div class="foot">
     <span id="phase-note"></span><br>
     <button onclick="limparHoje()">Limpar o que marquei hoje</button><br>
@@ -1300,13 +1350,185 @@ function renderSemana(){
 }
 function escapeHtml(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function setView(v){
-  ["hoje","semana","trilhos"].forEach(function(k){
+  ["hoje","semana","trilhos","vagas"].forEach(function(k){
     document.getElementById("view-"+k).hidden = (k!==v);
     document.getElementById("tab-"+k).classList.toggle("active", k===v);
   });
   if(v==="trilhos") renderTrilhos();
+  if(v==="vagas") vgAbrir();
   try{window.scrollTo(0,0);}catch(e){}}
 function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
+
+/* ==================== PAINEL VAGAS — Passo 4 ====================
+   O ARQUIVO DESCREVE, O APARELHO DECIDE. dados/vagas.json e dados/chamadas.json
+   dizem o que a oportunidade E; a triagem mora separada, em cron:triagem,
+   indexada por id. Nenhuma coleta sobrescreve uma decisao sua — a mesma
+   invariante do esquema v2, sem precisar do mesclarEntrada(), que foi feito
+   para objetivos com sub-itens e nao para um feed.
+
+   ADITIVO: nao le nem escreve nenhuma chave que ja existia.
+   =============================================================== */
+var VG_ST = {NOVO:0, SIM:1, NAO:2, ARQ:3};
+var VG_FILTRO = "abertas";
+var VG_VAGAS = {itens:[]}, VG_CHAMADAS = {itens:[]}, VG_BUSCOU = false;
+
+function vgTriagem(){ return LS("cron:triagem", {}) || {}; }
+function vgSalvarTriagem(t){ save("cron:triagem", t); }
+function vgEstado(id){ var t = vgTriagem()[id]; return t ? (t.st||0) : 0; }
+function vgMarcar(id, st){
+  var t = vgTriagem();
+  if((t[id] && t[id].st) === st) st = VG_ST.NOVO;   /* tocar de novo desmarca */
+  t[id] = {st:st, quando:ymd(new Date())};
+  vgSalvarTriagem(t);
+  vgRender();
+}
+function vgEsc(s){ return String(s==null?"":s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* Os criterios_*.json sao ASCII de proposito — lidos por Python, editados a
+   mao, comparados sem acento. O que aparece na tela e portugues, entao a
+   traducao acontece aqui, na borda. */
+var VG_LBL = {
+  "pos-doc":"pós-doc", "senior":"sênior",
+  "Alto":"alto", "Medio":"médio", "Baixo":"baixo",
+  "Aberto":"aberto", "Restrito":"restrito",
+  "Provavel c/ patrocinio":"provável c/ patrocínio",
+  "dossie":"dossiê", "periodico":"periódico"
+};
+function vgL(s){ return VG_LBL[s] || s; }
+
+var VG_GRUPOS = {
+  A:"Brasil — efetivo e pós-doc",
+  B:"Brasil — substituto e visitante",
+  C:"Internacional",
+  publicacao:"Chamadas — dossiês, special issues, volumes",
+  evento:"Chamadas — eventos com publicação"
+};
+var VG_ORDEM = ["A","B","C","publicacao","evento"];
+function vgGrupo(i){ return i.bloco || i.forma; }
+
+function vgCard(i){
+  var st = vgEstado(i.id);
+  var cls = "vg-card st-" + st + (i.vencida ? " vencida" : "");
+  var tags = [];
+  if(i.vencida)                       tags.push('<span class="vg-tag venceu">venceu</span>');
+  else if(i.urgente)                  tags.push('<span class="vg-tag urgente">⚠ '+
+                                        (i.dias_ate_prazo===0?"hoje":i.dias_ate_prazo+" dia"+(i.dias_ate_prazo===1?"":"s"))+'</span>');
+  else if(i.prazo)                    tags.push('<span class="vg-tag prazo">'+vgEsc(i.prazo)+
+                                        (i.prazo_brando?" · brando":"")+'</span>');
+  else                                tags.push('<span class="vg-tag duvida">sem prazo</span>');
+  if(i.novo && st===VG_ST.NOVO)       tags.push('<span class="vg-tag novo">novo</span>');
+  if(i.relevancia==="nicho")          tags.push('<span class="vg-tag nicho">núcleo</span>');
+  if(i.relevancia==="nao confirmada") tags.push('<span class="vg-tag duvida">área não confirmada</span>');
+  if(i.relevancia==="aberto")         tags.push('<span class="vg-tag">AOS aberto</span>');
+  if(i.tipo)                          tags.push('<span class="vg-tag">'+vgEsc(vgL(i.tipo))+'</span>');
+  if(i.esforco)                       tags.push('<span class="vg-tag">esforço '+vgEsc(vgL(i.esforco))+'</span>');
+  if(i.elegibilidade && i.elegibilidade!=="Aberto")
+                                      tags.push('<span class="vg-tag duvida">'+vgEsc(vgL(i.elegibilidade))+'</span>');
+  if(i.idioma)                        tags.push('<span class="vg-tag">'+vgEsc(i.idioma)+'</span>');
+  (i.marcas||[]).forEach(function(m){
+    if(m.indexOf("alemao")>=0)        tags.push('<span class="vg-tag urgente">exige alemão fluente</span>');
+    if(m.indexOf("texto pronto")>=0)  tags.push('<span class="vg-tag urgente">só com texto pronto</span>');
+  });
+
+  /* Chamada nao tem pais nem esforco: dossie de periodico nao tem geografia, e
+     chamada nao se candidata — se submete. O verbo do botao muda junto. */
+  var ehChamada = !!i.forma;
+  var subtitulo = ehChamada ? (i.periodico || i.instituicao || "")
+                            : [i.instituicao, i.uf, i.pais].filter(Boolean).join(" · ");
+  var simTxt = ehChamada ? "Vou submeter" : "Vou me candidatar";
+  var acoes = i.vencida
+    ? '<button onclick="vgMarcar(\''+i.id+'\','+VG_ST.ARQ+')">Arquivar</button>'
+    : '<button class="'+(st===VG_ST.SIM?"on-sim":"")+'" onclick="vgMarcar(\''+i.id+'\','+VG_ST.SIM+')">'+
+        (st===VG_ST.SIM?"✓ "+simTxt.toLowerCase():simTxt)+'</button>'+
+      '<button class="'+(st===VG_ST.NAO?"on-nao":"")+'" onclick="vgMarcar(\''+i.id+'\','+VG_ST.NAO+')">'+
+        (st===VG_ST.NAO?"descartada":"Descartar")+'</button>';
+
+  return '<div class="'+cls+'">'+
+    '<div class="vg-t"><a href="'+vgEsc(i.url)+'" target="_blank" rel="noopener">'+vgEsc(i.titulo)+'</a></div>'+
+    '<div class="vg-inst">'+vgEsc(subtitulo)+(i.link_e_da_lista?' · <i>link da lista</i>':'')+'</div>'+
+    '<div class="vg-tags">'+tags.join("")+'</div>'+
+    '<div class="vg-acoes">'+acoes+'</div>'+
+  '</div>';
+}
+
+function vgVisivel(i){
+  var st = vgEstado(i.id);
+  if(st===VG_ST.ARQ) return false;
+  if(VG_FILTRO==="abertas") return st!==VG_ST.NAO;
+  if(VG_FILTRO==="novas")   return st===VG_ST.NOVO && i.novo;
+  if(VG_FILTRO==="sim")     return st===VG_ST.SIM;
+  if(VG_FILTRO==="nao")     return st===VG_ST.NAO;
+  return true;
+}
+
+function vgRender(){
+  var alvo = document.getElementById("view-vagas");
+  if(!alvo) return;
+  var itens = (VG_VAGAS.itens||[]).concat(VG_CHAMADAS.itens||[]);
+  var mostrar = itens.filter(vgVisivel);
+  var nUrg = itens.filter(function(i){return i.urgente && !i.vencida && vgEstado(i.id)!==VG_ST.NAO;}).length;
+  var nNovo = itens.filter(function(i){return i.novo && vgEstado(i.id)===VG_ST.NOVO;}).length;
+  var nSim = itens.filter(function(i){return vgEstado(i.id)===VG_ST.SIM;}).length;
+  var quando = [VG_VAGAS._gerado_em, VG_CHAMADAS._gerado_em].filter(Boolean).sort().pop() || "";
+
+  var h = '<div class="vg-topo">'+
+    '<span class="vg-titulo">Vagas</span>'+
+    '<span class="vg-resumo">'+mostrar.length+' na lista'+
+      (nUrg?' · '+nUrg+' urgente'+(nUrg===1?'':'s'):'')+
+      (nSim?' · '+nSim+' marcada'+(nSim===1?'':'s'):'')+'</span>'+
+    '<span class="vg-atualizado">coletado em '+vgEsc(quando.slice(0,10)||"—")+'</span>'+
+  '</div>';
+  var fs = [["abertas","Em aberto"],["novas","Novas ("+nNovo+")"],
+            ["sim","Vou me candidatar ("+nSim+")"],["nao","Descartadas"],["tudo","Tudo"]];
+  h += '<div class="vg-filtros">' + fs.map(function(f){
+    return '<button class="'+(VG_FILTRO===f[0]?"on":"")+'" onclick="VG_FILTRO=\''+f[0]+'\';vgRender()">'+f[1]+'</button>';
+  }).join("") + '</div>';
+
+  if(!itens.length){
+    h += '<div class="vg-vazio"><b>Nada coletado ainda.</b>'+
+         'O Actions roda toda segunda às 8h e grava <code>dados/vagas.json</code> e '+
+         '<code>dados/chamadas.json</code>.<br>Este painel enche sozinho na primeira rodada.</div>';
+  } else if(!mostrar.length){
+    h += '<div class="vg-vazio"><b>Nada neste filtro.</b>Toque em “Tudo” para ver a lista inteira.</div>';
+  } else {
+    VG_ORDEM.forEach(function(g){
+      var doGrupo = mostrar.filter(function(i){return vgGrupo(i)===g;});
+      if(!doGrupo.length) return;
+      h += '<div class="vg-bloco"><h3>'+VG_GRUPOS[g]+'<span>'+doGrupo.length+'</span></h3>'+
+           doGrupo.map(vgCard).join("") + '</div>';
+    });
+  }
+  alvo.innerHTML = h;
+}
+
+function vgBuscar(u){
+  return fetch(u, {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .catch(function(){ return null; });
+}
+
+/* Cache primeiro, rede depois. No metro o painel abre com o que ja tinha em
+   vez de abrir vazio; se a rede responder, atualiza e regrava o cache. */
+function vgAbrir(){
+  var cache = LS("cron:feed-cache", null);
+  if(cache){
+    VG_VAGAS = cache.vagas || {itens:[]};
+    VG_CHAMADAS = cache.chamadas || {itens:[]};
+  }
+  vgRender();
+  if(VG_BUSCOU) return;
+  VG_BUSCOU = true;
+  Promise.all([vgBuscar("../dados/vagas.json"), vgBuscar("../dados/chamadas.json")])
+    .then(function(r){
+      if(r[0]) VG_VAGAS = r[0];
+      if(r[1]) VG_CHAMADAS = r[1];
+      if(r[0] || r[1]) save("cron:feed-cache", {vagas:VG_VAGAS, chamadas:VG_CHAMADAS,
+                                                quando:new Date().toISOString()});
+      vgRender();
+    });
+}
+
 /* ---- Backup: exportar / importar todos os dados cron: ---- */
 function coletarDados(){
   const d={};
