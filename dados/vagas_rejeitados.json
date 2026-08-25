@@ -1,0 +1,25 @@
+{
+  "_o_que_e": "O que o filtro barrou, com a nota e a razao. Serve para afinar criterios_vagas.json com evidencia em vez de palpite.",
+  "_teto": 200,
+  "_barrados_nesta_rodada": 2,
+  "itens": [
+    {
+      "id": "philjobs-31633",
+      "titulo": "Director, Kravis Leadership Institute / Full or advanced Associate Professor",
+      "url": "https://philjobs.org/job/show/31633",
+      "pontos": 4,
+      "porque": "regiao:united states +5; categoria:senior faculty -6; AOS aberto +5",
+      "motivo_saida": "abaixo do corte (4 < 8)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philjobs-31681",
+      "titulo": "APPEL DE CANDIDATURES - Chaire de Recherche du Canada de niveau 2 sur la résilience démocratique",
+      "url": "https://philjobs.org/job/show/31681",
+      "pontos": 0,
+      "porque": "regiao:canada +5; categoria:senior faculty -6; AOS aberto +5; prazo curto -4",
+      "motivo_saida": "abaixo do corte (0 < 8)",
+      "visto_em": "2026-08-24"
+    }
+  ]
+}

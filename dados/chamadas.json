@@ -1,0 +1,32 @@
+{
+  "_gerado_em": "2026-08-24T23:14:44.879007-03:00",
+  "_batimento": {
+    "quando": "2026-08-24T23:14:44.879007-03:00",
+    "fontes": {
+      "philevents": "ok · 120 sondados · 30 novos",
+      "upenn-cfp": "desligada"
+    },
+    "avisos": [],
+    "resumo": "1 vivos · 1 novos nesta rodada · 18 arquivados por prazo · 11 barrados pelo corte"
+  },
+  "_corte": 10,
+  "itens": [
+    {
+      "id": "philevents-146249",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/146249",
+      "titulo": "Kevin Jobe (University of Texas Rio Grande Valley)",
+      "instituicao": "James Sikkema (Bristol University)\n\n   \n\tSpinoza and Migratory Power",
+      "aos": "areas",
+      "local": "",
+      "categoria": "",
+      "prazo": "",
+      "publicado": "",
+      "texto": "Kevin Jobe (University of Texas Rio Grande Valley), James Sikkema (Bristol University)\n Spinoza and Migratory Power\n - PhilEvents \n Kevin Jobe (University of Texas Rio Grande Valley), James Sikkema (Bristol University)\n Spinoza and Migratory Power\n Kevin Jobe (University of Texas Rio Grande Valley) , James Sikkema (Bristol University) at Department of Philosophy, South Texas College (Philosophy and Law Week) in March, 2026. Topics: Philosophy of Law; Social and Political Philosophy\" />\n JavaScript must be enabled to properly use this site.\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Spinoza and Migratory Power Kevin Jobe (University of Texas Rio Grande Valley), James Sikkema (University of Bristol, Loyola Marymount University, McMaster University)\n Philosophy and Law Week \n Mar",
+      "visto_em": "2026-08-24",
+      "pontos": 12,
+      "porque": "nucleo(spinoza) +12",
+      "novo": true
+    }
+  ]
+}

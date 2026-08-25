@@ -1,0 +1,106 @@
+{
+  "_o_que_e": "O que o filtro barrou, com a nota e a razao. Serve para afinar criterios_chamadas.json com evidencia em vez de palpite.",
+  "_teto": 200,
+  "_barrados_nesta_rodada": 11,
+  "itens": [
+    {
+      "id": "philevents-146201",
+      "titulo": "On the Idiosyncrasy of Thinking: On Alphonso Lingis’s Philosophical Opera",
+      "url": "https://philevents.org/event/show/146201",
+      "pontos": 0,
+      "porque": "",
+      "motivo_saida": "abaixo do corte (0 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146209",
+      "titulo": "Katharina Stevens (University of Lethbridge)\n\n   \n\tBook Talk on \"The Ethics of Argumentation\"",
+      "url": "https://philevents.org/event/show/146209",
+      "pontos": 4,
+      "porque": "medio(ethics) +4",
+      "motivo_saida": "abaixo do corte (4 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146229",
+      "titulo": "Paolo Mancosu (University of California",
+      "url": "https://philevents.org/event/show/146229",
+      "pontos": -9,
+      "porque": "ruido(philosophy of science, philosophy of mathematics) -9",
+      "motivo_saida": "abaixo do corte (-9 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146237",
+      "titulo": "MANCEPT Workshop on Theories of Public Reason",
+      "url": "https://philevents.org/event/show/146237",
+      "pontos": 8,
+      "porque": "regiao:united kingdom +2; categoria:call for papers +6",
+      "motivo_saida": "abaixo do corte (8 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146257",
+      "titulo": "ON SEEKING A COMMUNITY OF TASTE",
+      "url": "https://philevents.org/event/show/146257",
+      "pontos": 8,
+      "porque": "regiao:united states +2; categoria:call for papers +6",
+      "motivo_saida": "abaixo do corte (8 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146273",
+      "titulo": "Wittgenstein's Lecture on Ethics: Online Lecture Series",
+      "url": "https://philevents.org/event/show/146273",
+      "pontos": 4,
+      "porque": "medio(ethics) +4",
+      "motivo_saida": "abaixo do corte (4 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146277",
+      "titulo": "Michael Thomas Grooff (Technische Universität Darmstadt)\n\n   \n\tPsychonauts in Every Direction: A Phenomenological Analysis of Political Attitudes Attributed to Psychedelic Experiences",
+      "url": "https://philevents.org/event/show/146277",
+      "pontos": 0,
+      "porque": "",
+      "motivo_saida": "abaixo do corte (0 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146281",
+      "titulo": "Measuring the Mind - Conceptual Issues in Psychology",
+      "url": "https://philevents.org/event/show/146281",
+      "pontos": -9,
+      "porque": "ruido(cognitive science) -9",
+      "motivo_saida": "abaixo do corte (-9 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146309",
+      "titulo": "Amy Kind (Claremont McKenna College)\n\n   \n\t“Imagination, Fantasy",
+      "url": "https://philevents.org/event/show/146309",
+      "pontos": 5,
+      "porque": "regiao:united states +2; categoria:conference +3",
+      "motivo_saida": "abaixo do corte (5 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146313",
+      "titulo": "Eleanor Helms (California Polytechnic State University",
+      "url": "https://philevents.org/event/show/146313",
+      "pontos": 5,
+      "porque": "regiao:united states +2; categoria:conference +3",
+      "motivo_saida": "abaixo do corte (5 < 10)",
+      "visto_em": "2026-08-24"
+    },
+    {
+      "id": "philevents-146317",
+      "titulo": "Genia Schönbaumsfeld (University of Southampton)\n\n   \n\t“Dialectical Intrepidity”",
+      "url": "https://philevents.org/event/show/146317",
+      "pontos": 5,
+      "porque": "regiao:united states +2; categoria:conference +3",
+      "motivo_saida": "abaixo do corte (5 < 10)",
+      "visto_em": "2026-08-24"
+    }
+  ]
+}
