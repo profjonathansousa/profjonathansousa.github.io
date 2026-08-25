@@ -1,24 +1,24 @@
 {
-  "quando": "2026-08-25T11:43:16.321238-03:00",
+  "quando": "2026-08-25T12:50:28.911368-03:00",
   "itens": [
     {
-      "id": "philevents-146341",
+      "id": "philevents-146497",
       "fonte": "philevents",
-      "url": "https://philevents.org/event/show/146341",
-      "titulo": "Folk Epistemology and Science Skepticism",
+      "url": "https://philevents.org/event/show/146497",
+      "titulo": "CFP: \n\tThe Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)",
       "instituicao": "",
       "aos": "areas",
       "aoc": "",
       "local": "",
       "categoria": "",
       "contrato": "",
-      "prazo": "",
+      "prazo": "2026-10-31",
       "prazo_brando": false,
       "publicado": "",
-      "texto": "Folk Epistemology and Science Skepticism\n - PhilEvents \n Folk Epistemology and Science Skepticism\n Mikkel Gerken (University of Southern Denmark) , Jitai Zhang (Freie Universität Berlin) at Department of Philosophy, University of Cologne (Cologne Summer School in Philosophy (CSSiP)) in August, 2026. Topics: Metaphysics and Epistemology; Science, Logic, and Mathematics\" />\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Folk Epistemology and Science Skepticism\n Cologne Summer School in Philosophy (CSSiP) \n August 10, 2026 - August 14, 2026\n Department of Philosophy, University of Cologne \n tba\nAlbertus Magnus Platz\nCologne 53029\nGermany\n This will be an accessible event, including organized related activities \n Sponsor(s):\n Kölner Gymnasial- und Stiftungsfonds\n Speakers:\n Mikkel Ger",
+      "texto": "CFP: \n The Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)\n - PhilEvents \n CFP: \n The Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n CFP: The Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)\n Submission deadline: October 31, 2026\n Topic areas\n History of Western Philosophy \n Metaphysics and Epistemology \n Details\n The Philosophy of the History of Philosophy: Concepts and Methods of a Philosophical Discipline (Archivio di filosofia 1/2027) \n Since its inception, the journal Archivio di filosofia has distinguished itself by the attention devoted to the theme of the historical-philosophical method, as well as to the more general problem of the philosophy of the history ",
       "visto_em": "2026-08-25",
       "tipo": "outro",
-      "porque": "competencia: epistemology",
+      "porque": "competencia: history of philosophy",
       "relevancia": "competencia",
       "pais": "",
       "uf": "",
@@ -27,12 +27,10 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": null,
+      "dias_ate_prazo": 67,
       "urgente": false,
       "descartado": false,
-      "marcas": [
-        "sem prazo"
-      ],
+      "marcas": [],
       "novo": true,
       "vencida": false
     }

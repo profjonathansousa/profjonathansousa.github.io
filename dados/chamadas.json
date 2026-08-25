@@ -1,17 +1,50 @@
 {
-  "_gerado_em": "2026-08-25T11:43:16.321238-03:00",
+  "_gerado_em": "2026-08-25T12:50:28.911368-03:00",
   "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_CHAMADAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-08-25T11:43:16.321238-03:00",
+    "quando": "2026-08-25T12:50:28.911368-03:00",
     "fontes": {
       "philevents": "ok · 120 sondados · 30 novos",
       "anpof-chamadas": "ok · 3123 itens (lista sem link proprio)",
       "upenn-cfp": "desligada"
     },
     "avisos": [],
-    "resumo": "2 vivos (?:1 evento:1) · 0 urgentes · 1 novos · 3 arquivados por prazo · 3149 barrados"
+    "resumo": "3 vivos (?:1 evento:2) · 0 urgentes · 1 novos · 1 arquivados por prazo · 3151 barrados"
   },
   "itens": [
+    {
+      "id": "philevents-146497",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/146497",
+      "titulo": "CFP: \n\tThe Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)",
+      "instituicao": "",
+      "aos": "areas",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "prazo": "2026-10-31",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "CFP: \n The Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)\n - PhilEvents \n CFP: \n The Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n CFP: The Philosophy of the History of Philosophy (Archivio di Filosofia 1/2027)\n Submission deadline: October 31, 2026\n Topic areas\n History of Western Philosophy \n Metaphysics and Epistemology \n Details\n The Philosophy of the History of Philosophy: Concepts and Methods of a Philosophical Discipline (Archivio di filosofia 1/2027) \n Since its inception, the journal Archivio di filosofia has distinguished itself by the attention devoted to the theme of the historical-philosophical method, as well as to the more general problem of the philosophy of the history ",
+      "visto_em": "2026-08-25",
+      "tipo": "outro",
+      "porque": "competencia: history of philosophy",
+      "relevancia": "competencia",
+      "pais": "",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 67,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [],
+      "novo": true,
+      "vencida": false
+    },
     {
       "id": "philevents-146341",
       "fonte": "philevents",

@@ -1,8 +1,463 @@
 {
   "_o_que_e": "O que o filtro barrou, com a razao. Serve para afinar criterios_vagas.json com evidencia em vez de palpite.",
   "_teto": 200,
-  "_barrados_nesta_rodada": 63,
+  "_barrados_nesta_rodada": 65,
   "itens": [
+    {
+      "id": "philjobs-31837",
+      "titulo": "Assistant Professor",
+      "url": "https://philjobs.org/job/show/31837",
+      "motivo_saida": "veto no cabeca: biomedical ethics",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31841",
+      "titulo": "PhD Student in Philosophy of Science",
+      "url": "https://philjobs.org/job/show/31841",
+      "motivo_saida": "veto no cabeca: philosophy of science",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31845",
+      "titulo": "PhD student in Theoretical Philosophy",
+      "url": "https://philjobs.org/job/show/31845",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31857",
+      "titulo": "Assistant Professor",
+      "url": "https://philjobs.org/job/show/31857",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31861",
+      "titulo": "Assistant Professor",
+      "url": "https://philjobs.org/job/show/31861",
+      "motivo_saida": "veto no cabeca: ancient greek",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31869",
+      "titulo": "Postdoctoral Fellow",
+      "url": "https://philjobs.org/job/show/31869",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31873",
+      "titulo": "Open-Rank Position in Philosophy",
+      "url": "https://philjobs.org/job/show/31873",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31877",
+      "titulo": "Cluster hire in AI for Modeling the Physical World and Living Systems",
+      "url": "https://philjobs.org/job/show/31877",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31889",
+      "titulo": "Researcher",
+      "url": "https://philjobs.org/job/show/31889",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31893",
+      "titulo": "Researcher",
+      "url": "https://philjobs.org/job/show/31893",
+      "motivo_saida": "veto no cabeca: philosophy of science",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31901",
+      "titulo": "PhD student in Practical Philosophy",
+      "url": "https://philjobs.org/job/show/31901",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philjobs-31905",
+      "titulo": "Assistant or Associate Professor of Philosophy",
+      "url": "https://philjobs.org/job/show/31905",
+      "motivo_saida": "veto no cabeca: environmental philosophy",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-gfilufes-abre-selecao-para-doutorado-em-filosofia-turma-2027",
+      "titulo": "PPGFIL/UFES abre seleção para Doutorado em Filosofia - Turma 2027",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/ppgfilufes-abre-selecao-para-doutorado-em-filosofia--turma-2027",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-ocesso-seletivo-mestrado-e-doutorado-em-filosofia-ppgfil-unb",
+      "titulo": "Processo Seletivo - Mestrado e Doutorado em Filosofia (PPGFIL-UnB)",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/processo-seletivo--mestrado-e-doutorado-em-filosofia-ppgfil-unb",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-genda-concursos-e-selecoes-selecao-mestrado-em-filosofia-ufg",
+      "titulo": "Seleção Mestrado em Filosofia UFG",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-mestrado-em-filosofia-ufg",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-lecoes-processo-seletivo-mestrado-e-doutorado-filosofia-ufsc",
+      "titulo": "Processo Seletivo - Mestrado e Doutorado Filosofia UFSC",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/processo-seletivo--mestrado-e-doutorado-filosofia-ufsc",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-rama-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-2026",
+      "titulo": "Edital extraordinário - Inclusão étnico-racial Processo de Seleção para ingresso no Programa de Pós-Graduação em Filosofia Mestrado e Doutorado 2026",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/edital-extraordinario--inclusao-etnico-racial-processo-de-selecao-para-ingresso-no-programa-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-selecoes-processo-seletivo-mestrado-e-doutorado-em-filosofia",
+      "titulo": "PROCESSO SELETIVO MESTRADO E DOUTORADO EM FILOSOFIA",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/processo-seletivo-mestrado-e-doutorado-em-filosofia",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-outorado-profissional-em-filosofia-e-ensino-do-ppfencefet-rj",
+      "titulo": "Seleção para o Mestrado e Doutorado Profissional em Filosofia e Ensino do PPFEN/Cefet-RJ",
+      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-para-o-mestrado-e-doutorado-profissional-em-filosofia-e-ensino-do-ppfencefet-rj",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "docentefederal-repositorio",
+      "titulo": "Repositório",
+      "url": "https://docentefederal.com.br/repositorio/",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "docentefederal-recursos",
+      "titulo": "Recursos",
+      "url": "https://docentefederal.com.br/recursos/",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "docentefederal-politica-de-privacidade",
+      "titulo": "Política de Privacidade",
+      "url": "https://docentefederal.com.br/politica-de-privacidade",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "docentefederal-copyrights",
+      "titulo": "Copyrights e Termos de Uso",
+      "url": "https://docentefederal.com.br/copyrights",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "docentefederal-responsabilidade-social",
+      "titulo": "Responsabilidade Social",
+      "url": "https://docentefederal.com.br/responsabilidade-social",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "docentefederal-creditos-das-imagens",
+      "titulo": "Créditos das Imagens",
+      "url": "https://docentefederal.com.br/creditos-das-imagens/",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Estrutura Organizacional",
+      "url": "https://www.faperj.br/?id=56.5.7",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Competências",
+      "url": "https://www.faperj.br/?id=57.5.4",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Base Jurídica",
+      "url": "https://www.faperj.br/?id=58.5.1",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Quem é Quem",
+      "url": "https://www.faperj.br/?id=59.5.9",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Localização e telefone",
+      "url": "https://www.faperj.br/?id=60.5.1",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Ações e Programas",
+      "url": "https://www.faperj.br/?id=10.5.0",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Ouvidoria",
+      "url": "https://www.faperj.br/?id=61.5.9",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Conselhos e Órgãos Colegiados",
+      "url": "https://www.faperj.br/?id=62.5.6",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Auditorias",
+      "url": "https://www.faperj.br/?id=12.5.5",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Convênios e Acordos",
+      "url": "https://www.faperj.br/?id=13.5.2",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Receitas e Despesas",
+      "url": "https://www.faperj.br/?id=14.5.0",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Licitações e Contratos",
+      "url": "https://www.faperj.br/?id=15.5.7",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Servidores",
+      "url": "https://www.faperj.br/?id=16.5.4",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Informações Classificadas",
+      "url": "https://www.faperj.br/?id=17.5.1",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Serviço de informação ao cidadão - SIC",
+      "url": "https://www.faperj.br/?id=18.5.9",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Perguntas Frequentes - FAQ",
+      "url": "https://www.faperj.br/?id=19.5.6",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Dados Abertos",
+      "url": "https://www.faperj.br/?id=20.5.9",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "PEDTIC - FAPERJ",
+      "url": "https://www.faperj.br/?id=116.5.1",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Carta de Serviços ao Usuário da FAPERJ",
+      "url": "https://www.faperj.br/?id=117.5.8",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Quem Somos",
+      "url": "https://www.faperj.br/?id=22.5.3",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Quem é Quem",
+      "url": "https://www.faperj.br/?id=23.5.0",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Conselhos e Órgãos Colegiados",
+      "url": "https://www.faperj.br/?id=24.5.8",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Base Jurídica",
+      "url": "https://www.faperj.br/?id=25.5.5",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Logo Faperj",
+      "url": "https://www.faperj.br/?id=26.5.2",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Localização e Telefone",
+      "url": "https://www.faperj.br/?id=27.5.0",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Lista de Editais",
+      "url": "https://www.faperj.br/?id=28.5.7",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Lista de Bolsas e Auxílios",
+      "url": "https://www.faperj.br/?id=112.5.6",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Iniciação Científica (IC)",
+      "url": "https://www.faperj.br/?id=64.5.0",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Iniciação Tecnológica (IT)",
+      "url": "https://www.faperj.br/?id=65.5.8",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Mestrado (MSC-10) e Doutorado (DSC-10) Nota 10",
+      "url": "https://www.faperj.br/?id=85.5.4",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Doutorado Sanduíche",
+      "url": "https://www.faperj.br/?id=86.5.1",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Doutorado Sanduíche Reverso",
+      "url": "https://www.faperj.br/?id=87.5.9",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Pós-Doutorado (PD)",
+      "url": "https://www.faperj.br/?id=67.5.2",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Bolsas de Bancada para Projetos (BBPs)",
+      "url": "https://www.faperj.br/?id=88.5.6",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Bolsa de Bancada para Apoio a Pesquisador Visitante (BAPV)",
+      "url": "https://www.faperj.br/?id=89.5.3",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Pesquisador Visitante (PV)",
+      "url": "https://www.faperj.br/?id=68.5.0",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Pesquisador Visitante Emérito (PVE)",
+      "url": "https://www.faperj.br/?id=90.5.6",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Inovação Tecnológica (INT)",
+      "url": "https://www.faperj.br/?id=91.5.3",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Treinamento e Capacitação Técnica (TCT)",
+      "url": "https://www.faperj.br/?id=92.5.0",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "faperj-",
+      "titulo": "Auxílio à Pesquisa (APQ 1)",
+      "url": "https://www.faperj.br/?id=69.5.7",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-25"
+    },
     {
       "id": "philjobs-31713",
       "titulo": "UCHV Fellows in Law and Normative Thinking for Academic Year 2027-28",
