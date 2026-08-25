@@ -1,8 +1,428 @@
 {
   "_o_que_e": "O que o filtro barrou, com a razao. Serve para afinar criterios_chamadas.json com evidencia em vez de palpite.",
   "_teto": 200,
-  "_barrados_nesta_rodada": 3151,
+  "_barrados_nesta_rodada": 60,
   "itens": [
+    {
+      "id": "philevents-146561",
+      "titulo": "Dorit Barchana-Lorand (Kibbutzim College)",
+      "url": "https://philevents.org/event/show/146561",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146565",
+      "titulo": "CFP: \n\tMeasuring the Mind - Conceptual Issues in Psychology",
+      "url": "https://philevents.org/event/show/146565",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146577",
+      "titulo": "2025 Berggruen Prize Essay Award Ceremony",
+      "url": "https://philevents.org/event/show/146577",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146581",
+      "titulo": "Maciej Tarnowski (Jagiellonian University)",
+      "url": "https://philevents.org/event/show/146581",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146585",
+      "titulo": "CFP: \n\tKantian Journal. Special Issue \"The Concept of Antagonism in Kant’s Philosophy\"",
+      "url": "https://philevents.org/event/show/146585",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146589",
+      "titulo": "II Rio de Janeiro International Workshop: Rethink AI Ethics",
+      "url": "https://philevents.org/event/show/146589",
+      "motivo_saida": "veto no cabeca: AI ethics",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146593",
+      "titulo": "CFP: \n\tII Rio de Janeiro International Workshop: Rethink AI Ethics",
+      "url": "https://philevents.org/event/show/146593",
+      "motivo_saida": "veto no cabeca: AI ethics",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146597",
+      "titulo": "Philosophical Issues in Neural Computation",
+      "url": "https://philevents.org/event/show/146597",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146617",
+      "titulo": "CFP: \n\tCFP for a Special Issue of Angelaki: Khôra",
+      "url": "https://philevents.org/event/show/146617",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146621",
+      "titulo": "Center of Canon Expansion and Change (CCEC) 2026 Ancient Philosophy Summer Program",
+      "url": "https://philevents.org/event/show/146621",
+      "motivo_saida": "veto no cabeca: ancient philosophy",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146625",
+      "titulo": "First Symposium on Indigenous Philosophy across the Americas: Epistemologies and Ontologies outside the Settler Colonial Hegemony",
+      "url": "https://philevents.org/event/show/146625",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146629",
+      "titulo": "Privacy at the margins",
+      "url": "https://philevents.org/event/show/146629",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146633",
+      "titulo": "CFP: \n\tPrivacy at the margins",
+      "url": "https://philevents.org/event/show/146633",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146637",
+      "titulo": "Mihnea Chiujdea (Freie Universität Berlin)\n\n   \n\tThe Heideggerian Uncanny: Self-Constitution and Being-Towards-Death",
+      "url": "https://philevents.org/event/show/146637",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146641",
+      "titulo": "Caring for Non-Humans: Interdisciplinary Perspectives on Care among Animals, the Environment",
+      "url": "https://philevents.org/event/show/146641",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146649",
+      "titulo": "CFP: \n\tCaring for Non-Humans: Interdisciplinary Perspectives on Care among Animals, the Environment",
+      "url": "https://philevents.org/event/show/146649",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146653",
+      "titulo": "Symposium: Philosophy in Practice (PiP)",
+      "url": "https://philevents.org/event/show/146653",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146657",
+      "titulo": "CFP: \n\tSymposium: Philosophy in Practice (PiP)",
+      "url": "https://philevents.org/event/show/146657",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146665",
+      "titulo": "Philosophische Wege in den Nationalsozialismus: Ideen",
+      "url": "https://philevents.org/event/show/146665",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146677",
+      "titulo": "Collective Agency in Classical and Continental Philosophy (Vilnius",
+      "url": "https://philevents.org/event/show/146677",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-issao-de-artigos-dossie-niilismo-existencialismo-gnosticismo",
+      "titulo": "Revista Enunciação - Chamada para submissão de artigos - Dossiê Niilismo, existencialismo, gnosticismo",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/revista-enunciacao--chamada-para-submissao-de-artigos--dossie-niilismo-existencialismo-gnosticismo",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-da-de-ensaios-dossie-as-mulheres-da-igreja-revista-neokrisis",
+      "titulo": "Chamada de ensaios Dossiê 'As Mulheres da Igreja' | Revista NeoKrísis",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-de-ensaios-dossie-as-mulheres-da-igreja-revista-neokrisis",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-atraves-das-imagens-epistemologias-do-sul-global-transfinito",
+      "titulo": "Chamada para o dossiê 'Pensar imagens e através das imagens: epistemologias do sul-global' | Transfinito",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-o-dossie-pensar-imagens-e-atraves-das-imagens-epistemologias-do-sul-global-transfinito",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-adas-de-revistas-chamada-fluxo-continuo-cadernos-espinosanos",
+      "titulo": "CHAMADA FLUXO CONTÍNUO - Cadernos Espinosanos",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-fluxo-continuo--cadernos-espinosanos",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
+      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 33, 2026.1",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-dossie-a-filosofia-de-norberto-bobbio-ii-revista-quero-saber",
+      "titulo": "Lançamento do Dossiê 'A Filosofia de Norberto Bobbio II' - Revista Quero Saber",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-a-filosofia-de-norberto-bobbio-ii--revista-quero-saber",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-s-dossie-ensino-de-filosofia-dialogos-desde-a-america-do-sul",
+      "titulo": "Dossiê Ensino de Filosofia: diálogos desde a América do Sul",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/dossie-ensino-de-filosofia-dialogos-desde-a-america-do-sul",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-amada-para-revista-paradigmas-filosofia-realidade-arte-20262",
+      "titulo": "Chamada para Revista Paradigmas. Filosofia, Realidade & Arte - 2026/2",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-revista-paradigmas-filosofia-realidade-arte--20262",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--negras-caribenhas-e-latino-americanas-cis-trans-e-travestis",
+      "titulo": "Chamada de publicação para o dossiê em comemoração ao I Ciclo de Conversas Mulheres Negras, Caribenhas e Latino-americanas (cis, trans e travestis)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-de-publicacao-para-o-dossie-em-comemoracao-ao-i-ciclo-de-conversas-mulheres-negras-caribenhas-e-latino-americanas-cis-trans-e-travestis",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche",
+      "titulo": "140 anos de 'Para a genealogia da moral', de Friedrich Nietzsche",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/140-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-rto-numero-e-dossie-intercultural-e-conflitos-etnico-raciais",
+      "titulo": "Chamada para quarto número e Dossiê intercultural e conflitos étnico-raciais",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-quarto-numero-e-dossie-intercultural-e-conflitos-etnico-raciais",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal",
+      "titulo": "Dossie Filomove. Arquivos Memoria e Performance na América Latina Rev Lampiao 6 1 Ufal",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/dossie-filomove-arquivos-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-losofia-da-existencia-nas-origens-da-filosofia-contemporanea",
+      "titulo": "Chamada para artigos: A Filosofia da Existência nas Origens da Filosofia Contemporânea",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-artigos-a-filosofia-da-existencia-nas-origens-da-filosofia-contemporanea",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--e-chamadas-de-revistas-o-que-pode-a-filosofia-pop-no-brasil",
+      "titulo": "O que pode a Filosofia Pop no Brasil?",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/o-que-pode-a-filosofia-pop-no-brasil",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-madas-de-revistas-novo-numero-dos-cadernos-espinosanos-no-ar",
+      "titulo": "Novo número dos Cadernos Espinosanos no ar",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/novo-numero-dos-cadernos-espinosanos-no-ar",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--revistas-prisma-revista-de-filosofia-lancamento-do-v-8-2026",
+      "titulo": "PRISMA - Revista de Filosofia, lançamento do v. 8, 2026",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/prisma--revista-de-filosofia-lancamento-do-v-8-2026",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-so-usp-561-dossie-nietzsche-e-em-homenagem-a-scarlett-marton",
+      "titulo": "Publicação da revista Discurso (USP), 56(1) - Dossiê Nietzsche e em homenagem à Scarlett Marton",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/publicacao-da-revista-discurso-usp-561--dossie-nietzsche-e-em-homenagem-a-scarlett-marton",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-adas-de-revistas-chamada-de-trabalho-alter-puc-rio-v-20-2026",
+      "titulo": "Chamada de trabalho - Alter (PUC-Rio), v. 20, 2026",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-de-trabalho--alter-puc-rio-v-20-2026",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-s-para-compor-o-dossie-donna-haraway-reverberacoes-no-brasil",
+      "titulo": "Chamada de artigos para compor o Dossie: Donna Haraway reverberacões no Brasil",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-de-artigos-para-compor-o-dossie-donna-haraway-reverberacoes-no-brasil",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-istas-politica-comunidade-e-emancipacao-leituras-filosoficas",
+      "titulo": "Política, Comunidade e Emancipação: Leituras Filosóficas",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/politica-comunidade-e-emancipacao-leituras-filosoficas",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-stas-novo-numero-voluntas-revista-internacional-de-filosofia",
+      "titulo": "Novo número - Voluntas: Revista Internacional de Filosofia",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--voluntas-revista-internacional-de-filosofia",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-e-rancire-30-anos-de-o-desentendimento-v2-n1-2026-unicampufc",
+      "titulo": "Lançamento da Revista: SIMBÓLICA - Revista de Filosofia da Cultura e Estudos Interdisciplinares - DOSSIÊ: Rancière - 30 anos de 'O desentendimento' - V.2, N.1 (2026) - (UNICAMP/UFC)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--dossie-rancire--30-anos-de-o-desentendimento--v2-n1-2026--unicampufc",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-v2-n1-2026",
+      "titulo": "Lançamento de Dossiê: Rancière - 30 anos de 'O desentendimento' - Simbólica: Revista de Filosofia da Cultura e Estudos Interdisciplinares - V.2, N.1 (2026)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-dossie-rancire--30-anos-de-o-desentendimento--simbolica-revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--v2-n1-2026",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-tas-lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
+      "titulo": "Lançamento da edição inaugural da NeoKrísis v. 1, n. 1 (2026)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-tos-e-chamadas-de-revistas-philosophy-of-brazilian-religions",
+      "titulo": "Philosophy of Brazilian Religions",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/philosophy-of-brazilian-religions",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-v2-n2-2026",
+      "titulo": "Chamada para publicação - SIMBÓLICA: Revista de Filosofia da Cultura e Estudos Interdisciplinares - V.2, N.2 (2026)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-publicacao--simbolica-revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--v2-n2-2026",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-das-de-revistas-revista-paranaense-de-filosofia-v-6-n-1-2026",
+      "titulo": "Revista Paranaense de Filosofia - (V. 6, N. 1, 2026)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/revista-paranaense-de-filosofia--v-6-n-1-2026",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--griot-revista-de-filosofia-novo-numero-e-chamada-de-artigos",
+      "titulo": "Griot - Revista de Filosofia: Novo Número e Chamada de Artigos",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/griot--revista-de-filosofia-novo-numero-e-chamada-de-artigos",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-icacao-da-revista-inconfidentia-v10-n10-chamada-e-divulgacao",
+      "titulo": "NOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/nova-publicacao-da-revista-inconfidentia-v10-n10--chamada-e-divulgacao",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-ntos-e-chamadas-de-revistas-lancamento-da-revista-ideacao-53",
+      "titulo": "Lançamento da Revista Ideação 53",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-53",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-hamadas-de-revistas-dossie-filosofia-arquitetura-inter-artes",
+      "titulo": "Dossiê Filosofia, Arquitetura & Inter-Artes",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/dossie-filosofia-arquitetura-inter-artes",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-amada-para-cadernos-de-filosofia-alema-critica-e-modernidade",
+      "titulo": "Chamada para Cadernos de filosofia alemã: Crítica e Modernidade",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-cadernos-de-filosofia-alema-critica-e-modernidade",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-ossie-a-interseccionalidade-entre-a-literatura-e-a-filosofia",
+      "titulo": "Chamada de artigos Revista Alere 33 - 2026/2 - Dossiê: A interseccionalidade entre a Literatura e a Filosofia",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-de-artigos-revista-alere-33--20262--dossie-a-interseccionalidade-entre-a-literatura-e-a-filosofia",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-e-revistas-chamada-para-publicacao-revista-outramargem-v8-n1",
+      "titulo": "Chamada para publicação - Revista Outramargem (v.8, n.1)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-publicacao--revista-outramargem-v8-n1",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-s-e-chamadas-de-revistas-call-for-paperschamada-de-trabalhos",
+      "titulo": "CALL FOR PAPERS/CHAMADA DE TRABALHOS",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/call-for-paperschamada-de-trabalhos",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--xxx-da-association-internationale-des-amis-de-hobbes-franca",
+      "titulo": "Pesquisa do Prof. Dr. Luiz Carlos Mariano da Rosa sobre contratualismo é integrada ao Bulletin Hobbes XXX da Association Internationale des Amis de Hobbes (França).",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/pesquisa-do-prof-dr-luiz-carlos-mariano-da-rosa-sobre-contratualismo-e-integrada-ao-bulletin-hobbes-xxx-da-association-internationale-des-amis-de-hobbes-franca",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-adas-de-revistas-phainomenon-volume-39-2025-issue-1-nov-2025",
+      "titulo": "Phainomenon / Volume 39 (2025): Issue 1 (Nov 2025)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/phainomenon-volume-39-2025-issue-1-nov-2025",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-s-de-revistas-manuscrito-international-journal-of-philosophy",
+      "titulo": "Manuscrito: International Journal of Philosophy",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/manuscrito-international-journal-of-philosophy",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--dossie-v-encontro-cearense-de-professores-de-filosofia-ecpf",
+      "titulo": "Dossiê V Encontro Cearense de Professores de Filosofia (ECPF)",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/-dossie-v-encontro-cearense-de-professores-de-filosofia-ecpf",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-ep-disagreements-40-years-of-the-logic-of-deep-disagreements",
+      "titulo": "Deep Disagreements: 40 Years of The Logic of Deep Disagreements",
+      "url": "https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas/-deep-disagreements-40-years-of-the-logic-of-deep-disagreements",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
     {
       "id": "philevents-146441",
       "titulo": "Philosophy and Mathematics of Situated Agency (PAMOSA 2026)",
@@ -965,426 +1385,6 @@
     {
       "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
       "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
       "url": "https://anpof.org.br/agenda/chamadas",
       "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
       "visto_em": "2026-08-25"
