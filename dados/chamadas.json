@@ -1,16 +1,52 @@
 {
-  "_gerado_em": "2026-08-24T23:14:44.879007-03:00",
+  "_gerado_em": "2026-08-25T11:43:16.321238-03:00",
+  "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_CHAMADAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-08-24T23:14:44.879007-03:00",
+    "quando": "2026-08-25T11:43:16.321238-03:00",
     "fontes": {
       "philevents": "ok · 120 sondados · 30 novos",
+      "anpof-chamadas": "ok · 3123 itens (lista sem link proprio)",
       "upenn-cfp": "desligada"
     },
     "avisos": [],
-    "resumo": "1 vivos · 1 novos nesta rodada · 18 arquivados por prazo · 11 barrados pelo corte"
+    "resumo": "2 vivos (?:1 evento:1) · 0 urgentes · 1 novos · 3 arquivados por prazo · 3149 barrados"
   },
-  "_corte": 10,
   "itens": [
+    {
+      "id": "philevents-146341",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/146341",
+      "titulo": "Folk Epistemology and Science Skepticism",
+      "instituicao": "",
+      "aos": "areas",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Folk Epistemology and Science Skepticism\n - PhilEvents \n Folk Epistemology and Science Skepticism\n Mikkel Gerken (University of Southern Denmark) , Jitai Zhang (Freie Universität Berlin) at Department of Philosophy, University of Cologne (Cologne Summer School in Philosophy (CSSiP)) in August, 2026. Topics: Metaphysics and Epistemology; Science, Logic, and Mathematics\" />\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Folk Epistemology and Science Skepticism\n Cologne Summer School in Philosophy (CSSiP) \n August 10, 2026 - August 14, 2026\n Department of Philosophy, University of Cologne \n tba\nAlbertus Magnus Platz\nCologne 53029\nGermany\n This will be an accessible event, including organized related activities \n Sponsor(s):\n Kölner Gymnasial- und Stiftungsfonds\n Speakers:\n Mikkel Ger",
+      "visto_em": "2026-08-25",
+      "tipo": "outro",
+      "porque": "competencia: epistemology",
+      "relevancia": "competencia",
+      "pais": "",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "novo": true,
+      "vencida": false
+    },
     {
       "id": "philevents-146249",
       "fonte": "philevents",
@@ -26,7 +62,8 @@
       "visto_em": "2026-08-24",
       "pontos": 12,
       "porque": "nucleo(spinoza) +12",
-      "novo": true
+      "novo": true,
+      "vencida": false
     }
   ]
 }
