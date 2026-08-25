@@ -658,6 +658,52 @@ def _links_da_pagina(html, url_base, padrao):
     return achados
 
 
+def fonte_manual(cfg, batimento):
+    """Fonte CURADA A MAO, num arquivo do repositorio.
+
+    Existe para o que nao tem pagina que se raspe toda semana: o boletim
+    trimestral que chega por e-mail (Lutheran Scholars Network) e o programa de
+    fluxo continuo que fica aberto o ano inteiro (pos-doc da FAPESP). Raspar
+    isso toda segunda seria muita maquina para uma coisa que se move quatro
+    vezes por ano — e maquina que falha em silencio e o defeito mais caro que
+    este desenho pode ter (secao 4.11).
+
+    Por que ARQUIVO e nao conector de e-mail: o arquivo mora no repositorio,
+    entao funciona no Actions E na tarefa semanal, que leem tudo pelo
+    raw.githubusercontent, sem token. Conector OAuth numa sessao agendada pode
+    simplesmente nao estar la — e ai a chamada some sem ninguem avisar.
+    """
+    rotulo = cfg["nome"]
+    dados = ler_json(os.path.join(RAIZ, cfg.get("arquivo", "")), {})
+    itens = dados.get("itens") or []
+    if not itens:
+        batimento["fontes"][rotulo] = "arquivo vazio ou ausente: %s" % cfg.get("arquivo")
+        return []
+    batimento["fontes"][rotulo] = "ok · %d curados · atualizado em %s" % (
+        len(itens), dados.get("_atualizado_em", "sem data"))
+    saida = []
+    for n, it in enumerate(itens):
+        saida.append({
+            "id": it.get("id") or "%s-%d" % (rotulo, n),
+            "fonte": rotulo,
+            "url": it.get("url", ""),
+            "titulo": it.get("titulo", ""),
+            "instituicao": it.get("instituicao", ""),
+            "aos": it.get("aos", ""),
+            "aoc": it.get("aoc", ""),
+            "local": it.get("local", ""),
+            "categoria": it.get("categoria", ""),
+            "contrato": it.get("contrato", ""),
+            "pais": it.get("pais") or cfg.get("pais_padrao", ""),
+            "prazo": it.get("prazo", ""),
+            "prazo_brando": it.get("prazo_brando", False),
+            "publicado": it.get("publicado", ""),
+            "texto": it.get("texto", ""),
+            "visto_em": hoje().isoformat(),
+        })
+    return saida
+
+
 def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
     """Fontes brasileiras: uma pagina de listagem, um item por link."""
     rotulo = cfg["nome"]
@@ -947,6 +993,8 @@ def executar(modo, diagnostico=False):
                 itens = fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico)
             elif metodo == "rss":
                 itens = fonte_rss(sessao, cfg, batimento)
+            elif metodo == "manual":
+                itens = fonte_manual(cfg, batimento)
             else:
                 batimento["fontes"][nome] = "metodo desconhecido: %s" % metodo
                 continue

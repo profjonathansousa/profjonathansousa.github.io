@@ -1,0 +1,60 @@
+{
+  "_o_que_e": "Chamadas curadas A MAO, tipicamente as que chegam por e-mail e nao tem pagina publica que se possa raspar toda semana.",
+  "_de_onde_vem_hoje": "Lutheran Scholars Network (LSN), boletim TRIMESTRAL em PDF. Extraido do numero #3, Summer 2026.",
+  "_como_manter": "Quando chegar o boletim seguinte, abra uma sessao com o PDF e peca para atualizar este arquivo. Remova o que ja venceu, acrescente o que e novo, atualize '_atualizado_em'. Quatro vezes por ano.",
+  "_porque_arquivo_e_nao_conector": "O arquivo vive no repositorio, entao o Actions e a tarefa semanal leem os dois pelo raw.githubusercontent, sem token e sem OAuth. Um conector de e-mail numa sessao agendada pode nao estar disponivel — e a chamada sumiria em silencio, que e a falha mais cara deste desenho (secao 4.11).",
+  "_repositorio_publico": "Nada de e-mail pessoal de editor aqui. O caminho de submissao esta na pagina do periodico; quem julga o encaixe contra os recortes e o prompt da tarefa 3c (decisao 4.8).",
+  "_atualizado_em": "2026-08-25",
+  "itens": [
+    {
+      "id": "lsn-promissio-2028-law-gospel",
+      "titulo": "Promissio: A Journal of Confessing Theology — numero tematico de janeiro de 2028: 'Perspectives on Law and Gospel, New and Old'",
+      "url": "https://www.lutheranscholarsnetwork.org/",
+      "instituicao": "Promissio: A Journal of Confessing Theology",
+      "aos": "theology, law and gospel, dogmatics, history of doctrine",
+      "pais": "Estados Unidos",
+      "prazo": "",
+      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Periodico trimestral, com numeros tematicos, editado por Paul R. Hinlicky desde o inicio de 2026. Aceita submissoes em dogmatica, exegese teologica, historia da doutrina e missiologia contemporanea. Os quatro temas anunciados para 2028: janeiro, 'Perspectives on Law and Gospel, New and Old'; abril, 'Salvation History versus Apocalyptic'; agosto, 'What's Really Wrong with Dispensationalism?'; outubro, 'The Parables of Jesus — Jesus as Parable of God'. O boletim NAO declara prazo de submissao para nenhum deles. Prazo longo: numero de 2028 anunciado em 2026."
+    },
+    {
+      "id": "lsn-jle-homelessness-2026",
+      "titulo": "Journal of Lutheran Ethics — numero de dezembro/janeiro de 2026: 'Homelessness'",
+      "url": "https://www.lutheranscholarsnetwork.org/",
+      "instituicao": "Journal of Lutheran Ethics",
+      "aos": "religious ethics, christian ethics, theology",
+      "pais": "Estados Unidos",
+      "prazo": "2026-10-01",
+      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. PRAZO DE PROPOSTA: 1 de outubro de 2026. Entrega final dos textos: 1 de novembro de 2026. E o unico prazo duro do boletim inteiro. O tema: pensando o nascimento de Cristo num estabulo e a fuga da Sagrada Familia para o Egito, a chamada convida a considerar quem se encontra em situacao semelhante — sem meios de custear moradia, ou fugindo de violencia, pobreza ou desastre. Editora do numero: Jennifer Hockenbery. O JLE e publicacao eclesial online, bimestral, gratuita e de acesso aberto, catalogada na ATLA, que trata questoes sociais a partir da tradicao historica, teologica e etica. Ha mais chamadas do JLE para 2026 alem desta."
+    },
+    {
+      "id": "lsn-consensus-public-theology",
+      "titulo": "Consensus: A Canadian Journal of Public Theology — submissoes em fluxo continuo",
+      "url": "https://scholars.wlu.ca/consensus/policies.html",
+      "instituicao": "Consensus: A Canadian Journal of Public Theology",
+      "aos": "public theology, political theology, religious ethics",
+      "pais": "Canada",
+      "prazo": "",
+      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Sem prazo: convida manuscritos em fluxo continuo, sobre qualquer parte do escopo do periodico. O foco e teologia publica em sentido amplo, de interesse para luteranos e nao-luteranos, no Canada e fora dele; a ELCIC e parceira de plena comunhao com a Igreja Anglicana do Canada, e o publico e deliberadamente diverso. NORMAS: 3.000 a 4.000 palavras, formato Word, citacao Chicago full-note. Co-editor-chefe: Kyle Schiefelbein-Guerrero. Requisitos completos na pagina de politicas do periodico."
+    },
+    {
+      "id": "lsn-lutheran-forum",
+      "titulo": "Lutheran Forum — ideias de artigo e manuscritos, em fluxo continuo",
+      "url": "https://www.lutheranscholarsnetwork.org/",
+      "instituicao": "Lutheran Forum",
+      "aos": "lutheran theology, theology",
+      "pais": "Estados Unidos",
+      "prazo": "",
+      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Sem prazo e sem tema declarado: o boletim so convida ideias de artigo e manuscritos. Editado por Piotr J. Malysz e Matthew O. Staneck. Chamada generica — util como destino, nao como urgencia."
+    },
+    {
+      "id": "lsn-jle-resenhas",
+      "titulo": "Journal of Lutheran Ethics — chamada permanente de resenhas de livros",
+      "url": "https://www.lutheranscholarsnetwork.org/",
+      "instituicao": "Journal of Lutheran Ethics",
+      "aos": "religious ethics, christian ethics, theology",
+      "pais": "Estados Unidos",
+      "prazo": "",
+      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Resenhas de 1.000 a 1.500 palavras, de livros recentes que contribuam para a reflexao teologica ou a deliberacao etica na igreja e na sociedade — inclusive livros que nao sejam teologicos em si. O livro NAO precisa ser do tema do numero. Envia-se a proposta (o livro e a direcao da resenha) ao editor de resenhas, William Rodriguez, com 'Book Review' no assunto; tambem se pode pedir cadastro como resenhista, indicando areas de interesse. ESFORCO BAIXO, porta de entrada: e o item mais barato deste boletim."
+    }
+  ]
+}

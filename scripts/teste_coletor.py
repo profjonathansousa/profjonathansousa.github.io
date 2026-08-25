@@ -395,6 +395,58 @@ ok(portas.get("philjobs") is None,
 ok(not [f for f in CRIT["fontes"] if f["nome"] == "dou"][0]["ligada"],
    "DOU descartado por decisao, e continua desligado", "ok")
 
+print("\n=== 13. Fonte curada a mao (metodo 'manual') ===")
+# De ponta a ponta e sem rede: le o arquivo, passa pelo descarte, pela porta e
+# pelo classificar. E o unico teste daqui que toca dado de producao.
+for modo, minimo in (("vagas", 1), ("chamadas", 5)):
+    crit = C.ler_json(os.path.join(C.RAIZ, "criterios_%s.json" % modo), {})
+    fonte = [f for f in crit["fontes"] if f["nome"] == "curadas"]
+    ok(len(fonte) == 1 and fonte[0].get("metodo") == "manual",
+       "%s: a fonte 'curadas' esta declarada" % modo, fonte)
+    cfg = fonte[0]
+    bat = {"fontes": {}, "avisos": []}
+    itens = C.fonte_manual(cfg, bat)
+    ok(len(itens) >= minimo, "%s: o arquivo curado carrega (%d itens)" % (modo, len(itens)),
+       bat["fontes"].get("curadas"))
+    for it in itens:
+        if not C.descarte_barato(it, crit) and cfg.get("unidade") == "edital":
+            C.resolver_area(None, it, crit, bat, {"restante": 0}, cfg.get("porta", "filosofia"))
+        C.classificar(it, crit, cfg.get("unidade", "vaga"))
+    mortos = [i["titulo"][:40] for i in itens if i.get("descartado")]
+    ok(not mortos, "%s: nenhum item curado morre no pipeline" % modo, mortos)
+
+crit_v = C.ler_json(os.path.join(C.RAIZ, "criterios_vagas.json"), {})
+cfg_v = [f for f in crit_v["fontes"] if f["nome"] == "curadas"][0]
+fapesp = C.fonte_manual(cfg_v, {"fontes": {}, "avisos": []})[0]
+C.descarte_barato(fapesp, crit_v)
+C.resolver_area(None, fapesp, crit_v, {"avisos": []}, {"restante": 0}, "posdoc")
+ok(fapesp["porta_passou"] is True,
+   "FAPESP: a porta posdoc abre no proprio texto curado, sem gastar requisicao",
+   fapesp.get("porta_passou"))
+C.classificar(fapesp, crit_v, "edital")
+ok(fapesp.get("tipo") == "pos-doc" and fapesp.get("relevancia") == "aberto",
+   "FAPESP: pos-doc de fluxo continuo entra como 'aberto'",
+   (fapesp.get("tipo"), fapesp.get("relevancia")))
+ok("sem prazo" in (fapesp.get("marcas") or []),
+   "FAPESP: fluxo continuo sai marcado 'sem prazo'", fapesp.get("marcas"))
+
+crit_c = C.ler_json(os.path.join(C.RAIZ, "criterios_chamadas.json"), {})
+cfg_c = [f for f in crit_c["fontes"] if f["nome"] == "curadas"][0]
+lsn = C.fonte_manual(cfg_c, {"fontes": {}, "avisos": []})
+for it in lsn:
+    C.descarte_barato(it, crit_c)
+    C.classificar(it, crit_c, "vaga")
+ok(all(i.get("forma") == "publicacao" for i in lsn),
+   "LSN: toda chamada de periodico sai como PUBLICACAO, nenhuma como evento",
+   {i["titulo"][:28]: i.get("forma") for i in lsn})
+ok(all(i.get("relevancia") == "nicho" for i in lsn),
+   "LSN: o cabeca ('theology', 'lutheran') elege nicho, sem ajuda do corpo",
+   {i["titulo"][:24]: i.get("relevancia") for i in lsn})
+com_prazo = [i for i in lsn if i.get("prazo")]
+ok(len(com_prazo) == 1 and com_prazo[0]["prazo"] == "2026-10-01",
+   "LSN: o unico prazo duro do boletim e o do JLE, 01/10/2026",
+   [(i["titulo"][:28], i.get("prazo")) for i in lsn])
+
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))
 for f in falhas: print("  - " + f)

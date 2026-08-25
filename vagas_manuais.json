@@ -1,0 +1,21 @@
+{
+  "_o_que_e": "Vagas e programas curados A MAO. Entram no coletor como qualquer outra fonte (metodo 'manual' em criterios_vagas.json), mas nao sao raspados: alguem escreve aqui.",
+  "_para_que_serve": "Fluxo continuo. Um programa que fica aberto o ano inteiro nunca aparece como 'novidade' em lista nenhuma, e por isso passaria despercebido para sempre por um coletor que so olha o que mudou nesta semana.",
+  "_como_manter": "Acrescente um objeto em 'itens' e atualize '_atualizado_em'. O campo 'texto' e o que a tarefa semanal le para julgar — escreva nele o que decide a candidatura (requisito que trava, e qual e o passo real), nao a propaganda do programa. Item sem 'prazo' entra marcado 'sem prazo' e fica na lista ate voce arquivar num toque.",
+  "_repositorio_publico": "Este arquivo esta num repositorio publico. Nada de e-mail pessoal, nada inedito, nada de recorte de pesquisa. Os recortes moram no prompt da tarefa 3c (decisao 4.8).",
+  "_atualizado_em": "2026-08-25",
+  "itens": [
+    {
+      "id": "manual-fapesp-pd",
+      "titulo": "Bolsa de Pos-Doutorado (PD) — FAPESP",
+      "url": "https://fapesp.br/bolsas/pd",
+      "instituicao": "FAPESP",
+      "aos": "",
+      "local": "Estado de Sao Paulo",
+      "categoria": "Pos-doutorado",
+      "pais": "Brasil",
+      "prazo": "",
+      "texto": "Bolsa de pos-doutorado da FAPESP em FLUXO CONTINUO. VERIFICADO na propria pagina em 2026-08-25: 'Em qualquer epoca do ano (fluxo continuo)' — nao ha edital com data limite, e por isso este item nunca apareceria numa lista de novidades. SEM RESTRICAO DE AREA do conhecimento. Requisitos: doutorado obtido nos ultimos 7 anos; supervisor com doutorado e vinculo com instituicao de pesquisa ou ensino superior NO ESTADO DE SAO PAULO, com liderança em projetos competitivos e experiencia internacional; a pesquisa e realizada em instituicao paulista. Duracao inicial de ate 36 meses (minimo 6), renovavel ate 48 no total. Inclui mensalidade, reserva tecnica e auxilio instalacao. O QUE TRAVA: dedicacao exclusiva, sem vinculo empregaticio e sem acumular outra bolsa. Para quem da aula, isso e a decisao inteira, nao um detalhe. O PASSO REAL nao e a inscricao: e achar o supervisor em Sao Paulo. Sem ele nao ha submissao, e e isso que consome o tempo."
+    }
+  ]
+}

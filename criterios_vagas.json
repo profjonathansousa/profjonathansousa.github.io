@@ -279,6 +279,17 @@
 
   "fontes": [
     {
+      "nome": "curadas",
+      "ligada": true,
+      "metodo": "manual",
+      "arquivo": "vagas_manuais.json",
+      "unidade": "edital",
+      "porta": "posdoc",
+      "pais_padrao": "Brasil",
+      "_o_que_e": "Vagas e programas que nao tem pagina de listagem para raspar toda semana — tipicamente FLUXO CONTINUO, que fica aberto o ano inteiro e por isso nunca aparece como 'novidade' em lista nenhuma. Hoje: pos-doc da FAPESP.",
+      "_porque_entra_pela_porta_posdoc": "O texto curado ja diz 'pos-doutorado', entao a porta abre no primeiro teste, sem gastar requisicao. Item sem prazo entra marcado 'sem prazo' e fica; um toque na triagem arquiva de vez."
+    },
+    {
       "nome": "philjobs",
       "ligada": true,
       "metodo": "sonda_id",

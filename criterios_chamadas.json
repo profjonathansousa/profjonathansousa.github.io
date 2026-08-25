@@ -102,7 +102,9 @@
       {
         "rotulo": "periodico",
         "_nota": "Chamada avulsa de periodico, sem tema de dossie.",
-        "quando": ["call for papers", "chamada para artigos", "chamada de artigos", "appel a contributions", "aufruf", "call for submissions", "chamada aberta", "fluxo continuo"]
+        "_MEDIDO_2026-08-25_sessao_4": "Faltava a palavra mais comum de todas: 'journal'. As duas chamadas do Journal of Lutheran Ethics caiam em tipo 'outro' e, por tabela, em forma 'evento' — uma chamada de artigo saindo como congresso. Vale para toda CFP em ingles, nao so para o boletim curado.",
+        "_cuidado_com_a_ordem": "Esta regra vem ANTES de congresso/workshop, e a primeira que casa vence. Por isso 'journal of' e nao 'journal' solto: um evento chamado 'Workshop of the Journal of X' seria rotulado periodico. Se isso aparecer, o conserto e mover a regra de lugar, nao alargar o termo.",
+        "quando": ["call for papers", "chamada para artigos", "chamada de artigos", "appel a contributions", "aufruf", "call for submissions", "chamada aberta", "fluxo continuo", "journal of", "revista", "chamada permanente", "resenha", "book review"]
       },
       {
         "rotulo": "congresso",
@@ -170,6 +172,14 @@
 
   "fontes": [
     {
+      "nome": "curadas",
+      "ligada": true,
+      "metodo": "manual",
+      "arquivo": "chamadas_manuais.json",
+      "unidade": "vaga",
+      "_o_que_e": "Chamadas que chegam por e-mail e nao tem pagina para raspar. Hoje: Lutheran Scholars Network, boletim TRIMESTRAL. Ver o cabecalho do chamadas_manuais.json para como manter."
+    },
+    {
       "nome": "philevents",
       "ligada": true,
       "metodo": "sonda_id",
@@ -183,14 +193,14 @@
       "nome": "anpof-chamadas",
       "ligada": true,
       "metodo": "lista_html",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "link_padrao": "/agenda/",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas",
+      "link_padrao": "/lancamentos-e-chamadas-de-revistas/",
       "pais_padrao": "Brasil",
       "unidade": "vaga",
-      "sem_link_proprio": true,
-      "_nota": "VERIFICADO 2026-08-25: a pagina existe e traz CFPs brasileiros reais com periodico e prazo — 'Dossie Ensino de Filosofia', revista O Manguezal, 30/07/2026.",
-      "_limitacao_verificada": "Ao contrario da lista de concursos, os itens NAO tem URL propria. O coletor usa a URL da lista como link e marca 'link: pagina da lista'. E honesto: melhor um item sem link do que um link inventado.",
-      "_link_padrao_nao_verificado": "Nao vi o HTML bruto. Rode 'python scripts/coletor.py chamadas --diagnostico' e ajuste com o que sair no log."
+      "_nota": "A pagina traz CFPs brasileiros reais com periodico e prazo — 'Dossie Ensino de Filosofia', revista O Manguezal.",
+      "_CORRIGIDO_2026-08-25_sessao_4": "Apontava para /agenda/chamadas com sem_link_proprio, e devolvia 3123 'itens' de uma pagina so — a lista inteira do site lida linha a linha. Os 3151 barrados escondiam que zero sobreviveu. Endereco certo indicado pelo usuario: /agenda/lancamentos-e-chamadas-de-revistas.",
+      "_e_os_itens_TEM_link_proprio": "A limitacao registrada na sessao 3 ('itens sem URL propria') era artefato da pagina errada. MEDIDO no dados/vagas.json das 11h38: o menu da ANPOF resolve para https://anpof.org.br/agenda/agenda/lancamentos-e-chamadas-de-revistas, exatamente a mesma forma de /agenda/agenda/concursos-e-selecoes/<slug>, que tem link por item. Por isso sem_link_proprio saiu daqui.",
+      "_a_triagem_de_fit": "Quem julga o encaixe contra os recortes e a tarefa semanal, no prompt — nao este arquivo. O repositorio e publico (decisao 4.8)."
     },
     {
       "nome": "upenn-cfp",
