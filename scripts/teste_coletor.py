@@ -5,7 +5,7 @@
 Os casos vieram de anuncios REAIS do jobs.csv (105 linhas, 2026-02-25 a
 2026-08-21) e das paginas verificadas em 2026-08-25.
 """
-import json, os, sys, datetime
+import json, os, re, sys, datetime
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import coletor as C
@@ -246,26 +246,101 @@ for bruto, cargo_esp, inst_esp, cidade_esp in titulos:
     ok(c == cargo_esp and i_ == inst_esp and cid == cidade_esp,
        "%-44s -> %s | %s" % (bruto[:44], cargo_esp[:30], inst_esp[:24]), (c, i_, cid))
 
-print("\n=== 9. Resolucao de area (opcao c) ===")
+def edital(titulo, texto, **extra):
+    base = {"titulo": titulo, "aos": "", "aoc": "", "categoria": "", "contrato": "",
+            "local": "", "instituicao": "", "prazo": "", "texto": texto}
+    base.update(extra)
+    return base
+
+print("\n=== 9. A PORTA 'filosofia' — abre ou fecha, nunca elege ===")
 orc = {"restante": 0}   # sem orcamento: nao busca a pagina do edital
 longo = "areas: " + ("medicina enfermagem odontologia fisioterapia nutricao " * 12)
-it = {"titulo": "UFTM abre 4 vagas", "aos": "", "texto": longo}
+it = edital("UFTM abre 4 vagas", longo)
 C.resolver_area(None, it, CRIT, {"avisos": []}, orc)
-ok(it["relevancia"] == "sem area", "texto longo sem filosofia -> 'sem area' (rejeita)", it["relevancia"])
+ok(it["porta_passou"] is False and "relevancia" not in it,
+   "texto longo sem filosofia -> porta FECHADA, sem tocar em relevancia",
+   (it.get("porta_passou"), it.get("relevancia")))
 
-it = {"titulo": "UFU abre 5 vagas", "aos": "", "texto": "Engenharia Fisica, Filosofia, Fisica, Quimica"}
+it = edital("UFU abre 5 vagas", "Engenharia Fisica, Filosofia, Fisica, Quimica")
 C.resolver_area(None, it, CRIT, {"avisos": []}, orc)
-ok(it["relevancia"] == "nicho" and it["area_confirmada"],
-   "'Filosofia' na listagem -> confirmada", it["relevancia"])
+ok(it["porta_passou"] is True and it["area_confirmada"] and "relevancia" not in it,
+   "'Filosofia' na listagem -> porta ABERTA, relevancia intocada", it.get("relevancia"))
 
-it = {"titulo": "UFRGS abre 20 vagas de Magisterio Superior", "aos": "", "texto": "edital 09/2026"}
+it = edital("UFRGS abre 20 vagas de Magisterio Superior", "edital 09/2026")
 C.resolver_area(None, it, CRIT, {"avisos": []}, orc)
-ok(it["relevancia"] == "nao confirmada" and not it["area_confirmada"],
-   "texto curto, so PDF -> 'nao confirmada' (ENTRA marcado)", it["relevancia"])
+ok(it["porta_passou"] is None and not it["area_confirmada"],
+   "texto curto, so PDF -> ignorancia (ENTRA marcado)", it.get("porta_passou"))
 
-it = {"titulo": "Chamada", "aos": "", "texto": "vagas para Filosofica e areas afins"}
+it = edital("Chamada", "vagas para Filosofica e areas afins")
 C.resolver_area(None, it, CRIT, {"avisos": []}, orc)
-ok(it["relevancia"] == "nicho", "prefixo 'filosof' pega 'Filosofica'", it["relevancia"])
+ok(it["porta_passou"] is True, "prefixo 'filosof' pega 'Filosofica'", it.get("porta_passou"))
+
+print("\n=== 9b. O DEFEITO DE 2026-08-25: o corpo elegia ===")
+# Pagina de navegacao da ANPOF: o corpo diz 'Filosofia' (esta no nome da
+# associacao), o cabeca nao diz nada. Saiam 33 destas no topo da lista, nicho.
+it = edital("Historico da ANPOF",
+            "ANPOF - Associacao Nacional de Pos-Graduacao em Filosofia. " * 12)
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0})
+C.classificar(it, CRIT, "edital")
+ok(it.get("relevancia") != "nicho",
+   "corpo cheio de 'Filosofia' + cabeca mudo -> NAO e nicho", it.get("relevancia"))
+ok(it.get("relevancia") == "aberto",
+   "...e sim 'aberto': passou pela porta, o cabeca nao declara area", it.get("relevancia"))
+
+it = edital("Professor Substituto - Instituto de Filosofia da Religiao", "filosofia")
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0})
+C.classificar(it, CRIT, "edital")
+ok(it.get("relevancia") == "nicho",
+   "nicho NO CABECA continua elegendo no edital", it.get("relevancia"))
+
+it = edital("Concurso para Professor de Filosofia Politica - UFF", "filosofia")
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0})
+C.classificar(it, CRIT, "edital")
+ok(it.get("relevancia") == "competencia",
+   "competencia no cabeca tambem elege", it.get("relevancia"))
+
+it = edital("UFTM abre 4 vagas", longo)
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0})
+C.classificar(it, CRIT, "edital")
+ok(it.get("descartado") and "sem filosofia" in (it.get("motivo_saida") or ""),
+   "porta fechada -> descartado, com a razao registrada", it.get("motivo_saida"))
+
+it = edital("UFRGS abre 20 vagas", "edital 09/2026")
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0})
+C.classificar(it, CRIT, "edital")
+ok("area nao confirmada" in (it.get("marcas") or []),
+   "ignorancia sai MARCADA — a marca que o arquivo declarava e ninguem escrevia",
+   it.get("marcas"))
+
+print("\n=== 9c. A PORTA 'posdoc' — fomento nao se mede por area ===")
+it = edital("Edital 12/2026 - Apoio a Infraestrutura Hospitalar",
+            "apoio a infraestrutura de hospitais universitarios " * 12)
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0}, "posdoc")
+ok(it["porta_passou"] is False,
+   "edital de infraestrutura -> porta posdoc FECHADA", it.get("motivo_porta"))
+
+for trecho in ("Bolsa de Pos-Doutorado Nota 10",
+               "Programa de pos-doc para jovens pesquisadores",
+               "Chamada para Bolsas de Pos-Doutoral no Estado",
+               "Postdoctoral fellowships in any area",
+               "Bolsa para recem-doutor"):
+    it = edital("Edital FAPERJ", trecho + " " + ("texto do edital " * 30))
+    C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0}, "posdoc")
+    ok(it["porta_passou"] is True, "porta posdoc abre em %-46r" % trecho[:44],
+       it.get("porta_passou"))
+
+it = edital("Edital 39/2025 - Pos-Doutorado Nota 10",
+            "bolsa de pos-doutorado para todas as areas " * 12)
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0}, "posdoc")
+C.classificar(it, CRIT, "edital")
+ok(not it.get("descartado") and it.get("relevancia") == "aberto",
+   "pos-doc de fomento ENTRA sem 'filosofia' em lugar nenhum",
+   (it.get("descartado"), it.get("relevancia")))
+
+it = edital("Selecao de Doutorado em Filosofia", "selecao de doutorado " * 25)
+C.resolver_area(None, it, CRIT, {"avisos": []}, {"restante": 0}, "posdoc")
+ok(it["porta_passou"] is False,
+   "'doutorado' sozinho NAO abre a porta posdoc", it.get("porta_passou"))
 
 print("\n=== 10. 'Discente' nao gasta requisicao (descarte barato) ===")
 it = {"titulo": "Selecao Mestrado PPGF-UFAM 2027", "aos": "Filosofia", "aoc": "",
@@ -276,6 +351,49 @@ ok(morreu and it["tipo"] == "discente", "selecao de mestrado morre ANTES da busc
 it2 = {"titulo": "Doutorado em Filosofia UFES - Turma 2027", "aos": "Filosofia", "aoc": "",
        "categoria": "", "contrato": "", "texto": ""}
 ok(C.descarte_barato(it2, CRIT), "'Turma 2027' tambem morre cedo", it2.get("motivo_saida"))
+
+# Os tres que PASSARAM na coleta de 2026-08-25 11h38. A lista dizia
+# "selecao de mestrado"; a ANPOF escreve "do", e as vezes preposicao nenhuma.
+for titulo in ("Selecao do Mestrado em Filosofia do PPGF-UFAM 2027",
+               "Selecao do Mestrado em Filosofia do PPGF-UFAM - Edital exclusivo para pessoas indigenas",
+               "Selecao Doutorado em Filosofia UFG"):
+    it = {"titulo": titulo, "aos": "Filosofia", "aoc": "", "categoria": "",
+          "contrato": "", "texto": "filosofia"}
+    ok(C.descarte_barato(it, CRIT) and it.get("tipo") == "discente",
+       "passou em 25/08, agora morre: %-44s" % titulo[:44], it.get("motivo_saida"))
+
+# A guarda da secao 5.2, do outro lado: nenhum termo novo pode comer pos-doc.
+for titulo in ("Post-doctoral fellowship in philosophy of religion",
+               "Pos-doutorado em Filosofia - Edital 39/2025",
+               "Chamada de pos-doutorado em teologia"):
+    it = {"titulo": titulo, "aos": "", "aoc": "", "categoria": "", "contrato": "", "texto": ""}
+    ok(not C.descarte_barato(it, CRIT),
+       "pos-doc NAO cai como discente: %-44s" % titulo[:44], it.get("motivo_saida"))
+
+print("\n=== 11. Peneira pelo texto da ancora (texto_padrao) ===")
+# Por que existe: padrao de URL largo + teto de itens = os itens reais nunca
+# sao avaliados. FAPERJ, 25/08: 215 links, teto de 40, zero edital de verdade.
+html_faperj = ("<a href='https://www.faperj.br/?id=1.2.3'>Quem somos na FAPERJ</a>"
+               "<a href='https://www.faperj.br/?id=4.5.6'>Fale conosco da FAPERJ</a>"
+               "<a href='https://www.faperj.br/?id=7.8.9'>Edital 12/2026 - Pos-Doutorado Nota 10</a>")
+todos = C._links_da_pagina(html_faperj, "https://www.faperj.br/",
+                           "faperj\\.br/(rp/downloads/|\\?id=)")
+ok(len(todos) == 3, "sem peneira, o padrao de URL leva a navegacao junto", len(todos))
+padrao = [f for f in CRIT["fontes"] if f["nome"] == "faperj"][0]["texto_padrao"]
+sobram = [(u, t) for u, t in todos if re.search(padrao, t, re.IGNORECASE)]
+ok(len(sobram) == 1 and "Edital" in sobram[0][1],
+   "com a peneira de ancora, sobra o edital de verdade", [t for _, t in sobram])
+
+print("\n=== 12. As portas estao declaradas onde devem ===")
+portas = {f["nome"]: f.get("porta") for f in CRIT["fontes"] if f.get("ligada")}
+ok(portas.get("anpof") == "filosofia" and portas.get("docentefederal") == "filosofia",
+   "agregadores (IFES, Pedro II, CAps) pedem filosofia", portas)
+ok(portas.get("faperj") == "posdoc" and portas.get("fapesp") == "posdoc",
+   "fomento pede pos-doc, nao area", portas)
+ok(portas.get("philjobs") is None,
+   "philjobs nao tem porta: unidade 'vaga', o cabeca ja carrega o AOS", portas)
+ok(not [f for f in CRIT["fontes"] if f["nome"] == "dou"][0]["ligada"],
+   "DOU descartado por decisao, e continua desligado", "ok")
 
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))

@@ -74,6 +74,7 @@
 
     "aberto": {
       "_nota": "AOS: Open nao te exclui por especialidade — e onde estao muitos pos-docs. Entra marcado e ordenado por ultimo. 32 dos 105 anuncios do jobs.csv eram assim; depois do veto sobram ~1 por semana.",
+      "_tambem_o_edital_geral": "Desde 2026-08-25 este estado recebe tambem o edital brasileiro que passou pela porta e cujo cabeca nao declara area — que e a regra, nao a excecao: o cabeca do edital nao carrega AOS. 'aberto' aqui quer dizer 'entrou por direito, sem especialidade declarada', e nao 'AOS: Open'.",
       "padrao_aos": "^\\s*open\\b"
     },
 
@@ -94,7 +95,8 @@
           "mestrado e doutorado", "processo seletivo discente", "aluno especial",
           "graduate fellowship", "phd fellowship", "phd student", "phd position",
           "doctoral fellowship", "doctoral position", "graduate student",
-          "iniciacao cientifica", "turma"
+          "iniciacao cientifica", "turma",
+          "selecao do mestrado", "selecao do doutorado", "selecao doutorado"
         ]
       },
       {
@@ -243,6 +245,20 @@
     "_nota_carencia": "Passo 4, decidido em 2026-08-25. A vencida vai para o historico SEMPRE — isso nao muda. Mas ela TAMBEM continua na lista viva, marcada 'vencida' e no fim da fila, por estes dias. A razao e o celular: o Cronograma so acrescenta e atualiza, nunca remove. Se a vaga sumisse do arquivo no dia do vencimento, ficaria pendurada no aparelho para sempre sem nunca aparecer como vencida. Marcada, voce arquiva num toque — e 'st' e 'vida' continuam sendo so do aparelho, que era a regra a preservar."
   },
 
+  "porta_posdoc": {
+    "_o_que_e": "A porta das agencias de fomento. Decisao do usuario em 2026-08-25: FAPERJ, FAPESP e similares publicam edital GERAL, que quase nunca diz 'filosofia'. Pedir area aqui equivale a desligar a fonte — foi o que aconteceu na coleta das 11h38, quando os 40 itens da FAPERJ morreram em 'areas lidas, sem filosofia'.",
+    "_o_que_basta": "Saber que ha edital de pos-doutorado ABERTO. O quadro se preenche com prazo, instituicao e link. Sem fit, sem area, sem filosofia no titulo.",
+    "_cuidado_ao_editar": "Mesma armadilha da lista 'discente', do outro lado: 'doutorado' sozinho NAO entra aqui, porque casaria 'selecao de doutorado', que e justamente o que se descarta. O casamento desta porta e por PREFIXO — 'pos-doc' ja pega 'pos-doctoral', e 'postdoc' ja pega 'postdoctoral'.",
+    "termos": [
+      "pos-doutorado", "pos doutorado", "posdoutorado",
+      "pos-doutoral", "pos doutoral",
+      "pos-doc", "pos doc", "posdoc",
+      "postdoctoral", "post-doctoral", "postdoc",
+      "jovem pesquisador", "recem-doutor", "recem doutor"
+    ],
+    "motivo_fechada": "edital lido, nao e de pos-doutorado"
+  },
+
   "resolucao_de_area": {
     "_o_problema": "VERIFICADO 2026-08-25: no Brasil a unidade de publicacao e o EDITAL, nao a vaga. O anuncio e 'UFRGS abre 20 vagas de Magisterio Superior, edital 09/2026' e as areas estao num anexo em PDF. Prova: a busca ?s=filosofia na docentefederal devolve 0 resultados, mas a listagem da mesma semana mostra 'UFU · Engenharia Fisica, Filosofia, Fisica, Quimica · Substituto'.",
     "_decisao_de_2026-08-25": "Opcao (c). Procura os termos abaixo no texto da listagem; se nao achar e houver link de edital em HTML, busca UMA vez mais nessa pagina. PDF nao e aberto.",
@@ -278,11 +294,13 @@
       "ligada": true,
       "metodo": "lista_html",
       "url": "https://anpof.org.br/agenda/concursos-e-selecoes",
-      "link_padrao": "/agenda/",
+      "link_padrao": "/concursos-e-selecoes/",
+      "porta": "filosofia",
       "pais_padrao": "Brasil",
       "unidade": "edital",
       "_nota": "VERIFICADO 2026-08-25: 200+ itens, cada um com URL propria e data. Pegou 'UFPI — Filosofia Medieval'. MAS ~80% e selecao de mestrado/doutorado: quem segura isso e o tipo 'discente'. Sem RSS — /feed devolve HTML, e a pagina ainda vaza 'Notice: Trying to get property' do PHP.",
-      "_link_padrao_nao_verificado": "Nao vi o HTML bruto (o WebFetch entrega markdown). Rode 'python scripts/coletor.py vagas --diagnostico' e ajuste este padrao com o que aparecer no log."
+      "_link_padrao_MEDIDO_2026-08-25": "O padrao antigo '/agenda/' pegava o MENU do site inteiro: 520 links, 33 itens de navegacao entre os 40 do teto ('Historico da ANPOF', 'Podcast Anpof', 'Colecao XX Encontro Nacional'). Os editais reais moram em /agenda/agenda/concursos-e-selecoes/<slug> — o 'agenda' dobrado e do site, nao e erro de digitacao. Medido no dados/vagas.json da coleta das 11h38.",
+      "_porque_esta_fonte_importa": "Decisao do usuario em 2026-08-25: e por aqui que passa quase toda vaga de filosofia no Brasil, e quase toda chamada."
     },
     {
       "nome": "docentefederal",
@@ -290,6 +308,7 @@
       "metodo": "lista_html",
       "url": "https://docentefederal.com.br/category/vagas/",
       "link_padrao": "docentefederal\\.com\\.br/(?!category|tag|author|page)[a-z0-9-]{8,}/?$",
+      "porta": "filosofia",
       "pais_padrao": "Brasil",
       "unidade": "edital",
       "_nota": "VERIFICADO 2026-08-25: agregador especializado em docencia federal. Pegou 'UFU, substituto, Filosofia, edital PROGEP 134/2026'. Ja usa o vocabulario Efetivo/Substituto/Visitante — os mesmos rotulos do agente. A busca ?s= nao indexa area: por isso a resolucao_de_area existe.",
@@ -301,9 +320,12 @@
       "metodo": "lista_html",
       "url": "https://www.faperj.br/?id=28.5.7",
       "link_padrao": "faperj\\.br/(rp/downloads/|\\?id=)",
+      "texto_padrao": "edital|chamada|programa|bolsa|p[oó]s-?doutorado|pesquisador",
+      "porta": "posdoc",
       "pais_padrao": "Brasil",
       "unidade": "edital",
-      "_nota": "VERIFICADO 2026-08-25: pagina unica e estavel, 17 editais de 2026, cada um com prazo e PDF. AVISO: nenhum edital de pos-doc em 2026 — o PDR-10 vigente e o Edital 39/2025. A fonte funciona; o poco e que esta seco este ano."
+      "_nota": "VERIFICADO 2026-08-25: pagina unica e estavel, 17 editais de 2026, cada um com prazo e PDF. AVISO: nenhum edital de pos-doc em 2026 — o PDR-10 vigente e o Edital 39/2025.",
+      "_correcao_da_sessao_4": "Na coleta das 11h38 esta fonte deu 215 links e os 40 do teto morreram TODOS em 'areas lidas, sem filosofia' — e nada garante que os 17 editais reais estivessem entre esses 40. Duas causas, dois consertos: o texto_padrao corta a navegacao, e a porta virou 'posdoc'. Agencia de fomento nao publica edital dizendo filosofia; pedir area aqui equivale a desligar a fonte."
     },
     {
       "nome": "dou",
@@ -315,17 +337,20 @@
       "unidade": "edital",
       "_nota": "DESLIGADA POR DECISAO, em 2026-08-25, e nao por falta de importancia — o DOU e onde TODO concurso federal (IFES, Pedro II, CEFETs, Colegios Militares, CAps federais) e publicado por lei.",
       "_porque_desligada": "in.gov.br recusou tres vezes: www.in.gov.br em dois caminhos e pesquisa.in.gov.br. O robots.txt nao responde — o servidor derruba a conexao. HIPOTESE: bloqueio a IP de datacenter. O Actions roda em IP da Azure, entao pode falhar la tambem.",
-      "_como_ligar": "Rode o workflow por workflow_dispatch com --diagnostico e leia o log. Se o DOU responder, ponha ligada: true. Se der timeout ou 403, ficou provada a hipotese — e ai a saida e o agregador, nao o diario."
+      "_DESCARTADO_EM_2026-08-25": "Decisao do usuario na sessao 4: descartar por completo, e nao voltar a analisar. O caminho para o concurso federal e o agregador (ANPOF e docentefederal), nao o diario oficial. NAO REABRIR — nem para testar o IP da Azure."
     },
     {
       "nome": "fapesp",
-      "ligada": false,
+      "ligada": true,
       "metodo": "lista_html",
       "url": "https://fapesp.br/oportunidades",
       "link_padrao": "/oportunidades/",
+      "texto_padrao": "p[oó]s-?doutorado|p[oó]s-?doc|edital|chamada|bolsa",
       "pais_padrao": "Brasil",
-      "unidade": "vaga",
-      "_nota": "DESLIGADA por baixa aderencia MEDIDA, nao suposta. VERIFICADO 2026-08-25: 106 oportunidades abertas, 55 de pos-doc — e a amostra inteira era STEM (IA, bioinformatica, fisica, imunologia, agronomia). Pos-doc de filosofia na FAPESP nao passa por essa vitrine: e submetido pelo candidato com um supervisor. Ligue se quiser conferir por conta propria."
+      "unidade": "edital",
+      "porta": "posdoc",
+      "_nota": "VERIFICADO 2026-08-25: 106 oportunidades abertas, 55 de pos-doc — e a amostra inteira era STEM (IA, bioinformatica, fisica, imunologia, agronomia).",
+      "_porque_voltou": "Estava desligada por 'baixa aderencia', mas a aderencia tinha sido medida com a regua errada: procurava filosofia numa vitrine de fomento. Decisao do usuario em 2026-08-25 — nestas fontes basta saber que ha pos-doc aberto; o fit nao se pede aqui. Se voltar a encher a lista de STEM, o conserto e o texto_padrao, nao desligar de novo."
     },
     {
       "nome": "pciconcursos",

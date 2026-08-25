@@ -373,13 +373,28 @@ def classificar(item, criterios, unidade="vaga"):
     rel = criterios.get("relevancia") or {}
     if unidade == "edital":
         # No Brasil a unidade publicada e o EDITAL, com N areas num anexo em
-        # PDF. A relevancia vem da resolucao de area, feita antes de chegar
-        # aqui. Ver resolver_area().
-        estado = item.get("relevancia") or "nao confirmada"
-        if estado == "sem area":
+        # PDF. O corpo do edital ABRE OU FECHA A PORTA (resolver_area) — ele
+        # nunca elege. Quem elege e o cabeca, aqui embaixo. Sem esta separacao,
+        # 'Historico da ANPOF' sai como nicho, porque a pagina inteira do site
+        # da ANPOF contem a palavra 'Filosofia'. Medido em 2026-08-25.
+        if item.get("porta_passou") is False:
             item["descartado"] = True
-            item["motivo_saida"] = "areas do edital lidas, sem filosofia"
+            item["motivo_saida"] = item.get("motivo_porta") or "porta fechada"
             return item
+        nicho = casa((rel.get("nicho") or {}).get("termos"), cabeca)
+        comp = casa((rel.get("competencia") or {}).get("termos"), cabeca)
+        if nicho:
+            estado, item["porque"] = "nicho", "nicho: " + ", ".join(nicho[:3])
+        elif comp:
+            estado, item["porque"] = "competencia", "competencia: " + ", ".join(comp[:3])
+        else:
+            # Passou pela porta e o cabeca nao diz mais nada: e edital geral.
+            # ENTRA, marcado e ordenado por ultimo — nunca descartado, porque
+            # o cabeca do edital brasileiro simplesmente nao carrega a area.
+            estado, item["porque"] = "aberto", "edital geral"
+        if item.get("porta_passou") is None:
+            marcas.append((criterios.get("resolucao_de_area") or {}).get(
+                "marca_quando_nao_confirmada", "area nao confirmada"))
     else:
         nicho = casa((rel.get("nicho") or {}).get("termos"), cabeca)
         comp = casa((rel.get("competencia") or {}).get("termos"), cabeca)
@@ -670,6 +685,13 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
         return _itens_sem_link(r.text, cfg, batimento)
 
     links = _links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao"))
+    # Segunda peneira, pelo TEXTO da ancora. Existe porque padrao de URL largo
+    # somado a teto de itens faz os itens reais nunca serem avaliados: em
+    # 2026-08-25 a FAPERJ deu 215 links (a navegacao inteira) e o teto de 40
+    # cortou antes dos 17 editais de verdade. O batimento dizia "ok".
+    if cfg.get("texto_padrao"):
+        links = [(u, t) for u, t in links
+                 if re.search(cfg["texto_padrao"], t, re.IGNORECASE)]
     batimento["fontes"][rotulo] = "ok · %d links" % len(links)
     if not links:
         batimento["avisos"].append(
@@ -783,7 +805,7 @@ def fonte_rss(sessao, cfg, batimento):
 
 # --------------------------------------------------- resolucao de area (opcao c)
 
-def resolver_area(sessao, item, criterios, batimento, orcamento):
+def resolver_area(sessao, item, criterios, batimento, orcamento, porta="filosofia"):
     """O problema brasileiro, VERIFICADO em 2026-08-25: aqui a unidade de
     publicacao e o EDITAL, nao a vaga. O anuncio e 'UFRGS abre 20 vagas de
     Magisterio Superior, edital 09/2026' e as areas estao num anexo em PDF.
@@ -795,9 +817,29 @@ def resolver_area(sessao, item, criterios, batimento, orcamento):
     se nao achar e houver link de edital em HTML, busca UMA vez mais. PDF nao e
     aberto. O que nao se conseguir resolver ENTRA marcado — nunca e descartado
     por duvida.
+
+    ISTO E UMA PORTA, NAO UM ELEITOR (corrigido em 2026-08-25, sessao 4). Ela
+    responde 'este edital serve de candidato?' e escreve porta_passou. Quem
+    decide a relevancia continua sendo o CABECA, no classificar(). Antes desta
+    correcao a funcao escrevia relevancia='nicho' direto, e como toda pagina do
+    site da ANPOF contem a palavra 'Filosofia', 'Historico da ANPOF' saia no
+    topo da lista como nicho. Medido no dados/vagas.json das 11h38.
+
+    Duas portas, escolhidas por fonte:
+      filosofia  ANPOF, docentefederal — agregadores onde IFES, Pedro II e os
+                 CAps publicam vaga de FILOSOFIA. Aqui a area e o que importa.
+      posdoc     FAPERJ, FAPESP — fomento. O edital e geral e quase nunca diz
+                 filosofia; o que importa e ser pos-doc e estar aberto.
     """
     cfg = criterios.get("resolucao_de_area") or {}
-    termos = cfg.get("termos") or ["filosof"]
+    if porta == "posdoc":
+        porta_cfg = criterios.get("porta_posdoc") or {}
+        termos = porta_cfg.get("termos") or ["pos-doutorado"]
+        motivo_fechada = porta_cfg.get("motivo_fechada") or \
+            "edital lido, nao e de pos-doutorado"
+    else:
+        termos = cfg.get("termos") or ["filosof"]
+        motivo_fechada = "areas do edital lidas, sem filosofia"
     texto = normalizar(item.get("titulo", "") + " " + item.get("aos", "") + " " + item.get("texto", ""))
 
     # Casamento por PREFIXO aqui, de proposito: 'filosof' tem que pegar
@@ -806,7 +848,7 @@ def resolver_area(sessao, item, criterios, batimento, orcamento):
         return any(re.search(r"(?<!\w)" + re.escape(normalizar(x)), t) for x in termos)
 
     if achou(texto):
-        item["relevancia"] = "nicho"
+        item["porta_passou"] = True
         item["area_confirmada"] = True
         return item
 
@@ -820,7 +862,7 @@ def resolver_area(sessao, item, criterios, batimento, orcamento):
                     extra = texto_limpo(r.text)
                     item["texto"] = (item.get("texto", "") + "\n" + extra)[:4000]
                     if achou(normalizar(extra)):
-                        item["relevancia"] = "nicho"
+                        item["porta_passou"] = True
                         item["area_confirmada"] = True
                         item["edital_lido"] = alvo
                         return item
@@ -835,10 +877,11 @@ def resolver_area(sessao, item, criterios, batimento, orcamento):
     # e ignorancia sai marcada, nao descartada.
     minimo = cfg.get("min_texto_para_confiar", 400)
     if len(texto) >= minimo:
-        item["relevancia"] = "sem area"
+        item["porta_passou"] = False          # AUSENCIA: lemos, e nao esta la
         item["area_confirmada"] = False
+        item["motivo_porta"] = motivo_fechada
     else:
-        item["relevancia"] = "nao confirmada"
+        item["porta_passou"] = None           # IGNORANCIA: entra marcado
         item["area_confirmada"] = False
     return item
 
@@ -886,7 +929,7 @@ def executar(modo, diagnostico=False):
                                 ler_json(os.path.join(DIR_DADOS, "%s_historico.json" % modo),
                                          {"itens": []}).get("itens", [])}
 
-    coletados, unidade_de = [], {}
+    coletados, unidade_de, porta_de = [], {}, {}
     for cfg in (criterios.get("fontes") or []):
         nome = cfg.get("nome", "?")
         if not cfg.get("ligada"):
@@ -912,6 +955,7 @@ def executar(modo, diagnostico=False):
             continue
         for it in itens:
             unidade_de[it["id"]] = cfg.get("unidade", "vaga")
+            porta_de[it["id"]] = cfg.get("porta", "filosofia")
         coletados += itens
 
     if diagnostico:
@@ -930,7 +974,8 @@ def executar(modo, diagnostico=False):
         # requisicao, e a resolucao de area custa. Sem isto, cada 'Selecao de
         # Mestrado 2027' da ANPOF gastaria uma busca para ser jogada fora.
         if not descarte_barato(item, criterios) and unidade == "edital":
-            resolver_area(sessao, item, criterios, batimento, orcamento)
+            resolver_area(sessao, item, criterios, batimento, orcamento,
+                          porta_de.get(item["id"], "filosofia"))
         classificar(item, criterios, unidade)
 
     # A ORDEM DESTAS PENEIRAS IMPORTA, e cada uma ja custou um defeito:
