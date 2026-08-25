@@ -1,30 +1,51 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Coletor semanal — VAGAS e CHAMADAS.
+Coletor semanal — VAGAS e CHAMADAS.  v2, Passo 3b da reforma do Portal.
 
 Roda no GitHub Actions, segunda 11:00 UTC (= 08:00 America/Sao_Paulo; o Brasil
 nao tem horario de verao, entao o horario e estavel o ano inteiro).
+
+    python scripts/coletor.py vagas
+    python scripts/coletor.py chamadas
+    python scripts/coletor.py vagas --diagnostico     # nao escreve nada
 
 POR QUE ISTO RODA NO ACTIONS E NAO NUMA TAREFA DO COWORK
 --------------------------------------------------------
 Verificado em 2026-08-24: api.github.com responde 403 do ambiente do Cowork
 ("sessions are bound to their configured repositories"). Tarefa agendada em
-nuvem LE do GitHub mas nao ESCREVE, e sem o Mac ligado nao alcanca pasta
-nenhuma. O Actions e a unica coisa que roda em horario, na nuvem, e escreve no
-repositorio — usando o GITHUB_TOKEN que o proprio GitHub injeta. Nenhuma
-credencial do usuario passa por aqui.
+nuvem LE do GitHub mas nao ESCREVE. O Actions e a unica coisa que roda em
+horario, na nuvem, e escreve no repositorio — com o GITHUB_TOKEN que o proprio
+GitHub injeta. Nenhuma credencial do usuario passa por aqui.
 
-PRINCIPIOS
-----------
+O QUE MUDOU DA v1 (2026-08-25)
+------------------------------
+A v1 PONTUAVA: somava pesos e comparava com um corte. Na primeira execucao real
+20 de 29 anuncios passaram e NENHUM disparou o grupo 'nucleo' — regiao (+5) e
+categoria (+9) somavam 14 num corte de 8, e atributo estrutural elegia sozinho.
+
+A v2 CLASSIFICA. Nao ha corte, nem peso, nem soma. Cada decisao vira uma coluna
+visivel da tabela: Bloco, Tipo, Esforco, Elegibilidade, Idioma, Prazo. Quem
+ordena e o prazo, que e o que aperta. E quem tria e o usuario, no Cronograma,
+no celular — Passo 4.
+
+Sai tambem o jobs.csv e a trava de fingerprint da secao 2.1 do agente_VAGAS.md:
+a pagina de ajuda do PhilJobs diz, literal, "Anyone can search for positions on
+PhilJobs", e /job/show/<id> abre completo sem login. Era o unico ponto do
+desenho capaz de derrubar o digest inteiro.
+
+PRINCIPIOS — cada um destes ja custou um defeito
+------------------------------------------------
 1. DEGRADA, NAO TRAVA. Fonte que falha vira uma linha no batimento; as outras
-   seguem. Nunca uma fonte derruba o digest inteiro.
+   seguem. Nunca uma fonte derruba o digest.
 2. SILENCIO SIGNIFICA FALHA. Todo run grava o batimento com o que rodou e o que
    quebrou. Se o arquivo nao mudar, algo esta errado — e da para ver.
-3. NAO DESCARTA. Anuncio que sai da lista por prazo vencido vai para o
-   historico, nao para o lixo.
-4. RESPEITA O robots.txt. O PhilJobs so proibe /ajax/. As paginas /job/show/
-   e /event/show/ sao publicas e permitidas — e foi por elas que entramos.
+3. NAO DESCARTA. Vencido vai para o historico. Barrado vai para os rejeitados,
+   com a razao. Nada some calado.
+4. NAO MENTE SOBRE O QUE NAO LEU. Prazo ilegivel nao vira "aberto"; area nao
+   lida nao vira "sem filosofia". As duas coisas saem marcadas.
+5. RESPEITA O robots.txt. O PhilJobs so proibe /ajax/. As paginas /job/show/ e
+   /event/show/ sao publicas e permitidas — e foi por elas que entramos.
 """
 
 import json
@@ -33,7 +54,9 @@ import re
 import sys
 import time
 import html as htmllib
+import unicodedata
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urljoin, urlparse
 
 import requests
 
@@ -42,11 +65,12 @@ DIR_DADOS = os.path.join(RAIZ, "dados")
 DIR_EVENTOS = os.path.join(RAIZ, "eventos")
 ARQ_ESTADO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "estado_coletor.json")
 
-UA = "cronograma-agente-semanal/1 (+https://jonathansousa.com.br)"
+UA = "cronograma-agente-semanal/2 (+https://jonathansousa.com.br)"
 TIMEOUT = 20
-PAUSA = 1.2          # segundos entre requisicoes: educacao com o servidor
-MAX_SONDAS = 120     # teto de ids sondados por execucao
-MAX_VAZIOS = 25      # para de sondar apos N ids seguidos inexistentes
+PAUSA = 1.2           # segundos entre requisicoes: educacao com o servidor
+MAX_SONDAS = 120      # teto de ids sondados por execucao
+MAX_VAZIOS = 25       # para de sondar apos N ids seguidos inexistentes
+MAX_ITENS_LISTA = 40  # teto de itens novos buscados por fonte de lista
 
 SP = timezone(timedelta(hours=-3))
 
@@ -55,6 +79,10 @@ SP = timezone(timedelta(hours=-3))
 
 def agora_sp():
     return datetime.now(timezone.utc).astimezone(SP)
+
+
+def hoje():
+    return agora_sp().date()
 
 
 def ler_json(caminho, padrao):
@@ -71,25 +99,82 @@ def escrever_json(caminho, dados):
         json.dump(dados, f, ensure_ascii=False, indent=2, sort_keys=False)
 
 
+def normalizar(s):
+    """Minuscula e sem acento, dos dois lados da comparacao. Sem isto,
+    'filosofia da religiao' nao casa 'Filosofia da Religiao'."""
+    s = unicodedata.normalize("NFKD", str(s or "").lower())
+    return "".join(c for c in s if not unicodedata.combining(c))
+
+
+def casa(termos, texto_norm):
+    """Casamento com FRONTEIRA DE PALAVRA, e devolve o que casou.
+
+    VERIFICADO em 2026-08-25: 'logic' esta dentro de 'theological', e 'ethic'
+    dentro de 'bioethics'. A v1 casava por substring pura ('p in campos'), o que
+    significa que no dia em que alguem escrevesse 'logic' no veto, etica
+    teologica passaria a ser vetada em silencio.
+
+    O HIFEN CONTA COMO LETRA na fronteira, e isso nao e detalhe. Com o \\b
+    comum, o termo 'doctoral fellowship' (lista de descarte) casaria dentro de
+    'post-doctoral fellowship', porque '-' e fronteira de palavra — e todo
+    pos-doc escrito com hifen seria descartado como selecao de doutorado, em
+    silencio. Pego no teste de 2026-08-25. Por isso [\\w-] nos dois lados.
+    """
+    achados = []
+    for t in (termos or []):
+        alvo = normalizar(t).strip()
+        if not alvo:
+            continue
+        if re.search(r"(?<![\w-])" + re.escape(alvo) + r"(?![\w-])", texto_norm):
+            achados.append(t)
+    return achados
+
+
+def achar_pais(texto_norm, texto_bruto, criterios):
+    """O pais nao sai de heuristica de virgula.
+
+    A v2 tentava so o padrao ', Pais' no fim do campo Location. Funciona para
+    'Notre Dame, Indiana, United States' e falha para 'United States' sozinho —
+    e o teste pegou: vaga tenure-track nos EUA saia como 'Aberto' em vez de
+    'Provavel c/ patrocinio', porque o pais nunca era lido. Casa contra os
+    nomes que o proprio arquivo de criterios ja conhece; a virgula fica so
+    como ultimo recurso.
+    """
+    nomes = list((criterios.get("paises_conhecidos") or {}).get("lista") or [])
+    nomes += [k for k in ((criterios.get("idioma") or {}).get("por_pais") or {})
+              if not k.startswith("_")]
+    for regra in (criterios.get("elegibilidade") or {}).get("regras", []):
+        nomes += regra.get("quando_pais") or []
+    # mais longo primeiro: 'United States' antes de qualquer 'States'
+    for nome in sorted(set(nomes), key=len, reverse=True):
+        if casa([nome], texto_norm):
+            return nome
+    m = re.search(r",\s*([A-Za-zÀ-ÿ\. ]{3,30})\s*$", (texto_bruto or "").strip())
+    return m.group(1).strip() if m else ""
+
+
 # Rotulos que a familia PhilPapers usa. Servem de PAREDE: o valor de um campo
 # termina onde o proximo rotulo comeca. Sem isto, o valor de "Deadline" engolia
 # o resto da pagina quando o site poe tudo num bloco so.
 ROTULOS = (r"(?:AOS|AOC|Location|Deadline|Posted|Published|Announced|Topic|Salary|"
            r"Start\s+date|Apply|Web|Email|Contact|Categoria|Localidade|City|Region|"
-           r"Job\s+category|Category|Contract\s+type|Type|"
+           r"Job\s+category|Category|Contract\s+type|Type|Inscricoes|Inscrições|"
+           r"Prazo|Edital|Vagas|Cargo|Area|Área|Instituição|"
            r"Area\s+of\s+special[is]zation|Application\s+deadline|"
            r"Submission\s+deadline|Closing\s+date)")
 
 
 def texto_limpo(bruto):
     """Tira script/style/tags e normaliza espacos. Parsear TEXTO em vez de
-    estrutura e muito mais resistente a mudanca de markup do site.
+    estrutura e muito mais resistente a mudanca de markup do site — e foi o que
+    permitiu escrever raspador para fontes cujo HTML eu nunca vi.
 
     Blocos viram QUEBRA DE LINHA antes de as tags sumirem: e a quebra que
     delimita um campo do seguinte. Colapsar tudo num paragrafo unico foi o
-    defeito que os testes pegaram em 2026-08-24 — o prazo deixava de ser lido
-    e vaga vencida entrava na lista como se estivesse aberta."""
-    s = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", bruto)
+    defeito que os testes pegaram em 2026-08-24 — o prazo deixava de ser lido e
+    vaga vencida entrava na lista como se estivesse aberta. NAO REINTRODUZIR.
+    """
+    s = re.sub(r"(?is)<(script|style|noscript)[^>]*>.*?</\1>", " ", bruto)
     s = re.sub(r"(?is)<\s*br\s*/?>", "\n", s)
     s = re.sub(r"(?is)</\s*(div|p|li|tr|td|th|h[1-6]|dt|dd|section|article)\s*>", "\n", s)
     s = re.sub(r"(?s)<[^>]+>", " ", s)
@@ -113,83 +198,371 @@ def campo(texto, rotulos, limite=200):
     return ""
 
 
+MESES_PT = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
+            "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
+
+
 def parse_data(s):
-    """Devolve AAAA-MM-DD a partir de varios formatos, ou '' se nao entender."""
+    """Devolve (AAAA-MM-DD, brando) — brando = prazo marcado '(soft)'.
+
+    VERIFICADO no jobs.csv: o PhilJobs escreve '2026-10-01 (soft)' em metade dos
+    anuncios. Prazo brando e informacao, nao sujeira: a leitura comeca na data
+    mas as inscricoes seguem. Vira coluna.
+    """
     if not s:
-        return ""
-    s = s.strip()
-    for fmt in ("%B %d, %Y", "%d %B %Y", "%Y-%m-%d", "%d/%m/%Y", "%b %d, %Y"):
+        return "", False
+    s = str(s).strip()
+    brando = bool(re.search(r"\(\s*soft\s*\)|\bbrando\b|\bprorrogav", s, re.IGNORECASE))
+    limpo = re.sub(r"\(\s*soft\s*\)", " ", s, flags=re.IGNORECASE).strip()
+    limpo = re.sub(r",?\s*\d{1,2}:\d{2}(:\d{2})?\s*(am|pm)?.*$", "", limpo, flags=re.IGNORECASE).strip()
+
+    # ISO em qualquer lugar da string
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", limpo)
+    if m:
+        return m.group(0), brando
+
+    # DD/MM/AAAA — o formato brasileiro. Vem antes dos formatos ingleses de
+    # proposito: 03/04/2026 no Brasil e 3 de abril, nao 4 de marco.
+    m = re.search(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b", limpo)
+    if m:
+        d, mes, a = int(m.group(1)), int(m.group(2)), int(m.group(3))
         try:
-            return datetime.strptime(re.sub(r",?\s*\d{1,2}:\d{2}.*$", "", s), fmt).strftime("%Y-%m-%d")
-        except ValueError:
-            continue
-    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", s)
-    return m.group(0) if m else ""
-
-
-# ------------------------------------------------------------------- pontuacao
-
-def pontuar(item, criterios):
-    """Soma os pesos dos criterios. O JULGAMENTO MORA AQUI — e no arquivo de
-    criterios, que e feito para voce editar. Nao ha modelo rodando no Actions."""
-    campos = " ".join(str(item.get(k, "")) for k in
-                      ("titulo", "instituicao", "aos", "categoria", "local", "texto")).lower()
-    pontos, porque = 0, []
-
-    for grupo, cfg in (criterios.get("termos") or {}).items():
-        peso = cfg.get("peso", 0)
-        achados = [p for p in cfg.get("palavras", []) if p.lower() in campos]
-        if achados:
-            # conta o grupo uma vez, nao uma vez por palavra
-            pontos += peso
-            porque.append("%s(%s) %+d" % (grupo, ", ".join(achados[:3]), peso))
-
-    for chave, mapa, rotulo in (("regiao", criterios.get("regiao"), "regiao"),
-                                ("categoria", criterios.get("categoria"), "categoria")):
-        if not mapa:
-            continue
-        for nome, peso in mapa.items():
-            if nome.lower() in campos:
-                pontos += peso
-                porque.append("%s:%s %+d" % (rotulo, nome, peso))
-                break
-
-    if criterios.get("aos_aberto") and re.search(r"\baos\s*:?\s*open\b", campos):
-        pontos += criterios["aos_aberto"]
-        porque.append("AOS aberto %+d" % criterios["aos_aberto"])
-
-    prazo = item.get("prazo") or ""
-    regras = criterios.get("prazo") or {}
-    if prazo:
-        try:
-            dias = (datetime.strptime(prazo, "%Y-%m-%d").date() - agora_sp().date()).days
-            item["dias_ate_prazo"] = dias
-            if dias < 0:
-                pontos += regras.get("vencido", -999)
-                porque.append("vencido")
-            elif dias < regras.get("curto_dias", 7):
-                pontos += regras.get("curto_peso", -3)
-                porque.append("prazo curto %+d" % regras.get("curto_peso", -3))
+            return datetime(a, mes, d).strftime("%Y-%m-%d"), brando
         except ValueError:
             pass
 
-    item["pontos"] = pontos
-    item["porque"] = "; ".join(porque)
-    return pontos
+    # "12 ago 2026" / "12 de agosto de 2026"
+    m = re.search(r"\b(\d{1,2})\s*(?:de\s+)?([a-zç]{3,})\.?\s*(?:de\s+)?(\d{4})\b",
+                  normalizar(limpo))
+    if m and m.group(2)[:3] in MESES_PT:
+        try:
+            return datetime(int(m.group(3)), MESES_PT[m.group(2)[:3]],
+                            int(m.group(1))).strftime("%Y-%m-%d"), brando
+        except ValueError:
+            pass
+
+    for fmt in ("%B %d, %Y", "%d %B %Y", "%b %d, %Y", "%d %b %Y", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(limpo, fmt).strftime("%Y-%m-%d"), brando
+        except ValueError:
+            continue
+    return "", brando
+
+
+UFS = {
+    "AC": "Acre", "AL": "Alagoas", "AP": "Amapa", "AM": "Amazonas", "BA": "Bahia",
+    "CE": "Ceara", "DF": "Distrito Federal", "ES": "Espirito Santo", "GO": "Goias",
+    "MA": "Maranhao", "MT": "Mato Grosso", "MS": "Mato Grosso do Sul",
+    "MG": "Minas Gerais", "PA": "Para", "PB": "Paraiba", "PR": "Parana",
+    "PE": "Pernambuco", "PI": "Piaui", "RJ": "Rio de Janeiro",
+    "RN": "Rio Grande do Norte", "RS": "Rio Grande do Sul", "RO": "Rondonia",
+    "RR": "Roraima", "SC": "Santa Catarina", "SP": "Sao Paulo",
+    "SE": "Sergipe", "TO": "Tocantins",
+}
+
+
+def achar_uf(texto, texto_norm):
+    """UF pela sigla (com fronteira, para 'PARA' nao virar Para) ou pelo nome."""
+    m = re.search(r"(?<![A-Za-z])(" + "|".join(UFS) + r")(?![A-Za-z])", texto)
+    if m:
+        return m.group(1)
+    for sigla, nome in UFS.items():
+        if casa([nome], texto_norm):
+            return sigla
+    return ""
+
+
+# ------------------------------------------------------------- classificacao
+
+def _primeira_regra(regras, alvo_norm):
+    """Percorre as regras NA ORDEM e devolve a primeira que casar. A ordem no
+    arquivo de criterios nao e alfabetica: e a ordem em que os rotulos se
+    canibalizam. 'PhD fellowship' tem que morrer em 'discente' antes de
+    'fellowship' o transformar em pos-doc."""
+    ultimo = None
+    for r in (regras or []):
+        termos = r.get("quando") or []
+        if not termos:
+            ultimo = r          # a regra sem termos e o padrao, no fim
+            continue
+        if casa(termos, alvo_norm):
+            return r
+    return ultimo or {"rotulo": "outro"}
+
+
+def descarte_barato(item, criterios):
+    """Veto e tipo 'discente' decididos SEM gastar requisicao nenhuma.
+
+    Existe porque a resolucao de area do bloco brasileiro busca a pagina do
+    edital, e seria absurdo gastar essa busca numa 'Selecao de Mestrado 2027'
+    que vai ser descartada de qualquer jeito — ~80% da agenda da ANPOF e disso.
+    """
+    onde = criterios.get("onde_se_decide") or {}
+    cabeca = normalizar(" ".join(str(item.get(k, "")) for k in
+                                 (onde.get("cabeca") or ["titulo", "aos", "aoc"])))
+    controlado = normalizar(" ".join(str(item.get(k, "")) for k in
+                                     ("categoria", "contrato", "tipo_fonte")))
+
+    vetadas = casa((criterios.get("veto") or {}).get("termos"), cabeca)
+    if vetadas:
+        item["descartado"] = True
+        item["motivo_saida"] = "veto no cabeca: %s" % ", ".join(vetadas[:3])
+        return True
+
+    regra = _primeira_regra((criterios.get("tipo") or {}).get("regras"),
+                            cabeca + " " + controlado)
+    if regra.get("descarta"):
+        item["tipo"] = regra.get("rotulo", "outro")
+        item["descartado"] = True
+        item["motivo_saida"] = "tipo '%s' nao e vaga" % item["tipo"]
+        return True
+    return False
+
+
+def classificar(item, criterios, unidade="vaga"):
+    """CLASSIFICA. Nao pontua, nao soma, nao compara com corte.
+
+    Cada passo abaixo produz uma COLUNA da tabela do agente_VAGAS.md. Nenhum
+    deles produz uma nota, e por isso nenhum atributo estrutural pode eleger
+    sozinho — que era exatamente o defeito da v1.
+
+    A relevancia se decide no CABECA (titulo + AOS + AOC). O CORPO nunca elege
+    ninguem: so preenche pais, prazo, elegibilidade e idioma. No teste de
+    2026-08-24 o corpo elegeu — 'ethics' no boilerplate institucional pesava
+    igual a 'AOS: Ethics'.
+    """
+    if item.get("descartado"):
+        return item          # ja morreu no descarte_barato; nao ressuscita aqui
+
+    onde = criterios.get("onde_se_decide") or {}
+    campos_cabeca = onde.get("cabeca") or ["titulo", "aos", "aoc"]
+    campos_corpo = onde.get("corpo") or ["texto", "local", "categoria", "instituicao"]
+
+    cabeca = normalizar(" ".join(str(item.get(k, "")) for k in campos_cabeca))
+    corpo = normalizar(" ".join(str(item.get(k, "")) for k in campos_corpo))
+    tudo = cabeca + " \n " + corpo
+
+    marcas = []
+
+    # ---- 1. VETO — so o cabeca ----
+    vetadas = casa((criterios.get("veto") or {}).get("termos"), cabeca)
+    if vetadas:
+        item["descartado"] = True
+        item["motivo_saida"] = "veto no cabeca: %s" % ", ".join(vetadas[:3])
+        return item
+
+    # ---- 2. TIPO — antes da relevancia, porque 'discente' descarta ----
+    # Campos de vocabulario fechado primeiro (Job type / Contract type no
+    # PhilJobs, 'Efetivo/Substituto/Visitante' na docentefederal); so depois o
+    # titulo. Vocabulario fechado erra menos que texto livre.
+    controlado = normalizar(" ".join(str(item.get(k, "")) for k in
+                                     ("categoria", "contrato", "tipo_fonte")))
+    regra_tipo = _primeira_regra((criterios.get("tipo") or {}).get("regras"),
+                                 controlado if controlado.strip() else "")
+    if regra_tipo.get("rotulo") in (None, "outro") or not controlado.strip():
+        regra_tipo = _primeira_regra((criterios.get("tipo") or {}).get("regras"),
+                                     cabeca + " " + controlado)
+    item["tipo"] = regra_tipo.get("rotulo", "outro")
+
+    if regra_tipo.get("descarta"):
+        item["descartado"] = True
+        item["motivo_saida"] = "tipo '%s' nao e vaga" % item["tipo"]
+        return item
+
+    # ---- 3. RELEVANCIA — estado, nao nota ----
+    rel = criterios.get("relevancia") or {}
+    if unidade == "edital":
+        # No Brasil a unidade publicada e o EDITAL, com N areas num anexo em
+        # PDF. A relevancia vem da resolucao de area, feita antes de chegar
+        # aqui. Ver resolver_area().
+        estado = item.get("relevancia") or "nao confirmada"
+        if estado == "sem area":
+            item["descartado"] = True
+            item["motivo_saida"] = "areas do edital lidas, sem filosofia"
+            return item
+    else:
+        nicho = casa((rel.get("nicho") or {}).get("termos"), cabeca)
+        comp = casa((rel.get("competencia") or {}).get("termos"), cabeca)
+        padrao_aberto = (rel.get("aberto") or {}).get("padrao_aos")
+        eh_aberto = bool(padrao_aberto and re.search(padrao_aberto,
+                                                     normalizar(item.get("aos", ""))))
+        if nicho:
+            estado, item["porque"] = "nicho", "nicho: " + ", ".join(nicho[:3])
+        elif comp:
+            estado, item["porque"] = "competencia", "competencia: " + ", ".join(comp[:3])
+        elif eh_aberto:
+            estado, item["porque"] = "aberto", "AOS aberto"
+        else:
+            item["descartado"] = True
+            item["motivo_saida"] = "sem aderencia no cabeca (titulo/AOS/AOC)"
+            return item
+    item["relevancia"] = estado
+
+    # ---- 4. PAIS e UF ----
+    local = str(item.get("local", "")) + " " + str(item.get("instituicao", ""))
+    loc_norm = normalizar(local)
+    pais = item.get("pais") or ""
+    if not pais:
+        pais = "Brasil" if casa(["brazil", "brasil"], loc_norm) \
+            else achar_pais(loc_norm, local, criterios)
+    item["pais"] = pais
+    eh_br = bool(casa(["brasil", "brazil"], normalizar(pais)))
+    item["uf"] = achar_uf(local, loc_norm) if eh_br else ""
+
+    # ---- 5. BLOCO (vagas) ou FORMA (chamadas) ----
+    # Os dois arquivos de criterios agrupam por eixos diferentes, e e o proprio
+    # arquivo que diz qual: 'bloco' (A/B/C, por pais e tipo) nas vagas, 'forma'
+    # (publicacao/evento) nas chamadas. Chamada nao tem bloco: dossie de
+    # periodico nao tem geografia.
+    formas = criterios.get("forma") or {}
+    if formas:
+        item["forma"] = "evento"
+        for nome, cfg in formas.items():
+            if nome.startswith("_"):
+                continue
+            if item["tipo"] in (cfg.get("tipos") or []):
+                item["forma"] = nome
+                break
+        item["bloco"] = None
+    else:
+        blocos = criterios.get("bloco") or {}
+        bloco = "C"
+        if eh_br:
+            bloco = "A"
+            for nome in ("A", "B"):
+                cfg = blocos.get(nome) or {}
+                if item["tipo"] in (cfg.get("tipos") or []):
+                    bloco = nome
+                    break
+        elif not pais:
+            # Pais ilegivel nao vira Brasil por omissao — vira internacional
+            # marcado. Adivinhar aqui poria vaga estrangeira no bloco A.
+            marcas.append("pais nao lido")
+        item["bloco"] = bloco
+
+    # ---- 6. ESFORCO — tabela bloco:tipo. So vagas tem esforco: a coluna
+    # responde "quanto custa se candidatar", e chamada nao se candidata. ----
+    bloco = item.get("bloco")
+    item["esforco"] = (criterios.get("esforco") or {}).get(
+        "%s:%s" % (bloco, item["tipo"]), "Medio") if bloco else ""
+
+    # ---- 7. ELEGIBILIDADE — primeira regra que casar ----
+    item["elegibilidade"] = "Aberto"
+    for regra in (criterios.get("elegibilidade") or {}).get("regras", []):
+        if regra.get("_padrao"):
+            item["elegibilidade"] = regra["resultado"]
+            break
+        if regra.get("onde") == "corpo":
+            if casa(regra.get("quando"), corpo):
+                item["elegibilidade"] = regra["resultado"]
+                break
+            continue
+        if regra.get("quando_bloco") and bloco in regra["quando_bloco"]:
+            item["elegibilidade"] = regra["resultado"]
+            break
+        if regra.get("quando_tipo") and item["tipo"] in regra["quando_tipo"]:
+            item["elegibilidade"] = regra["resultado"]
+            break
+        if regra.get("quando_pais"):
+            if casa(regra["quando_pais"], normalizar(pais)) and \
+               (not regra.get("e_tipo") or item["tipo"] in regra["e_tipo"]):
+                item["elegibilidade"] = regra["resultado"]
+                break
+
+    # ---- 8. IDIOMA ----
+    idi = criterios.get("idioma") or {}
+    lingua = (idi.get("padrao_por_bloco") or {}).get(bloco, "EN")
+    for nome_pais, codigo in (idi.get("por_pais") or {}).items():
+        if nome_pais.startswith("_"):
+            continue
+        if casa([nome_pais], normalizar(pais)):
+            lingua = codigo
+            break
+    item["idioma"] = lingua
+    if casa((idi.get("alerta_alemao_fluente") or {}).get("termos"), tudo):
+        marcas.append("exige alemao fluente")
+
+    # ---- 9. PRAZO — urgencia, brando, sem prazo ----
+    regras_prazo = criterios.get("prazo") or {}
+    urgente_dias = regras_prazo.get("urgente_dias", 14)
+    if item.get("prazo"):
+        try:
+            dias = (datetime.strptime(item["prazo"], "%Y-%m-%d").date() - hoje()).days
+            item["dias_ate_prazo"] = dias
+            # Urgente e SIMBOLO e posicao no topo — nunca desconto. A v1
+            # penalizava prazo curto em -4, empurrando para baixo exatamente o
+            # que precisava subir.
+            item["urgente"] = 0 <= dias <= urgente_dias
+            if item["urgente"]:
+                marcas.append("prazo em %d dia(s)" % dias)
+            curto = regras_prazo.get("so_com_texto_pronto_dias")
+            if curto and 0 <= dias <= curto:
+                marcas.append("so com texto pronto")
+        except ValueError:
+            item["dias_ate_prazo"] = None
+    else:
+        item["dias_ate_prazo"] = None
+        item["urgente"] = False
+        marcas.append("sem prazo")
+    if item.get("prazo_brando"):
+        marcas.append("prazo brando")
+
+    item["descartado"] = False
+    item["marcas"] = marcas
+    return item
+
+
+def vencido(item):
+    """Vencido e ROTEAMENTO, nunca penalidade — e nunca por adivinhacao.
+    Prazo que nao foi lido NAO conta como vencido: nao se sabe."""
+    d = item.get("dias_ate_prazo")
+    return isinstance(d, int) and d < 0
 
 
 # --------------------------------------------------------------------- fontes
 
-def _sondar_familia_philpapers(sessao, base, caminho, estado_fonte, batimento, rotulo):
-    """PhilJobs e PhilEvents sao a mesma plataforma. Anuncio individual e publico
-    e indexavel; a LISTA vem por /ajax/, que o robots.txt pede para nao acessar.
-    Entao avancamos por id, que e sequencial por data de publicacao."""
-    ultimo = int(estado_fonte.get("ultimo_id") or 0)
-    if ultimo <= 0:
-        ultimo = int(estado_fonte.get("semente") or 31580)
+INSTITUICAO_PISTAS = ("university", "universite", "universidade", "universitat", "universiteit",
+                      "college", "institute", "instituto", "school", "escola", "faculdade",
+                      "academy", "academia", "seminary", "seminario", "hochschule", "universita")
+
+
+def _partir_titulo(bruto):
+    """Reparte 'Cargo, Instituicao, Cidade' — e o numero de virgulas VARIA.
+
+    A v1 cortava na ultima virgula. VERIFICADO no dados/vagas.json publicado em
+    2026-08-24, isso produziu lixo em metade dos casos:
+      'Postdoctoral Teaching Fellow, University of Nevada' + inst 'Reno'
+      'Assistant Professor of Philosophy, University of Wis' + inst 'Madison'
+    O nome da universidade ficava partido ao meio e a cidade virava instituicao.
+
+    Aqui a instituicao e achada por PISTA, da direita para a esquerda: o pedaco
+    que contem 'University', 'College', 'Institute' e afins. O que vem antes e
+    cargo, o que vem depois e cidade. Isso acerta tambem o caso em que o proprio
+    cargo tem virgula — 'Director, Uehiro Oxford Institute, University of
+    Oxford' devolve cargo 'Director, Uehiro Oxford Institute'.
+    """
+    partes = [p.strip() for p in bruto.split(",") if p.strip()]
+    if len(partes) <= 1:
+        return (bruto.strip(), "", "")
+    for i in range(len(partes) - 1, -1, -1):
+        if any(p in normalizar(partes[i]) for p in INSTITUICAO_PISTAS):
+            cargo = ", ".join(partes[:i]).strip()
+            cidade = ", ".join(partes[i + 1:]).strip()
+            return (cargo or partes[i], partes[i], cidade)
+    # Sem pista nenhuma: volta ao comportamento antigo, que ao menos e previsivel.
+    return (", ".join(partes[:-1]), partes[-1], "")
+
+
+def _sondar_familia_philpapers(sessao, cfg, estado_fonte, batimento):
+    """PhilJobs e PhilEvents sao a mesma plataforma. O anuncio individual e
+    publico e permitido; a LISTA vem por /ajax/, que o robots.txt (regra unica
+    do site) pede para nao acessar. Entao avancamos por id, que e sequencial
+    por data de publicacao."""
+    rotulo = cfg["nome"]
+    base, caminho = cfg["base"], cfg["caminho"]
+    ultimo = int(estado_fonte.get("ultimo_id") or 0) or int(cfg.get("semente") or 31580)
 
     novos, vazios, sondados, ident = [], 0, 0, ultimo
-
     while vazios < MAX_VAZIOS and sondados < MAX_SONDAS:
         ident += 1
         sondados += 1
@@ -202,14 +575,13 @@ def _sondar_familia_philpapers(sessao, base, caminho, estado_fonte, batimento, r
             time.sleep(PAUSA)
             continue
 
-        # id inexistente redireciona para a home
         if r.status_code != 200 or "show" not in r.url:
             vazios += 1
             time.sleep(PAUSA)
             continue
 
-        titulo_tag = re.search(r"(?is)<title>(.*?)</title>", r.text)
-        bruto = htmllib.unescape(titulo_tag.group(1)).strip() if titulo_tag else ""
+        tt = re.search(r"(?is)<title>(.*?)</title>", r.text)
+        bruto = htmllib.unescape(tt.group(1)).strip() if tt else ""
         bruto = re.sub(r"\s*[-–]\s*Phil(Jobs|Events).*$", "", bruto).strip()
         if not bruto:
             vazios += 1
@@ -218,23 +590,27 @@ def _sondar_familia_philpapers(sessao, base, caminho, estado_fonte, batimento, r
 
         vazios = 0
         corpo = texto_limpo(r.text)
-        # o <title> vem como "Cargo, Instituicao"
-        partes = [p.strip() for p in bruto.rsplit(",", 1)]
-        item = {
+        titulo, instituicao, cidade = _partir_titulo(bruto)
+        prazo, brando = parse_data(campo(corpo, ["Deadline", "Application deadline",
+                                                 "Submission deadline", "Closing date"]))
+        pub, _ = parse_data(campo(corpo, ["Posted", "Published", "Announced"]))
+        novos.append({
             "id": "%s-%d" % (rotulo, ident),
             "fonte": rotulo,
             "url": url,
-            "titulo": partes[0],
-            "instituicao": partes[1] if len(partes) > 1 else "",
+            "titulo": titulo,
+            "instituicao": instituicao,
             "aos": campo(corpo, ["AOS", "Area of specialisation", "Area of specialization", "Topic"]),
-            "local": campo(corpo, ["Location", "Localidade", "City"]),
-            "categoria": campo(corpo, ["Job category", "Categoria", "Type", "Contract type"]),
-            "prazo": parse_data(campo(corpo, ["Deadline", "Application deadline", "Submission deadline", "Closing date"])),
-            "publicado": parse_data(campo(corpo, ["Posted", "Published", "Announced"])),
+            "aoc": campo(corpo, ["AOC"]),
+            "local": campo(corpo, ["Location", "Localidade", "City"]) or cidade,
+            "categoria": campo(corpo, ["Job category", "Categoria", "Category"]),
+            "contrato": campo(corpo, ["Contract type", "Type"]),
+            "prazo": prazo,
+            "prazo_brando": brando,
+            "publicado": pub,
             "texto": corpo[:1200],
-            "visto_em": agora_sp().strftime("%Y-%m-%d"),
-        }
-        novos.append(item)
+            "visto_em": hoje().isoformat(),
+        })
         time.sleep(PAUSA)
 
     estado_fonte["ultimo_id"] = ident - vazios
@@ -243,53 +619,255 @@ def _sondar_familia_philpapers(sessao, base, caminho, estado_fonte, batimento, r
     return novos
 
 
-def fonte_philjobs(sessao, estado, batimento):
-    return _sondar_familia_philpapers(
-        sessao, "https://philjobs.org", "/job/show/",
-        estado.setdefault("philjobs", {"semente": 31580}), batimento, "philjobs")
+def _links_da_pagina(html, url_base, padrao):
+    """Extrai (url, texto da ancora) e filtra por padrao de URL.
+
+    Deliberadamente generico: eu NAO vi o HTML bruto destas fontes — o WebFetch
+    entrega markdown convertido. Seletor escrito no escuro quebra na primeira
+    mudanca de tema. Isto pega todos os <a>, filtra por padrao configuravel, e
+    o modo --diagnostico existe justamente para ajustar o padrao com evidencia.
+    """
+    achados, vistos = [], set()
+    for href, dentro in re.findall(
+            r'(?is)<a\s[^>]*href\s*=\s*["\']([^"\']+)["\'][^>]*>(.*?)</a>', html):
+        absoluto = urljoin(url_base, htmllib.unescape(href.strip()))
+        if absoluto in vistos:
+            continue
+        if padrao and not re.search(padrao, absoluto, re.IGNORECASE):
+            continue
+        rotulo = texto_limpo(dentro)
+        if len(rotulo) < 8:      # "leia mais", setas, icones
+            continue
+        vistos.add(absoluto)
+        achados.append((absoluto, rotulo))
+    return achados
 
 
-def fonte_philevents(sessao, estado, batimento):
-    return _sondar_familia_philpapers(
-        sessao, "https://philevents.org", "/event/show/",
-        estado.setdefault("philevents", {"semente": 146200}), batimento, "philevents")
-
-
-def fonte_opcional(sessao, estado, batimento, rotulo, url, extrator):
-    """Fontes ainda NAO VERIFICADAS por mim. Ficam desligadas por padrao no
-    arquivo de criterios. Se falharem, entram no batimento e nada mais acontece."""
+def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
+    """Fontes brasileiras: uma pagina de listagem, um item por link."""
+    rotulo = cfg["nome"]
     try:
-        r = sessao.get(url, timeout=TIMEOUT)
+        r = sessao.get(cfg["url"], timeout=TIMEOUT)
         r.raise_for_status()
-        itens = extrator(r.text)
-        batimento["fontes"][rotulo] = "ok · %d itens" % len(itens)
-        return itens
     except Exception as e:
         batimento["fontes"][rotulo] = "FALHOU: %s" % e.__class__.__name__
         return []
 
+    if diagnostico:
+        print("\n--- DIAGNOSTICO · %s ---" % rotulo)
+        print("    %s → HTTP %d, %d bytes" % (cfg["url"], r.status_code, len(r.text)))
+        todos = _links_da_pagina(r.text, cfg["url"], None)
+        print("    %d links com texto; com o padrao atual: %d"
+              % (len(todos), len(_links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao")))))
+        for u, t in todos[:30]:
+            print("      %-70s | %s" % (u[:70], t[:60]))
+        print("    --- primeiras linhas do texto limpo ---")
+        for linha in texto_limpo(r.text).split("\n")[:25]:
+            print("      %s" % linha[:110])
+        return []
 
-def extrator_rss(texto):
+    if cfg.get("sem_link_proprio"):
+        return _itens_sem_link(r.text, cfg, batimento)
+
+    links = _links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao"))
+    batimento["fontes"][rotulo] = "ok · %d links" % len(links)
+    if not links:
+        batimento["avisos"].append(
+            "%s: 0 links com o padrao '%s'. Rode --diagnostico e ajuste link_padrao."
+            % (rotulo, cfg.get("link_padrao")))
+        return []
+
+    novos, buscados = [], 0
+    for url, rotulo_link in links:
+        ident = "%s-%s" % (rotulo, re.sub(r"\W+", "-", urlparse(url).path).strip("-")[-60:])
+        if ident in conhecidos:
+            continue                      # ja visto: nao gasta requisicao
+        if buscados >= MAX_ITENS_LISTA:
+            batimento["avisos"].append("%s: teto de %d itens novos atingido"
+                                       % (rotulo, MAX_ITENS_LISTA))
+            break
+        buscados += 1
+        try:
+            ri = sessao.get(url, timeout=TIMEOUT)
+            corpo = texto_limpo(ri.text) if ri.status_code == 200 else ""
+        except Exception as e:
+            batimento["avisos"].append("%s: %s em %s" % (rotulo, e.__class__.__name__, url[:60]))
+            corpo = ""
+        time.sleep(PAUSA)
+
+        prazo, brando = parse_data(campo(corpo, ["Prazo", "Inscrições até",
+                                                 "Deadline", "até", "Data limite",
+                                                 "Encerramento"]) or rotulo_link)
+        novos.append({
+            "id": ident,
+            "fonte": rotulo,
+            "url": url,
+            "titulo": rotulo_link,
+            "instituicao": campo(corpo, ["Instituição", "Universidade"]) or "",
+            "aos": campo(corpo, ["Área", "Area", "Disciplina"]),
+            "aoc": "",
+            "local": campo(corpo, ["Local", "Localidade", "Cidade"]),
+            "categoria": campo(corpo, ["Tipo", "Cargo", "Categoria"]),
+            "contrato": "",
+            "pais": cfg.get("pais_padrao", ""),
+            "prazo": prazo,
+            "prazo_brando": brando,
+            "publicado": "",
+            "texto": corpo[:2500],
+            "visto_em": hoje().isoformat(),
+        })
+    return novos
+
+
+def _itens_sem_link(html, cfg, batimento):
+    """ANPOF /agenda/chamadas: VERIFICADO em 2026-08-25 que os itens NAO tem URL
+    propria, ao contrario da lista de concursos. Entao o item sai com a URL da
+    lista e uma marca dizendo isso. Melhor um item sem link do que um link
+    inventado."""
+    rotulo = cfg["nome"]
+    linhas = [l.strip() for l in texto_limpo(html).split("\n") if len(l.strip()) > 25]
     itens = []
-    for bloco in re.findall(r"(?is)<item>(.*?)</item>", texto):
+    for i, linha in enumerate(linhas):
+        prazo, brando = parse_data(linha)
+        if not prazo:
+            continue
+        titulo = re.sub(r"\s*\d{1,2}/\d{1,2}/\d{4}\s*", " ", linha).strip(" |·-")
+        if len(titulo) < 15:
+            continue
+        itens.append({
+            "id": "%s-%s" % (rotulo, re.sub(r"\W+", "-", normalizar(titulo))[:60]),
+            "fonte": rotulo,
+            "url": cfg["url"],
+            "titulo": titulo,
+            "instituicao": "", "aos": titulo, "aoc": "", "local": "",
+            "categoria": "", "contrato": "",
+            "pais": cfg.get("pais_padrao", ""),
+            "prazo": prazo, "prazo_brando": brando, "publicado": "",
+            "texto": " ".join(linhas[max(0, i - 1):i + 2])[:1500],
+            "link_e_da_lista": True,
+            "visto_em": hoje().isoformat(),
+        })
+    batimento["fontes"][rotulo] = "ok · %d itens (lista sem link proprio)" % len(itens)
+    return itens
+
+
+def fonte_rss(sessao, cfg, batimento):
+    """Fontes ainda NAO VERIFICADAS. Desligadas por padrao no arquivo de
+    criterios. Se falharem, entram no batimento e nada mais acontece."""
+    rotulo = cfg["nome"]
+    try:
+        r = sessao.get(cfg["url"], timeout=TIMEOUT)
+        r.raise_for_status()
+    except Exception as e:
+        batimento["fontes"][rotulo] = "FALHOU: %s" % e.__class__.__name__
+        return []
+    itens = []
+    for bloco in re.findall(r"(?is)<item>(.*?)</item>", r.text):
         def pega(tag):
             m = re.search(r"(?is)<%s[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</%s>" % (tag, tag), bloco)
             return htmllib.unescape(m.group(1)).strip() if m else ""
+        pub, _ = parse_data(pega("pubDate"))
         itens.append({
-            "id": pega("guid") or pega("link"),
+            "id": "%s-%s" % (rotulo, re.sub(r"\W+", "-", pega("guid") or pega("link"))[-60:]),
+            "fonte": rotulo, "url": pega("link"),
             "titulo": texto_limpo(pega("title")),
-            "url": pega("link"),
-            "publicado": parse_data(pega("pubDate")),
+            "instituicao": "", "aos": "", "aoc": "", "local": "",
+            "categoria": "", "contrato": "", "prazo": "", "prazo_brando": False,
+            "publicado": pub,
             "texto": texto_limpo(pega("description"))[:1200],
-            "instituicao": "", "aos": "", "local": "", "categoria": "", "prazo": "",
-            "visto_em": agora_sp().strftime("%Y-%m-%d"),
+            "visto_em": hoje().isoformat(),
         })
+    batimento["fontes"][rotulo] = "ok · %d itens" % len(itens)
     return itens
+
+
+# --------------------------------------------------- resolucao de area (opcao c)
+
+def resolver_area(sessao, item, criterios, batimento, orcamento):
+    """O problema brasileiro, VERIFICADO em 2026-08-25: aqui a unidade de
+    publicacao e o EDITAL, nao a vaga. O anuncio e 'UFRGS abre 20 vagas de
+    Magisterio Superior, edital 09/2026' e as areas estao num anexo em PDF.
+    Prova: a busca ?s=filosofia na docentefederal devolve 0 resultados, mas a
+    listagem da mesma semana mostra 'UFU · Engenharia Fisica, Filosofia,
+    Fisica, Quimica · Substituto'.
+
+    Opcao (c), decidida em 2026-08-25: procura os termos no texto que ja temos;
+    se nao achar e houver link de edital em HTML, busca UMA vez mais. PDF nao e
+    aberto. O que nao se conseguir resolver ENTRA marcado — nunca e descartado
+    por duvida.
+    """
+    cfg = criterios.get("resolucao_de_area") or {}
+    termos = cfg.get("termos") or ["filosof"]
+    texto = normalizar(item.get("titulo", "") + " " + item.get("aos", "") + " " + item.get("texto", ""))
+
+    # Casamento por PREFIXO aqui, de proposito: 'filosof' tem que pegar
+    # filosofia, filosofica e filosoficas. Fronteira de palavra so no comeco.
+    def achou(t):
+        return any(re.search(r"(?<!\w)" + re.escape(normalizar(x)), t) for x in termos)
+
+    if achou(texto):
+        item["relevancia"] = "nicho"
+        item["area_confirmada"] = True
+        return item
+
+    if cfg.get("seguir_link_do_edital") and orcamento["restante"] > 0:
+        alvo = _link_do_edital(item)
+        if alvo:
+            orcamento["restante"] -= 1
+            try:
+                r = sessao.get(alvo, timeout=TIMEOUT)
+                if r.status_code == 200 and "pdf" not in (r.headers.get("Content-Type") or "").lower():
+                    extra = texto_limpo(r.text)
+                    item["texto"] = (item.get("texto", "") + "\n" + extra)[:4000]
+                    if achou(normalizar(extra)):
+                        item["relevancia"] = "nicho"
+                        item["area_confirmada"] = True
+                        item["edital_lido"] = alvo
+                        return item
+                    texto = normalizar(extra)
+            except Exception as e:
+                batimento["avisos"].append("edital %s: %s" % (alvo[:50], e.__class__.__name__))
+            time.sleep(PAUSA)
+
+    # Heuristica declarada, e por isso ajustavel: se o texto resolvido e longo o
+    # bastante para conter a lista de areas e filosofia nao esta la, e ausencia
+    # de verdade. Se e curto (so PDF, ou pagina que nao abriu), e ignorancia —
+    # e ignorancia sai marcada, nao descartada.
+    minimo = cfg.get("min_texto_para_confiar", 400)
+    if len(texto) >= minimo:
+        item["relevancia"] = "sem area"
+        item["area_confirmada"] = False
+    else:
+        item["relevancia"] = "nao confirmada"
+        item["area_confirmada"] = False
+    return item
+
+
+def _link_do_edital(item):
+    """Procura no texto do item uma URL que pareca a pagina do edital."""
+    m = re.search(r"https?://[^\s\"'<>)]+", item.get("texto", ""))
+    if m and not m.group(0).lower().endswith(".pdf"):
+        return m.group(0)
+    return None
 
 
 # ----------------------------------------------------------------------- fluxo
 
-def executar(modo):
+def ordenar(itens):
+    """Secao 6 do agente_VAGAS.md: nao ha nota para ordenar — ordena-se pelo
+    prazo, que e o que aperta. Urgentes primeiro, de qualquer bloco."""
+    peso_rel = {"nicho": 0, "competencia": 1, "nao confirmada": 2, "aberto": 3}
+    peso_grupo = {"A": 0, "B": 1, "C": 2, "publicacao": 0, "evento": 1}
+    return sorted(itens, key=lambda i: (
+        1 if i.get("vencida") else 0,          # vencida em carencia: sempre no fim
+        0 if i.get("urgente") else 1,
+        peso_grupo.get(i.get("bloco") or i.get("forma"), 3),
+        peso_rel.get(i.get("relevancia"), 9),
+        i.get("prazo") or "9999-99-99",
+    ))
+
+
+def executar(modo, diagnostico=False):
     criterios = ler_json(os.path.join(RAIZ, "criterios_%s.json" % modo), {})
     if not criterios:
         print("ERRO: criterios_%s.json nao encontrado ou vazio." % modo, file=sys.stderr)
@@ -299,110 +877,160 @@ def executar(modo):
     batimento = {"quando": agora_sp().isoformat(), "fontes": {}, "avisos": []}
 
     sessao = requests.Session()
-    sessao.headers.update({"User-Agent": UA, "Accept-Language": "en,pt-BR;q=0.8"})
+    sessao.headers.update({"User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8"})
 
-    coletados = []
-    principal = fonte_philjobs if modo == "vagas" else fonte_philevents
-    try:
-        coletados += principal(sessao, estado, batimento)
-    except Exception as e:
-        batimento["fontes"]["principal"] = "FALHOU: %s: %s" % (e.__class__.__name__, e)
-
-    for f in (criterios.get("fontes_opcionais") or []):
-        if not f.get("ligada"):
-            batimento["fontes"][f["nome"]] = "desligada"
-            continue
-        coletados += fonte_opcional(sessao, estado, batimento, f["nome"], f["url"], extrator_rss)
-
-    for item in coletados:
-        pontuar(item, criterios)
-
-    corte = criterios.get("corte", 8)
     arq_saida = os.path.join(DIR_DADOS, "%s.json" % modo)
     anterior = ler_json(arq_saida, {"itens": []})
     por_id = {i["id"]: i for i in anterior.get("itens", [])}
+    conhecidos = set(por_id) | {i["id"] for i in
+                                ler_json(os.path.join(DIR_DADOS, "%s_historico.json" % modo),
+                                         {"itens": []}).get("itens", [])}
 
-    def vencido(i):
-        d = i.get("dias_ate_prazo")
-        return isinstance(d, int) and d < 0
+    coletados, unidade_de = [], {}
+    for cfg in (criterios.get("fontes") or []):
+        nome = cfg.get("nome", "?")
+        if not cfg.get("ligada"):
+            batimento["fontes"][nome] = "desligada"
+            continue
+        metodo = cfg.get("metodo")
+        try:
+            if metodo == "sonda_id":
+                if diagnostico:
+                    batimento["fontes"][nome] = "pulada no diagnostico"
+                    continue
+                itens = _sondar_familia_philpapers(
+                    sessao, cfg, estado.setdefault(nome, {"semente": cfg.get("semente")}), batimento)
+            elif metodo == "lista_html":
+                itens = fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico)
+            elif metodo == "rss":
+                itens = fonte_rss(sessao, cfg, batimento)
+            else:
+                batimento["fontes"][nome] = "metodo desconhecido: %s" % metodo
+                continue
+        except Exception as e:
+            batimento["fontes"][nome] = "FALHOU: %s: %s" % (e.__class__.__name__, e)
+            continue
+        for it in itens:
+            unidade_de[it["id"]] = cfg.get("unidade", "vaga")
+        coletados += itens
 
-    # A ordem aqui importa e ja custou um defeito: o vencido leva -999, entao
-    # se o corte fosse aplicado ANTES do roteamento ele seria descartado em vez
-    # de arquivado. Roteia primeiro, corta depois.
-    novos_relevantes, rejeitados = [], []
+    if diagnostico:
+        print("\n=== DIAGNOSTICO · %s — nada foi escrito ===" % modo)
+        for nome, situacao in batimento["fontes"].items():
+            print("  %-18s %s" % (nome, situacao))
+        for aviso in batimento["avisos"]:
+            print("  aviso: %s" % aviso)
+        return 0
+
+    orcamento = {"restante": (criterios.get("resolucao_de_area") or {}).get(
+        "max_seguimentos_por_rodada", 25)}
     for item in coletados:
-        if vencido(item):
-            item["motivo_saida"] = "prazo vencido"
-        elif item["pontos"] < corte:
-            item["motivo_saida"] = "abaixo do corte (%d < %d)" % (item["pontos"], corte)
+        unidade = unidade_de.get(item["id"], "vaga")
+        # O descarte barato vem PRIMEIRO: veto e 'discente' nao custam
+        # requisicao, e a resolucao de area custa. Sem isto, cada 'Selecao de
+        # Mestrado 2027' da ANPOF gastaria uma busca para ser jogada fora.
+        if not descarte_barato(item, criterios) and unidade == "edital":
+            resolver_area(sessao, item, criterios, batimento, orcamento)
+        classificar(item, criterios, unidade)
+
+    # A ORDEM DESTAS PENEIRAS IMPORTA, e cada uma ja custou um defeito:
+    #   descartado -> veto, tipo discente, ou sem aderencia no cabeca
+    #   vencido    -> ROTEIA para o historico; nunca e descartado
+    #   o resto    -> entra. Nao ha corte: quem tria e o usuario, no Cronograma.
+    novos, rejeitados = [], []
+    for item in coletados:
+        if item.get("descartado"):
             rejeitados.append(item)
             continue
-        else:
-            if item["id"] not in por_id:
-                item["novo"] = True
-                novos_relevantes.append(item)
-            por_id[item["id"]] = item
+        if vencido(item):
+            por_id[item["id"]] = item          # entra so para ser arquivado
+            item["motivo_saida"] = "prazo vencido"
             continue
-        por_id[item["id"]] = item          # vencido: entra so para ser arquivado
+        if item["id"] not in por_id:
+            item["novo"] = True
+            novos.append(item)
+        por_id[item["id"]] = item
 
+    # CARENCIA DA VENCIDA (Passo 4, decidido em 2026-08-25).
+    # Vencida vai para o historico SEMPRE — isso nao muda. Mas ela tambem
+    # continua na lista viva, marcada, por alguns dias. A razao e o celular:
+    # o Cronograma so acrescenta e atualiza, nunca remove. Se a vaga sumisse do
+    # arquivo no dia do vencimento, ela ficaria pendurada no aparelho para
+    # sempre, sem nunca aparecer como vencida. Marcada, voce arquiva num toque
+    # — e 'st' e 'vida' continuam sendo so do aparelho, que era a regra a
+    # preservar.
+    carencia = (criterios.get("prazo") or {}).get("dias_de_carencia_vencida", 21)
     vivos, expirados = [], []
     for i in por_id.values():
-        (expirados if vencido(i) else vivos).append(i)
-    vivos.sort(key=lambda i: (-i["pontos"], i.get("prazo") or "9999"))
+        if vencido(i):
+            expirados.append(i)
+            if abs(i.get("dias_ate_prazo") or 0) <= carencia:
+                i["vencida"] = True
+                vivos.append(i)
+        else:
+            i["vencida"] = False
+            vivos.append(i)
+    vivos = ordenar(vivos)
 
-    # Vencido nao some: vai para o historico, com o motivo.
     if expirados:
         hist = os.path.join(DIR_DADOS, "%s_historico.json" % modo)
         antigos = ler_json(hist, {"itens": []})
         ids = {i["id"] for i in antigos["itens"]}
         antigos["itens"] += [i for i in expirados if i["id"] not in ids]
-        antigos["_nota"] = "Itens que sairam da lista viva por prazo. Preservados, nunca apagados."
+        antigos["_o_que_e"] = ("Itens que sairam da lista viva por prazo. Preservados, "
+                               "nunca apagados. Roteados ANTES de qualquer filtro.")
         escrever_json(hist, antigos)
 
-    # Rejeitado pelo corte tambem nao some calado: fica o registro minimo, com a
-    # nota e a razao. E com isto que se afina o arquivo de criterios — da para
-    # ver o que o filtro barrou em vez de adivinhar.
     arq_rej = os.path.join(DIR_DADOS, "%s_rejeitados.json" % modo)
     rej_ant = ler_json(arq_rej, {"itens": []})
     linhas = [{"id": i["id"], "titulo": i.get("titulo", ""), "url": i.get("url", ""),
-               "pontos": i["pontos"], "porque": i.get("porque", ""),
-               "motivo_saida": i["motivo_saida"], "visto_em": i.get("visto_em", "")}
+               "motivo_saida": i.get("motivo_saida", ""), "visto_em": i.get("visto_em", "")}
               for i in rejeitados]
-    todas = linhas + rej_ant.get("itens", [])
     escrever_json(arq_rej, {
-        "_o_que_e": "O que o filtro barrou, com a nota e a razao. Serve para afinar "
+        "_o_que_e": "O que o filtro barrou, com a razao. Serve para afinar "
                     "criterios_%s.json com evidencia em vez de palpite." % modo,
         "_teto": 200,
         "_barrados_nesta_rodada": len(linhas),
-        "itens": todas[:200],
+        "itens": (linhas + rej_ant.get("itens", []))[:200],
     })
 
-    batimento["resumo"] = "%d vivos · %d novos nesta rodada · %d arquivados por prazo · %d barrados pelo corte" % (
-        len(vivos), len(novos_relevantes), len(expirados), len(rejeitados))
+    contagem = {}
+    for i in vivos:
+        chave = i.get("bloco") or i.get("forma") or "?"
+        contagem[chave] = contagem.get(chave, 0) + 1
+    grupos = " ".join("%s:%d" % (k, contagem[k]) for k in sorted(contagem))
+    urgentes = sum(1 for i in vivos if i.get("urgente"))
+    batimento["resumo"] = (
+        "%d vivos (%s) · %d urgentes · %d novos · "
+        "%d arquivados por prazo · %d barrados" % (
+            len(vivos), grupos or "vazio", urgentes, len(novos),
+            len(expirados), len(rejeitados)))
 
     escrever_json(arq_saida, {
         "_gerado_em": batimento["quando"],
+        "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 "
+                    "do agente_%s.md: urgentes primeiro, depois bloco, depois prazo." % modo.upper(),
         "_batimento": batimento,
-        "_corte": corte,
         "itens": vivos,
     })
-    if novos_relevantes:
-        escrever_json(os.path.join(DIR_EVENTOS, "%s_%s.json" % (modo, agora_sp().strftime("%Y-%m-%d"))),
-                      {"quando": batimento["quando"], "itens": novos_relevantes})
+    if novos:
+        escrever_json(os.path.join(DIR_EVENTOS, "%s_%s.json" % (modo, hoje().isoformat())),
+                      {"quando": batimento["quando"], "itens": novos})
     escrever_json(ARQ_ESTADO, estado)
 
     print("=== BATIMENTO · %s ===" % modo)
     for nome, situacao in batimento["fontes"].items():
-        print("  %-14s %s" % (nome, situacao))
-    for aviso in batimento["avisos"][:10]:
+        print("  %-18s %s" % (nome, situacao))
+    for aviso in batimento["avisos"][:12]:
         print("  aviso: %s" % aviso)
     print("  %s" % batimento["resumo"])
     return 0
 
 
 if __name__ == "__main__":
-    modo = sys.argv[1] if len(sys.argv) > 1 else "vagas"
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    modo = args[0] if args else "vagas"
     if modo not in ("vagas", "chamadas"):
-        print("uso: coletor.py [vagas|chamadas]", file=sys.stderr)
+        print("uso: coletor.py [vagas|chamadas] [--diagnostico]", file=sys.stderr)
         sys.exit(2)
-    sys.exit(executar(modo))
+    sys.exit(executar(modo, diagnostico="--diagnostico" in sys.argv))

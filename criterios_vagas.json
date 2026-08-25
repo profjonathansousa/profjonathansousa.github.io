@@ -1,103 +1,362 @@
 {
-  "_o_que_e": "O julgamento do agente de VAGAS mora aqui. Nao ha modelo rodando no Actions: a relevancia e esta soma de pesos. Este arquivo foi feito para VOCE editar — cada peso e uma opiniao minha sobre o seu perfil, e opiniao minha se corrige.",
-  "_como_funciona": "Cada grupo de termos conta UMA vez se qualquer palavra dele aparecer no anuncio (titulo, instituicao, AOS, categoria, local, texto). Os pesos somam. Acima do corte, o item entra no Cronograma.",
-  "_como_ajustar": "Vaga boa que nao apareceu: baixe o corte ou suba o peso do termo que a descreve. Lixo demais: suba o corte ou acrescente palavra em 'ruido'.",
+  "_o_que_e": "O julgamento do agente de VAGAS mora aqui. Nao ha modelo rodando no Actions. A v1 PONTUAVA; esta CLASSIFICA — cada decisao vira uma coluna visivel na tabela, nao uma nota escondida. Este arquivo foi feito para VOCE editar.",
 
-  "corte": 8,
+  "_o_que_morreu_da_v1": "corte, minimo_topico, pesos, aos_aberto como bonus, regiao e categoria como pontos, e a penalidade por prazo curto. Nada mais soma. Regiao e categoria viraram BLOCO e TIPO — colunas, nao votos. Prazo curto virou o simbolo de urgencia, nao desconto: vaga urgente sobe na lista, nao afunda.",
 
-  "termos": {
-    "nucleo": {
-      "_nota": "O seu centro. Uma palavra destas ja quase garante a vaga na lista.",
-      "peso": 12,
-      "palavras": [
-        "luther", "lutero", "lutheran", "spinoza", "spinozist",
-        "reformation", "reforma", "philosophy of religion", "filosofia da religiao",
-        "theological ethics", "religious ethics", "philosophical theology"
+  "_porque": "Na execucao de 2026-08-24 a soma unica deixou passar 20 de 29 anuncios e nenhum disparou o grupo 'nucleo'. Regiao (+5) e categoria (+9) somavam 14 num corte de 8. Atributo estrutural elegia sozinho. Aqui ele nao vota: descreve.",
+
+  "_calibrado_contra": "Os 105 anuncios reais do jobs.csv (2026-02-25 a 2026-08-21, 26 semanas). Com estas listas: ~2,3 vagas entram por semana e ~1,8 sao barradas com razao registrada em dados/vagas_rejeitados.json.",
+
+  "onde_se_decide": {
+    "cabeca": ["titulo", "aos", "aoc"],
+    "corpo": ["texto", "local", "categoria", "instituicao"],
+    "_regra": "A relevancia se decide no CABECA. O CORPO nunca elege ninguem — so preenche colunas (pais, prazo, elegibilidade, idioma).",
+    "_porque": "No teste de 2026-08-24 o corpo elegeu: a palavra 'ethics' no boilerplate institucional pesava igual a 'AOS: Ethics'.",
+    "_fronteira_de_palavra": "VERIFICADO 2026-08-25: 'logic' esta dentro de 'theological', e 'ethic' dentro de 'bioethics'. A v1 casava por substring pura. Todo casamento aqui usa fronteira de palavra — sem isso, no dia em que voce escrever 'logic' no veto, etica teologica passa a ser vetada em silencio.",
+    "_acentos": "Comparacao sem acento nos dois lados. 'religiao' casa 'religiao' e 'religiao'."
+  },
+
+  "veto": {
+    "_nota": "Derruba antes de tudo, e so olha o CABECA. 'Assistant Professor of Bioethics' morre no titulo; 'AOS: Open' que cita bioetica entre dez areas, nao.",
+    "termos": [
+      "bioethics", "bioetica", "biomedical ethics", "medical ethics",
+      "formal logic", "logica formal", "mathematical logic",
+      "philosophy of science", "filosofia da ciencia",
+      "cognitive science", "neuroscience", "neurociencia",
+      "philosophy of mathematics", "philosophy of physics",
+      "computer science", "data science", "machine learning",
+      "artificial intelligence", "AI ethics", "ethics of AI",
+      "ancient philosophy", "ancient greek", "filosofia antiga",
+      "chinese philosophy", "buddhist", "indian philosophy",
+      "philosophy of biology", "environmental philosophy",
+      "business ethics", "aged care ethics", "sports ethics"
+    ]
+  },
+
+  "relevancia": {
+    "_nota": "Nao e nota, e ESTADO. Sai como coluna na tabela. Os tres estados abaixo ENTRAM na lista; quem nao casa nenhum vai para os rejeitados, com a razao.",
+    "_decisao_de_2026-08-25": "Os tres entram, marcados. Sao ~2,3 por semana somados. E justamente entre 'Early Modern, Notre Dame' e 'AOS: Open, pos-doc' que so voce decide — e a triagem e no celular, no Cronograma.",
+
+    "nicho": {
+      "_nota": "Seu centro. Entra sempre, e sobe na ordem.",
+      "termos": [
+        "luther", "lutero", "lutheran", "luterano",
+        "spinoza", "spinozist", "espinosa",
+        "reformation", "reforma protestante", "protestant reformation",
+        "philosophy of religion", "filosofia da religiao",
+        "religious studies", "ciencias da religiao", "estudos de religiao",
+        "theology", "teologia", "theological", "teologico",
+        "philosophical theology", "teologia filosofica",
+        "religious ethics", "theological ethics", "etica teologica",
+        "political theology", "teologia politica",
+        "religion", "religiao", "religious",
+        "leibniz", "calvin", "calvino", "kierkegaard", "bonhoeffer", "barth",
+        "de servo arbitrio", "conatus"
       ]
     },
-    "forte": {
-      "_nota": "Adjacentes diretos do seu doutorado e da esteira de artigos.",
-      "peso": 7,
-      "palavras": [
-        "ethics", "etica", "epistemology", "epistemologia",
-        "early modern", "modernidade", "political theology", "teologia politica",
-        "systematic theology", "protestant", "calvin", "reformed",
-        "secularization", "secular", "genealogy"
+
+    "competencia": {
+      "_nota": "Sua competencia, sem o nicho. Entra marcado. E daqui que vem a maior parte do volume — 'ethics' sozinho traz etica da IA, empresarial e ambiental, e por isso o veto acima e agressivo.",
+      "termos": [
+        "ethics", "etica", "moral philosophy", "filosofia moral",
+        "epistemology", "epistemologia", "social epistemology",
+        "early modern", "early modern philosophy", "filosofia moderna",
+        "modern philosophy", "seventeenth century", "17th century",
+        "political philosophy", "filosofia politica", "political thought",
+        "history of philosophy", "historia da filosofia",
+        "hermeneutics", "hermeneutica",
+        "philosophy of education", "filosofia da educacao",
+        "continental philosophy", "filosofia continental",
+        "medieval philosophy", "filosofia medieval",
+        "nominalism", "nominalismo", "metaphysics", "metafisica"
       ]
     },
-    "medio": {
-      "_nota": "Campo em volta. Sozinho nao passa do corte; somado ao 'forte', passa.",
-      "peso": 4,
-      "palavras": [
-        "religious studies", "theology", "teologia", "history of philosophy",
-        "continental philosophy", "hermeneutics", "hermeneutica",
-        "moral philosophy", "political philosophy", "kierkegaard", "bonhoeffer", "barth"
-      ]
+
+    "aberto": {
+      "_nota": "AOS: Open nao te exclui por especialidade — e onde estao muitos pos-docs. Entra marcado e ordenado por ultimo. 32 dos 105 anuncios do jobs.csv eram assim; depois do veto sobram ~1 por semana.",
+      "padrao_aos": "^\\s*open\\b"
     },
-    "ruido": {
-      "_nota": "Areas em que voce nao concorre. Peso negativo para nao entupir a lista.",
-      "peso": -9,
-      "palavras": [
-        "formal logic", "philosophy of science", "cognitive science", "neuroscience",
-        "bioethics", "ancient philosophy", "chinese philosophy", "buddhist",
-        "philosophy of mathematics", "artificial intelligence ethics", "data ethics"
+
+    "_fora": "Nada casou. Vai para dados/vagas_rejeitados.json com a razao. Nunca some calado — e com esse arquivo que voce afina este aqui, com evidencia em vez de palpite."
+  },
+
+  "tipo": {
+    "_nota": "Rotulo canonico. Le PRIMEIRO os campos de vocabulario fechado da fonte (Job type, Contract type no PhilJobs; 'Efetivo/Substituto/Visitante' na docentefederal) e so cai no titulo se eles faltarem.",
+    "_ordem_importa": "Primeira regra que casar vence. A ordem abaixo nao e alfabetica: e a ordem em que os rotulos se canibalizam.",
+    "regras": [
+      {
+        "rotulo": "discente",
+        "descarta": true,
+        "_nota": "Voce e doutor desde 2025. Selecao de mestrado/doutorado nao e vaga. Isto e o que segura os ~80% de ruido da ANPOF. Vem PRIMEIRO porque 'PhD fellowship' seria capturado por 'fellowship' logo abaixo.",
+        "_cuidado_ao_editar": "NAO acrescente aqui nenhum termo que seja o final de um termo de pos-doc. O hifen conta como fronteira de palavra: 'doctoral fellowship' casaria dentro de 'post-doctoral fellowship' e todo pos-doc escrito com hifen seria descartado em silencio como selecao de doutorado. O coletor trata [\\w-] como letra nos dois lados justamente por causa disso — mas se voce escrever 'doutorado em', ele casa dentro de 'pos-doutorado em' pela mesma razao. Pego no teste de 2026-08-25.",
+        "quando": [
+          "selecao de mestrado", "selecao mestrado", "selecao de doutorado",
+          "mestrado e doutorado", "processo seletivo discente", "aluno especial",
+          "graduate fellowship", "phd fellowship", "phd student", "phd position",
+          "doctoral fellowship", "doctoral position", "graduate student",
+          "iniciacao cientifica", "turma"
+        ]
+      },
+      {
+        "rotulo": "substituto",
+        "quando": ["professor substituto", "substituto", "docente substituto", "temporario"]
+      },
+      {
+        "rotulo": "visitante",
+        "quando": [
+          "professor visitante", "visitante", "visiting", "visiting fellowship",
+          "visiting professorship", "visiting assistant professor", "visiting instructor",
+          "visiting lecturer"
+        ]
+      },
+      {
+        "rotulo": "pos-doc",
+        "quando": [
+          "postdoc", "post-doc", "postdoctoral", "post-doctoral",
+          "pos-doutorado", "pos doutorado", "posdoc", "PNPD", "PDR", "PDR-10", "PDS",
+          "fellowship", "research fellow", "bolsa de pos-doutorado"
+        ]
+      },
+      {
+        "rotulo": "efetivo",
+        "quando": [
+          "concurso publico", "professor efetivo", "magisterio superior",
+          "professor adjunto", "professor titular", "professor associado",
+          "EBTT", "carreira docente", "provimento efetivo", "quadro permanente"
+        ]
+      },
+      {
+        "rotulo": "senior",
+        "_nota": "Doutor de 2025 nao concorre a catedra — mas NAO descarta. A vaga de Great Books da UT Austin (Associate/Full) e um acerto de nicho perfeito, e 0,4 por semana nao afoga ninguem. Se cansar, ponha descarta: true aqui.",
+        "descarta": false,
+        "quando": ["senior faculty", "full professor", "chair in", "professorship (w3)", "distinguished professor"]
+      },
+      {
+        "rotulo": "tenure-track",
+        "quando": [
+          "tenure-track", "tenure track", "tenured", "junior faculty",
+          "assistant professor", "associate professor", "open rank",
+          "lecturer", "senior lecturer", "assistant teaching professor",
+          "teaching professor", "instructor"
+        ]
+      },
+      { "rotulo": "outro", "quando": [] }
+    ]
+  },
+
+  "bloco": {
+    "_nota": "Os tres blocos do agente_VAGAS.md. Bloco = f(pais, tipo). Nada de pontos aqui.",
+    "A": { "titulo": "Brasil — concursos efetivos e pos-doc", "pais": "BR", "tipos": ["efetivo", "pos-doc", "senior", "outro"] },
+    "B": { "titulo": "Brasil — substituto e visitante", "pais": "BR", "tipos": ["substituto", "visitante"] },
+    "C": { "titulo": "Internacional", "pais": "!BR" }
+  },
+
+  "esforco": {
+    "_nota": "Secao 5 do agente_VAGAS.md. Chaveado por bloco:tipo, e nao so por tipo, porque 'visitante' pesa diferente dos dois lados: no Brasil e um processo seletivo curto; la fora, um Visiting Assistant Professor e uma candidatura de verdade.",
+    "A:efetivo": "Alto",
+    "A:pos-doc": "Medio",
+    "A:senior": "Alto",
+    "A:outro": "Medio",
+    "B:substituto": "Baixo",
+    "B:visitante": "Baixo",
+    "C:tenure-track": "Alto",
+    "C:efetivo": "Alto",
+    "C:senior": "Alto",
+    "C:pos-doc": "Medio",
+    "C:visitante": "Medio",
+    "C:outro": "Medio"
+  },
+
+  "elegibilidade": {
+    "_nota": "Secao 4 do agente_VAGAS.md. Primeira regra que casar vence. A regra 'Restrito' e a unica que le o CORPO — e uma coluna, nao um voto de relevancia.",
+    "regras": [
+      {
+        "resultado": "Restrito",
+        "onde": "corpo",
+        "quando": [
+          "must be a citizen", "citizens only", "citizenship is required",
+          "permanent resident", "must have permanent residency",
+          "EU nationals only", "restricted to nationals",
+          "existing work authorization", "must already have the right to work",
+          "no visa sponsorship", "we cannot sponsor", "unable to sponsor"
+        ]
+      },
+      { "resultado": "Aberto", "quando_bloco": ["A", "B"], "_nota": "Brasil: sem barreira." },
+      { "resultado": "Aberto", "quando_tipo": ["pos-doc"], "_nota": "Pos-doc internacional costuma ir por J-1, MSCA ou Humboldt." },
+      {
+        "resultado": "Provavel c/ patrocinio",
+        "quando_pais": ["United States", "Estados Unidos", "United Kingdom", "Reino Unido", "Australia", "Canada"],
+        "e_tipo": ["tenure-track", "efetivo", "senior"],
+        "_nota": "H-1B nos EUA, Skilled Worker no Reino Unido."
+      },
+      { "resultado": "Aberto", "_padrao": true }
+    ]
+  },
+
+  "paises_conhecidos": {
+    "_nota": "O pais nao sai de heuristica de virgula. A v2 tentava so o padrao ', Pais' no fim do campo Location: funciona para 'Notre Dame, Indiana, United States' e falha para 'United States' sozinho. O teste de 2026-08-25 pegou — vaga tenure-track nos EUA saia como 'Aberto' em vez de 'Provavel c/ patrocinio', porque o pais nunca era lido. Casar contra esta lista vem primeiro; a virgula fica de ultimo recurso.",
+    "lista": [
+      "Brasil", "Brazil", "Portugal",
+      "United States", "Estados Unidos", "USA", "United Kingdom", "Reino Unido",
+      "Canada", "Australia", "New Zealand", "Ireland", "Irlanda",
+      "Germany", "Alemanha", "Deutschland", "France", "Franca",
+      "Netherlands", "Holanda", "Belgium", "Belgica", "Austria", "Switzerland", "Suica",
+      "Italy", "Italia", "Spain", "Espanha", "Sweden", "Norway", "Denmark", "Finland",
+      "Poland", "Czech Republic", "Hungary", "Israel", "Singapore", "Hong Kong",
+      "South Africa", "Japan", "China", "Chile", "Argentina", "Mexico"
+    ]
+  },
+
+  "idioma": {
+    "_nota": "Idiomas de trabalho: PT, EN, FR, DE.",
+    "padrao_por_bloco": { "A": "PT", "B": "PT", "C": "EN" },
+    "por_pais": {
+      "Brazil": "PT", "Brasil": "PT", "Portugal": "PT",
+      "France": "FR", "Franca": "FR", "Belgium": "FR/NL", "Belgica": "FR/NL",
+      "Germany": "DE", "Alemanha": "DE", "Austria": "DE", "Switzerland": "DE/FR", "Suica": "DE/FR",
+      "Netherlands": "EN/NL", "Holanda": "EN/NL"
+    },
+    "alerta_alemao_fluente": {
+      "_nota": "Voce le alemao com desenvoltura razoavel, mas nao e fluente. Quando a vaga exigir fluencia, a tabela tem que dizer.",
+      "termos": [
+        "fluent german", "fluent in german", "verhandlungssicher",
+        "fliessend deutsch", "fliessende deutschkenntnisse",
+        "muttersprachlich", "lehre auf deutsch", "unterricht auf deutsch",
+        "sehr gute deutschkenntnisse"
       ]
     }
   },
 
-  "aos_aberto": 5,
-  "_nota_aos_aberto": "AOS 'Open' e bom: nao te exclui por especialidade.",
-
-  "regiao": {
-    "_nota": "Casa com a estrategia do tracker: EUA, Reino Unido e Europa primeiro; Brasil conta.",
-    "united states": 5,
-    "canada": 5,
-    "united kingdom": 5,
-    "netherlands": 4,
-    "germany": 3,
-    "belgium": 4,
-    "brazil": 4,
-    "brasil": 4
-  },
-
-  "categoria": {
-    "_nota": "Doutor de 2025. Pos-doc e junior sao o alvo; senior nao e para agora.",
-    "postdoc": 9,
-    "post-doc": 9,
-    "fellowship": 7,
-    "junior faculty": 7,
-    "fixed term": 4,
-    "tenure-track": 6,
-    "visiting": 4,
-    "senior faculty": -6,
-    "graduate": 0
-  },
-
   "prazo": {
-    "_nota": "Prazo curto penaliza porque o pipeline assume writing sample sob medida por aplicacao, e isso leva tempo.",
-    "vencido": -999,
-    "curto_dias": 10,
-    "curto_peso": -4
+    "urgente_dias": 14,
+    "_nota_urgente": "Secao 4 do agente_VAGAS.md. Urgente e simbolo e posicao no topo — NUNCA desconto. A v1 penalizava prazo curto em -4, o que empurrava para baixo exatamente o que precisava subir.",
+    "soft": {
+      "_nota": "VERIFICADO no jobs.csv: o PhilJobs escreve '2026-10-01 (soft)' em 3 dos 6 primeiros. Prazo brando: a leitura comeca na data mas as inscricoes seguem. Vira coluna, nao sujeira.",
+      "padrao": "\\(\\s*soft\\s*\\)",
+      "marca": "brando"
+    },
+    "sem_prazo": {
+      "_nota": "Prazo que nao foi lido NAO vira 'aberto para sempre'. Sai marcado, ordenado por ultimo, e nunca e dado como urgente NEM como vencido — porque nao se sabe."
+    },
+    "_nota_vencido": "Vencido e ROTEAMENTO para dados/vagas_historico.json, feito ANTES de qualquer filtro. Secao 5.2 do briefing: penalizar aqui derrubava o item abaixo do corte e ele sumia em vez de ser arquivado.",
+    "dias_de_carencia_vencida": 21,
+    "_nota_carencia": "Passo 4, decidido em 2026-08-25. A vencida vai para o historico SEMPRE — isso nao muda. Mas ela TAMBEM continua na lista viva, marcada 'vencida' e no fim da fila, por estes dias. A razao e o celular: o Cronograma so acrescenta e atualiza, nunca remove. Se a vaga sumisse do arquivo no dia do vencimento, ficaria pendurada no aparelho para sempre sem nunca aparecer como vencida. Marcada, voce arquiva num toque — e 'st' e 'vida' continuam sendo so do aparelho, que era a regra a preservar."
   },
 
-  "fontes_opcionais": [
+  "resolucao_de_area": {
+    "_o_problema": "VERIFICADO 2026-08-25: no Brasil a unidade de publicacao e o EDITAL, nao a vaga. O anuncio e 'UFRGS abre 20 vagas de Magisterio Superior, edital 09/2026' e as areas estao num anexo em PDF. Prova: a busca ?s=filosofia na docentefederal devolve 0 resultados, mas a listagem da mesma semana mostra 'UFU · Engenharia Fisica, Filosofia, Fisica, Quimica · Substituto'.",
+    "_decisao_de_2026-08-25": "Opcao (c). Procura os termos abaixo no texto da listagem; se nao achar e houver link de edital em HTML, busca UMA vez mais nessa pagina. PDF nao e aberto.",
+    "termos": ["filosof", "philosoph", "etica", "ethics", "ciencias da religiao", "teologia", "ensino religioso", "sociologia e filosofia"],
+    "seguir_link_do_edital": true,
+    "max_seguimentos_por_rodada": 25,
+    "min_texto_para_confiar": 400,
+    "_nota_min_texto": "HEURISTICA DECLARADA, e por isso ajustavel. Se o texto que conseguimos ler tem pelo menos este tamanho, ele provavelmente contem a lista de areas do edital — entao filosofia ausente e AUSENCIA de verdade, e o item e rejeitado com essa razao. Abaixo disso e IGNORANCIA (so PDF, ou pagina que nao abriu), e ignorancia sai marcada, nunca descartada. Se voce vir edital de filosofia caindo em 'areas lidas, sem filosofia', suba este numero.",
+    "_nota_max": "Teto de requisicoes extras por rodada. Estourado, os que sobram saem como 'area nao confirmada' — degrada, nao trava.",
+    "marca_quando_nao_confirmada": "area nao confirmada",
+    "_nota_marca": "O item ENTRA na lista com essa marca. Nunca e descartado por duvida: quem decide e voce, no celular. O coletor nao mente sobre o que nao leu."
+  },
+
+  "ordem": {
+    "_nota": "Secao 6 do agente_VAGAS.md. Nao ha nota para ordenar — ordena-se por prazo, que e o que aperta.",
+    "regra": ["urgentes primeiro, de qualquer bloco", "depois bloco A, B, C", "dentro do bloco: nicho, competencia, aberto", "dentro disso: prazo mais proximo primeiro", "sem prazo por ultimo"]
+  },
+
+  "fontes": [
+    {
+      "nome": "philjobs",
+      "ligada": true,
+      "metodo": "sonda_id",
+      "base": "https://philjobs.org",
+      "caminho": "/job/show/",
+      "semente": 31580,
+      "unidade": "vaga",
+      "bloco_padrao": null,
+      "_nota": "A LISTA vem por /ajax/, e o robots.txt do site (regra unica) pede para nao acessar /ajax/. As paginas /job/show/ sao publicas e permitidas — a pagina de ajuda diz, literalmente, 'Anyone can search for positions on PhilJobs'. Ids sao sequenciais por data de publicacao. Sem jobs.csv e sem trava de fingerprint: caiu em 2026-08-25."
+    },
+    {
+      "nome": "anpof",
+      "ligada": true,
+      "metodo": "lista_html",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes",
+      "link_padrao": "/agenda/",
+      "pais_padrao": "Brasil",
+      "unidade": "edital",
+      "_nota": "VERIFICADO 2026-08-25: 200+ itens, cada um com URL propria e data. Pegou 'UFPI — Filosofia Medieval'. MAS ~80% e selecao de mestrado/doutorado: quem segura isso e o tipo 'discente'. Sem RSS — /feed devolve HTML, e a pagina ainda vaza 'Notice: Trying to get property' do PHP.",
+      "_link_padrao_nao_verificado": "Nao vi o HTML bruto (o WebFetch entrega markdown). Rode 'python scripts/coletor.py vagas --diagnostico' e ajuste este padrao com o que aparecer no log."
+    },
+    {
+      "nome": "docentefederal",
+      "ligada": true,
+      "metodo": "lista_html",
+      "url": "https://docentefederal.com.br/category/vagas/",
+      "link_padrao": "docentefederal\\.com\\.br/(?!category|tag|author|page)[a-z0-9-]{8,}/?$",
+      "pais_padrao": "Brasil",
+      "unidade": "edital",
+      "_nota": "VERIFICADO 2026-08-25: agregador especializado em docencia federal. Pegou 'UFU, substituto, Filosofia, edital PROGEP 134/2026'. Ja usa o vocabulario Efetivo/Substituto/Visitante — os mesmos rotulos do agente. A busca ?s= nao indexa area: por isso a resolucao_de_area existe.",
+      "_link_padrao_nao_verificado": "Mesma coisa: confirme pelo --diagnostico."
+    },
+    {
+      "nome": "faperj",
+      "ligada": true,
+      "metodo": "lista_html",
+      "url": "https://www.faperj.br/?id=28.5.7",
+      "link_padrao": "faperj\\.br/(rp/downloads/|\\?id=)",
+      "pais_padrao": "Brasil",
+      "unidade": "edital",
+      "_nota": "VERIFICADO 2026-08-25: pagina unica e estavel, 17 editais de 2026, cada um com prazo e PDF. AVISO: nenhum edital de pos-doc em 2026 — o PDR-10 vigente e o Edital 39/2025. A fonte funciona; o poco e que esta seco este ano."
+    },
+    {
+      "nome": "dou",
+      "ligada": false,
+      "metodo": "lista_html",
+      "url": "https://www.in.gov.br/consulta/-/buscar/dou?q=professor+filosofia&s=do3",
+      "link_padrao": "/web/dou/-/",
+      "pais_padrao": "Brasil",
+      "unidade": "edital",
+      "_nota": "DESLIGADA POR DECISAO, em 2026-08-25, e nao por falta de importancia — o DOU e onde TODO concurso federal (IFES, Pedro II, CEFETs, Colegios Militares, CAps federais) e publicado por lei.",
+      "_porque_desligada": "in.gov.br recusou tres vezes: www.in.gov.br em dois caminhos e pesquisa.in.gov.br. O robots.txt nao responde — o servidor derruba a conexao. HIPOTESE: bloqueio a IP de datacenter. O Actions roda em IP da Azure, entao pode falhar la tambem.",
+      "_como_ligar": "Rode o workflow por workflow_dispatch com --diagnostico e leia o log. Se o DOU responder, ponha ligada: true. Se der timeout ou 403, ficou provada a hipotese — e ai a saida e o agregador, nao o diario."
+    },
+    {
+      "nome": "fapesp",
+      "ligada": false,
+      "metodo": "lista_html",
+      "url": "https://fapesp.br/oportunidades",
+      "link_padrao": "/oportunidades/",
+      "pais_padrao": "Brasil",
+      "unidade": "vaga",
+      "_nota": "DESLIGADA por baixa aderencia MEDIDA, nao suposta. VERIFICADO 2026-08-25: 106 oportunidades abertas, 55 de pos-doc — e a amostra inteira era STEM (IA, bioinformatica, fisica, imunologia, agronomia). Pos-doc de filosofia na FAPESP nao passa por essa vitrine: e submetido pelo candidato com um supervisor. Ligue se quiser conferir por conta propria."
+    },
+    {
+      "nome": "pciconcursos",
+      "ligada": false,
+      "_nota": "DESCARTADA POR EVIDENCIA em 2026-08-25, nao por preferencia. Tres tentativas: /concursos/professor/ devolveu anuncios do IMIP de 2023 e 2025 numa consulta de agosto de 2026; /busca?q=filosofia e /concursos/sudeste/rj/ deram 404. Conteudo obsoleto ou URL instavel — nos dois casos, nao serve de fonte."
+    },
     {
       "nome": "jobs.ac.uk",
       "ligada": false,
+      "metodo": "rss",
       "url": "https://www.jobs.ac.uk/jobs/philosophy/rss",
-      "_nota": "NAO VERIFICADA. O endereco de feed que testei em 2026-08-24 deu 404. Ligue so depois de confirmar o endereco certo no navegador."
+      "_nota": "NAO VERIFICADA. O endereco testado em 2026-08-24 deu 404. Confirme no navegador antes de ligar."
     },
     {
       "nome": "academicjobsonline",
       "ligada": false,
+      "metodo": "rss",
       "url": "https://academicjobsonline.org/ajo/jobs/rss",
-      "_nota": "NAO VERIFICADA. Mesma coisa: confirme o endereco antes de ligar."
+      "_nota": "NAO VERIFICADA."
     },
     {
       "nome": "h-net",
       "ligada": false,
+      "metodo": "rss",
       "url": "https://networks.h-net.org/rss/jobs",
       "_nota": "NAO VERIFICADA."
     }
-  ]
+  ],
+
+  "_fontes_que_nao_viraram_coletor": {
+    "_nota": "Registrado para nao ser redescoberto. Colegio Pedro II, CEFETs, Colegios Militares, FAETEC, Colegios de Aplicacao e as IFES uma a uma NAO ganham raspador proprio.",
+    "_porque": "VERIFICADO 2026-08-25: o Pedro II nao publica concurso no site dele — vai para a banca (Selecon), e quem noticia sao os agregadores. Cada instituicao usa banca diferente (Selecon, Cesgranrio, Cebraspe, IDECAN, FGV). Doze raspadores institucionais e o build errado: eles chegam pela ANPOF, pela docentefederal e — quando ligar — pelo DOU."
+  }
 }

@@ -1,80 +1,207 @@
 {
-  "_o_que_e": "O julgamento do agente de CHAMADAS (calls for papers, eventos, dossies). Mesma mecanica do criterios_vagas.json, pesos diferentes — aqui o que importa e se a chamada casa com alguma peca da esteira dos doze artigos.",
-  "_como_ajustar": "Se uma chamada boa nao apareceu, suba o peso do tema dela ou baixe o corte. Se veio lixo, suba o corte.",
+  "_o_que_e": "O julgamento do agente de CHAMADAS (calls for papers, dossies, special issues, eventos com publicacao). Mesma mecanica do criterios_vagas.json: CLASSIFICA, nao pontua.",
 
-  "corte": 10,
+  "_o_que_morreu_da_v1": "corte, minimo_topico, pesos, categoria e regiao como pontos, e a penalidade de -6 por prazo curto. Prazo curto agora e marca, nao desconto.",
 
-  "termos": {
-    "nucleo": {
-      "_nota": "Temas que ja tem peca correspondente na esteira ago/26 a jul/27.",
-      "peso": 12,
-      "palavras": [
-        "luther", "lutero", "spinoza", "reformation", "reforma",
+  "_a_divisao_de_trabalho": "Secao 4.6 do briefing, duas camadas. O Actions COLETA e LEMBRA: monta a tabela mecanica — periodico, tema, prazo, idioma, forma. A tarefa em nuvem JULGA: o encaixe fino com os recortes prontos e o paragrafo de 'melhor encaixe' que vai por push.",
+
+  "_porque_nao_ha_fit_ALTO_aqui": "Secao 4.8 do briefing. O fit ALTO depende dos recortes do Tier B — suicidio/conatus, o projeto Leibniz-Spinoza-Lutero, 'Christian Patriotism' e a tese politeia. Esses NAO vao para arquivo nenhum: moram no prompt da tarefa agendada. Este arquivo so alcanca o que ja e publico (Lattes, obra publicada). Por isso ele classifica em 'nicho' e 'competencia' e para ai — o ALTO e da nuvem, nao do repositorio.",
+
+  "onde_se_decide": {
+    "cabeca": ["titulo", "tema", "periodico"],
+    "corpo": ["texto", "local"],
+    "_regra": "A relevancia se decide no CABECA. O CORPO so preenche colunas.",
+    "_fronteira_de_palavra": "VERIFICADO 2026-08-25: 'logic' esta dentro de 'theological'. Todo casamento usa fronteira de palavra.",
+    "_acentos": "Comparacao sem acento nos dois lados."
+  },
+
+  "veto": {
+    "_nota": "Derruba antes de tudo, e so olha o cabeca.",
+    "termos": [
+      "bioethics", "bioetica", "biomedical ethics",
+      "formal logic", "logica formal", "mathematical logic",
+      "philosophy of science", "filosofia da ciencia",
+      "cognitive science", "neuroscience", "neurociencia",
+      "philosophy of mathematics", "philosophy of physics",
+      "machine learning", "artificial intelligence", "AI ethics",
+      "ancient philosophy", "filosofia antiga",
+      "chinese philosophy", "buddhist", "indian philosophy"
+    ]
+  },
+
+  "relevancia": {
+    "_nota": "Estado, nao nota. Os dois estados abaixo entram; o resto vai para os rejeitados com a razao.",
+
+    "nicho": {
+      "_nota": "So o que ja e publico: as linhas do Tier A (com publicacao ou defesa) e o nicho prioritario da secao 4 do agente_CHAMADAS.md. Nada daqui e inedito.",
+      "termos": [
+        "luther", "lutero", "lutheran", "luterano",
+        "spinoza", "espinosa", "spinozist", "leibniz",
+        "reformation", "reforma protestante", "protestant",
         "philosophy of religion", "filosofia da religiao",
-        "two kingdoms", "dois reinos", "theology of the cross", "teologia da cruz",
-        "justification", "justificacao", "libertas philosophandi"
+        "religious studies", "ciencias da religiao",
+        "theology", "teologia", "theological", "philosophical theology",
+        "political theology", "teologia politica",
+        "religious ethics", "theological ethics", "etica religiosa",
+        "two kingdoms", "dois reinos",
+        "theology of the cross", "teologia da cruz",
+        "justification", "justificacao", "servo arbitrio", "de servo arbitrio",
+        "libertas philosophandi", "conatus",
+        "nominalism", "nominalismo", "razao e fe", "reason and faith",
+        "religious liberty", "liberdade religiosa", "toleration", "tolerancia",
+        "secularization", "secularizacao", "genealogy of the secular",
+        "category of religion", "categoria de religiao",
+        "kierkegaard", "bonhoeffer", "barth", "schleiermacher", "calvin", "calvino"
       ]
     },
-    "forte": {
-      "_nota": "Casam com os artigos de setembro a marco: categoria de religiao, genealogia do secular, tolerancia, etica dos Galatas.",
-      "peso": 8,
-      "palavras": [
-        "category of religion", "secularization", "genealogy of the secular",
-        "toleration", "tolerancia", "religious liberty", "liberdade religiosa",
-        "political theology", "teologia politica", "religious ethics",
-        "early modern", "biblical interpretation", "hermeneutics", "exegesis"
+
+    "competencia": {
+      "_nota": "Area ampla da secao 4 do agente. Entra marcado. A regra do agente vale: na duvida entre 'tangencial' e 'fora', inclua.",
+      "termos": [
+        "ethics", "etica", "moral philosophy", "filosofia moral",
+        "epistemology", "epistemologia",
+        "early modern", "filosofia moderna", "modern philosophy",
+        "seventeenth century", "século xvii", "seculo xvii",
+        "political philosophy", "filosofia politica", "political thought",
+        "history of philosophy", "historia da filosofia",
+        "hermeneutics", "hermeneutica", "exegesis", "exegese",
+        "biblical interpretation", "interpretacao biblica",
+        "philosophy of education", "filosofia da educacao",
+        "medieval philosophy", "filosofia medieval",
+        "metaphysics", "metafisica", "sovereignty", "soberania"
       ]
     },
-    "medio": {
-      "peso": 4,
-      "palavras": [
-        "protestant", "theology", "teologia", "ethics", "etica",
-        "epistemology", "history of philosophy", "religious studies",
-        "kierkegaard", "bonhoeffer", "barth", "schleiermacher"
-      ]
-    },
-    "ruido": {
-      "peso": -9,
-      "palavras": [
-        "formal logic", "philosophy of science", "cognitive science",
-        "bioethics", "ancient philosophy", "chinese philosophy", "buddhist",
-        "philosophy of mathematics", "machine learning"
-      ]
-    }
+
+    "_fora": "Vai para dados/chamadas_rejeitados.json com a razao."
   },
 
-  "categoria": {
-    "_nota": "Dossie de periodico vale mais que evento presencial: entra direto na esteira e nao exige viagem.",
-    "special issue": 9,
-    "dossie": 9,
-    "call for papers": 6,
-    "journal": 6,
-    "conference": 3,
-    "workshop": 2,
-    "summer school": -3
+  "tipo": {
+    "_nota": "Secao 1 do agente_CHAMADAS.md. Dossie de periodico vale mais que evento presencial: entra direto na esteira e nao exige viagem. Isso agora e COLUNA, nao peso.",
+    "_ordem_importa": "Primeira regra que casar vence.",
+    "regras": [
+      {
+        "rotulo": "discente",
+        "descarta": true,
+        "_nota": "Selecao de pos-graduacao nao e chamada de publicacao. Mesmo problema da ANPOF do lado das vagas.",
+        "_cuidado_ao_editar": "NAO acrescente aqui termo que seja o final de um termo de pos-doc. O hifen conta como fronteira: 'doctoral fellowship' casaria dentro de 'post-doctoral fellowship'. Pego no teste de 2026-08-25.",
+        "quando": [
+          "selecao de mestrado", "selecao mestrado", "selecao de doutorado",
+          "mestrado e doutorado", "processo seletivo discente",
+          "turma", "aluno especial", "iniciacao cientifica", "edital de bolsas"
+        ]
+      },
+      {
+        "rotulo": "dossie",
+        "_nota": "O alvo. Entra direto na esteira dos doze artigos.",
+        "quando": ["dossie", "dossier", "special issue", "numero tematico", "numero especial", "thematic issue", "sonderheft", "numero monografico"]
+      },
+      {
+        "rotulo": "volume",
+        "quando": ["edited volume", "edited collection", "volume coletivo", "coletanea", "book chapter", "capitulo de livro", "handbook"]
+      },
+      {
+        "rotulo": "periodico",
+        "_nota": "Chamada avulsa de periodico, sem tema de dossie.",
+        "quando": ["call for papers", "chamada para artigos", "chamada de artigos", "appel a contributions", "aufruf", "call for submissions", "chamada aberta", "fluxo continuo"]
+      },
+      {
+        "rotulo": "congresso",
+        "_nota": "So interessa quando tem anais ou dossie derivado — secao 1 do agente.",
+        "quando": ["congresso", "conference", "coloquio", "colloquium", "simposio", "symposium", "encontro nacional", "jornada"]
+      },
+      { "rotulo": "workshop", "quando": ["workshop", "seminario", "seminar", "oficina", "graduate conference"] },
+      { "rotulo": "escola", "quando": ["summer school", "winter school", "escola de verao", "escola de inverno"] },
+      { "rotulo": "outro", "quando": [] }
+    ]
   },
 
-  "regiao": {
-    "_nota": "Peso baixo aqui: chamada de periodico nao tem geografia. So conta para evento.",
-    "brazil": 3,
-    "brasil": 3,
-    "united states": 2,
-    "united kingdom": 2
+  "forma": {
+    "_nota": "Substitui os blocos A/B/C das vagas. Duas formas, porque decidem coisas diferentes: publicacao entra na esteira; evento custa viagem e data.",
+    "publicacao": { "titulo": "Publicacao — dossies, special issues, volumes", "tipos": ["dossie", "volume", "periodico"] },
+    "evento": { "titulo": "Eventos com publicacao", "tipos": ["congresso", "workshop", "escola", "outro"] }
   },
 
   "prazo": {
-    "_nota": "Chamada com prazo curto e pior que vaga com prazo curto: artigo exige as tres janelas do pipeline.",
-    "vencido": -999,
-    "curto_dias": 21,
-    "curto_peso": -6
+    "urgente_dias": 21,
+    "_nota_urgente": "21 e nao 14, ao contrario das vagas: um artigo exige as tres janelas do pipeline, e a bibliografia leva semanas. O simbolo sobe o item no topo — nunca o desconta.",
+    "so_com_texto_pronto_dias": 10,
+    "_nota_texto_pronto": "Abaixo de 10 dias a chamada NAO e descartada: e marcada 'so com texto pronto'. E o unico caso em que os recortes semiprontos do Tier B decidem — e essa decisao e da tarefa em nuvem, que os conhece.",
+    "sem_prazo": {
+      "_nota": "Prazo nao lido nao vira 'aberto para sempre'. Marcado, ordenado por ultimo, nunca urgente nem vencido."
+    },
+    "_nota_vencido": "Vencido vai para dados/chamadas_historico.json ANTES de qualquer filtro. VERIFICADO 2026-08-25: a pagina de chamadas da ANPOF carrega chamadas ja expiradas (prazos de 23/07 e 30/07 visiveis em 25/08), entao esse roteamento nao e teorico.",
+    "dias_de_carencia_vencida": 14,
+    "_nota_carencia": "Passo 4. Mais curta que a das vagas (21): chamada vencida nao tem recurso — nao ha 'talvez ainda de'. Quatorze dias so para voce ver que passou e arquivar num toque."
   },
 
-  "fontes_opcionais": [
+  "whitelist_periodicos": {
+    "_nota": "Secao 3 do agente_CHAMADAS.md. Publica: e curadoria de reputacao de area, nao informacao sensivel. Serve para reconhecer o periodico quando ele aparecer numa chamada e para o bloco de fluxo continuo.",
+    "_aviso_qualis": "Estratos A1/A2 mudam por quadrienio. NAO inferir estrato ao vivo — trate como conjunto a monitorar.",
+
+    "filosofia_da_religiao": ["Faith and Philosophy", "Religious Studies", "International Journal for Philosophy of Religion", "Sophia", "European Journal for Philosophy of Religion", "Journal of Analytic Theology", "International Journal of Philosophy and Theology"],
+    "etica": ["Journal of Religious Ethics", "Studies in Christian Ethics", "Journal of Moral Philosophy", "Ethical Theory and Moral Practice", "The Journal of Ethics", "Political Theology"],
+    "epistemologia": ["Episteme", "Synthese", "Erkenntnis"],
+    "moderna": ["Journal of the History of Philosophy", "British Journal for the History of Philosophy", "Journal of Modern Philosophy", "Archiv fur Geschichte der Philosophie"],
+    "teologia_reforma": ["Modern Theology", "Harvard Theological Review", "Lutheran Quarterly", "International Journal of Systematic Theology", "Scottish Journal of Theology", "The Journal of Religion", "Archiv fur Reformationsgeschichte", "Lutherjahrbuch"],
+    "ciencias_da_religiao": ["Method & Theory in the Study of Religion", "MTSR", "Numen", "Religion", "Journal of the American Academy of Religion", "JAAR"],
+    "francofonos": ["Revue de metaphysique et de morale", "Les Etudes philosophiques", "Archives de Philosophie", "Revue des sciences philosophiques et theologiques"],
+    "germanofonos": ["Neue Zeitschrift fur Systematische Theologie und Religionsphilosophie", "Zeitschrift fur philosophische Forschung", "Philosophisches Jahrbuch"],
+    "brasil_filosofia": ["Kriterion", "Manuscrito", "Analytica", "Dois Pontos", "Trans/Form/Acao", "Cadernos Espinosanos", "Seiscentos", "Cadernos de Filosofia Alema", "Sofia", "Principia", "Veritas", "Sintese", "Discurso"],
+    "brasil_religiao": ["Numen", "Horizonte", "Reflexao", "Pistis & Praxis", "Estudos de Religiao", "Interacoes", "Revista Brasileira de Historia das Religioes"],
+    "brasil_educacao": ["Educacao e Filosofia", "Pro-Posicoes", "Educacao & Realidade"]
+  },
+
+  "recortes_publicos": {
+    "_nota": "Tier A do agente_CHAMADAS.md — SO o que ja foi publicado ou defendido, e portanto ja e publico. O Tier B nao esta aqui e nao deve ser acrescentado: secao 4.8 do briefing.",
+    "_para_que_serve": "Etiquetar a coluna 'recorte que encaixa' nos casos obvios. O encaixe fino e da tarefa em nuvem.",
+    "lista": [
+      "Spinoza — mente eterna, beatitude e a relacao da mente consigo mesma (Analogos v.19, 2019; dissertacao, 2019)",
+      "Spinoza — liberdade e responsabilidade moral (Anais, 2017)",
+      "Lutero e as estruturas do pensamento moderno; epistemologia luterana (tese, 2025)",
+      "Lutero, razao e fe — 'a prostituta grega' (Numen v.28, 2025)",
+      "Reforma protestante, filosofia e politica (cap. em Antologia Reflexoes Teologicas Contemporaneas, Trinitatis, 2025)",
+      "Nominalismo x realismo em Lutero (monografia; comunicacao, 2021)"
+    ]
+  },
+
+  "ordem": {
+    "regra": ["urgentes primeiro", "depois publicacao, depois evento", "dentro disso: nicho antes de competencia", "dentro disso: prazo mais proximo primeiro", "sem prazo por ultimo"]
+  },
+
+  "fontes": [
+    {
+      "nome": "philevents",
+      "ligada": true,
+      "metodo": "sonda_id",
+      "base": "https://philevents.org",
+      "caminho": "/event/show/",
+      "semente": 146200,
+      "unidade": "vaga",
+      "_nota": "Mesma plataforma do PhilJobs: /event/show/<id> e publico e permitido; a lista vem por /ajax/, que o robots.txt pede para nao acessar. Ids sequenciais por data de publicacao, por volta de 146300 em agosto de 2026."
+    },
+    {
+      "nome": "anpof-chamadas",
+      "ligada": true,
+      "metodo": "lista_html",
+      "url": "https://anpof.org.br/agenda/chamadas",
+      "link_padrao": "/agenda/",
+      "pais_padrao": "Brasil",
+      "unidade": "vaga",
+      "sem_link_proprio": true,
+      "_nota": "VERIFICADO 2026-08-25: a pagina existe e traz CFPs brasileiros reais com periodico e prazo — 'Dossie Ensino de Filosofia', revista O Manguezal, 30/07/2026.",
+      "_limitacao_verificada": "Ao contrario da lista de concursos, os itens NAO tem URL propria. O coletor usa a URL da lista como link e marca 'link: pagina da lista'. E honesto: melhor um item sem link do que um link inventado.",
+      "_link_padrao_nao_verificado": "Nao vi o HTML bruto. Rode 'python scripts/coletor.py chamadas --diagnostico' e ajuste com o que sair no log."
+    },
     {
       "nome": "upenn-cfp",
       "ligada": false,
+      "metodo": "rss",
       "url": "https://call-for-papers.sas.upenn.edu/rss.xml",
       "_nota": "NAO VERIFICADA. Confirme o endereco antes de ligar."
     }
-  ]
+  ],
+
+  "_fontes_que_nao_viraram_coletor": {
+    "_nota": "As paginas de CFP dos periodicos da whitelist (secao 2.2 do agente) NAO ganham raspador. Sao ~60 periodicos, cada um com um CMS diferente, e a maioria publica chamada em PDF ou em pagina sem data legivel. O caminho e o PhilEvents e a ANPOF, que ja agregam; o resto e trabalho da tarefa em nuvem, que navega."
+  }
 }

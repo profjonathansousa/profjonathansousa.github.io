@@ -9,3 +9,7 @@ backup-cronograma-*.json
 # Cache local
 __pycache__/
 *.pyc
+
+# Copias que o patch deixa ao lado do arquivo. O device_bash nao apaga,
+# entao ficam onde estao — mas nunca entram no repositorio.
+*.antes-*
