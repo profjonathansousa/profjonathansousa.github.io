@@ -1,0 +1,11 @@
+# Backups do Cronograma: contêm o seu estado inteiro. Nunca no repositório.
+cronograma-backup-*.json
+backup-cronograma-*.json
+
+# Ruído do macOS
+.DS_Store
+**/.DS_Store
+
+# Cache local
+__pycache__/
+*.pyc

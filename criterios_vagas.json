@@ -1,0 +1,103 @@
+{
+  "_o_que_e": "O julgamento do agente de VAGAS mora aqui. Nao ha modelo rodando no Actions: a relevancia e esta soma de pesos. Este arquivo foi feito para VOCE editar — cada peso e uma opiniao minha sobre o seu perfil, e opiniao minha se corrige.",
+  "_como_funciona": "Cada grupo de termos conta UMA vez se qualquer palavra dele aparecer no anuncio (titulo, instituicao, AOS, categoria, local, texto). Os pesos somam. Acima do corte, o item entra no Cronograma.",
+  "_como_ajustar": "Vaga boa que nao apareceu: baixe o corte ou suba o peso do termo que a descreve. Lixo demais: suba o corte ou acrescente palavra em 'ruido'.",
+
+  "corte": 8,
+
+  "termos": {
+    "nucleo": {
+      "_nota": "O seu centro. Uma palavra destas ja quase garante a vaga na lista.",
+      "peso": 12,
+      "palavras": [
+        "luther", "lutero", "lutheran", "spinoza", "spinozist",
+        "reformation", "reforma", "philosophy of religion", "filosofia da religiao",
+        "theological ethics", "religious ethics", "philosophical theology"
+      ]
+    },
+    "forte": {
+      "_nota": "Adjacentes diretos do seu doutorado e da esteira de artigos.",
+      "peso": 7,
+      "palavras": [
+        "ethics", "etica", "epistemology", "epistemologia",
+        "early modern", "modernidade", "political theology", "teologia politica",
+        "systematic theology", "protestant", "calvin", "reformed",
+        "secularization", "secular", "genealogy"
+      ]
+    },
+    "medio": {
+      "_nota": "Campo em volta. Sozinho nao passa do corte; somado ao 'forte', passa.",
+      "peso": 4,
+      "palavras": [
+        "religious studies", "theology", "teologia", "history of philosophy",
+        "continental philosophy", "hermeneutics", "hermeneutica",
+        "moral philosophy", "political philosophy", "kierkegaard", "bonhoeffer", "barth"
+      ]
+    },
+    "ruido": {
+      "_nota": "Areas em que voce nao concorre. Peso negativo para nao entupir a lista.",
+      "peso": -9,
+      "palavras": [
+        "formal logic", "philosophy of science", "cognitive science", "neuroscience",
+        "bioethics", "ancient philosophy", "chinese philosophy", "buddhist",
+        "philosophy of mathematics", "artificial intelligence ethics", "data ethics"
+      ]
+    }
+  },
+
+  "aos_aberto": 5,
+  "_nota_aos_aberto": "AOS 'Open' e bom: nao te exclui por especialidade.",
+
+  "regiao": {
+    "_nota": "Casa com a estrategia do tracker: EUA, Reino Unido e Europa primeiro; Brasil conta.",
+    "united states": 5,
+    "canada": 5,
+    "united kingdom": 5,
+    "netherlands": 4,
+    "germany": 3,
+    "belgium": 4,
+    "brazil": 4,
+    "brasil": 4
+  },
+
+  "categoria": {
+    "_nota": "Doutor de 2025. Pos-doc e junior sao o alvo; senior nao e para agora.",
+    "postdoc": 9,
+    "post-doc": 9,
+    "fellowship": 7,
+    "junior faculty": 7,
+    "fixed term": 4,
+    "tenure-track": 6,
+    "visiting": 4,
+    "senior faculty": -6,
+    "graduate": 0
+  },
+
+  "prazo": {
+    "_nota": "Prazo curto penaliza porque o pipeline assume writing sample sob medida por aplicacao, e isso leva tempo.",
+    "vencido": -999,
+    "curto_dias": 10,
+    "curto_peso": -4
+  },
+
+  "fontes_opcionais": [
+    {
+      "nome": "jobs.ac.uk",
+      "ligada": false,
+      "url": "https://www.jobs.ac.uk/jobs/philosophy/rss",
+      "_nota": "NAO VERIFICADA. O endereco de feed que testei em 2026-08-24 deu 404. Ligue so depois de confirmar o endereco certo no navegador."
+    },
+    {
+      "nome": "academicjobsonline",
+      "ligada": false,
+      "url": "https://academicjobsonline.org/ajo/jobs/rss",
+      "_nota": "NAO VERIFICADA. Mesma coisa: confirme o endereco antes de ligar."
+    },
+    {
+      "nome": "h-net",
+      "ligada": false,
+      "url": "https://networks.h-net.org/rss/jobs",
+      "_nota": "NAO VERIFICADA."
+    }
+  ]
+}

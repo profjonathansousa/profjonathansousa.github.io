@@ -151,6 +151,20 @@
   .sub-text{flex:1;font-size:13.5px;line-height:1.4;color:var(--ink);outline:none;}
   .sub.st-1 .sub-text{color:var(--ink);font-weight:600;}
   .sub.st-2 .sub-text{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  /* --- Esquema v2: ciclo de vida, medida e lugar --- */
+  .sub.vida-adiado{opacity:.72;}
+  .sub.vida-abandonado{opacity:.5;}
+  .sub.vida-abandonado .sub-text{text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  .vida-selo{flex:none;align-self:center;font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;
+    border:1px solid var(--line-strong);color:var(--muted);white-space:nowrap;}
+  .vida-selo.v-adiado{border-color:var(--gold-line);color:var(--gold);}
+  .sub-medida{flex:none;align-self:center;font-size:11px;color:var(--muted);
+    font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .sub-onde{flex:none;align-self:center;font-size:10.5px;color:var(--muted);
+    border:1px solid var(--line);border-radius:4px;padding:2px 5px;white-space:nowrap;}
+  .vida-btn{flex:none;align-self:center;background:none;border:0;cursor:pointer;
+    color:var(--line-strong);font-size:15px;line-height:1;padding:2px 5px;}
+  .vida-btn:active{color:var(--ink-soft);}
   .count{display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--paper);
     border-radius:12px;padding:15px 16px;margin-bottom:10px;}
   .count .num{font-family:var(--display);font-size:34px;font-weight:600;line-height:1;color:var(--gold-soft);min-width:44px;text-align:center;}
@@ -266,7 +280,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-07-29-02";
+const APP_VERSION = "2026-08-24-esquema2";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -619,6 +633,139 @@ const monthKey = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function LS(k,def){try{const v=localStorage.getItem(k);return v===null?def:JSON.parse(v);}catch(e){return def;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+/* ================== ESQUEMA v2 — Passo 2 da reforma ==================
+   Dois eixos independentes:
+     st   — progresso : 0 a fazer · 1 em andamento · 2 concluída
+     vida — ciclo     : ativo · adiado · abandonado · arquivado
+   Nada é descartado em lugar nenhum:
+     · o que passa do teto do registro       -> cron:registro-arquivo
+     · o que você remove de um painel        -> cron:arquivo (com restaurar)
+     · o histórico que não casar na migração -> cron:registro-antigo
+   O log passa a ser gravado por id, com o título fotografado no momento:
+   renomear um item deixa de orfanar o histórico.
+   ==================================================================== */
+const SCHEMA_VERSAO = 2;
+const REG_TETO = 600;
+const VIDA_ORDEM = ["ativo","adiado","abandonado"];
+const VIDA_LBL = {ativo:"", adiado:"adiada", abandonado:"abandonada", arquivado:"arquivada"};
+
+function normSub(x){
+  if(!x || typeof x!=="object") return x;
+  if(typeof x.st!=="number") x.st = 0;
+  if(!x.vida) x.vida = "ativo";
+  if(!("motivo" in x)) x.motivo = "";
+  if(!("voltar_em" in x)) x.voltar_em = "";
+  if(!("vidaDesde" in x)) x.vidaDesde = "";
+  if(!("origem" in x)) x.origem = "semente";
+  /* campos do mapa_portal.json — ficam vazios até o Passo 4 preenchê-los */
+  if(!("onde" in x)) x.onde = "";
+  if(!("prova" in x)) x.prova = "";
+  if(!("medida" in x)) x.medida = null;   /* {feito, total} */
+  return x;
+}
+function normProj(p){
+  if(!p || typeof p!=="object") return p;
+  if(!p.vida) p.vida = "ativo";
+  if(!("origem" in p)) p.origem = "semente";
+  if(!Array.isArray(p.subs)) p.subs = [];
+  p.subs.forEach(normSub);
+  return p;
+}
+function chaveTitulo(p,s){
+  return String(p||"").trim().toLowerCase()+" ␟ "+String(s||"").trim().toLowerCase();
+}
+function indiceDeTitulos(){
+  var idx={};
+  PAINEIS.forEach(function(P){
+    var projs;
+    try{ projs = LS(P.key, JSON.parse(JSON.stringify(P.seed))); }catch(e){ projs = []; }
+    (projs||[]).forEach(function(p){
+      (p.subs||[]).forEach(function(x){ idx[chaveTitulo(p.t, x.t)] = {pid:P.id, projId:p.id, subId:x.id}; });
+    });
+  });
+  return idx;
+}
+/* Migração única, versionada. Casa o histórico antigo pelo texto e converte
+   para id. O que não casar NÃO é descartado: vai para cron:registro-antigo. */
+function migrarEsquema(){
+  if(LS("cron:schema-versao", 1) >= SCHEMA_VERSAO) return;
+  PAINEIS.forEach(function(P){
+    var v = LS(P.key, null);
+    if(v && v.forEach){ v.forEach(normProj); save(P.key, v); }
+  });
+  var reg = LS("cron:registro", []) || [];
+  var idx = indiceDeTitulos();
+  var novos = [], orfaos = [];
+  reg.forEach(function(o){
+    if(!o) return;
+    if(o.projId){ novos.push(o); return; }               /* já está no esquema novo */
+    var achado = idx[chaveTitulo(o.p, o.s)];
+    if(achado){
+      novos.push({d:o.d, pid:achado.pid, projId:achado.projId, subId:achado.subId,
+                  projT:o.p, subT:o.s, de:null, para:o.st, vida:"ativo", motivo:""});
+    } else {
+      orfaos.push(o);
+    }
+  });
+  save("cron:registro", novos);
+  if(orfaos.length) save("cron:registro-antigo", (LS("cron:registro-antigo", [])||[]).concat(orfaos));
+  save("cron:schema-versao", SCHEMA_VERSAO);
+  save("cron:migracao-relatorio", {quando:new Date().toISOString(), migradas:novos.length, orfas:orfaos.length});
+}
+/* Entrada externa (Passo 4): o arquivo manda na ESTRUTURA, o aparelho guarda
+   o que é dele. st e vida NUNCA são tocados por aqui. */
+function mesclarEntrada(){
+  var ent = LS("cron:entrada", null);
+  if(!ent || !ent.paineis) return;
+  var aplicou = false;
+  Object.keys(ent.paineis).forEach(function(pid){
+    if(!painelDef(pid)) return;
+    var atuais = getProjs(pid), mudou = false, porId = {};
+    atuais.forEach(function(p){ porId[p.id]=p; });
+    (ent.paineis[pid]||[]).forEach(function(novo){
+      if(!novo || !novo.id) return;
+      var alvo = porId[novo.id];
+      if(!alvo){ atuais.push(normProj(Object.assign({}, novo, {origem:"evento"}))); mudou=true; return; }
+      if(novo.t && novo.t!==alvo.t){ alvo.t=novo.t; mudou=true; }
+      if(novo.n && novo.n!==alvo.n){ alvo.n=novo.n; mudou=true; }
+      var subsPorId={}; (alvo.subs||[]).forEach(function(s){ subsPorId[s.id]=s; });
+      (novo.subs||[]).forEach(function(ns){
+        if(!ns || !ns.id) return;
+        var as = subsPorId[ns.id];
+        if(!as){ alvo.subs.push(normSub(Object.assign({}, ns, {origem:"evento"}))); mudou=true; return; }
+        ["t","n","onde","prova","medida"].forEach(function(campo){
+          if((campo in ns) && JSON.stringify(ns[campo])!==JSON.stringify(as[campo])){ as[campo]=ns[campo]; mudou=true; }
+        });
+      });
+    });
+    if(mudou){ setProjs(pid, atuais); aplicou = true; }
+  });
+  if(aplicou) save("cron:entrada-aplicada", new Date().toISOString());
+}
+/* ---- Arquivo: remover deixa de destruir ---- */
+function getArquivo(){ return LS("cron:arquivo", []) || []; }
+function arquivar(pid, item, tipo, ondeEstava){
+  var a = getArquivo();
+  a.push({quando:new Date().toISOString(), d:ymd(now), pid:pid, tipo:tipo, ondeEstava:ondeEstava||null, item:item});
+  save("cron:arquivo", a);
+}
+function restaurarArquivo(k){
+  var a = getArquivo(), it = a[k];
+  if(!it) return;
+  var p = getProjs(it.pid);
+  if(it.tipo==="projeto"){
+    p.push(normProj(it.item));
+  } else {
+    var alvo = null, procurado = it.ondeEstava && it.ondeEstava.projId;
+    for(var i=0;i<p.length;i++){ if(p[i].id===procurado){ alvo=p[i]; break; } }
+    if(!alvo){ alert("O item que continha esta subtarefa não existe mais no painel. Restaure-o primeiro."); return; }
+    alvo.subs.push(normSub(it.item));
+  }
+  setProjs(it.pid, p);
+  a.splice(k,1); save("cron:arquivo", a);
+  renderPainel(it.pid); renderArquivo(); sincronizarHoje(it.pid);
+}
 let checks = LS("cron:checks:"+dateKey, {});
 function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,checks);renderHoje();}
 function weekOfMonth(d){return Math.min(4, Math.ceil(d.getDate()/7));}
@@ -914,7 +1061,7 @@ function delEv(i){const ref=sortedRef(i);const e=getEventos().filter(x=>x.id!==r
 function addEv(){const e=getEventos();e.push({id:"e"+Date.now(),t:"",data:ymd(now)});setEventos(e);renderEventos();}
 /* ---- Painéis de projetos: estado persistente, sem data ---- */
 function painelDef(pid){ for(var i=0;i<PAINEIS.length;i++){ if(PAINEIS[i].id===pid) return PAINEIS[i]; } return null; }
-function getProjs(pid){ var P=painelDef(pid); return LS(P.key, JSON.parse(JSON.stringify(P.seed))); }
+function getProjs(pid){ var P=painelDef(pid); var v=LS(P.key, JSON.parse(JSON.stringify(P.seed))); if(v&&v.forEach) v.forEach(normProj); return v; }
 function setProjs(pid,v){ save(painelDef(pid).key, v); }
 function getTec(){return getProjs("tecnico");}
 function setTec(p){setProjs("tecnico",p);}
@@ -923,19 +1070,51 @@ function abertos(){return LS("cron:paineis-open",{});}
 function projAberto(pid,id,emAnd){var a=abertos(),k=pid+"/"+id;return (k in a)?a[k]:emAnd;}
 function setProjAberto(pid,id,v){var a=abertos();a[pid+"/"+id]=v;save("cron:paineis-open",a);}
 function cycleSub(pid,pi,si){
-  var p=getProjs(pid),x=p[pi].subs[si];
+  var p=getProjs(pid),x=normSub(p[pi].subs[si]);
+  var de=x.st;
   x.st=(x.st+1)%3;
   setProjs(pid,p);
-  logar(p[pi].t, x.t, x.st);
+  logar(pid, p[pi], x, de, x.st);
+  renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
+}
+/* Ciclo de vida: ativo -> adiado -> abandonado -> ativo. Pede motivo, e
+   no caso de adiar pergunta também para quando voltar. O progresso (st)
+   não é tocado: uma peça 60% escrita e adiada continua 60% escrita. */
+function ciclarVida(pid,pi,si){
+  var p=getProjs(pid), x=normSub(p[pi].subs[si]);
+  var prox=VIDA_ORDEM[(VIDA_ORDEM.indexOf(x.vida)+1)%VIDA_ORDEM.length];
+  if(prox==="ativo"){
+    x.vida="ativo"; x.motivo=""; x.voltar_em="";
+  } else {
+    var m=prompt(prox==="adiado" ? "Por que adiar?" : "Por que abandonar?", x.motivo||"");
+    if(m===null) return;
+    x.vida=prox; x.motivo=(m||"").trim();
+    if(prox==="adiado"){
+      var v=prompt("Voltar em (AAAA-MM-DD). Deixe vazio se não souber.", x.voltar_em||"");
+      if(v===null) return;
+      x.voltar_em=(v||"").trim();
+    } else { x.voltar_em=""; }
+  }
+  x.vidaDesde=ymd(now);
+  setProjs(pid,p);
+  logar(pid, p[pi], x, x.st, x.st);
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
 /* ---- Registro: histórico datado, só cresce ---- */
-function getReg(){return LS("cron:registro", []);}
-function logar(proj, sub, st){
-  if(st===0) return;                       // voltar para "a fazer" não vira histórico
+function getReg(){return LS("cron:registro", []) || [];}
+/* Grava por id, com o título fotografado no momento. Registra também o
+   RECUO (voltar para "a fazer"), que antes sumia. O que passa do teto
+   não é descartado: vai para cron:registro-arquivo. */
+function logar(pid, proj, sub, de, para){
   var r=getReg();
-  r.push({d:ymd(now), p:proj, s:sub, st:st});
-  if(r.length>600) r=r.slice(-600);
+  r.push({d:ymd(now), pid:pid, projId:proj.id, subId:sub.id,
+          projT:proj.t, subT:sub.t, de:(de===undefined?null:de), para:para,
+          vida:sub.vida||"ativo", motivo:sub.motivo||""});
+  if(r.length>REG_TETO){
+    var excedente=r.slice(0, r.length-REG_TETO);
+    r=r.slice(-REG_TETO);
+    save("cron:registro-arquivo", (LS("cron:registro-arquivo", [])||[]).concat(excedente));
+  }
   save("cron:registro", r);
 }
 function renderRegistro(){
@@ -953,9 +1132,48 @@ function renderRegistro(){
     h+='<div class="reg-mes">'+mesLabel(mk)+'</div>';
     porMes[mk].forEach(function(o){
       h+='<div class="reg-i"><span class="reg-d">'+Number(o.d.slice(8,10))+'</span>'+
-         '<span class="reg-t">'+escapeHtml(o.p)+
-         '<span>'+escapeHtml(o.s)+' \u00b7 '+(o.st===2?'conclu\u00edda':'<i>em andamento</i>')+'</span></span></div>';
+         '<span class="reg-t">'+escapeHtml(o.projT||o.p||"")+
+         '<span>'+escapeHtml(o.subT||o.s||"")+' \u00b7 '+rotuloReg(o)+'</span></span></div>';
     });
+  });
+  var ant = LS("cron:registro-antigo", []) || [];
+  if(ant.length){
+    h+='<div class="reg-mes">Hist\u00f3rico antigo \u00b7 '+ant.length+' linha'+(ant.length===1?'':'s')+'</div>'+
+       '<div class="vazio">Linhas que a migra\u00e7\u00e3o n\u00e3o conseguiu casar com nenhum item atual '+
+       '\u2014 provavelmente de itens renomeados ou removidos. Guardadas inteiras, nada foi descartado.</div>';
+    ant.slice().reverse().forEach(function(o){
+      h+='<div class="reg-i"><span class="reg-d">'+Number(String(o.d||"").slice(8,10)||0)+'</span>'+
+         '<span class="reg-t">'+escapeHtml(o.p||"")+
+         '<span>'+escapeHtml(o.s||"")+' \u00b7 '+(o.st===2?'conclu\u00edda':'<i>em andamento</i>')+'</span></span></div>';
+    });
+  }
+  box.innerHTML=h;
+}
+/* R\u00f3tulo de uma linha do registro. O recuo (voltar para "a fazer") era
+   invis\u00edvel no esquema antigo; aqui ele aparece. */
+function rotuloReg(o){
+  if(o.vida==="adiado")     return '<i>adiada</i>'+(o.motivo?' \u00b7 '+escapeHtml(o.motivo):'');
+  if(o.vida==="abandonado") return '<i>abandonada</i>'+(o.motivo?' \u00b7 '+escapeHtml(o.motivo):'');
+  var p = (o.para===undefined||o.para===null) ? o.st : o.para;
+  if(p===2) return 'conclu\u00edda';
+  if(p===1) return '<i>em andamento</i>';
+  return (o.de>0) ? '<i>voltou para a fazer</i>' : '<i>a fazer</i>';
+}
+/* ---- Aba Arquivo: o que foi removido, com bot\u00e3o de restaurar ---- */
+function renderArquivo(){
+  var box=document.getElementById("arquivo"); if(!box) return;
+  var a=getArquivo();
+  if(!a.length){ box.innerHTML='<div class="vazio">Nada arquivado. Quando voc\u00ea remover um item de um painel, ele vem parar aqui \u2014 e pode voltar.</div>'; return; }
+  var h="";
+  a.slice().reverse().forEach(function(it, revIdx){
+    var k=a.length-1-revIdx;
+    var P=painelDef(it.pid);
+    var titulo = it.item && it.item.t ? it.item.t : "(sem t\u00edtulo)";
+    var contexto = it.tipo==="subtarefa" && it.ondeEstava && it.ondeEstava.projT ? " \u00b7 de \u201c"+it.ondeEstava.projT+"\u201d" : "";
+    h+='<div class="reg-i"><span class="reg-d">'+Number(String(it.d||"").slice(8,10)||0)+'</span>'+
+       '<span class="reg-t">'+escapeHtml(titulo)+
+       '<span>'+(it.tipo==="projeto"?"item":"subtarefa")+' \u00b7 '+escapeHtml(P?P.titulo:it.pid)+escapeHtml(contexto)+'</span></span>'+
+       '<button class="add-row" style="margin:0;padding:4px 10px" onclick="restaurarArquivo('+k+')">restaurar</button></div>';
   });
   box.innerHTML=h;
 }
@@ -975,12 +1193,17 @@ function irAoTrilho(pid, projId){
 }
 function editProj(pid,i,t){var p=getProjs(pid);p[i].t=t.trim()||p[i].t;setProjs(pid,p);}
 function editSub(pid,pi,si,t){var p=getProjs(pid);p[pi].subs[si].t=t.trim()||p[pi].subs[si].t;setProjs(pid,p);}
-function delProj(pid,i){if(!confirm("Remover este item e tudo o que est\u00e1 dentro dele?"))return;
-  var p=getProjs(pid);p.splice(i,1);setProjs(pid,p);renderPainel(pid);sincronizarHoje(pid);}
-function delSub(pid,pi,si){var p=getProjs(pid);p[pi].subs.splice(si,1);setProjs(pid,p);renderPainel(pid);sincronizarHoje(pid);}
-function addProj(pid){var p=getProjs(pid);p.push({id:"p"+Date.now(),t:"",subs:[]});setProjs(pid,p);renderPainel(pid);
+/* Remover deixa de destruir: vai para a aba Arquivo e pode voltar. */
+function delProj(pid,i){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para a aba Arquivo e pode ser restaurado."))return;
+  var p=getProjs(pid);var removido=p.splice(i,1)[0];
+  arquivar(pid, removido, "projeto", {indice:i});
+  setProjs(pid,p);renderPainel(pid);renderArquivo();sincronizarHoje(pid);}
+function delSub(pid,pi,si){var p=getProjs(pid);var removido=p[pi].subs.splice(si,1)[0];
+  arquivar(pid, removido, "subtarefa", {projId:p[pi].id, projT:p[pi].t, indice:si});
+  setProjs(pid,p);renderPainel(pid);renderArquivo();sincronizarHoje(pid);}
+function addProj(pid){var p=getProjs(pid);p.push(normProj({id:"p"+Date.now(),t:"",subs:[],origem:"manual"}));setProjs(pid,p);renderPainel(pid);
   var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj-name');if(b.length)b[b.length-1].focus();}
-function addSub(pid,pi){var p=getProjs(pid);p[pi].subs.push({id:"s"+Date.now(),t:"",st:0});setProjs(pid,p);renderPainel(pid);
+function addSub(pid,pi){var p=getProjs(pid);p[pi].subs.push(normSub({id:"s"+Date.now(),t:"",st:0,origem:"manual"}));setProjs(pid,p);renderPainel(pid);
   var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-pi="'+pi+'"] .sub-text');if(b.length)b[b.length-1].focus();}
 function sincronizarHoje(pid){ if(pid==="pipeline") renderHoje(); }
 function renderPainel(pid){
@@ -999,10 +1222,20 @@ function renderPainel(pid){
        '<span class="proj-prog">'+feitas+'/'+total+'</span></summary><div class="proj-body">';
     if(p.n) h+='<div class="proj-note">'+escapeHtml(p.n)+'</div>';
     p.subs.forEach(function(x,si){
-      h+='<div class="sub st-'+x.st+'">'+
+      normSub(x);
+      var vClass = x.vida && x.vida!=="ativo" ? " vida-"+x.vida : "";
+      var selo = "";
+      if(x.vida==="adiado")     selo='<span class="vida-selo v-adiado" title="'+escapeHtml(x.motivo||"")+'">adiada'+(x.voltar_em?" · volta "+escapeHtml(x.voltar_em):"")+'</span>';
+      if(x.vida==="abandonado") selo='<span class="vida-selo v-abandonado" title="'+escapeHtml(x.motivo||"")+'">abandonada</span>';
+      var med = (x.medida && typeof x.medida.total==="number")
+              ? '<span class="sub-medida">'+(x.medida.feito||0)+'/'+x.medida.total+'</span>' : '';
+      var ondeT = x.onde ? '<span class="sub-onde">'+escapeHtml(x.onde)+'</span>' : '';
+      h+='<div class="sub st-'+x.st+vClass+'">'+
          '<span class="st-dot" onclick="cycleSub(\''+pid+'\','+pi+','+si+')" title="'+ST_LBL[x.st]+'"></span>'+
          '<div class="sub-text" contenteditable="true" onblur="editSub(\''+pid+'\','+pi+','+si+',this.innerText)">'+escapeHtml(x.t)+'</div>'+
-         '<button class="del" onclick="delSub(\''+pid+'\','+pi+','+si+')" aria-label="Remover subtarefa">&times;</button></div>';
+         selo+med+ondeT+
+         '<button class="vida-btn" onclick="ciclarVida(\''+pid+'\','+pi+','+si+')" title="adiar, abandonar ou reativar">&#8943;</button>'+
+         '<button class="del" onclick="delSub(\''+pid+'\','+pi+','+si+')" aria-label="Arquivar subtarefa">&times;</button></div>';
     });
     h+='<button class="add-sub" onclick="addSub(\''+pid+'\','+pi+')">+ subtarefa</button>'+
        '<button class="del-proj" onclick="delProj(\''+pid+'\','+pi+')">remover este item</button>'+
@@ -1043,9 +1276,15 @@ function renderTrilhos(){
      ' ontoggle="save(\'cron:painel-open:registro\', this.open)">'+
      '<summary><span class="tb-t">Registro</span><span class="tb-sub">o que voc\u00ea fechou, por data</span></summary>'+
      '<div class="tb-body"><div id="registro"></div></div></details>';
+  var nArq = getArquivo().length;
+  h+='<details class="tecbloco" id="painel-arquivo" '+(LS("cron:painel-open:arquivo",false)?"open":"")+
+     ' ontoggle="save(\'cron:painel-open:arquivo\', this.open)">'+
+     '<summary><span class="tb-t">Arquivo</span><span class="tb-sub">'+(nArq? nArq+' item'+(nArq===1?'':'s')+' \u00b7 nada foi apagado' : 'nada arquivado')+'</span></summary>'+
+     '<div class="tb-body"><div id="arquivo"></div></div></details>';
   document.getElementById("view-trilhos").innerHTML=h;
   PAINEIS.forEach(function(P){renderPainel(P.id);});
   renderRegistro();
+  renderArquivo();
 }
 function renderSemana(){
   let html=`<p class="plate-eyebrow">Visão geral</p><h1 class="plate-day" style="font-size:30px;margin-bottom:16px;">A semana</h1>`;
@@ -1141,6 +1380,10 @@ function renderBackupAviso(){
 }
 renderBackupAviso();
 document.getElementById("ver").textContent = "v"+APP_VERSION;
+/* Migração do esquema v1 -> v2. Roda UMA vez, antes das sementes e de
+   qualquer render. Nada é descartado: ver migrarEsquema(). */
+try{ migrarEsquema(); }catch(e){ console.error("migração do esquema falhou:", e); }
+try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", e); }
 /* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
    Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
 const TEC_SEED = "2026-07-28-limpa";

@@ -1,0 +1,80 @@
+{
+  "_o_que_e": "O julgamento do agente de CHAMADAS (calls for papers, eventos, dossies). Mesma mecanica do criterios_vagas.json, pesos diferentes — aqui o que importa e se a chamada casa com alguma peca da esteira dos doze artigos.",
+  "_como_ajustar": "Se uma chamada boa nao apareceu, suba o peso do tema dela ou baixe o corte. Se veio lixo, suba o corte.",
+
+  "corte": 10,
+
+  "termos": {
+    "nucleo": {
+      "_nota": "Temas que ja tem peca correspondente na esteira ago/26 a jul/27.",
+      "peso": 12,
+      "palavras": [
+        "luther", "lutero", "spinoza", "reformation", "reforma",
+        "philosophy of religion", "filosofia da religiao",
+        "two kingdoms", "dois reinos", "theology of the cross", "teologia da cruz",
+        "justification", "justificacao", "libertas philosophandi"
+      ]
+    },
+    "forte": {
+      "_nota": "Casam com os artigos de setembro a marco: categoria de religiao, genealogia do secular, tolerancia, etica dos Galatas.",
+      "peso": 8,
+      "palavras": [
+        "category of religion", "secularization", "genealogy of the secular",
+        "toleration", "tolerancia", "religious liberty", "liberdade religiosa",
+        "political theology", "teologia politica", "religious ethics",
+        "early modern", "biblical interpretation", "hermeneutics", "exegesis"
+      ]
+    },
+    "medio": {
+      "peso": 4,
+      "palavras": [
+        "protestant", "theology", "teologia", "ethics", "etica",
+        "epistemology", "history of philosophy", "religious studies",
+        "kierkegaard", "bonhoeffer", "barth", "schleiermacher"
+      ]
+    },
+    "ruido": {
+      "peso": -9,
+      "palavras": [
+        "formal logic", "philosophy of science", "cognitive science",
+        "bioethics", "ancient philosophy", "chinese philosophy", "buddhist",
+        "philosophy of mathematics", "machine learning"
+      ]
+    }
+  },
+
+  "categoria": {
+    "_nota": "Dossie de periodico vale mais que evento presencial: entra direto na esteira e nao exige viagem.",
+    "special issue": 9,
+    "dossie": 9,
+    "call for papers": 6,
+    "journal": 6,
+    "conference": 3,
+    "workshop": 2,
+    "summer school": -3
+  },
+
+  "regiao": {
+    "_nota": "Peso baixo aqui: chamada de periodico nao tem geografia. So conta para evento.",
+    "brazil": 3,
+    "brasil": 3,
+    "united states": 2,
+    "united kingdom": 2
+  },
+
+  "prazo": {
+    "_nota": "Chamada com prazo curto e pior que vaga com prazo curto: artigo exige as tres janelas do pipeline.",
+    "vencido": -999,
+    "curto_dias": 21,
+    "curto_peso": -6
+  },
+
+  "fontes_opcionais": [
+    {
+      "nome": "upenn-cfp",
+      "ligada": false,
+      "url": "https://call-for-papers.sas.upenn.edu/rss.xml",
+      "_nota": "NAO VERIFICADA. Confirme o endereco antes de ligar."
+    }
+  ]
+}
