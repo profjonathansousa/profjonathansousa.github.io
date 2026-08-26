@@ -1,8 +1,253 @@
 {
   "_o_que_e": "O que o filtro barrou, com a razao. Serve para afinar criterios_chamadas.json com evidencia em vez de palpite.",
   "_teto": 200,
-  "_barrados_nesta_rodada": 67,
+  "_barrados_nesta_rodada": 35,
   "itens": [
+    {
+      "id": "philevents-146801",
+      "titulo": "Michael Ohl \n\n   \n\tOn Collecting:  Transforming Nature into Evidence",
+      "url": "https://philevents.org/event/show/146801",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146805",
+      "titulo": "Ram Neta (University of North Carolina",
+      "url": "https://philevents.org/event/show/146805",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146809",
+      "titulo": "Andreas Bartels \n\n   \n\tFinding: The Key to Discovery",
+      "url": "https://philevents.org/event/show/146809",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146813",
+      "titulo": "Nurida Boddenberg \n\n   \n\tFinding as Tracing:  A Perspective from Particle Physics",
+      "url": "https://philevents.org/event/show/146813",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146817",
+      "titulo": "Maciej Witek (Uniwersytet Szczeciński)\n\n   \n\tUptake and Endorsement in Scientific Discovery:  A Speech Act-Theoretic Perspective",
+      "url": "https://philevents.org/event/show/146817",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146821",
+      "titulo": "Joseph Moore (Amherst College)\n\n   \n\tMusical Finding:  Between Discovery and Creation",
+      "url": "https://philevents.org/event/show/146821",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146825",
+      "titulo": "Kim Boström (University of Münster)\n\n   \n\tFinding Neptune",
+      "url": "https://philevents.org/event/show/146825",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146829",
+      "titulo": "CFP: \n\tBROLLY. Journal of Social Sciences | Vol. 7, No. 1, April 2026 | London",
+      "url": "https://philevents.org/event/show/146829",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146833",
+      "titulo": "Annual Philosophy of Science Conference Dubrovnik",
+      "url": "https://philevents.org/event/show/146833",
+      "motivo_saida": "veto no cabeca: philosophy of science",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146837",
+      "titulo": "Workshop: Measuring Commitment in Communication",
+      "url": "https://philevents.org/event/show/146837",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146841",
+      "titulo": "CFP: \n\tWorkshop: Measuring Commitments in Communication",
+      "url": "https://philevents.org/event/show/146841",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146845",
+      "titulo": "Beneath the Surface of the Life Sciences: How Epistemic Uncertainty, Metaphysical Assumptions",
+      "url": "https://philevents.org/event/show/146845",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146849",
+      "titulo": "Relationships and Mental Health",
+      "url": "https://philevents.org/event/show/146849",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146853",
+      "titulo": "CFP: \n\tRelationships and Mental Health",
+      "url": "https://philevents.org/event/show/146853",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146857",
+      "titulo": "CFP: \n\tThinking with AI: Ideas, Experiments",
+      "url": "https://philevents.org/event/show/146857",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146861",
+      "titulo": "Dean Zimmerman (Rutgers - New Brunswick)\n\n   \n\tDivine Bootstrapping:  Do Abstract Objects Lead to Atheism?",
+      "url": "https://philevents.org/event/show/146861",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146865",
+      "titulo": "Margot Strohminger (Australian Catholic University)\n\n   \n\tReference in Imagination: Towards a Causal Explanation",
+      "url": "https://philevents.org/event/show/146865",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146869",
+      "titulo": "Satellite Sessions of The Sacra Doctrina Project for the American Catholic Philosophical Association",
+      "url": "https://philevents.org/event/show/146869",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146873",
+      "titulo": "CFP: \n\tSatellite Sessions of The Sacra Doctrina Project for the American Catholic Philosophical Association",
+      "url": "https://philevents.org/event/show/146873",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146877",
+      "titulo": "Rocío Martín Istilart \n\n   \n\tRTAIM 26 Online | \"Dialogical Models and Counterfactual Questions for Epistemic Robustness in XAI\"",
+      "url": "https://philevents.org/event/show/146877",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146889",
+      "titulo": "The BEYOND LANGUAGE 2026 Conference",
+      "url": "https://philevents.org/event/show/146889",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146893",
+      "titulo": "11th International Association for Philosophy of Time Conference",
+      "url": "https://philevents.org/event/show/146893",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146897",
+      "titulo": "CFP: \n\tThe BEYOND LANGUAGE 2026 Conference",
+      "url": "https://philevents.org/event/show/146897",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146909",
+      "titulo": "Edith Stein Sommerakademie 2026: Postfaktisch? Über die Zukunft der Wahrheit",
+      "url": "https://philevents.org/event/show/146909",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146913",
+      "titulo": "Budapest Workshop in Continental Philosophy",
+      "url": "https://philevents.org/event/show/146913",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "philevents-146917",
+      "titulo": "CFP: \n\tPhenomenologies of Unique Value (Duquesne Studies in Phenomenology)",
+      "url": "https://philevents.org/event/show/146917",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
+      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 33, 2026.1",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-dossie-a-filosofia-de-norberto-bobbio-ii-revista-quero-saber",
+      "titulo": "Lançamento do Dossiê 'A Filosofia de Norberto Bobbio II' - Revista Quero Saber",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-a-filosofia-de-norberto-bobbio-ii--revista-quero-saber",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-madas-de-revistas-novo-numero-dos-cadernos-espinosanos-no-ar",
+      "titulo": "Novo número dos Cadernos Espinosanos no ar",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero-dos-cadernos-espinosanos-no-ar",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas--revistas-prisma-revista-de-filosofia-lancamento-do-v-8-2026",
+      "titulo": "PRISMA - Revista de Filosofia, lançamento do v. 8, 2026",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/prisma--revista-de-filosofia-lancamento-do-v-8-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-stas-novo-numero-voluntas-revista-internacional-de-filosofia",
+      "titulo": "Novo número - Voluntas: Revista Internacional de Filosofia",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--voluntas-revista-internacional-de-filosofia",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-e-rancire-30-anos-de-o-desentendimento-v2-n1-2026-unicampufc",
+      "titulo": "Lançamento da Revista: SIMBÓLICA - Revista de Filosofia da Cultura e Estudos Interdisciplinares - DOSSIÊ: Rancière - 30 anos de 'O desentendimento' - V.2, N.1 (2026) - (UNICAMP/UFC)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--dossie-rancire--30-anos-de-o-desentendimento--v2-n1-2026--unicampufc",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-v2-n1-2026",
+      "titulo": "Lançamento de Dossiê: Rancière - 30 anos de 'O desentendimento' - Simbólica: Revista de Filosofia da Cultura e Estudos Interdisciplinares - V.2, N.1 (2026)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-dossie-rancire--30-anos-de-o-desentendimento--simbolica-revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--v2-n1-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-tas-lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
+      "titulo": "Lançamento da edição inaugural da NeoKrísis v. 1, n. 1 (2026)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
+    {
+      "id": "anpof-chamadas-ntos-e-chamadas-de-revistas-lancamento-da-revista-ideacao-53",
+      "titulo": "Lançamento da Revista Ideação 53",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-53",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-08-25"
+    },
     {
       "id": "philevents-146681",
       "titulo": "CFP: \n\tCollective Agency in Classical and Continental Philosophy (Vilnius",
@@ -1154,251 +1399,6 @@
     {
       "id": "anpof-chamadas-concursos-e-selecoes",
       "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-de-livros",
-      "titulo": "Lançamentos de Livros",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-concursos-e-selecoes",
-      "titulo": "Concursos e Seleções",
-      "url": "https://anpof.org.br/agenda/chamadas",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-chamadas-lancamentos-e-chamadas-de-revistas",
-      "titulo": "Lançamentos e Chamadas de Revistas",
       "url": "https://anpof.org.br/agenda/chamadas",
       "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
       "visto_em": "2026-08-25"
