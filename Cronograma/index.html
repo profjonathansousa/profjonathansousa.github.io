@@ -253,6 +253,18 @@
   .reg-t{flex:1;color:var(--ink);}
   .reg-t span{display:block;font-size:11px;color:var(--muted);margin-top:1px;}
   .reg-t i{font-style:normal;color:var(--crimson);}
+  .sync{margin:12px auto 0;max-width:340px;text-align:left;border:1px solid var(--line);
+    border-radius:12px;overflow:hidden;background:var(--card);}
+  .sync summary{list-style:none;cursor:pointer;padding:10px 14px;font-size:10px;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .sync summary::-webkit-details-marker{display:none;}
+  .sync .s-body{padding:0 14px 12px;}
+  .sync .s-nota{font-size:11.5px;color:var(--ink-soft);line-height:1.5;margin:0 0 10px;
+    letter-spacing:normal;}
+  .sync input{width:100%;box-sizing:border-box;font-family:var(--sans);font-size:12px;
+    padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;
+    background:var(--paper-2);color:var(--ink);}
+  .sync .s-linha{margin-top:8px;text-align:right;}
   .backup-aviso{margin-top:8px;font-size:11px;color:var(--muted);}
   .backup-aviso.velho{color:var(--crimson);}
 
@@ -325,12 +337,32 @@
     <button onclick="exportarDados()">Exportar backup</button>
     <button onclick="document.getElementById('importFile').click()">Importar backup</button>
     <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importarDados(this)"><br>
-    <span class="backup-aviso" id="backup-aviso"></span><br>
+    <span class="backup-aviso" id="backup-aviso"></span>
+    <details class="sync" id="sync">
+      <summary>Sincronização</summary>
+      <div class="s-body">
+        <p class="s-nota">Cada toque no painel vira um arquivo em
+          <code>Cronograma/toques/</code>. O repositório é público, então o
+          <b>motivo</b> que você escreve ao adiar ou abandonar não sobe: fica neste
+          aparelho, no registro e no backup.</p>
+        <p class="s-nota">O token é seu. Fica guardado só neste aparelho, não entra
+          no backup exportado e não sai daqui.</p>
+        <input type="password" id="sync-token" placeholder="Cole o token aqui"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="s-linha">
+          <button onclick="salvarToken()">Salvar token</button>
+          <button onclick="removerToken()">Remover</button>
+        </div>
+        <span class="backup-aviso" id="sync-estado"></span><br>
+        <span class="backup-aviso" id="toques-aviso"></span>
+        <div class="s-linha"><button onclick="enviarToques()">Enviar agora</button></div>
+      </div>
+    </details>
     <span id="ver"></span>
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-24-esquema2";
+const APP_VERSION = "2026-08-26-toques";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1150,6 +1182,217 @@ function ciclarVida(pid,pi,si){
   logar(pid, p[pi], x, x.st, x.st);
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
+/* ================== TOQUES — fila de sincronização (Passo 5) ==================
+   Cada mudança de estado vira um TOQUE. O toque entra numa fila local e sobe
+   depois, como ARQUIVO NOVO em Cronograma/toques/. Nunca se edita um arquivo já
+   enviado: é isso, e só isso, que torna o desenho à prova de conflito quando o
+   mesmo item é tocado no celular e no Mac no mesmo dia.
+
+   A fila existe porque o toque não pode depender da rede. Você marca a etapa no
+   metrô, a fila guarda, e o envio acontece quando houver sinal.
+
+   ATENÇÃO ao nome. "Evento" já tem dois donos neste sistema: a pasta /eventos/
+   na raiz é dos snapshots do coletor, e cron:eventos são os compromissos com
+   data que alimentam o contador. Toque é o toque no painel, e só isso.
+   ============================================================================ */
+const TOQUES_SCHEMA = 1;
+const TOQUES_TETO = 500;
+
+function getToques(){ return LS("cron:toques", []) || []; }
+function setToques(f){ save("cron:toques", f); }
+
+/* Identidade do aparelho: nasce no primeiro toque e não muda mais. Serve para o
+   Cowork saber de onde veio cada toque, e para dois aparelhos que tocam no mesmo
+   segundo não gerarem o mesmo nome de arquivo. */
+function aparelhoId(){
+  var a = LS("cron:aparelho", null);
+  if(!a){ a = Math.random().toString(36).slice(2,8); save("cron:aparelho", a); }
+  return a;
+}
+
+/* Hora de verdade, não a do carregamento da página: o `now` do topo é fixado
+   quando o app abre, e um celular que passa a noite aberto carimbaria ontem. */
+function enfileirarToque(tipo, dados){
+  var t = new Date();
+  var f = getToques();
+  f.push({ v:TOQUES_SCHEMA,
+           id: t.toISOString().replace(/[:.]/g,"-") + "-" + aparelhoId(),
+           quando: t.toISOString(),
+           aparelho: aparelhoId(),
+           app: APP_VERSION,
+           tipo: tipo,
+           dados: dados });
+  if(f.length > TOQUES_TETO){
+    var sobra = f.slice(0, f.length - TOQUES_TETO);
+    f = f.slice(-TOQUES_TETO);
+    save("cron:toques-excedente", (LS("cron:toques-excedente", [])||[]).concat(sobra));
+  }
+  setToques(f);
+  renderToquesAviso();
+}
+
+/* Só desenha se o elemento existir. A tela de ajustes ainda não foi construída,
+   e a ausência dela não pode derrubar um toque. */
+function renderToquesAviso(){
+  var el = document.getElementById("toques-aviso"); if(!el) return;
+  var n = getToques().length;
+  if(typeof ENVIANDO !== "undefined" && ENVIANDO){ el.textContent = "Enviando…"; el.className="backup-aviso"; return; }
+  el.textContent = n===0 ? "Nada esperando envio."
+                 : n===1 ? "1 toque esperando envio."
+                         : n + " toques esperando envio.";
+  el.className = "backup-aviso" + (n>0 ? " velho" : "");
+}
+
+/* ---- Token de sincronização: mora no aparelho, nunca no backup ----
+   A chave fica FORA do prefixo cron: de propósito. O exportarDados() varre
+   todas as chaves cron:, e o .gitignore já diz por que um backup do Cronograma
+   nunca entra no repositório: ele contém o estado inteiro. Um token dentro
+   dele viajaria junto em cada exportação. */
+const TOKEN_KEY = "sync:token";
+
+function getToken(){ try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(e){ return ""; } }
+
+function salvarToken(){
+  var el = document.getElementById("sync-token");
+  var t = (el.value || "").trim();
+  if(!t){ alert("Cole o token antes de salvar."); return; }
+  if(t.indexOf("github_pat_") !== 0 && t.indexOf("ghp_") !== 0){
+    if(!confirm("Isso não parece um token do GitHub (eles começam com github_pat_ ou ghp_). Salvar assim mesmo?")) return;
+  }
+  try{ localStorage.setItem(TOKEN_KEY, t); }catch(e){ alert("Não foi possível guardar o token neste aparelho."); return; }
+  el.value = "";
+  renderSyncEstado();
+}
+
+function removerToken(){
+  if(!confirm("Remover o token deste aparelho? Os toques continuam na fila até você colar outro.")) return;
+  try{ localStorage.removeItem(TOKEN_KEY); }catch(e){}
+  renderSyncEstado();
+}
+
+/* Mostra os quatro últimos caracteres, e só. Serve para você conferir que a
+   colagem funcionou e qual token está aqui, sem exibir o token. */
+function renderSyncEstado(){
+  var el = document.getElementById("sync-estado"); if(!el) return;
+  var t = getToken();
+  if(!t){ el.textContent = "Sem token neste aparelho. Os toques ficam na fila."; el.className = "backup-aviso velho"; return; }
+  el.textContent = "Token guardado neste aparelho, terminando em " + t.slice(-4) + ".";
+  el.className = "backup-aviso";
+}
+
+/* O toque sobe para repositório público. O motivo é texto livre e não sobe;
+   o toque leva apenas a marca de que existe um, para o estado.json saber que
+   há uma razão registrada no aparelho. */
+function semMotivo(linha){
+  var c = {};
+  for(var k in linha){ if(k !== "motivo") c[k] = linha[k]; }
+  c.temMotivo = !!(linha.motivo && String(linha.motivo).trim());
+  return c;
+}
+
+/* ================== ENVIO DOS TOQUES ==================
+   Um arquivo NOVO por envio, pela API do GitHub. Arquivo já enviado nunca é
+   editado: é isso, e só isso, que torna o desenho à prova de conflito quando o
+   celular e o Mac tocam o mesmo item no mesmo dia. Quem concilia é o Cowork, ao
+   dobrar tudo em estado.json.
+
+   GRANULARIDADE. O desenho original dizia "um arquivo por toque". Mantive a
+   propriedade que importa (arquivo novo, nunca editado) mas juntando os toques
+   pendentes num lote por envio, porque cada gravação pela API é um commit no
+   main, e cada commit no main é uma reconstrução do GitHub Pages. Marcar dez
+   etapas seguidas seriam dez reconstruções do site, e o Pages tem limite.
+   Para voltar ao literal, troque TOQUES_POR_ARQUIVO para "um".
+   ====================================================== */
+const GH_DONO  = "profjonathansousa";
+const GH_REPO  = "profjonathansousa.github.io";
+const GH_RAMO  = "main";
+const GH_PASTA = "Cronograma/toques";
+const TOQUES_POR_ARQUIVO = "lote";   /* "lote" | "um" */
+
+/* btoa não aceita acento. UTF-8 -> bytes -> base64 é o caminho que não corrompe
+   "Prolegômenos" nem "Espírito". */
+function paraBase64(obj){
+  var bytes = new TextEncoder().encode(JSON.stringify(obj, null, 1));
+  var bin = ""; for(var i=0;i<bytes.length;i++){ bin += String.fromCharCode(bytes[i]); }
+  return btoa(bin);
+}
+
+function gravarNoGitHub(nome, corpo, mensagem){
+  return fetch("https://api.github.com/repos/"+GH_DONO+"/"+GH_REPO+"/contents/"+GH_PASTA+"/"+nome, {
+    method: "PUT",
+    headers: { "Authorization": "Bearer " + getToken(),
+               "Accept": "application/vnd.github+json",
+               "X-GitHub-Api-Version": "2022-11-28" },
+    body: JSON.stringify({ message: mensagem, content: paraBase64(corpo), branch: GH_RAMO })
+  }).then(function(res){
+    if(res.status === 201 || res.status === 200) return {ok:true};
+    /* 422 é o que a API responde quando o arquivo já existe e não veio sha.
+       Como o nome carrega o id do toque, isso significa reenvio do que já subiu:
+       não é falha, é a fila tendo sido enviada duas vezes. */
+    if(res.status === 422) return {ok:true, jaEstava:true};
+    return res.text().catch(function(){return "";}).then(function(t){
+      return {ok:false, status:res.status, msg:(t||"").slice(0,300)};
+    });
+  }).catch(function(e){ return {ok:false, status:0, msg:String(e && e.message || e)}; });
+}
+
+function explicarFalha(f, enviados){
+  var base = enviados ? enviados + " toque(s) subiram antes da falha; o resto continua na fila.\n\n"
+                      : "Nada subiu; a fila está intacta.\n\n";
+  if(f.status === 0)   return base + "Sem rede. Tente de novo quando houver sinal.";
+  if(f.status === 401) return base + "O GitHub recusou o token. Ele expirou, foi revogado, ou foi colado incompleto. Cole outro em Sincronização.";
+  if(f.status === 403) return base + "Token sem permissão para gravar. Ele precisa de Contents: Read and write neste repositório — e só disso.";
+  if(f.status === 404) return base + "Repositório ou caminho não encontrado: " + GH_DONO + "/" + GH_REPO + ". Se o token não enxerga este repositório, o GitHub responde 404 em vez de 403.";
+  if(f.status === 409) return base + "Conflito no ramo " + GH_RAMO + ". Tente de novo em alguns segundos.";
+  return base + "O GitHub respondeu " + f.status + ". " + (f.msg || "");
+}
+
+var ENVIANDO = false;
+
+/* silencioso = disparado pelo app (ao abrir, ao voltar a rede). Sem alertas:
+   um aviso de erro no meio de uma aula não ajuda ninguém. O contador da tela
+   de Sincronização continua contando a verdade. */
+function enviarToques(silencioso){
+  if(ENVIANDO) return Promise.resolve();
+  if(!getToken()){ if(!silencioso) alert("Cole o token primeiro, aqui em Sincronização."); return Promise.resolve(); }
+  var fila = getToques();
+  if(!fila.length){ if(!silencioso) alert("Nada esperando envio."); return Promise.resolve(); }
+
+  ENVIANDO = true; renderToquesAviso();
+
+  var pacotes;
+  if(TOQUES_POR_ARQUIVO === "um"){
+    pacotes = fila.map(function(t){ return {nome:t.id+".json", corpo:t, quantos:1,
+             msg:"toque: "+((t.dados && t.dados.subT) || t.tipo)+" ("+t.aparelho+")"}; });
+  } else {
+    pacotes = [{ nome: fila[0].id + ".json", quantos: fila.length,
+                 corpo: { v:TOQUES_SCHEMA, lote:fila[0].id, quando:new Date().toISOString(),
+                          aparelho:aparelhoId(), app:APP_VERSION, toques:fila },
+                 msg: "toques: " + fila.length + " de " + aparelhoId() }];
+  }
+
+  var enviados = 0, falha = null;
+  /* Em ordem e parando na primeira falha: o que não subiu continua na fila,
+     na ordem em que aconteceu. */
+  var cadeia = Promise.resolve();
+  pacotes.forEach(function(pc){
+    cadeia = cadeia.then(function(){
+      if(falha) return;
+      return gravarNoGitHub(pc.nome, pc.corpo, pc.msg).then(function(r){
+        if(r.ok) enviados += pc.quantos; else falha = r;
+      });
+    });
+  });
+
+  return cadeia.then(function(){
+    /* Relê a fila: um toque pode ter entrado enquanto o envio corria, e ele
+       entra no fim. Cortar pela frente nunca descarta o que chegou depois. */
+    if(enviados) setToques(getToques().slice(enviados));
+    ENVIANDO = false; renderToquesAviso();
+    if(falha && !silencioso) alert(explicarFalha(falha, enviados));
+  });
+}
+
 /* ---- Registro: histórico datado, só cresce ---- */
 function getReg(){return LS("cron:registro", []) || [];}
 /* Grava por id, com o título fotografado no momento. Registra também o
@@ -1157,15 +1400,19 @@ function getReg(){return LS("cron:registro", []) || [];}
    não é descartado: vai para cron:registro-arquivo. */
 function logar(pid, proj, sub, de, para){
   var r=getReg();
-  r.push({d:ymd(now), pid:pid, projId:proj.id, subId:sub.id,
-          projT:proj.t, subT:sub.t, de:(de===undefined?null:de), para:para,
-          vida:sub.vida||"ativo", motivo:sub.motivo||""});
+  var linha={d:ymd(now), pid:pid, projId:proj.id, subId:sub.id,
+             projT:proj.t, subT:sub.t, de:(de===undefined?null:de), para:para,
+             vida:sub.vida||"ativo", motivo:sub.motivo||""};
+  r.push(linha);
   if(r.length>REG_TETO){
     var excedente=r.slice(0, r.length-REG_TETO);
     r=r.slice(-REG_TETO);
     save("cron:registro-arquivo", (LS("cron:registro-arquivo", [])||[]).concat(excedente));
   }
   save("cron:registro", r);
+  /* A fila leva a MESMA linha que o registro guarda: uma fonte, dois
+     consumidores. Se um dia o registro mudar de forma, o toque muda junto. */
+  enfileirarToque("registro", semMotivo(linha));
 }
 function renderRegistro(){
   var box=document.getElementById("registro"); if(!box) return;
@@ -1534,7 +1781,9 @@ function coletarDados(){
   const d={};
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
-    if(k && k.indexOf("cron:")===0){ d[k]=localStorage.getItem(k); }
+    /* Cinto e suspensório: a chave do token já mora fora do prefixo cron:,
+       e ainda assim nada que se pareça com token é varrido para um backup. */
+    if(k && k.indexOf("cron:")===0 && !/token/i.test(k)){ d[k]=localStorage.getItem(k); }
   }
   return d;
 }
@@ -1601,6 +1850,14 @@ function renderBackupAviso(){
   el.className = "backup-aviso"+(dias>30?" velho":"");
 }
 renderBackupAviso();
+renderSyncEstado();
+renderToquesAviso();
+/* Sobe sozinho ao abrir e quando a rede volta. Em silêncio: o toque foi feito,
+   o envio é problema do app, não seu. */
+try{
+  enviarToques(true);
+  window.addEventListener("online", function(){ enviarToques(true); });
+}catch(e){ console.error("envio de toques falhou ao iniciar:", e); }
 document.getElementById("ver").textContent = "v"+APP_VERSION;
 /* Migração do esquema v1 -> v2. Roda UMA vez, antes das sementes e de
    qualquer render. Nada é descartado: ver migrarEsquema(). */
