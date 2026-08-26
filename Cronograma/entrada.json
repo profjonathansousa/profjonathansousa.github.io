@@ -1,7 +1,7 @@
 {
  "_versao": 1,
- "_gerado_em": "2026-08-26T13:27:49Z",
- "_o_que_e": "Estrutura das peças do Cronograma, escrita pelo Cowork a partir do que o pipeline produziu. A página lê no carregamento e mescla: a ENTRADA manda na estrutura (quais peças, quais subitens, os títulos), o TOQUE manda no progresso. Subitem que já existe não tem st nem vida alterados por aqui.",
+ "_gerado_em": "2026-08-26T14:05:00Z",
+ "_o_que_e": "Estrutura das peças do Cronograma, escrita pelo Cowork a partir do que o pipeline produziu. A página lê no carregamento e mescla: a ENTRADA manda na estrutura (quais peças, quais subitens, os títulos), o TOQUE manda no progresso. Subitem que já existe não tem st nem vida alterados por aqui. O campo prova vem do mapa_portal.json: 'maquina' = o artefato prova; 'estrela' = exige decisao do autor, e o Cowork nao escreve toque sobre ela.",
  "_escritor": "Cowork. Não editar à mão.",
  "paineis": {
   "pipeline": [
@@ -11,32 +11,38 @@
      {
       "id": "a01-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a01-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a01-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a01-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a01-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a01-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -46,32 +52,38 @@
      {
       "id": "a02-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a02-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a02-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a02-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a02-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a02-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -81,32 +93,38 @@
      {
       "id": "a03-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a03-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a03-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a03-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a03-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a03-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -116,32 +134,38 @@
      {
       "id": "a04-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a04-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a04-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a04-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a04-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a04-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -151,32 +175,38 @@
      {
       "id": "a05-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a05-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a05-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a05-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a05-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a05-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -186,32 +216,38 @@
      {
       "id": "a06-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a06-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a06-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a06-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a06-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a06-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -221,32 +257,38 @@
      {
       "id": "a07-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a07-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a07-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a07-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a07-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a07-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -256,32 +298,38 @@
      {
       "id": "a08-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a08-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a08-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a08-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a08-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a08-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -291,32 +339,38 @@
      {
       "id": "a09-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a09-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a09-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a09-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a09-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a09-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -326,32 +380,38 @@
      {
       "id": "a10-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a10-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a10-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a10-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a10-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a10-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -361,32 +421,38 @@
      {
       "id": "a11-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a11-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a11-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a11-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a11-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a11-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -396,32 +462,38 @@
      {
       "id": "a12-1",
       "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      },
      {
       "id": "a12-2",
       "t": "Janela 0 · planilha de corpus",
-      "onde": "celular"
+      "onde": "celular",
+      "prova": "maquina"
      },
      {
       "id": "a12-3",
       "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a12-4",
       "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a12-5",
       "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork"
+      "onde": "cowork",
+      "prova": "maquina"
      },
      {
       "id": "a12-6",
       "t": "3.5-FIL + pandoc · pronto para submeter",
-      "onde": "escrivaninha"
+      "onde": "escrivaninha",
+      "prova": "estrela"
      }
     ]
    },
@@ -437,7 +509,8 @@
       "onde": "escrivaninha",
       "st": 2,
       "vida": "ativo",
-      "motivo": ""
+      "motivo": "",
+      "prova": "estrela"
      },
      {
       "id": "a00-2",
@@ -445,7 +518,8 @@
       "onde": "celular",
       "st": 1,
       "vida": "ativo",
-      "motivo": ""
+      "motivo": "",
+      "prova": "maquina"
      },
      {
       "id": "a00-3",
@@ -453,7 +527,8 @@
       "onde": "cowork",
       "st": 0,
       "vida": "inaplicavel",
-      "motivo": "artigo importado de nov/2025; nasceu escrito, não houve 1.0-FIL"
+      "motivo": "artigo importado de nov/2025; nasceu escrito, não houve 1.0-FIL",
+      "prova": "maquina"
      },
      {
       "id": "a00-4",
@@ -461,7 +536,8 @@
       "onde": "cowork",
       "st": 1,
       "vida": "ativo",
-      "motivo": ""
+      "motivo": "",
+      "prova": "maquina"
      },
      {
       "id": "a00-5",
@@ -469,7 +545,8 @@
       "onde": "cowork",
       "st": 0,
       "vida": "ativo",
-      "motivo": ""
+      "motivo": "",
+      "prova": "maquina"
      },
      {
       "id": "a00-6",
@@ -477,7 +554,8 @@
       "onde": "escrivaninha",
       "st": 0,
       "vida": "ativo",
-      "motivo": ""
+      "motivo": "",
+      "prova": "estrela"
      }
     ]
    }

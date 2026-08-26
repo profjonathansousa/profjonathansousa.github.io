@@ -22,6 +22,20 @@ está, e é relatado no fim.
 USO:
     python3 scripts/dobrar_toques.py            # dobra e relata
     python3 scripts/dobrar_toques.py --seco     # só relata, não escreve nada
+
+    # a sessão do Cowork marcando uma etapa que o pipeline fechou:
+    python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-4 --para 2
+    python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-5 --para 1 --seco
+
+O --registrar escreve um toque com aparelho "cowork" e dobra em seguida. Não passa
+pela rede: grava o arquivo na pasta conectada e lê de volta no mesmo comando. É a
+metade que faltava do elo pipeline -> Cronograma.
+
+REGRA DURA DO --registrar: ele RECUSA subitem de prova "estrela". O mapa_portal.json
+marca assim as etapas cuja conclusão é decisão do autor e não artefato — a escolha
+entre as opções A/B/C, o portão do NotebookLM, o "pronto para submeter". Escrever
+toque sobre elas faria o relógio do Cowork vencer a decisão do autor e apagá-la. O
+campo prova viaja no Cronograma/entrada.json. Para insistir mesmo assim: --forcar.
 """
 
 import json
@@ -33,6 +47,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_TOQUES = os.path.join(RAIZ, "Cronograma", "toques")
 DIR_DOBRADOS = os.path.join(DIR_TOQUES, "_dobrados")
 ARQ_ESTADO = os.path.join(RAIZ, "Cronograma", "estado.json")
+ARQ_ENTRADA = os.path.join(RAIZ, "Cronograma", "entrada.json")
 ESTADO_VERSAO = 1
 
 
@@ -141,8 +156,101 @@ def guardar_dobrado(caminho):
         return "movido"
 
 
+def _agora_iso():
+    import datetime
+    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+
+def procurar_na_entrada(pid, proj_id, sub_id):
+    """Devolve (titulo do projeto, titulo do subitem, prova) pelo entrada.json.
+    Devolve (None, None, None) quando o entrada nao conhece o item."""
+    if not os.path.exists(ARQ_ENTRADA):
+        return (None, None, None)
+    with open(ARQ_ENTRADA, encoding="utf-8") as f:
+        ent = json.load(f)
+    for proj in (ent.get("paineis", {}).get(pid) or []):
+        if proj.get("id") != proj_id:
+            continue
+        for sub in (proj.get("subs") or []):
+            if sub.get("id") == sub_id:
+                return (proj.get("t"), sub.get("t"), sub.get("prova"))
+    return (None, None, None)
+
+
+def registrar(alvo, para, vida, forcar, seco):
+    """Escreve UM toque, como se o Cowork fosse mais um aparelho."""
+    partes = (alvo or "").split("/")
+    if len(partes) != 3:
+        print("Alvo invalido: %r. Use painel/projeto/subitem, ex.: pipeline/a00/a00-4" % alvo)
+        return 1
+    pid, proj_id, sub_id = partes
+
+    projT, subT, prova = procurar_na_entrada(pid, proj_id, sub_id)
+    if prova is None and projT is None:
+        print("AVISO: %s nao esta no Cronograma/entrada.json." % alvo)
+        print("Se o id estiver errado, o toque nao vai aparecer em lugar nenhum.")
+    if prova == "estrela" and not forcar:
+        print("RECUSADO: %s tem prova 'estrela'." % alvo)
+        print("Etapa cuja conclusao e decisao do autor, nao artefato. O Cowork nao")
+        print("escreve toque sobre ela: o relogio dele venceria a decisao do autor e")
+        print("a apagaria. Se for mesmo o caso, repita com --forcar.")
+        return 1
+
+    estado = carregar_estado()
+    atual = estado["itens"].get("%s/%s/%s" % (pid, proj_id, sub_id)) or {}
+    de = atual.get("st")
+    if projT is None:
+        projT = atual.get("projT")
+    if subT is None:
+        subT = atual.get("subT")
+
+    agora = os.environ.get("TOQUE_AGORA") or _agora_iso()
+    ident = agora.replace(":", "-").replace(".", "-") + "-cowork"
+    toque = {"v": 1, "id": ident, "quando": agora, "aparelho": "cowork",
+             "app": "dobrar_toques.py", "tipo": "registro",
+             "dados": {"d": agora[:10], "pid": pid, "projId": proj_id, "subId": sub_id,
+                       "projT": projT, "subT": subT, "de": de, "para": para,
+                       "vida": vida, "temMotivo": False}}
+
+    print("Toque a escrever:")
+    print("  %s   %s / %s" % (alvo, projT or "?", subT or "?"))
+    print("  st %s -> %s   vida=%s   prova=%s" % (de, para, vida, prova or "?"))
+    if seco:
+        print("\n--seco: nada foi escrito.")
+        return 0
+
+    os.makedirs(DIR_TOQUES, exist_ok=True)
+    caminho = os.path.join(DIR_TOQUES, ident + ".json")
+    with open(caminho, "w", encoding="utf-8") as f:
+        json.dump({"v": 1, "lote": ident, "quando": agora, "aparelho": "cowork",
+                   "app": "dobrar_toques.py", "toques": [toque]},
+                  f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    print("\nEscrito em %s" % os.path.relpath(caminho, RAIZ))
+    return 0
+
+
+def arg(nome, padrao=None):
+    if nome in sys.argv:
+        i = sys.argv.index(nome)
+        if i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+    return padrao
+
+
 def main():
     seco = "--seco" in sys.argv
+
+    if "--registrar" in sys.argv:
+        para = arg("--para")
+        if para is None:
+            print("Falta --para 0|1|2 (a fazer, em andamento, concluida).")
+            return 1
+        r = registrar(arg("--registrar"), int(para), arg("--vida", "ativo"),
+                      "--forcar" in sys.argv, seco)
+        if r or seco:
+            return r
+        print("")   # e segue direto para a dobra, no mesmo comando
 
     if not os.path.isdir(DIR_TOQUES):
         print("Nao existe %s. Rode um `git pull` primeiro: os toques sobem do" % DIR_TOQUES)
