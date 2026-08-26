@@ -154,10 +154,12 @@
   /* --- Esquema v2: ciclo de vida, medida e lugar --- */
   .sub.vida-adiado{opacity:.72;}
   .sub.vida-abandonado{opacity:.5;}
+  .sub.vida-inaplicavel{opacity:.5;}
   .sub.vida-abandonado .sub-text{text-decoration:line-through;text-decoration-color:var(--line-strong);}
   .vida-selo{flex:none;align-self:center;font-size:10.5px;line-height:1;padding:3px 7px;border-radius:999px;
     border:1px solid var(--line-strong);color:var(--muted);white-space:nowrap;}
   .vida-selo.v-adiado{border-color:var(--gold-line);color:var(--gold);}
+  .vida-selo.v-inaplicavel{border-style:dashed;}
   .sub-medida{flex:none;align-self:center;font-size:11px;color:var(--muted);
     font-variant-numeric:tabular-nums;white-space:nowrap;}
   .sub-onde{flex:none;align-self:center;font-size:10.5px;color:var(--muted);
@@ -362,7 +364,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-26-toques";
+const APP_VERSION = "2026-08-26-entrada";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -730,7 +732,13 @@ function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const SCHEMA_VERSAO = 2;
 const REG_TETO = 600;
 const VIDA_ORDEM = ["ativo","adiado","abandonado"];
-const VIDA_LBL = {ativo:"", adiado:"adiada", abandonado:"abandonada", arquivado:"arquivada"};
+const VIDA_LBL = {ativo:"", adiado:"adiada", abandonado:"abandonada", arquivada:"arquivada",
+                  arquivado:"arquivada", inaplicavel:"n\u00e3o se aplica"};
+/* "inaplicavel" NAO entra em VIDA_ORDEM de proposito: e estado que so chega pela
+   entrada (cron:entrada), nunca por toque. Existe para a peca que nasce de um
+   texto ja escrito, onde etapas do pipeline (brainstorm, mapa argumentativo) nao
+   tem o que fazer. Nao e "abandonada": ninguem abandonou nada, a etapa e que nao
+   cabe. Um item inaplicavel sai da conta de progresso e nao vira "proxima etapa". */
 
 function normSub(x){
   if(!x || typeof x!=="object") return x;
@@ -808,22 +816,41 @@ function mesclarEntrada(){
     (ent.paineis[pid]||[]).forEach(function(novo){
       if(!novo || !novo.id) return;
       var alvo = porId[novo.id];
-      if(!alvo){ atuais.push(normProj(Object.assign({}, novo, {origem:"evento"}))); mudou=true; return; }
+      if(!alvo){
+        /* Entrada sem titulo e ATUALIZACAO de peca existente, nunca criacao: o
+           arquivo de renomeacao manda so id e subs. Sem esta guarda, um aparelho
+           a que faltasse uma peca ganharia um projeto sem nome e sem mes — e um
+           projeto sem mes desliga a ordenacao do painel inteiro. */
+        if(!novo.t) return;
+        atuais.push(normProj(Object.assign({}, novo, {origem:"entrada"}))); mudou=true; return;
+      }
       if(novo.t && novo.t!==alvo.t){ alvo.t=novo.t; mudou=true; }
       if(novo.n && novo.n!==alvo.n){ alvo.n=novo.n; mudou=true; }
       var subsPorId={}; (alvo.subs||[]).forEach(function(s){ subsPorId[s.id]=s; });
       (novo.subs||[]).forEach(function(ns){
         if(!ns || !ns.id) return;
         var as = subsPorId[ns.id];
-        if(!as){ alvo.subs.push(normSub(Object.assign({}, ns, {origem:"evento"}))); mudou=true; return; }
+        if(!as){ alvo.subs.push(normSub(Object.assign({}, ns, {origem:"entrada"}))); mudou=true; return; }
         ["t","n","onde","prova","medida"].forEach(function(campo){
           if((campo in ns) && JSON.stringify(ns[campo])!==JSON.stringify(as[campo])){ as[campo]=ns[campo]; mudou=true; }
         });
       });
     });
-    if(mudou){ setProjs(pid, atuais); aplicou = true; }
+    if(mudou){
+      /* Peca nova entra pela ponta certa. Sem isto, um artigo de agosto
+         acrescentado hoje apareceria depois de julho de 2027, porque a mesclagem
+         empurra para o fim da lista. So reordena quando TODO projeto do painel
+         tem mes — a esteira tem; os outros paineis nao, e ficam como estavam. */
+      if(atuais.every(function(x){ return typeof x.mes === "string" && x.mes; })){
+        atuais.sort(function(a,b){ return a.mes===b.mes ? (a.id<b.id?-1:1) : (a.mes<b.mes?-1:1); });
+      }
+      setProjs(pid, atuais); aplicou = true;
+    }
   });
-  if(aplicou) save("cron:entrada-aplicada", new Date().toISOString());
+  /* Guarda a marca do PROPRIO arquivo, nao a hora da mesclagem: e assim que a
+     proxima carga sabe que ja aplicou esta versao e nao precisa remesclar. */
+  save("cron:entrada-aplicada", ent._gerado_em || new Date().toISOString());
+  return aplicou;
 }
 /* ---- Arquivo: remover deixa de destruir ---- */
 function getArquivo(){ return LS("cron:arquivo", []) || []; }
@@ -1164,6 +1191,15 @@ function cycleSub(pid,pi,si){
    não é tocado: uma peça 60% escrita e adiada continua 60% escrita. */
 function ciclarVida(pid,pi,si){
   var p=getProjs(pid), x=normSub(p[pi].subs[si]);
+  /* Sair de "nao se aplica" e decisao, nao passo do ciclo: sem esta pergunta,
+     um toque no lugar errado transformaria em "ativa" uma etapa que o pipeline
+     ja disse que nao cabe neste artigo. */
+  if(x.vida==="inaplicavel"){
+    if(!confirm("Esta etapa esta marcada como \u201cn\u00e3o se aplica\u201d"+(x.motivo?" ("+x.motivo+")":"")+".\n\nVoltar para ativa?")) return;
+    x.vida="ativo"; x.motivo=""; x.voltar_em=""; x.vidaDesde=ymd(now);
+    setProjs(pid,p); logar(pid, p[pi], x, x.st, x.st);
+    renderPainel(pid); renderRegistro(); sincronizarHoje(pid); return;
+  }
   var prox=VIDA_ORDEM[(VIDA_ORDEM.indexOf(x.vida)+1)%VIDA_ORDEM.length];
   if(prox==="ativo"){
     x.vida="ativo"; x.motivo=""; x.voltar_em="";
@@ -1451,6 +1487,7 @@ function renderRegistro(){
 function rotuloReg(o){
   if(o.vida==="adiado")     return '<i>adiada</i>'+(o.motivo?' \u00b7 '+escapeHtml(o.motivo):'');
   if(o.vida==="abandonado") return '<i>abandonada</i>'+(o.motivo?' \u00b7 '+escapeHtml(o.motivo):'');
+  if(o.vida==="inaplicavel") return '<i>n\u00e3o se aplica</i>'+(o.motivo?' \u00b7 '+escapeHtml(o.motivo):'');
   var p = (o.para===undefined||o.para===null) ? o.st : o.para;
   if(p===2) return 'conclu\u00edda';
   if(p===1) return '<i>em andamento</i>';
@@ -1508,7 +1545,8 @@ function renderPainel(pid){
   if(!alvos.length) return;
   var projs=getProjs(pid), h="";
   projs.forEach(function(p,pi){
-    var total=p.subs.length, feitas=p.subs.filter(function(x){return x.st===2;}).length;
+    var contam=p.subs.filter(function(x){return x.vida!=="inaplicavel";});
+    var total=contam.length, feitas=contam.filter(function(x){return x.st===2;}).length;
     var emAnd=p.subs.some(function(x){return x.st===1;});
     var ab=projAberto(pid,p.id,emAnd);
     h+='<details class="proj'+(emAnd?" ativo":"")+'" data-pi="'+pi+'" data-proj="'+pid+'/'+p.id+'" '+(ab?"open":"")+
@@ -1524,6 +1562,7 @@ function renderPainel(pid){
       var selo = "";
       if(x.vida==="adiado")     selo='<span class="vida-selo v-adiado" title="'+escapeHtml(x.motivo||"")+'">adiada'+(x.voltar_em?" · volta "+escapeHtml(x.voltar_em):"")+'</span>';
       if(x.vida==="abandonado") selo='<span class="vida-selo v-abandonado" title="'+escapeHtml(x.motivo||"")+'">abandonada</span>';
+      if(x.vida==="inaplicavel") selo='<span class="vida-selo v-inaplicavel" title="'+escapeHtml(x.motivo||"")+'">n\u00e3o se aplica</span>';
       var med = (x.medida && typeof x.medida.total==="number")
               ? '<span class="sub-medida">'+(x.medida.feito||0)+'/'+x.medida.total+'</span>' : '';
       var ondeT = x.onde ? '<span class="sub-onde">'+escapeHtml(x.onde)+'</span>' : '';
@@ -1549,7 +1588,10 @@ function pecaDoMes(){
   if(!p){ for(var i=0;i<projs.length;i++){ if(projs[i].mes>monthKey){p=projs[i];proxima=true;break;} } }
   if(!p) return null;
   var etapa=null;
-  for(var j=0;j<p.subs.length;j++){ if(p.subs[j].st!==2){etapa=p.subs[j].t;break;} }
+  for(var j=0;j<p.subs.length;j++){
+    if(p.subs[j].vida==="inaplicavel") continue;
+    if(p.subs[j].st!==2){etapa=p.subs[j].t;break;}
+  }
   return {id:p.id, curto:p.t.replace(/^[^\u00b7]*\u00b7\s*/,""), mes:p.mes, proxima:proxima,
           etapa: etapa || "pronta para submeter"};
 }
@@ -1913,6 +1955,32 @@ if(LS("cron:metas-seed", null) !== METAS_SEED){
 }
 renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();
 checkUpdate();
+
+/* ---- Entrada: o Cowork escreve, a pagina mescla ----
+   O mesclarEntrada() existe desde o Passo 2 e nunca teve quem o alimentasse.
+   Este e o alimentador: um arquivo no repositorio, escrito pelo Cowork a partir
+   do que o pipeline produziu, com a ESTRUTURA das pecas — quais artigos, quais
+   subitens, e os titulos.
+
+   A divisao de trabalho e a de sempre: a ENTRADA manda na estrutura, o TOQUE
+   manda no progresso. Por isso o mesclarEntrada() nao encosta em st nem em vida
+   de subitem que ja existe. Projeto NOVO entra inteiro, com os estados que
+   vierem nele — e assim que uma peca nasce ja marcada.
+
+   Sem rede nao acontece nada: o que ja foi mesclado continua valendo. */
+function buscarEntrada(){
+  return fetch("entrada.json?v=" + Date.now(), {cache:"no-store"})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .catch(function(){ return null; })
+    .then(function(ent){
+      if(!ent || !ent.paineis) return;
+      var marca = ent._gerado_em || "";
+      if(marca && marca === LS("cron:entrada-aplicada", null)) return;
+      save("cron:entrada", ent);
+      if(mesclarEntrada()){ renderOrdo(); renderHoje(); renderSemana(); renderTrilhos(); }
+    });
+}
+try{ buscarEntrada(); }catch(e){ console.error("busca da entrada falhou:", e); }
 </script>
 </body>
 </html>

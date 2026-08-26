@@ -1,0 +1,486 @@
+{
+ "_versao": 1,
+ "_gerado_em": "2026-08-26T13:27:49Z",
+ "_o_que_e": "Estrutura das peças do Cronograma, escrita pelo Cowork a partir do que o pipeline produziu. A página lê no carregamento e mescla: a ENTRADA manda na estrutura (quais peças, quais subitens, os títulos), o TOQUE manda no progresso. Subitem que já existe não tem st nem vida alterados por aqui.",
+ "_escritor": "Cowork. Não editar à mão.",
+ "paineis": {
+  "pipeline": [
+   {
+    "id": "a01",
+    "subs": [
+     {
+      "id": "a01-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a01-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a01-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a01-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a01-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a01-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a02",
+    "subs": [
+     {
+      "id": "a02-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a02-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a02-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a02-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a02-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a02-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a03",
+    "subs": [
+     {
+      "id": "a03-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a03-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a03-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a03-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a03-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a03-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a04",
+    "subs": [
+     {
+      "id": "a04-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a04-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a04-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a04-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a04-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a04-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a05",
+    "subs": [
+     {
+      "id": "a05-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a05-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a05-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a05-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a05-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a05-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a06",
+    "subs": [
+     {
+      "id": "a06-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a06-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a06-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a06-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a06-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a06-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a07",
+    "subs": [
+     {
+      "id": "a07-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a07-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a07-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a07-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a07-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a07-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a08",
+    "subs": [
+     {
+      "id": "a08-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a08-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a08-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a08-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a08-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a08-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a09",
+    "subs": [
+     {
+      "id": "a09-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a09-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a09-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a09-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a09-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a09-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a10",
+    "subs": [
+     {
+      "id": "a10-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a10-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a10-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a10-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a10-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a10-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a11",
+    "subs": [
+     {
+      "id": "a11-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a11-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a11-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a11-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a11-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a11-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a12",
+    "subs": [
+     {
+      "id": "a12-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha"
+     },
+     {
+      "id": "a12-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular"
+     },
+     {
+      "id": "a12-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork"
+     },
+     {
+      "id": "a12-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork"
+     },
+     {
+      "id": "a12-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork"
+     },
+     {
+      "id": "a12-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha"
+     }
+    ]
+   },
+   {
+    "id": "a00",
+    "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "mes": "2026-08",
+    "n": "Horizonte (PUC Minas, A1) ou Journal of Church and State. Artigo pré-existente, de nov/2025, importado como equivalente ao draft_1.1 — as Janelas de Brainstorm e o 1.0-FIL não se aplicam. Parado no 1.3-APL, esperando a verificação do corpus. Ordem de submissão em aberto: ela define APA 7 ou Chicago 17.",
+    "subs": [
+     {
+      "id": "a00-1",
+      "t": "Brainstorm · B-GERAÇÃO · entrada preenchida",
+      "onde": "escrivaninha",
+      "st": 2,
+      "vida": "ativo",
+      "motivo": ""
+     },
+     {
+      "id": "a00-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "celular",
+      "st": 1,
+      "vida": "ativo",
+      "motivo": ""
+     },
+     {
+      "id": "a00-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "st": 0,
+      "vida": "inaplicavel",
+      "motivo": "artigo importado de nov/2025; nasceu escrito, não houve 1.0-FIL"
+     },
+     {
+      "id": "a00-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "st": 1,
+      "vida": "ativo",
+      "motivo": ""
+     },
+     {
+      "id": "a00-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "st": 0,
+      "vida": "ativo",
+      "motivo": ""
+     },
+     {
+      "id": "a00-6",
+      "t": "3.5-FIL + pandoc · pronto para submeter",
+      "onde": "escrivaninha",
+      "st": 0,
+      "vida": "ativo",
+      "motivo": ""
+     }
+    ]
+   }
+  ]
+ }
+}
