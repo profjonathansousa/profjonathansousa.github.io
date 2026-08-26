@@ -486,6 +486,64 @@ ok(cfg_ch_anpof.get("base_item")
    "anpof-chamadas declara base_item (mesmo defeito, mesma casa)",
    cfg_ch_anpof.get("base_item"))
 
+print("\n=== 14. Fronteira DIREITA: flexao casa, colisao nao (2026-08-26) ===")
+ok(C.casa(["espinosa"], C.normalizar("Cadernos Espinosanos")) != [],
+   "'espinosa' casa 'Espinosanos' (ia para os rejeitados)")
+ok(C.casa(["epistemologia"], C.normalizar("epistemologias do sul-global")) != [],
+   "'epistemologia' casa o plural 'epistemologias'")
+ok(C.casa(["barth"], C.normalizar("Roland Barthes e o texto")) == [],
+   "'barth' NAO casa 'Barthes' - a lista de COLISOES segura")
+ok(C.casa(["barth"], C.normalizar("Karl Barth e a dogmatica")) != [],
+   "'barth' continua casando 'Barth'")
+# A esquerda e que carrega as protecoes de 2026-08-25. Nada la mudou.
+ok(C.casa(["ethics"], "bioethics") == [], "'ethics' segue NAO casando 'bioethics'")
+ok(C.casa(["logic"], "theological ethics") == [], "'logic' segue NAO casando 'theological'")
+ok(C.casa(["doctoral"], "postdoctoral fellow") == [], "'doctoral' segue NAO casando 'postdoctoral'")
+
+print("\n=== 15. salvo_se: lancamento nao mata chamada de verdade ===")
+regras = [{"rotulo": "anuncio", "descarta": True,
+           "quando": ["lancamento", "novo numero"],
+           "salvo_se": ["chamada", "call for"]}]
+ok(C._primeira_regra(regras, C.normalizar("Lancamento da Revista Ideacao 53")).get("descarta"),
+   "anuncio de numero e descartado")
+ok(not C._primeira_regra(regras, C.normalizar(
+       "Griot - Revista de Filosofia: Novo Numero e Chamada de Artigos")).get("descarta"),
+   "'Novo Numero E CHAMADA de Artigos' NAO e descartado")
+ok(not C._primeira_regra(regras, C.normalizar(
+       "Chamada de trabalho - Alter (PUC-Rio), v. 20")).get("descarta"),
+   "chamada sem palavra de lancamento passa intacta")
+
+print("\n=== 16. Chamada brasileira sem area no cabeca entra como 'aberto' ===")
+alvo = (crit_c.get("relevancia") or {}).get("aberto") or {}
+ok(alvo.get("fontes_sem_area_no_cabeca") == ["anpof-chamadas"],
+   "criterios_chamadas declara a fonte sem area no cabeca",
+   alvo.get("fontes_sem_area_no_cabeca"))
+for titulo in ("Politica, Comunidade e Emancipacao: Leituras Filosoficas",
+               "Philosophy of Brazilian Religions",
+               "Dossie Ensino de Filosofia: dialogos desde a America do Sul"):
+    it = {"id": "anpof-chamadas-x", "fonte": "anpof-chamadas", "titulo": titulo,
+          "aos": "", "aoc": "", "texto": "", "prazo": "", "url": ""}
+    C.descarte_barato(it, crit_c)
+    C.classificar(it, crit_c, "vaga")
+    ok(not it.get("descartado") and it.get("relevancia") == "aberto",
+       "entra como aberto: %-52s" % titulo[:52],
+       it.get("motivo_saida") or it.get("relevancia"))
+it = {"id": "philevents-x", "fonte": "philevents", "titulo": "Workshop on Category Theory",
+      "aos": "", "aoc": "", "texto": "", "prazo": "", "url": ""}
+C.descarte_barato(it, crit_c); C.classificar(it, crit_c, "vaga")
+ok(it.get("descartado"), "a regra NAO vale para o philevents (so a fonte declarada)",
+   it.get("relevancia"))
+
+print("\n=== 17. A propria listagem nao entra como item ===")
+BASE = "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/"
+html_l = ("<a href='agenda/lancamentos-e-chamadas-de-revistas/'>Lancamentos e Chamadas de Revistas</a>"
+          "<a href='agenda/lancamentos-e-chamadas-de-revistas/dossie-ensino-de-filosofia'>"
+          "Dossie Ensino de Filosofia: dialogos desde a America do Sul</a>")
+saiu = C._links_da_pagina(html_l, "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas",
+                          "/lancamentos-e-chamadas-de-revistas/", BASE)
+ok(len(saiu) == 1 and saiu[0][0].endswith("dossie-ensino-de-filosofia"),
+   "o link para a propria pagina de listagem e descartado", saiu)
+
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))
 for f in falhas: print("  - " + f)

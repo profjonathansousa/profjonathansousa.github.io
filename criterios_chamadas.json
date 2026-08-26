@@ -30,6 +30,7 @@
   },
 
   "relevancia": {
+    "aberto": {"_MEDIDO_2026-08-26": "Das 43 chamadas unicas barradas da ANPOF, 17 eram CFP de verdade do recorte do usuario e nenhuma trazia termo no titulo - a chamada brasileira nao declara area, exatamente como o edital brasileiro da secao 2.1. Sem isto, Politica/Comunidade/Emancipacao, Philosophy of Brazilian Religions e Dossie Ensino de Filosofia morrem nos rejeitados.", "fontes_sem_area_no_cabeca": ["anpof-chamadas"]},
     "_nota": "Estado, nao nota. Os dois estados abaixo entram; o resto vai para os rejeitados com a razao.",
 
     "nicho": {
@@ -79,6 +80,7 @@
     "_nota": "Secao 1 do agente_CHAMADAS.md. Dossie de periodico vale mais que evento presencial: entra direto na esteira e nao exige viagem. Isso agora e COLUNA, nao peso.",
     "_ordem_importa": "Primeira regra que casar vence.",
     "regras": [
+      {"rotulo": "anuncio de numero", "descarta": true, "_MEDIDO_2026-08-26": "Anuncio de numero novo nao e convite a submeter. Das 43 barradas da ANPOF, 23 eram isso. O salvo_se existe porque titulo como 'Griot: Novo Numero E CHAMADA de Artigos' e chamada de verdade - descartar pela palavra de lancamento sozinha mataria CFP real.", "quando": ["lancamento", "novo numero", "nova publicacao", "novo volume", "concursos e selecoes"], "salvo_se": ["chamada", "call for", "submissao", "cfp", "convite"]},
       {
         "rotulo": "discente",
         "descarta": true,

@@ -106,6 +106,12 @@ def normalizar(s):
     return "".join(c for c in s if not unicodedata.combining(c))
 
 
+SUFIXO_MAX = 3          # 'espinosa' -> 'espinosanos'; 'epistemologia' -> 'as'
+COLISOES_DE_SUFIXO = (  # termo que vira OUTRA COISA com sufixo. So cresce por
+    "barth",           # defeito medido: 'Barthes' (Roland) nao e 'Barth' (Karl)
+)
+
+
 def casa(termos, texto_norm):
     """Casamento com FRONTEIRA DE PALAVRA, e devolve o que casou.
 
@@ -125,7 +131,21 @@ def casa(termos, texto_norm):
         alvo = normalizar(t).strip()
         if not alvo:
             continue
-        if re.search(r"(?<![\w-])" + re.escape(alvo) + r"(?![\w-])", texto_norm):
+        # FRONTEIRA ESQUERDA: intocada. E ela que impede 'ethics' de casar
+        # dentro de 'bioethics' e 'logic' dentro de 'theological' — os dois
+        # defeitos de 2026-08-25. Todas as assercoes daquele dia dependem
+        # dela, e nenhuma da direita.
+        # FRONTEIRA DIREITA: aceita ate SUFIXO_MAX letras, para o termo casar
+        # a propria flexao. MEDIDO em 2026-08-26: 'espinosa' nao casava
+        # 'Cadernos Espinosanos' e 'epistemologia' nao casava o plural
+        # 'epistemologias' — duas chamadas boas foram para os rejeitados.
+        # Nao e whitelist de formas (essa cresceria sem fim): e lista de
+        # COLISOES, que so cresce quando alguma quebra de verdade.
+        if alvo in COLISOES_DE_SUFIXO or len(alvo) < 5:
+            direita = r"(?![\w-])"
+        else:
+            direita = r"[a-z]{0,%d}(?![\w-])" % SUFIXO_MAX
+        if re.search(r"(?<![\w-])" + re.escape(alvo) + direita, texto_norm):
             achados.append(t)
     return achados
 
@@ -285,7 +305,7 @@ def _primeira_regra(regras, alvo_norm):
         if not termos:
             ultimo = r          # a regra sem termos e o padrao, no fim
             continue
-        if casa(termos, alvo_norm):
+        if casa(termos, alvo_norm) and not casa(r.get("salvo_se") or [], alvo_norm):
             return r
     return ultimo or {"rotulo": "outro"}
 
@@ -407,6 +427,15 @@ def classificar(item, criterios, unidade="vaga"):
             estado, item["porque"] = "competencia", "competencia: " + ", ".join(comp[:3])
         elif eh_aberto:
             estado, item["porque"] = "aberto", "AOS aberto"
+        elif item.get("fonte") in ((rel.get("aberto") or {}).get(
+                "fontes_sem_area_no_cabeca") or []):
+            # Espelho da decisao de 2026-08-25 para o edital brasileiro: o
+            # cabeca nao carrega a area. MEDIDO em 2026-08-26: das 43 chamadas
+            # unicas barradas da ANPOF, 17 eram CFP de verdade do recorte dele
+            # ('Politica, Comunidade e Emancipacao', 'Philosophy of Brazilian
+            # Religions', 'Dossie Ensino de Filosofia'), sem termo nenhum no
+            # titulo. Entra marcado e por ultimo; quem tria e o usuario.
+            estado, item["porque"] = "aberto", "chamada brasileira sem area no titulo"
         else:
             item["descartado"] = True
             item["motivo_saida"] = "sem aderencia no cabeca (titulo/AOS/AOC)"
@@ -662,6 +691,12 @@ def _links_da_pagina(html, url_base, padrao, base_item=None):
             # e entraria pela porta dos fundos.
             partes = [p for p in urlparse(absoluto).path.split("/") if p]
             if not partes:
+                continue
+            # A propria pagina de listagem aparece no menu dela mesma, e
+            # chega aqui com o "agenda" dobrado — comparar a URL inteira
+            # nao pega. Quem denuncia e o ultimo segmento.
+            fim_base = [p for p in urlparse(base_item).path.split("/") if p]
+            if fim_base and partes[-1] == fim_base[-1]:
                 continue
             absoluto = urljoin(base_item, partes[-1])
         if absoluto in vistos:
