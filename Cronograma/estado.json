@@ -2,15 +2,15 @@
  "_versao": 1,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-26T12:49:23.526Z",
+ "_dobrado_em": "2026-08-26T12:58:45.412Z",
  "itens": {
   "pipeline/a01/a01-1": {
-   "st": 1,
+   "st": 2,
    "vida": "ativo",
    "temMotivo": false,
    "projT": "Ago · A consciência em Lutero e Spinoza",
    "subT": "Tese em 1 parágrafo + periódico-alvo",
-   "quando": "2026-08-26T12:49:23.526Z",
+   "quando": "2026-08-26T12:58:45.412Z",
    "aparelho": "s41hky"
   }
  },
@@ -34,9 +34,30 @@
     "vida": "ativo",
     "temMotivo": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-26T12-58-45-412Z-s41hky",
+   "quando": "2026-08-26T12:58:45.412Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-26-toques",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-08-26",
+    "pid": "pipeline",
+    "projId": "a01",
+    "subId": "a01-1",
+    "projT": "Ago · A consciência em Lutero e Spinoza",
+    "subT": "Tese em 1 parágrafo + periódico-alvo",
+    "de": 1,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
   }
  ],
  "_ids_dobrados": [
-  "2026-08-26T12-49-23-526Z-s41hky"
+  "2026-08-26T12-49-23-526Z-s41hky",
+  "2026-08-26T12-58-45-412Z-s41hky"
  ]
 }
