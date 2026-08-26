@@ -89,9 +89,21 @@ def dobrar(estado, toques):
     # Ordem por relogio, nao por ordem de leitura do diretorio: quem chega
     # depois no tempo e quem manda no estado final.
     novos.sort(key=lambda t: t.get("quando") or "")
+    atrasados = 0
     for t in novos:
         d = t.get("dados") or {}
         if not d.get("subId"):
+            continue
+        # Toque atrasado NAO derruba estado mais novo. Acontece de verdade: voce
+        # toca no Mac sem rede as 10h, toca no celular as 10h05 com rede, e o Mac
+        # so consegue enviar depois. O toque das 10h e novo para esta funcao (id
+        # nunca visto) mas velho para o item. Ele entra no historico do mesmo
+        # jeito — nada se perde —, so nao manda no estado.
+        atual = estado["itens"].get(chave(t))
+        if atual and (atual.get("quando") or "") > (t.get("quando") or ""):
+            estado["historico"].append(t)
+            estado["_ids_dobrados"].append(t["id"])
+            atrasados += 1
             continue
         estado["itens"][chave(t)] = {
             "st": d.get("para"),
@@ -104,6 +116,8 @@ def dobrar(estado, toques):
         }
         estado["historico"].append(t)
         estado["_ids_dobrados"].append(t["id"])
+    if atrasados:
+        print("Toques atrasados (guardados no historico, sem mandar no estado): %d" % atrasados)
     return novos
 
 
