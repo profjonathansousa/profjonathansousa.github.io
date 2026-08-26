@@ -1,20 +1,56 @@
 {
-  "_gerado_em": "2026-08-25T13:34:58.223802-03:00",
+  "_gerado_em": "2026-08-25T22:52:33.901696-03:00",
   "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_CHAMADAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-08-25T13:34:58.223802-03:00",
+    "quando": "2026-08-25T22:52:33.901696-03:00",
     "fontes": {
       "curadas": "ok · 5 curados · atualizado em 2026-08-25",
-      "philevents": "ok · 120 sondados · 26 novos",
+      "philevents": "ok · 120 sondados · 28 novos",
       "anpof-chamadas": "ok · 1527 links",
       "upenn-cfp": "desligada"
     },
     "avisos": [
       "anpof-chamadas: teto de 40 itens novos atingido"
     ],
-    "resumo": "11 vivos (?:1 evento:5 publicacao:5) · 0 urgentes · 8 novos · 3 arquivados por prazo · 60 barrados"
+    "resumo": "12 vivos (?:1 evento:6 publicacao:5) · 1 urgentes · 1 novos · 0 arquivados por prazo · 67 barrados"
   },
   "itens": [
+    {
+      "id": "philevents-146753",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/146753",
+      "titulo": "Critical Political Epistemology",
+      "instituicao": "",
+      "aos": "areas",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "prazo": "2026-09-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Critical Political Epistemology\n - PhilEvents \n Critical Political Epistemology\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Critical Political Epistemology\n Freiburg Workshops in Political Epistemology \n September 15, 2026 - September 17, 2026\n Professorship for Epistemology & Theory of Science, University College Freiburg \n Freiburg 79098\nGermany\n Organisers:\n Melanie Altanian \n University of Freiburg \n Anna Klieber \n Cardiff University \n Resa-Philip Lunau (he/him) \n Georg-August-Universität Göttingen \n Sonja Riegler \n Goethe University Frankfurt \n Frieder Vogelmann \n University of Freiburg \n Topic areas\n Epistemology \n General Philosophy of Science \n Value Theory \n Talks at this conference\n Add a talk \n Details\n International conference organized by the Professorship for Epis",
+      "visto_em": "2026-08-25",
+      "tipo": "outro",
+      "porque": "competencia: epistemology",
+      "relevancia": "competencia",
+      "pais": "",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 7,
+      "urgente": true,
+      "descartado": false,
+      "marcas": [
+        "prazo em 7 dia(s)",
+        "so com texto pronto"
+      ],
+      "novo": true,
+      "vencida": false
+    },
     {
       "id": "lsn-jle-homelessness-2026",
       "fonte": "curadas",
@@ -45,7 +81,6 @@
       "urgente": false,
       "descartado": false,
       "marcas": [],
-      "novo": true,
       "vencida": false
     },
     {
@@ -80,7 +115,6 @@
       "marcas": [
         "sem prazo"
       ],
-      "novo": true,
       "vencida": false
     },
     {
@@ -115,7 +149,6 @@
       "marcas": [
         "sem prazo"
       ],
-      "novo": true,
       "vencida": false
     },
     {
@@ -150,7 +183,6 @@
       "marcas": [
         "sem prazo"
       ],
-      "novo": true,
       "vencida": false
     },
     {
@@ -185,7 +217,6 @@
       "marcas": [
         "sem prazo"
       ],
-      "novo": true,
       "vencida": false
     },
     {
