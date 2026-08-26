@@ -388,8 +388,14 @@ print("\n=== 12. As portas estao declaradas onde devem ===")
 portas = {f["nome"]: f.get("porta") for f in CRIT["fontes"] if f.get("ligada")}
 ok(portas.get("anpof") == "filosofia" and portas.get("docentefederal") == "filosofia",
    "agregadores (IFES, Pedro II, CAps) pedem filosofia", portas)
-ok(portas.get("faperj") == "posdoc" and portas.get("fapesp") == "posdoc",
-   "fomento pede pos-doc, nao area", portas)
+ok(portas.get("faperj") == "posdoc",
+   "fomento (FAPERJ) pede pos-doc, nao area", portas)
+fapesp = [f for f in CRIT["fontes"] if f["nome"] == "fapesp"][0]
+ok(not fapesp.get("ligada") and "_DESLIGADA_DE_NOVO_2026-08-25" in fapesp,
+   "a VITRINE da FAPESP esta desligada, e a razao esta no arquivo", fapesp.get("ligada"))
+curadas_v = [f for f in CRIT["fontes"] if f["nome"] == "curadas"][0]
+ok(curadas_v.get("ligada") and curadas_v.get("porta") == "posdoc",
+   "...e o PROGRAMA da FAPESP continua vivo, pela fonte curada", curadas_v.get("arquivo"))
 ok(portas.get("philjobs") is None,
    "philjobs nao tem porta: unidade 'vaga', o cabeca ja carrega o AOS", portas)
 ok(not [f for f in CRIT["fontes"] if f["nome"] == "dou"][0]["ligada"],

@@ -352,7 +352,11 @@
     },
     {
       "nome": "fapesp",
-      "ligada": true,
+      "ligada": false,
+      "_DESLIGADA_DE_NOVO_2026-08-25": "MEDIDO na coleta das 13h30: 24 dos 93 itens vivos vieram daqui, e os 26 'urgentes' da rodada eram TODOS desta fonte — pos-doc em IA, gestao de dados, descarbonizacao, petroleo e gas, imunologia, biologia molecular de plantas. As duas vagas urgentes de verdade (George Mason 31/08 e Oxford 02/09) ficaram enterradas embaixo delas.",
+      "_o_erro_que_isto_conserta": "A decisao de 2026-08-25 — 'em fomento nao se pede area nem fit' — vale para o PROGRAMA (o PDR-10 da FAPERJ, o PD de fluxo continuo da FAPESP). Esta URL nao lista programas: lista VAGAS DE PROJETO individuais, cada uma amarrada a um supervisor e a uma area, e a area delas e STEM. A porta 'posdoc' foi ligada na coisa errada.",
+      "_o_que_NAO_se_perde": "O programa de pos-doc da FAPESP continua na lista, pela fonte curada: vagas_manuais.json, item manual-fapesp-pd, com os requisitos que de fato decidem (supervisor no Estado de Sao Paulo, dedicacao exclusiva sem vinculo empregaticio). Desligar aqui tira a vitrine alheia, nao a FAPESP.",
+      "_se_for_religar": "Nao basta 'ligada': true. Precisa de porta dupla — posdoc E uma peneira de grande area — ou o resultado sera o mesmo.",
       "metodo": "lista_html",
       "url": "https://fapesp.br/oportunidades",
       "link_padrao": "/oportunidades/",
