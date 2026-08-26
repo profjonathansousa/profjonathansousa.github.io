@@ -453,6 +453,39 @@ ok(len(com_prazo) == 1 and com_prazo[0]["prazo"] == "2026-10-01",
    "LSN: o unico prazo duro do boletim e o do JLE, 01/10/2026",
    [(i["titulo"][:28], i.get("prazo")) for i in lsn])
 
+print("\n=== 13. O link do item da ANPOF (o 404 medido em 2026-08-26) ===")
+# A listagem mora em /agenda/concursos-e-selecoes, SEM barra final. O urljoin
+# descarta o ultimo segmento e monta /agenda/agenda/..., que da 404 - e foi por
+# isso que os 28 itens da ANPOF sairam com o corpo vazio, sem prazo nenhum.
+LISTA_ANPOF = "https://anpof.org.br/agenda/concursos-e-selecoes"
+html_anpof = ("<a href='agenda/concursos-e-selecoes/edital-ufpi-filosofia-medieval'>"
+              "Concurso Publico para o Magisterio Superior na UFPI - Filosofia Medieval</a>"
+              "<a href='agenda/agenda'>Agenda da ANPOF</a>")
+cru = C._links_da_pagina(html_anpof, LISTA_ANPOF, "/concursos-e-selecoes/")
+ok(len(cru) == 1 and cru[0][0].count("/agenda/agenda/") == 1,
+   "sem base_item o urljoin dobra o 'agenda' (o defeito, preservado)", cru)
+cfg_anpof = [f for f in CRIT["fontes"] if f["nome"] == "anpof"][0]
+ok(cfg_anpof.get("base_item") == "https://anpof.org.br/agenda/concursos-e-selecoes/",
+   "a fonte anpof declara base_item", cfg_anpof.get("base_item"))
+com = C._links_da_pagina(html_anpof, LISTA_ANPOF, "/concursos-e-selecoes/",
+                         cfg_anpof["base_item"])
+ok(len(com) == 1 and com[0][0] == ("https://anpof.org.br/agenda/concursos-e-selecoes/"
+                                   "edital-ufpi-filosofia-medieval"),
+   "com base_item sai o endereco vivo, com um 'agenda' so", com)
+ok(all("/agenda/agenda/" not in u for u, _ in com),
+   "nenhum link remontado conserva o 'agenda' dobrado", com)
+# A peneira tem que rodar ANTES da remontagem. Se rodasse depois, todo link do
+# site viraria base_item + ultimo segmento e passaria pelo padrao.
+html_menu = "<a href='agenda/podcast-anpof'>Podcast Anpof da ANPOF</a>"
+ok(C._links_da_pagina(html_menu, LISTA_ANPOF, "/concursos-e-selecoes/",
+                      cfg_anpof["base_item"]) == [],
+   "a remontagem nao deixa o menu do site entrar pela porta dos fundos")
+cfg_ch_anpof = [f for f in crit_c["fontes"] if f["nome"] == "anpof-chamadas"][0]
+ok(cfg_ch_anpof.get("base_item")
+   == "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/",
+   "anpof-chamadas declara base_item (mesmo defeito, mesma casa)",
+   cfg_ch_anpof.get("base_item"))
+
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))
 for f in falhas: print("  - " + f)

@@ -306,6 +306,8 @@
       "metodo": "lista_html",
       "url": "https://anpof.org.br/agenda/concursos-e-selecoes",
       "link_padrao": "/concursos-e-selecoes/",
+      "base_item": "https://anpof.org.br/agenda/concursos-e-selecoes/",
+      "_base_item_MEDIDO_2026-08-26": "A listagem mora em /agenda/concursos-e-selecoes, SEM barra final: o urljoin descarta o ultimo segmento e monta /agenda/agenda/concursos-e-selecoes/<slug>, que da 404. VERIFICADO em 2026-08-26 buscando as duas formas: a dobrada devolve 404, a simples devolve o edital com 'Inscricoes ate 17/04/2026', instituicao e area. Era por isso que os 28 itens da ANPOF no dado publicado estavam com o corpo VAZIO, sem prazo, sem instituicao, sem area - 50 de 50 paginas, contando os rejeitados. E como nenhum tinha prazo, nenhum era arquivado por vencimento: a lista so crescia. O 'agenda dobrado e do site' registrado na sessao 4 era artefato nosso, nao do site.",
       "porta": "filosofia",
       "pais_padrao": "Brasil",
       "unidade": "edital",

@@ -195,6 +195,8 @@
       "metodo": "lista_html",
       "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas",
       "link_padrao": "/lancamentos-e-chamadas-de-revistas/",
+      "base_item": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/",
+      "_base_item_MEDIDO_2026-08-26": "Mesmo defeito, mesma casa, medido em 2026-08-26: o urljoin dobrava o 'agenda' e as paginas de item davam 404. E a explicacao mais provavel [HIPOTESE ate a proxima rodada] para 'anpof-chamadas: 1527 links, 40 buscados, 0 vivos' - corpo vazio nao da ao classificador nada para eleger.",
       "pais_padrao": "Brasil",
       "unidade": "vaga",
       "_nota": "A pagina traz CFPs brasileiros reais com periodico e prazo — 'Dossie Ensino de Filosofia', revista O Manguezal.",

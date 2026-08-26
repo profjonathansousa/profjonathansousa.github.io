@@ -634,21 +634,37 @@ def _sondar_familia_philpapers(sessao, cfg, estado_fonte, batimento):
     return novos
 
 
-def _links_da_pagina(html, url_base, padrao):
+def _links_da_pagina(html, url_base, padrao, base_item=None):
     """Extrai (url, texto da ancora) e filtra por padrao de URL.
 
     Deliberadamente generico: eu NAO vi o HTML bruto destas fontes — o WebFetch
     entrega markdown convertido. Seletor escrito no escuro quebra na primeira
     mudanca de tema. Isto pega todos os <a>, filtra por padrao configuravel, e
     o modo --diagnostico existe justamente para ajustar o padrao com evidencia.
+
+    base_item: remonta o endereco como base_item + ultimo segmento do caminho,
+    para a pagina cujo link relativo NAO resolve contra a propria URL da
+    listagem. VERIFICADO em 2026-08-26: a listagem da ANPOF mora em
+    /agenda/concursos-e-selecoes, SEM barra final, entao o urljoin descarta o
+    ultimo segmento e devolve /agenda/agenda/concursos-e-selecoes/<slug>, que
+    da 404. O 'agenda dobrado e do site' registrado na sessao 4 era artefato
+    nosso: o endereco vivo tem um 'agenda' so.
     """
     achados, vistos = [], set()
     for href, dentro in re.findall(
             r'(?is)<a\s[^>]*href\s*=\s*["\']([^"\']+)["\'][^>]*>(.*?)</a>', html):
         absoluto = urljoin(url_base, htmllib.unescape(href.strip()))
-        if absoluto in vistos:
-            continue
         if padrao and not re.search(padrao, absoluto, re.IGNORECASE):
+            continue
+        if base_item:
+            # A peneira roda ANTES daqui de proposito: se a remontagem viesse
+            # primeiro, todo link do site viraria base_item + ultimo segmento
+            # e entraria pela porta dos fundos.
+            partes = [p for p in urlparse(absoluto).path.split("/") if p]
+            if not partes:
+                continue
+            absoluto = urljoin(base_item, partes[-1])
+        if absoluto in vistos:
             continue
         rotulo = texto_limpo(dentro)
         if len(rotulo) < 8:      # "leia mais", setas, icones
@@ -719,7 +735,8 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
         print("    %s → HTTP %d, %d bytes" % (cfg["url"], r.status_code, len(r.text)))
         todos = _links_da_pagina(r.text, cfg["url"], None)
         print("    %d links com texto; com o padrao atual: %d"
-              % (len(todos), len(_links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao")))))
+              % (len(todos), len(_links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao"),
+                                                  cfg.get("base_item")))))
         for u, t in todos[:30]:
             print("      %-70s | %s" % (u[:70], t[:60]))
         print("    --- primeiras linhas do texto limpo ---")
@@ -730,7 +747,8 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
     if cfg.get("sem_link_proprio"):
         return _itens_sem_link(r.text, cfg, batimento)
 
-    links = _links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao"))
+    links = _links_da_pagina(r.text, cfg["url"], cfg.get("link_padrao"),
+                             cfg.get("base_item"))
     # Segunda peneira, pelo TEXTO da ancora. Existe porque padrao de URL largo
     # somado a teto de itens faz os itens reais nunca serem avaliados: em
     # 2026-08-25 a FAPERJ deu 215 links (a navegacao inteira) e o teto de 40
@@ -745,7 +763,7 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
             % (rotulo, cfg.get("link_padrao")))
         return []
 
-    novos, buscados = [], 0
+    novos, buscados, vazios = [], 0, 0
     for url, rotulo_link in links:
         ident = "%s-%s" % (rotulo, re.sub(r"\W+", "-", urlparse(url).path).strip("-")[-60:])
         if ident in conhecidos:
@@ -758,9 +776,14 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
         try:
             ri = sessao.get(url, timeout=TIMEOUT)
             corpo = texto_limpo(ri.text) if ri.status_code == 200 else ""
+            if ri.status_code != 200:
+                batimento["avisos"].append("%s: HTTP %d em %s"
+                                           % (rotulo, ri.status_code, url[:70]))
         except Exception as e:
             batimento["avisos"].append("%s: %s em %s" % (rotulo, e.__class__.__name__, url[:60]))
             corpo = ""
+        if not corpo:
+            vazios += 1
         time.sleep(PAUSA)
 
         prazo, brando = parse_data(campo(corpo, ["Prazo", "Inscrições até",
@@ -784,6 +807,12 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
             "texto": corpo[:2500],
             "visto_em": hoje().isoformat(),
         })
+    # O silencio era o defeito: em 2026-08-25 a ANPOF entregou 40 paginas
+    # vazias (404 no endereco remontado errado) e o batimento dizia
+    # "ok - 487 links". Corpo vazio em massa agora aparece.
+    if vazios:
+        batimento["avisos"].append("%s: %d de %d paginas vieram SEM CORPO"
+                                   % (rotulo, vazios, buscados))
     return novos
 
 
