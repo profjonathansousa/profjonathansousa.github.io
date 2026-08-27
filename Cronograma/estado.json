@@ -2,7 +2,7 @@
  "_versao": 2,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-27T18:51:19.252Z",
+ "_dobrado_em": "2026-08-27T19:01:20.083Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -195,6 +195,18 @@
     "vid": "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-27T19-01-20-083Z-ipkt72",
+   "quando": "2026-08-27T19:01:20.083Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-27-sincronia2",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-ep-disagreements-40-years-of-the-logic-of-deep-disagreements",
+    "st": 2
+   }
   }
  ],
  "_ids_dobrados": [
@@ -206,12 +218,18 @@
   "2026-08-27T02-58-00-678Z-ipkt72",
   "2026-08-27T02-58-04-843Z-ipkt72",
   "2026-08-27T02-58-05-343Z-ipkt72",
-  "2026-08-27T18-51-19-252Z-ipkt72"
+  "2026-08-27T18-51-19-252Z-ipkt72",
+  "2026-08-27T19-01-20-083Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
    "st": 2,
    "quando": "2026-08-27T18:51:19.252Z",
+   "aparelho": "ipkt72"
+  },
+  "anpof-chamadas-ep-disagreements-40-years-of-the-logic-of-deep-disagreements": {
+   "st": 2,
+   "quando": "2026-08-27T19:01:20.083Z",
    "aparelho": "ipkt72"
   }
  },
