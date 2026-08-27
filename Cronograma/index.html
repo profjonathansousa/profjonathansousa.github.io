@@ -364,7 +364,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-27-sincronia3";
+const APP_VERSION = "2026-08-27-sincronia4";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -2185,6 +2185,13 @@ try{
     var agora = Date.now();
     if(agora - ULTIMA_BUSCA < 20000) return;
     ULTIMA_BUSCA = agora;
+    /* checkUpdate junto, e nao so buscarEstado. Ele so rodava no boot, entao
+       uma aba deixada aberta nunca ficava sabendo de uma versao nova. Foi
+       exatamente assim que o Safari do Mac passou a tarde na sincronia2
+       depois da sincronia3 no ar: marcando vagas sem publicar nada, porque o
+       codigo que publica estava na versao que ele nao tinha carregado. Uma
+       correcao que so chega a quem recarrega e meia correcao. */
+    try{ checkUpdate(); }catch(e){}
     buscarEstado();
   });
 }catch(e){ console.error("busca da entrada/estado falhou:", e); }
