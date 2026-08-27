@@ -207,6 +207,18 @@
     "vid": "anpof-chamadas-ep-disagreements-40-years-of-the-logic-of-deep-disagreements",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-26T12-00-00-000Z-s41hky",
+   "quando": "2026-08-26T12:00:00.000Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-27-sincronia3",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-doutorado-profissional-em-filosofia-e-ensino-do-pais-em-2026",
+    "st": 2
+   }
   }
  ],
  "_ids_dobrados": [
@@ -219,7 +231,8 @@
   "2026-08-27T02-58-04-843Z-ipkt72",
   "2026-08-27T02-58-05-343Z-ipkt72",
   "2026-08-27T18-51-19-252Z-ipkt72",
-  "2026-08-27T19-01-20-083Z-ipkt72"
+  "2026-08-27T19-01-20-083Z-ipkt72",
+  "2026-08-26T12-00-00-000Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -231,6 +244,11 @@
    "st": 2,
    "quando": "2026-08-27T19:01:20.083Z",
    "aparelho": "ipkt72"
+  },
+  "anpof-doutorado-profissional-em-filosofia-e-ensino-do-pais-em-2026": {
+   "st": 2,
+   "quando": "2026-08-26T12:00:00.000Z",
+   "aparelho": "s41hky"
   }
  },
  "metas": {}
