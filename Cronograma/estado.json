@@ -2,7 +2,7 @@
  "_versao": 2,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-27T19:06:35.815Z",
+ "_dobrado_em": "2026-08-27T19:12:37.337Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -687,6 +687,18 @@
     "vid": "anpof-chamadas--xxx-da-association-internationale-des-amis-de-hobbes-franca",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-27T19-12-37-337Z-ipkt72",
+   "quando": "2026-08-27T19:12:37.337Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-27-sincronia3",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philevents-146341",
+    "st": 2
+   }
   }
  ],
  "_ids_dobrados": [
@@ -737,7 +749,8 @@
   "2026-08-26T12-00-00-030Z-ipkt72",
   "2026-08-26T12-00-00-031Z-ipkt72",
   "2026-08-26T12-00-00-032Z-ipkt72",
-  "2026-08-27T12-00-00-033Z-ipkt72"
+  "2026-08-27T12-00-00-033Z-ipkt72",
+  "2026-08-27T19-12-37-337Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -918,6 +931,11 @@
   "anpof-chamadas--xxx-da-association-internationale-des-amis-de-hobbes-franca": {
    "st": 2,
    "quando": "2026-08-27T12:00:00.033Z",
+   "aparelho": "ipkt72"
+  },
+  "philevents-146341": {
+   "st": 2,
+   "quando": "2026-08-27T19:12:37.337Z",
    "aparelho": "ipkt72"
   }
  },
