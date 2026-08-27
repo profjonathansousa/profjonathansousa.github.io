@@ -364,7 +364,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-27-sincronia2";
+const APP_VERSION = "2026-08-27-sincronia3";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1292,8 +1292,12 @@ function aparelhoId(){
 
 /* Hora de verdade, não a do carregamento da página: o `now` do topo é fixado
    quando o app abre, e um celular que passa a noite aberto carimbaria ontem. */
-function enfileirarToque(tipo, dados){
-  var t = new Date();
+function enfileirarToque(tipo, dados, quandoISO){
+  /* quandoISO existe para UM caso: publicar, uma vez, o que ja estava
+     marcado no aparelho antes de este mecanismo existir. Sem ele, uma
+     marcacao de semana passada subiria com a data de hoje e venceria uma
+     marcacao recente feita no outro aparelho. */
+  var t = quandoISO ? new Date(quandoISO) : new Date();
   var f = getToques();
   f.push({ v:TOQUES_SCHEMA,
            id: t.toISOString().replace(/[:.]/g,"-") + "-" + aparelhoId(),
@@ -1708,6 +1712,40 @@ var VG_VAGAS = {itens:[]}, VG_CHAMADAS = {itens:[]}, VG_BUSCOU = false;
 
 function vgTriagem(){ return LS("cron:triagem", {}) || {}; }
 function vgSalvarTriagem(t){ save("cron:triagem", t); }
+
+/* MIGRACAO, UMA VEZ POR APARELHO.
+   O toque so publica marcacao NOVA. Uma vaga marcada antes desta versao
+   existe so no aparelho que a marcou, e nao viajaria nunca — foi o que
+   aconteceu com tres "vou me candidatar" em 27/08. Esta rotina publica,
+   uma unica vez, o que ja estava aqui.
+
+   A DATA E A DA MARCACAO, nao a de agora: a triagem antiga guardava o dia
+   em `quando`, e e ele que vai no toque, ao meio-dia UTC. Assim o relogio
+   continua decidindo direito, e uma marcacao recente do outro aparelho nao
+   e atropelada por uma antiga que so agora subiu. O milissegundo somado por
+   item existe porque o id do toque nasce do instante: duas marcacoes do
+   mesmo dia gerariam o mesmo id, e a dobra descartaria a segunda como ja
+   vista. */
+function migrarTriagemUmaVez(){
+  try{
+    if(LS("cron:triagem-publicada", false)) return;
+    var t = LS("cron:triagem", {}) || {};
+    var vids = Object.keys(t), n = 0;
+    vids.forEach(function(vid){
+      var r = t[vid];
+      if(!r || !r.st) return;      /* st 0 e ausencia de marca */
+      if(r.em) return;             /* ja nasceu com instante: ja viaja */
+      var dia = (r.quando && /^\d{4}-\d{2}-\d{2}$/.test(r.quando)) ? r.quando : ymd(new Date());
+      var em = new Date(new Date(dia + "T12:00:00.000Z").getTime() + n).toISOString();
+      r.em = em; t[vid] = r;
+      enfileirarToque("triagem", {vid:vid, st:r.st}, em);
+      n++;
+    });
+    save("cron:triagem", t);
+    save("cron:triagem-publicada", true);
+    if(n) console.log("triagem: " + n + " marcacao(oes) anterior(es) publicada(s).");
+  }catch(e){ console.error("migracao da triagem falhou:", e); }
+}
 function vgEstado(id){ var t = vgTriagem()[id]; return t ? (t.st||0) : 0; }
 function vgMarcar(id, st){
   var t = vgTriagem();
@@ -1946,6 +1984,7 @@ renderSyncEstado();
 renderToquesAviso();
 /* Sobe sozinho ao abrir e quando a rede volta. Em silêncio: o toque foi feito,
    o envio é problema do app, não seu. */
+try{ migrarTriagemUmaVez(); }catch(e){ console.error("migracao da triagem falhou:", e); }
 try{
   enviarToques(true);
   window.addEventListener("online", function(){ enviarToques(true); });
@@ -2133,9 +2172,21 @@ function buscarEstado(){
 
 /* Estrutura primeiro, progresso depois: um item precisa existir para receber
    estado. E de novo quando a rede volta, porque quem abriu offline abriu velho. */
+var ULTIMA_BUSCA = 0;
 try{
   buscarEntrada().then(buscarEstado);
   window.addEventListener("online", function(){ buscarEntrada().then(buscarEstado); });
+  /* Voltar para a aba tambem re-le o estado. Sem isto, o celular que ficou
+     aberto no bolso continua mostrando o que era verdade quando foi aberto,
+     e so um recarregamento a mao mostra o que o Mac marcou depois. Trava de
+     20s para alternar de app nao virar uma busca por vez. */
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState !== "visible") return;
+    var agora = Date.now();
+    if(agora - ULTIMA_BUSCA < 20000) return;
+    ULTIMA_BUSCA = agora;
+    buscarEstado();
+  });
 }catch(e){ console.error("busca da entrada/estado falhou:", e); }
 </script>
 </body>
