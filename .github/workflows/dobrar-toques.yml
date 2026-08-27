@@ -1,0 +1,80 @@
+name: Dobrar toques do Cronograma
+
+# POR QUE ESTE WORKFLOW EXISTE.
+# O Cronograma escreve toques do navegador direto para Cronograma/toques/, pela
+# API do GitHub. Mas quem consolida os toques em Cronograma/estado.json e o
+# dobrar_toques.py — e ate 27/08 ele so rodava quando alguem o chamava a mao.
+# Sem a dobra, os toques sobem e nada desce: o Mac marca, o celular nao ve.
+# Este workflow fecha a volta sem depender de nenhum aparelho estar ligado.
+#
+# NAO HA LACO. O toque sobe com o token pessoal e dispara este workflow; a dobra
+# sai com o GITHUB_TOKEN, e push feito com ele nao dispara workflow nenhum.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Cronograma/toques/**'
+  # Rede de seguranca: se uma rodada falhar (rede, corrida com o coletor), a
+  # proxima varredura pega os toques que ficaram para tras.
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+# Mesmo grupo do coletor semanal: dois jobs empurrando para main ao mesmo tempo
+# e a unica corrida que este desenho ainda pode perder.
+concurrency:
+  group: escrita-no-main
+  cancel-in-progress: false
+
+jobs:
+  dobrar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar o repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Dobrar os toques
+        run: python scripts/dobrar_toques.py
+
+      - name: Gravar no repositorio
+        id: gravar
+        run: |
+          git config user.name  "dobra-de-toques"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # `Cronograma` inteiro, e nao os dois caminhos: entre dobras a pasta
+          # toques/ fica vazia, e o Git nao versiona pasta vazia. Nomear um
+          # caminho que nao existe faria o `git add` falhar, e a varredura de 15
+          # em 15 minutos ficaria vermelha justamente quando nao ha nada a fazer.
+          git add -A Cronograma
+          if git diff --staged --quiet; then
+            echo "Nada a dobrar nesta rodada."
+            echo "mudou=nao" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "dobra: toques consolidados em estado.json"
+            git pull --rebase --autostash
+            git push
+            echo "mudou=sim" >> "$GITHUB_OUTPUT"
+          fi
+
+      # O site le o estado.json servido pelo Pages. Um push feito pelo
+      # GITHUB_TOKEN nem sempre dispara a reconstrucao sozinho, entao ela e
+      # pedida aqui de proposito. continue-on-error: se este pedido falhar, a
+      # dobra ja esta gravada e a proxima construcao a publica.
+      - name: Pedir a construcao do Pages
+        if: steps.gravar.outputs.mudou == 'sim'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds"

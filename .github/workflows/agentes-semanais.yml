@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: agentes-semanais
+  group: escrita-no-main
   cancel-in-progress: false
 
 jobs:

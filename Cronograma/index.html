@@ -364,7 +364,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-26-sincronia";
+const APP_VERSION = "2026-08-27-sincronia2";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1109,31 +1109,54 @@ function renderPendencias(){
 }
 function trazerMeta(i){
   const o=pendencias()[i]; if(!o)return;
+  const nova={id:"m"+Date.now(), t:o.meta.t, done:false, de:o.mes, em:new Date().toISOString()};
   const destino=getMetas(monthKey);
-  destino.push({id:"m"+Date.now(), t:o.meta.t, done:false, de:o.mes});
+  destino.push(nova);
   setMetas(destino,monthKey);
   const origem=getMetas(o.mes).filter(function(m){return m.id!==o.meta.id;});
   setMetas(origem,o.mes);
+  /* Trazer e mover: nasce uma no mes atual e morre a do mes de origem. Os
+     dois toques saem juntos, senao o outro aparelho ficaria com as duas. */
+  tocarMeta(monthKey,nova,false);
+  tocarMeta(o.mes,o.meta,true);
   renderMetas();
 }
 function trazerTodas(){
   const p=pendencias(); const destino=getMetas(monthKey); const porMes={};
+  const agora=new Date().toISOString(); const novas=[];
   p.forEach(function(o,n){
-    destino.push({id:"m"+Date.now()+"-"+n, t:o.meta.t, done:false, de:o.mes});
+    const nova={id:"m"+Date.now()+"-"+n, t:o.meta.t, done:false, de:o.mes, em:agora};
+    destino.push(nova); novas.push(nova);
     (porMes[o.mes]=porMes[o.mes]||[]).push(o.meta.id);
   });
   setMetas(destino,monthKey);
   Object.keys(porMes).forEach(function(k){
     setMetas(getMetas(k).filter(function(m){return porMes[k].indexOf(m.id)<0;}),k);
   });
+  novas.forEach(function(m){ tocarMeta(monthKey, m, false); });
+  p.forEach(function(o){ tocarMeta(o.mes, o.meta, true); });
   renderMetas();
 }
 function dispensarAviso(){save("cron:metas-aviso:"+monthKey,true);renderMetas();}
 function trocarMes(k){mesAtivo=k;renderMetas();}
-function toggleMeta(i){const m=getMetas();m[i].done=!m[i].done;setMetas(m);renderMetas();}
-function editMeta(i,t){const m=getMetas();m[i].t=t.trim()||m[i].t;setMetas(m);}
-function delMeta(i){const m=getMetas();m.splice(i,1);setMetas(m);renderMetas();}
-function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:false});setMetas(m);renderMetas();
+/* UMA META VIAJA POR ID, nao pela lista do mes. Se o mes inteiro viajasse,
+   duas metas criadas em aparelhos diferentes no mesmo mes se apagariam: a
+   ultima lista a chegar levaria a outra junto. E `del` e a lapide de uma meta
+   removida — sem ela, quem apaga no celular veria a meta voltar do Mac no
+   carregamento seguinte, porque ausencia nao se distingue de desconhecimento. */
+function tocarMeta(mes, m, apagada){
+  if(!m || !m.id) return;
+  enfileirarToque("meta", {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
+                           de:m.de||null, del:!!apagada});
+}
+function toggleMeta(i){const k=mesAtivo;const m=getMetas();if(!m[i])return;m[i].done=!m[i].done;m[i].em=new Date().toISOString();setMetas(m);tocarMeta(k,m[i],false);renderMetas();}
+/* Sai do onblur do contenteditable: so enfileira se o texto mudou de verdade,
+   senao cada clique fora do campo viraria um toque. */
+function editMeta(i,t){const k=mesAtivo;const m=getMetas();if(!m[i])return;const novo=t.trim()||m[i].t;if(novo===m[i].t)return;m[i].t=novo;m[i].em=new Date().toISOString();setMetas(m);tocarMeta(k,m[i],false);}
+function delMeta(i){const k=mesAtivo;const m=getMetas();const fora=m[i];if(!fora)return;m.splice(i,1);setMetas(m);tocarMeta(k,fora,true);renderMetas();}
+/* Nasce sem texto, e por isso nao enfileira nada: o toque sai no primeiro
+   editMeta, ja com o que voce escreveu. */
+function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:false, em:new Date().toISOString()});setMetas(m);renderMetas();
   const b=document.querySelectorAll("#metas-wrap .goal-text");if(b.length)b[b.length-1].focus();}
 function getEventos(){return LS("cron:eventos", JSON.parse(JSON.stringify(EVENTOS_DEFAULT)));}
 function setEventos(e){save("cron:eventos",e);}
@@ -1243,6 +1266,21 @@ const TOQUES_TETO = 500;
 function getToques(){ return LS("cron:toques", []) || []; }
 function setToques(f){ save("cron:toques", f); }
 
+/* ENVIO AUTOMATICO, COM ESPERA CURTA.
+   Antes, os toques so subiam ao abrir a pagina: quem marcava e fechava a aba
+   deixava a fila parada ate a proxima abertura. Agora cada toque agenda um
+   envio, e um toque novo adia o envio agendado. Marcar dez itens seguidos
+   continua sendo UM commit — que e o que protege o limite de reconstrucoes
+   do Pages, a razao pela qual o lote existe. */
+const ENVIO_ESPERA = 4000;
+var ENVIO_TIMER = null;
+function agendarEnvio(){
+  try{
+    if(ENVIO_TIMER) clearTimeout(ENVIO_TIMER);
+    ENVIO_TIMER = setTimeout(function(){ ENVIO_TIMER = null; enviarToques(true); }, ENVIO_ESPERA);
+  }catch(e){}
+}
+
 /* Identidade do aparelho: nasce no primeiro toque e não muda mais. Serve para o
    Cowork saber de onde veio cada toque, e para dois aparelhos que tocam no mesmo
    segundo não gerarem o mesmo nome de arquivo. */
@@ -1271,6 +1309,7 @@ function enfileirarToque(tipo, dados){
   }
   setToques(f);
   renderToquesAviso();
+  agendarEnvio();
 }
 
 /* Só desenha se o elemento existir. A tela de ajustes ainda não foi construída,
@@ -1673,8 +1712,13 @@ function vgEstado(id){ var t = vgTriagem()[id]; return t ? (t.st||0) : 0; }
 function vgMarcar(id, st){
   var t = vgTriagem();
   if((t[id] && t[id].st) === st) st = VG_ST.NOVO;   /* tocar de novo desmarca */
-  t[id] = {st:st, quando:ymd(new Date())};
+  /* `quando` continua sendo o dia, que e o que a tela mostra; `em` e o
+     instante, e existe porque sem ele nao ha como decidir quem venceu
+     quando o Mac e o celular marcam a mesma vaga no mesmo dia. */
+  var agora = new Date();
+  t[id] = {st:st, quando:ymd(agora), em:agora.toISOString()};
   vgSalvarTriagem(t);
+  enfileirarToque("triagem", {vid:id, st:st});
   vgRender();
 }
 function vgEsc(s){ return String(s==null?"":s)
@@ -1905,6 +1949,13 @@ renderToquesAviso();
 try{
   enviarToques(true);
   window.addEventListener("online", function(){ enviarToques(true); });
+  /* Sair da aba tambem envia. Quem marca e troca de app nao deixa a fila
+     parada. E melhor esforco: se a rede cortar no meio, a fila fica intacta
+     e sobe no proximo carregamento. */
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "hidden") enviarToques(true);
+  });
+  window.addEventListener("pagehide", function(){ enviarToques(true); });
 }catch(e){ console.error("envio de toques falhou ao iniciar:", e); }
 document.getElementById("ver").textContent = "v"+APP_VERSION;
 /* Migração do esquema v1 -> v2. Roda UMA vez, antes das sementes e de
@@ -2001,9 +2052,9 @@ function buscarEstado(){
     .then(function(r){ return r.ok ? r.json() : null; })
     .catch(function(){ return null; })
     .then(function(est){
-      if(!est || !est.itens) return;
+      if(!est) return;
       var mudou = false;
-      PAINEIS.forEach(function(P){
+      if(est.itens) PAINEIS.forEach(function(P){
         var projs = getProjs(P.id), mudouAqui = false;
         (projs||[]).forEach(function(pr){
           (pr.subs||[]).forEach(function(x){
@@ -2023,6 +2074,59 @@ function buscarEstado(){
         });
         if(mudouAqui){ setProjs(P.id, projs); mudou = true; }
       });
+      /* ---- Vagas: a triagem tambem desce ----
+         Mesma regra do relogio, vaga a vaga. O id da vaga e estavel
+         (philjobs-31649), entao a triagem sobrevive a coleta semanal, que
+         reescreve dados/vagas.json inteiro toda segunda. */
+      if(est.triagem){
+        var tri = LS("cron:triagem", {}) || {}, mudouTri = false;
+        Object.keys(est.triagem).forEach(function(vid){
+          var r = est.triagem[vid];
+          if(!r || !r.quando) return;
+          var atual = tri[vid];
+          if(atual && (atual.em || "") >= r.quando) return;
+          tri[vid] = {st:r.st, quando:String(r.quando).slice(0,10), em:r.quando};
+          mudouTri = true;
+        });
+        if(mudouTri){
+          save("cron:triagem", tri);
+          try{
+            var abaVg = document.getElementById("view-vagas");
+            if(abaVg && !abaVg.hidden && typeof vgRender === "function") vgRender();
+          }catch(e){}
+        }
+      }
+      /* ---- Metas do mes ----
+         Chave e "AAAA-MM/id". Meta desconhecida entra; meta com lapide sai;
+         meta conhecida so muda se o que vem de fora for mais novo do que a
+         ultima mudanca feita aqui. */
+      if(est.metas){
+        var porMesR = {};
+        Object.keys(est.metas).forEach(function(k){
+          var corte = k.indexOf("/");
+          if(corte < 0) return;
+          var mes = k.slice(0, corte);
+          (porMesR[mes] = porMesR[mes] || []).push({mid:k.slice(corte+1), r:est.metas[k]});
+        });
+        var mudouAlgumaMeta = false;
+        Object.keys(porMesR).forEach(function(mes){
+          var lista = getMetas(mes), mudouMes = false;
+          porMesR[mes].forEach(function(o){
+            var r = o.r;
+            if(!r || !r.quando) return;
+            var j = -1;
+            for(var n=0;n<lista.length;n++){ if(lista[n].id === o.mid){ j = n; break; } }
+            if(j > -1 && (lista[j].em || "") >= r.quando) return;
+            if(r.del){ if(j > -1){ lista.splice(j,1); mudouMes = true; } return; }
+            if(j < 0){ lista.push({id:o.mid, t:r.t||"", done:!!r.done, de:r.de||undefined, em:r.quando}); }
+            else { lista[j].t = r.t || lista[j].t; lista[j].done = !!r.done;
+                   if(r.de) lista[j].de = r.de; lista[j].em = r.quando; }
+            mudouMes = true;
+          });
+          if(mudouMes){ setMetas(lista, mes); mudouAlgumaMeta = true; }
+        });
+        if(mudouAlgumaMeta){ try{ renderMetas(); }catch(e){} }
+      }
       if(mudou){ renderOrdo(); renderHoje(); renderSemana(); renderTrilhos(); }
     });
 }

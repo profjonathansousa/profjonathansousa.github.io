@@ -19,6 +19,13 @@ NADA SE PERDE. Um toque dobrado sai da pasta, mas o seu conteúdo fica em
 duas vezes não conte duas vezes. Toque que este script não entende continua onde
 está, e é relatado no fim.
 
+TRES COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
+    registro -> progresso dos subitens dos trilhos, em `itens`
+    triagem  -> a marca de cada vaga na aba Vagas, em `triagem`
+    meta     -> as metas do mes, uma a uma, em `metas`
+Toque de tipo que este script nao conhece nao e descartado: vai para o
+historico e o id fica em _ids_dobrados, para nao ser contado duas vezes.
+
 USO:
     python3 scripts/dobrar_toques.py            # dobra e relata
     python3 scripts/dobrar_toques.py --seco     # só relata, não escreve nada
@@ -48,7 +55,7 @@ DIR_TOQUES = os.path.join(RAIZ, "Cronograma", "toques")
 DIR_DOBRADOS = os.path.join(DIR_TOQUES, "_dobrados")
 ARQ_ESTADO = os.path.join(RAIZ, "Cronograma", "estado.json")
 ARQ_ENTRADA = os.path.join(RAIZ, "Cronograma", "entrada.json")
-ESTADO_VERSAO = 1
+ESTADO_VERSAO = 2
 
 
 def estado_vazio():
@@ -60,6 +67,8 @@ def estado_vazio():
         "_escritor": "scripts/dobrar_toques.py",
         "_dobrado_em": None,
         "itens": {},
+        "triagem": {},
+        "metas": {},
         "historico": [],
         "_ids_dobrados": [],
     }
@@ -72,6 +81,9 @@ def carregar_estado():
         e = json.load(f)
     for k, v in estado_vazio().items():
         e.setdefault(k, v)
+    # Um estado gravado pela versao 1 ganha as secoes novas vazias acima; a
+    # marca de versao precisa acompanhar, senao ele mente sobre a propria forma.
+    e["_versao"] = ESTADO_VERSAO
     return e
 
 
@@ -90,12 +102,55 @@ def ler_arquivo_de_toques(caminho):
     raise ValueError("forma desconhecida")
 
 
-def chave(t):
-    """Um item e identificado por painel/projeto/subitem. O titulo NAO entra na
-    chave: renomear um item nao pode criar um item novo — foi exatamente esse o
-    defeito que o log por id consertou no Passo 4."""
+def alvo(t):
+    """Onde este toque manda: (secao, chave). (None, None) quando ele nao manda
+    em lugar nenhum — e mesmo assim ele entra no historico.
+
+    A chave nunca leva titulo nem texto. Um item e painel/projeto/subitem; uma
+    vaga e o seu id; uma meta e mes/id. Renomear nao pode criar um item novo —
+    foi exatamente esse o defeito que o log por id consertou no Passo 4."""
+    tipo = t.get("tipo") or "registro"
     d = t.get("dados") or {}
-    return "%s/%s/%s" % (d.get("pid"), d.get("projId"), d.get("subId"))
+    if tipo == "registro":
+        if not d.get("subId"):
+            return (None, None)
+        return ("itens", "%s/%s/%s" % (d.get("pid"), d.get("projId"), d.get("subId")))
+    if tipo == "triagem":
+        if not d.get("vid"):
+            return (None, None)
+        return ("triagem", str(d.get("vid")))
+    if tipo == "meta":
+        if not d.get("mes") or not d.get("mid"):
+            return (None, None)
+        return ("metas", "%s/%s" % (d.get("mes"), d.get("mid")))
+    return (None, None)
+
+
+def valor(t):
+    """O que fica gravado no estado. `quando` e `aparelho` sao de todos os tipos:
+    e por `quando` que a proxima rodada decide quem vence."""
+    tipo = t.get("tipo") or "registro"
+    d = t.get("dados") or {}
+    if tipo == "registro":
+        v = {"st": d.get("para"),
+             "vida": d.get("vida", "ativo"),
+             "temMotivo": bool(d.get("temMotivo")),
+             "projT": d.get("projT"),
+             "subT": d.get("subT")}
+    elif tipo == "triagem":
+        v = {"st": d.get("st")}
+    else:
+        # A meta apagada vira lapide: fica no estado com del=true, para que o
+        # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e
+        # desconhecimento sao a mesma coisa, e a meta ressuscita no proximo
+        # carregamento do outro aparelho.
+        v = {"t": d.get("t", ""),
+             "done": bool(d.get("done")),
+             "de": d.get("de"),
+             "del": bool(d.get("del"))}
+    v["quando"] = t.get("quando")
+    v["aparelho"] = t.get("aparelho")
+    return v
 
 
 def dobrar(estado, toques):
@@ -105,34 +160,36 @@ def dobrar(estado, toques):
     # depois no tempo e quem manda no estado final.
     novos.sort(key=lambda t: t.get("quando") or "")
     atrasados = 0
+    sem_alvo = 0
     for t in novos:
-        d = t.get("dados") or {}
-        if not d.get("subId"):
+        secao, k = alvo(t)
+        if secao is None:
+            # Tipo que este script nao conhece — uma versao da pagina mais nova
+            # do que ele, tipicamente. Vai para o historico assim mesmo: o
+            # arquivo de toque sera apagado, e o que ele dizia nao pode sumir
+            # junto. Quando o script aprender o tipo, o dado ainda estara aqui.
+            estado["historico"].append(t)
+            estado["_ids_dobrados"].append(t["id"])
+            sem_alvo += 1
             continue
         # Toque atrasado NAO derruba estado mais novo. Acontece de verdade: voce
         # toca no Mac sem rede as 10h, toca no celular as 10h05 com rede, e o Mac
         # so consegue enviar depois. O toque das 10h e novo para esta funcao (id
         # nunca visto) mas velho para o item. Ele entra no historico do mesmo
         # jeito — nada se perde —, so nao manda no estado.
-        atual = estado["itens"].get(chave(t))
+        atual = estado.setdefault(secao, {}).get(k)
         if atual and (atual.get("quando") or "") > (t.get("quando") or ""):
             estado["historico"].append(t)
             estado["_ids_dobrados"].append(t["id"])
             atrasados += 1
             continue
-        estado["itens"][chave(t)] = {
-            "st": d.get("para"),
-            "vida": d.get("vida", "ativo"),
-            "temMotivo": bool(d.get("temMotivo")),
-            "projT": d.get("projT"),
-            "subT": d.get("subT"),
-            "quando": t.get("quando"),
-            "aparelho": t.get("aparelho"),
-        }
+        estado[secao][k] = valor(t)
         estado["historico"].append(t)
         estado["_ids_dobrados"].append(t["id"])
     if atrasados:
         print("Toques atrasados (guardados no historico, sem mandar no estado): %d" % atrasados)
+    if sem_alvo:
+        print("Toques de tipo desconhecido (guardados no historico): %d" % sem_alvo)
     return novos
 
 
@@ -282,15 +339,26 @@ def main():
     print("Arquivos lidos:      %d" % len(lidos))
     print("Toques dentro deles: %d" % len(dobrados_agora))
     print("Novos (nao dobrados antes): %d" % len(novos))
-    print("Itens no estado:     %d" % len(estado["itens"]))
+    print("Trilhos no estado:   %d" % len(estado.get("itens") or {}))
+    print("Vagas triadas:       %d" % len(estado.get("triagem") or {}))
+    print("Metas:               %d" % len(estado.get("metas") or {}))
 
     if seco:
         print("\n--seco: nada foi escrito nem movido.")
         for t in novos:
             d = t.get("dados") or {}
-            print("  %s  %s / %s  ->  st=%s vida=%s" % (
-                (t.get("quando") or "")[:16], d.get("projT"), d.get("subT"),
-                d.get("para"), d.get("vida")))
+            secao, k = alvo(t)
+            if secao == "itens":
+                detalhe = "%s / %s  ->  st=%s vida=%s" % (
+                    d.get("projT"), d.get("subT"), d.get("para"), d.get("vida"))
+            elif secao == "triagem":
+                detalhe = "vaga %s  ->  st=%s" % (k, d.get("st"))
+            elif secao == "metas":
+                detalhe = "meta %s  ->  %s" % (
+                    k, "apagada" if d.get("del") else ("feita" if d.get("done") else "aberta"))
+            else:
+                detalhe = "(tipo %s, sem alvo)" % (t.get("tipo") or "?")
+            print("  %s  %s" % ((t.get("quando") or "")[:16], detalhe))
         return 0
 
     # So anda para a frente. Um arquivo antigo que reaparece (um pull que traz de
