@@ -2,7 +2,7 @@
  "_versao": 2,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-27T19:12:37.337Z",
+ "_dobrado_em": "2026-08-29T23:49:51.569Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -14,13 +14,13 @@
    "aparelho": "s41hky"
   },
   "pipeline/a00/a00-3": {
-   "st": 0,
+   "st": 1,
    "vida": "inaplicavel",
    "temMotivo": true,
    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
    "subT": "Janela 0 · 1.0-FIL · mapa argumentativo",
-   "quando": "2026-08-27T19:06:35.815Z",
-   "aparelho": "ipkt72"
+   "quando": "2026-08-29T23:49:51.569Z",
+   "aparelho": "s41hky"
   }
  },
  "historico": [
@@ -699,6 +699,26 @@
     "vid": "philevents-146341",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-29T23-49-51-569Z-s41hky",
+   "quando": "2026-08-29T23:49:51.569Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-envio1",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-08-29",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-3",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · 1.0-FIL · mapa argumentativo",
+    "de": 0,
+    "para": 1,
+    "vida": "inaplicavel",
+    "temMotivo": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -750,7 +770,8 @@
   "2026-08-26T12-00-00-031Z-ipkt72",
   "2026-08-26T12-00-00-032Z-ipkt72",
   "2026-08-27T12-00-00-033Z-ipkt72",
-  "2026-08-27T19-12-37-337Z-ipkt72"
+  "2026-08-27T19-12-37-337Z-ipkt72",
+  "2026-08-29T23-49-51-569Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
