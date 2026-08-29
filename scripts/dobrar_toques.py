@@ -155,7 +155,20 @@ def valor(t):
 
 def dobrar(estado, toques):
     ja = set(estado["_ids_dobrados"])
-    novos = [t for t in toques if t.get("id") and t["id"] not in ja]
+    # O `ja` cresce DENTRO desta selecao. Sem isso o conjunto era fotografado
+    # uma vez e nunca mais olhado, e o mesmo toque presente em dois arquivos do
+    # mesmo lote passava duas vezes — entrava duas vezes no historico e duas
+    # vezes em _ids_dobrados. Passou a acontecer de verdade quando o navegador
+    # ganhou nome de arquivo derivado do lote inteiro: se a resposta de um envio
+    # se perde, o toque ja gravado sobe outra vez junto dos novos, e os dois
+    # arquivos podem cair na mesma rodada.
+    novos = []
+    for t in toques:
+        ident = t.get("id")
+        if not ident or ident in ja:
+            continue
+        ja.add(ident)
+        novos.append(t)
     # Ordem por relogio, nao por ordem de leitura do diretorio: quem chega
     # depois no tempo e quem manda no estado final.
     novos.sort(key=lambda t: t.get("quando") or "")

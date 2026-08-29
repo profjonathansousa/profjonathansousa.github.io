@@ -364,7 +364,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-27-sincronia4";
+const APP_VERSION = "2026-08-29-envio1";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1402,29 +1402,79 @@ function paraBase64(obj){
   return btoa(bin);
 }
 
+/* O NOME CARREGA A IDENTIDADE DO LOTE INTEIRO.
+   Era aqui o defeito. Com o nome derivado so de fila[0], um 422 provava apenas
+   que o PRIMEIRO toque ja subira — e a fila inteira era cortada mesmo assim,
+   levando junto tudo que tivesse entrado atras dele. O codigo sempre supos que
+   o nome identifica o que esta dentro; isso valia no modo "um" e deixou de
+   valer quando o lote entrou, sem que o nome acompanhasse.
+   Com o nome derivado do CONJUNTO, 422 volta a significar o que se supunha:
+   um arquivo com este nome so pode ter sido escrito por um envio com
+   exatamente estes toques, nesta ordem.
+   O prefixo continua sendo o instante do primeiro toque, para que a pasta siga
+   ordenada por tempo — a ordem de leitura da dobra depende disso. */
+function nomeDoLote(fila){
+  return fila[0].id + "-" + fila.length + "-" + impressaoDeIds(fila) + ".json";
+}
+/* FNV-1a de 32 bits sobre os ids, em ordem. Nao e criptografia: e uma
+   impressao curta e estavel do conjunto, calculada sem depender de
+   crypto.subtle, que e assincrono e exige contexto seguro. */
+function impressaoDeIds(fila){
+  var s = fila.map(function(t){ return t.id; }).join("|");
+  var h = 0x811c9dc5;
+  for(var i=0;i<s.length;i++){
+    h ^= s.charCodeAt(i);
+    h = (h + (h<<1) + (h<<4) + (h<<7) + (h<<8) + (h<<24)) >>> 0;
+  }
+  return ("0000000" + h.toString(16)).slice(-8);
+}
+
+/* CORTE DE TEMPO. Uma conexão pendurada nunca resolve a promessa do fetch, e
+   sem corte o ENVIANDO nunca voltava a false: a aba parava de enviar até ser
+   recarregada. O aborto cai no .catch abaixo e vira status 0 — "sem rede" —,
+   que descreve exatamente o que aconteceu, e deixa a fila intacta. */
+const ENVIO_TIMEOUT = 20000;
+
 function gravarNoGitHub(nome, corpo, mensagem){
-  return fetch("https://api.github.com/repos/"+GH_DONO+"/"+GH_REPO+"/contents/"+GH_PASTA+"/"+nome, {
+  /* O corpo primeiro, e só depois o relógio: se paraBase64 falhar, ele falha
+     antes de existir temporizador algum para ficar solto por aí. */
+  var corpoJson = JSON.stringify({ message: mensagem, content: paraBase64(corpo), branch: GH_RAMO });
+  var ctl = null, corte = null;
+  try{ ctl = new AbortController(); }catch(e){ ctl = null; }
+  if(ctl) corte = setTimeout(function(){ try{ ctl.abort(); }catch(e){} }, ENVIO_TIMEOUT);
+  var solta = function(){ if(corte){ clearTimeout(corte); corte = null; } };
+  var pedido = {
     method: "PUT",
     headers: { "Authorization": "Bearer " + getToken(),
                "Accept": "application/vnd.github+json",
                "X-GitHub-Api-Version": "2022-11-28" },
-    body: JSON.stringify({ message: mensagem, content: paraBase64(corpo), branch: GH_RAMO })
-  }).then(function(res){
-    if(res.status === 201 || res.status === 200) return {ok:true};
-    /* 422 é o que a API responde quando o arquivo já existe e não veio sha.
-       Como o nome carrega o id do toque, isso significa reenvio do que já subiu:
-       não é falha, é a fila tendo sido enviada duas vezes. */
-    if(res.status === 422) return {ok:true, jaEstava:true};
-    return res.text().catch(function(){return "";}).then(function(t){
-      return {ok:false, status:res.status, msg:(t||"").slice(0,300)};
+    body: corpoJson
+  };
+  if(ctl) pedido.signal = ctl.signal;
+  return fetch("https://api.github.com/repos/"+GH_DONO+"/"+GH_REPO+"/contents/"+GH_PASTA+"/"+nome, pedido)
+    .then(function(res){
+      solta();
+      if(res.status === 201 || res.status === 200) return {ok:true};
+      /* 422 é o que a API responde quando o arquivo já existe e não veio sha.
+         O nome carrega agora a identidade do LOTE INTEIRO — primeiro id,
+         quantidade e impressão dos ids —, então um arquivo com este nome só
+         pode ter sido escrito por um envio com exatamente estes toques. É
+         reenvio do que já subiu, e não falha. */
+      if(res.status === 422) return {ok:true, jaEstava:true};
+      return res.text().catch(function(){return "";}).then(function(t){
+        return {ok:false, status:res.status, msg:(t||"").slice(0,300)};
+      });
+    })
+    .catch(function(e){
+      solta();
+      return {ok:false, status:0, msg:String(e && e.message || e)};
     });
-  }).catch(function(e){ return {ok:false, status:0, msg:String(e && e.message || e)}; });
 }
 
 function explicarFalha(f, enviados){
   var base = enviados ? enviados + " toque(s) subiram antes da falha; o resto continua na fila.\n\n"
                       : "Nada subiu; a fila está intacta.\n\n";
-  if(f.status === 0)   return base + "Sem rede. Tente de novo quando houver sinal.";
+  if(f.status === 0)   return base + "Sem rede, ou o GitHub não respondeu a tempo. Tente de novo quando houver sinal.";
   if(f.status === 401) return base + "O GitHub recusou o token. Ele expirou, foi revogado, ou foi colado incompleto. Cole outro em Sincronização.";
   if(f.status === 403) return base + "Token sem permissão para gravar. Ele precisa de Contents: Read and write neste repositório — e só disso.";
   if(f.status === 404) return base + "Repositório ou caminho não encontrado: " + GH_DONO + "/" + GH_REPO + ". Se o token não enxerga este repositório, o GitHub responde 404 em vez de 403.";
@@ -1445,18 +1495,20 @@ function enviarToques(silencioso){
 
   ENVIANDO = true; renderToquesAviso();
 
+  /* Cada pacote diz QUAIS ids ele leva. E por eles, e nao por contagem, que a
+     fila e cortada depois. */
   var pacotes;
   if(TOQUES_POR_ARQUIVO === "um"){
-    pacotes = fila.map(function(t){ return {nome:t.id+".json", corpo:t, quantos:1,
+    pacotes = fila.map(function(t){ return {nome:t.id+".json", corpo:t, ids:[t.id],
              msg:"toque: "+((t.dados && t.dados.subT) || t.tipo)+" ("+t.aparelho+")"}; });
   } else {
-    pacotes = [{ nome: fila[0].id + ".json", quantos: fila.length,
+    pacotes = [{ nome: nomeDoLote(fila), ids: fila.map(function(t){ return t.id; }),
                  corpo: { v:TOQUES_SCHEMA, lote:fila[0].id, quando:new Date().toISOString(),
                           aparelho:aparelhoId(), app:APP_VERSION, toques:fila },
                  msg: "toques: " + fila.length + " de " + aparelhoId() }];
   }
 
-  var enviados = 0, falha = null;
+  var subiram = {}, enviados = 0, falha = null;
   /* Em ordem e parando na primeira falha: o que não subiu continua na fila,
      na ordem em que aconteceu. */
   var cadeia = Promise.resolve();
@@ -1464,17 +1516,31 @@ function enviarToques(silencioso){
     cadeia = cadeia.then(function(){
       if(falha) return;
       return gravarNoGitHub(pc.nome, pc.corpo, pc.msg).then(function(r){
-        if(r.ok) enviados += pc.quantos; else falha = r;
+        if(!r.ok){ falha = r; return; }
+        pc.ids.forEach(function(id){ subiram[id] = 1; });
+        enviados += pc.ids.length;
       });
     });
   });
 
+  /* A trava tem de cair pelos dois caminhos. Sem o segundo ramo do then, uma
+     exceção inesperada na cadeia deixava ENVIANDO em true para o resto da vida
+     da aba, e nada mais subia até um recarregamento. */
+  var terminar = function(){ ENVIANDO = false; renderToquesAviso(); };
+
   return cadeia.then(function(){
-    /* Relê a fila: um toque pode ter entrado enquanto o envio corria, e ele
-       entra no fim. Cortar pela frente nunca descarta o que chegou depois. */
-    if(enviados) setToques(getToques().slice(enviados));
-    ENVIANDO = false; renderToquesAviso();
+    /* CORTA POR ID, NÃO POR POSIÇÃO. O slice(enviados) de antes supunha que os
+       N primeiros da fila atual eram os que subiram — suposição que cai por
+       terra se um toque novo entrou no meio do envio, ou se outra aba do mesmo
+       aparelho já cortou a fila. Remover exatamente os ids que subiram não
+       depende de suposição nenhuma. */
+    if(enviados) setToques(getToques().filter(function(t){ return !subiram[t.id]; }));
+    terminar();
     if(falha && !silencioso) alert(explicarFalha(falha, enviados));
+  }, function(err){
+    terminar();
+    try{ console.error("envio de toques falhou:", err); }catch(e){}
+    if(!silencioso) alert("Não foi possível enviar agora. A fila está intacta e sobe na próxima tentativa.");
   });
 }
 
