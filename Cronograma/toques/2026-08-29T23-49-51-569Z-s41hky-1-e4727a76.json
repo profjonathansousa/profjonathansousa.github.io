@@ -1,0 +1,29 @@
+{
+ "v": 1,
+ "lote": "2026-08-29T23-49-51-569Z-s41hky",
+ "quando": "2026-08-29T23:49:55.574Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-29-envio1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-08-29T23-49-51-569Z-s41hky",
+   "quando": "2026-08-29T23:49:51.569Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-envio1",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-08-29",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-3",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · 1.0-FIL · mapa argumentativo",
+    "de": 0,
+    "para": 1,
+    "vida": "inaplicavel",
+    "temMotivo": true
+   }
+  }
+ ]
+}
