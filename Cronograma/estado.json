@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:58:51.991Z",
+ "_dobrado_em": "2026-08-30T15:29:50.500Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -14,12 +14,12 @@
    "aparelho": "s41hky"
   },
   "pipeline/a00/a00-3": {
-   "st": 0,
+   "st": 1,
    "vida": "inaplicavel",
    "temMotivo": true,
    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
    "subT": "Janela 0 · 1.0-FIL · mapa argumentativo",
-   "quando": "2026-08-29T23:59:20.301Z",
+   "quando": "2026-08-30T15:29:50.500Z",
    "aparelho": "s41hky"
   }
  },
@@ -1490,6 +1490,26 @@
     "del": false,
     "t": "Encontro Romântico - Projeto ACOLHER"
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T15-29-50-500Z-s41hky",
+   "quando": "2026-08-30T15:29:50.500Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-registro1",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-08-30",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-3",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · 1.0-FIL · mapa argumentativo",
+    "de": 0,
+    "para": 1,
+    "vida": "inaplicavel",
+    "temMotivo": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1594,7 +1614,8 @@
   "2026-08-30T01-58-48-189Z-s41hky",
   "2026-08-30T01-58-49-506Z-s41hky",
   "2026-08-30T01-58-50-774Z-s41hky",
-  "2026-08-30T01-58-51-991Z-s41hky"
+  "2026-08-30T01-58-51-991Z-s41hky",
+  "2026-08-30T15-29-50-500Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
