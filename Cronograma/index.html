@@ -394,7 +394,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-29-eventos4";
+const APP_VERSION = "2026-08-30-registro1";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -2709,6 +2709,86 @@ function buscarEstado(){
           mudouEv = true;
         });
         if(mudouEv){ setEventos(evs); try{ renderEventos(); }catch(e){} }
+      }
+      /* ---- Registro datado: a metade que faltava ----
+         A subida ja existia inteira. logar() passa a MESMA linha que grava em
+         cron:registro para o toque, e a dobra guarda o toque cru no `historico`
+         do estado.json. Nada descia: o registro era o unico dos cinco que subia
+         e nao voltava, e cada aparelho via so a propria metade do dia.
+
+         NAO HA SECAO NOVA NO estado.json. O registro nao e estado corrente, e
+         lista que so cresce: nao existe "vence o mais recente" para ele, cada
+         linha vale por si. A fonte, aqui, e o proprio `historico`.
+
+         DUAS COISAS DECIDEM SE UMA LINHA ENTRA:
+
+         1. O id do toque, gravado na linha recebida como `tid`. E por ele que
+            reler o mesmo estado.json dez vezes nao cria dez linhas.
+         2. O aparelho. TOQUE MEU NAO DESCE NUNCA. logar() grava a linha e
+            enfileira o toque no mesmo ato, entao um toque com o meu aparelho
+            ja tem a linha aqui, por construcao — inclusive as linhas escritas
+            antes de isto existir, que nao tem `tid` nenhum e que a regra 1
+            sozinha deixaria entrar em duplicata. Sao 5 no iPhone e 6 no Mac
+            [VERIFICADO nos backups de 29/08], entao o caso e real, e nao
+            hipotetico. E a regra nao tem furo porque `cron:aparelho` e
+            `cron:registro` moram no MESMO localStorage: somem juntos e voltam
+            juntos. Um aparelho que perdesse o registro perderia tambem a
+            identidade, nasceria com outra, e receberia o proprio passado como
+            se fosse de fora — o que e o comportamento certo.
+
+         ISTO AMARRA O REGISTRO AO `historico`, e a amarra e a divida deste
+         bloco: enquanto o historico nunca for podado (achado 7, adiado), nada
+         muda; no dia em que for, a poda leva junto o registro DOS OUTROS
+         aparelhos. O que sobrevive a uma poda e so o que este aparelho
+         escreveu, porque so isso mora em cron:registro por direito proprio.
+
+         Nao chama logar(): receber nao e tocar, pela mesma razao dos subitens
+         logo acima. Um logar() aqui subiria de volta o que acabou de descer,
+         e o eco nao pararia mais. */
+      if(Array.isArray(est.historico)){
+        var meuAparelho = aparelhoId();
+        var reg = getReg(), tidsVistos = {}, recebidas = [];
+        reg.forEach(function(o){ if(o && o.tid) tidsVistos[o.tid] = true; });
+        est.historico.forEach(function(t){
+          if(!t || t.tipo !== "registro" || !t.id) return;
+          if(tidsVistos[t.id]) return;
+          if(t.aparelho === meuAparelho) return;
+          var d = t.dados || {};
+          if(!d.subId) return;
+          tidsVistos[t.id] = true;
+          recebidas.push({d:d.d, pid:d.pid, projId:d.projId, subId:d.subId,
+                          projT:d.projT, subT:d.subT,
+                          de:(d.de === undefined ? null : d.de), para:d.para,
+                          vida:d.vida || "ativo",
+                          /* O motivo nao viaja, e nao deve: e texto livre e o
+                             repositorio e publico — o toque leva so a marca de
+                             que existe um. A linha recebida ganha rotulo
+                             proprio, como o subitem ja ganhava, para dizer onde
+                             a razao esta em vez de mostrar um motivo velho
+                             deste aparelho colado numa marca de outro. */
+                          motivo: d.temMotivo ? "motivo registrado no outro aparelho" : "",
+                          tid: t.id});
+        });
+        if(recebidas.length){
+          /* Reordena por `d`, a data de origem: uma linha do celular de ontem
+             entra ANTES da que este aparelho escreveu hoje, e nao no fim da
+             lista. A ordenacao e estavel, entao dentro do mesmo dia o que ja
+             estava aqui continua na frente do que acabou de chegar. */
+          var todas = reg.concat(recebidas);
+          todas.sort(function(a,b){
+            var x = (a && a.d) || "", y = (b && b.d) || "";
+            return x < y ? -1 : (x > y ? 1 : 0);
+          });
+          /* Mesmo teto do logar(), e mesmo destino para o excedente: o registro
+             so cresce, mas nada e descartado. */
+          if(todas.length > REG_TETO){
+            save("cron:registro-arquivo",
+                 (LS("cron:registro-arquivo", []) || []).concat(todas.slice(0, todas.length - REG_TETO)));
+            todas = todas.slice(-REG_TETO);
+          }
+          save("cron:registro", todas);
+          try{ renderRegistro(); }catch(e){}
+        }
       }
       try{ renderAcervoEstado(); }catch(e){}
       if(mudou){ renderOrdo(); renderHoje(); renderSemana(); renderTrilhos(); }

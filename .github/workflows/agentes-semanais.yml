@@ -1,5 +1,10 @@
 name: Agentes semanais — VAGAS e CHAMADAS
 
+# O coletor roda uma vez por semana e escreve em TRES caminhos, e so neles:
+#   dados/  ·  eventos/  ·  scripts/estado_coletor.json
+# Verificado no scripts/coletor.py: ele so escreve (nao apaga nada), e as
+# constantes DIR_DADOS, DIR_EVENTOS e ARQ_ESTADO sao os unicos destinos.
+
 on:
   schedule:
     - cron: '0 11 * * 1'
@@ -19,10 +24,10 @@ jobs:
 
     steps:
       - name: Baixar o repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Preparar Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -40,19 +45,87 @@ jobs:
         continue-on-error: true
         run: python scripts/coletor.py chamadas
 
+      # POR QUE UM LACO, E POR QUE REAPLICAR EM VEZ DE REBASEAR.
+      # Ate agora este passo fazia commit -> pull --rebase -> push, uma vez so.
+      # E o mesmo desenho que a dobra tinha ate 29/08, e que se perdeu em
+      # producao naquele dia: duas escritas concorrentes no main viram CONFLICT
+      # no rebase, o push nem chega a ser tentado, e a rodada inteira e
+      # descartada. Aqui o custo seria maior — uma rodada perdida e uma semana
+      # sem coleta, porque o `schedule` so volta na segunda seguinte.
+      #
+      # A DIFERENCA PARA A DOBRA. A dobra e funcao pura de (estado.json,
+      # toques/) e por isso pode RECALCULAR sobre o main de agora a cada
+      # tentativa. A coleta nao e: ela sai da rede, custa ate 25 minutos e nao
+      # se repete de graca. Entao o resultado e guardado FORA da arvore e
+      # REAPLICADO sobre o main de agora. A propriedade que importa e a mesma:
+      # nao ha dois resultados para fundir, logo nao ha conflito a resolver.
+      #
+      # A reaplicacao e por cima, e nao por substituicao: `cp -R origem/. destino/`
+      # sobrescreve o que a coleta escreveu e preserva o que o main tiver de
+      # novo naqueles caminhos. Vale porque o coletor so escreve — nao apaga
+      # arquivo nenhum —, entao "o que ele produziu" e sempre um acrescimo.
       - name: Gravar no repositorio
         if: always()
         run: |
           git config user.name  "agente-semanal"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A dados eventos scripts/estado_coletor.json
-          if git diff --staged --quiet; then
-            echo "Nada mudou nesta rodada."
-          else
-            git commit -m "agentes: coleta de $(date -u +%Y-%m-%d)"
-            git pull --rebase --autostash
-            git push
+
+          # A mesma guarda de alcance da dobra. O laco abaixo reescreve a arvore
+          # a partir do main a cada tentativa; se um dia alguem acrescentar um
+          # passo que escreva fora dos tres caminhos da coleta, e melhor o job
+          # parar aqui do que ver a mudanca sumir no primeiro `git reset --hard`.
+          sujo=$(git status --porcelain -uno -- . \
+                   ':(exclude)dados' ':(exclude)eventos' ':(exclude)scripts/estado_coletor.json')
+          if [ -n "$sujo" ]; then
+            echo "Ha mudanca rastreada fora dos caminhos da coleta:"
+            echo "$sujo"
+            echo "O laco abaixo a descartaria. Corrija o workflow."
+            exit 1
           fi
+
+          # A colheita sai da arvore antes do primeiro reset. mktemp -d cria
+          # fora do repositorio de proposito: e o unico lugar que o reset nao
+          # alcanca.
+          colheita=$(mktemp -d)
+          mkdir -p "$colheita/dados" "$colheita/eventos" "$colheita/scripts"
+          if [ -d dados ];   then cp -R dados/.   "$colheita/dados/";   fi
+          if [ -d eventos ]; then cp -R eventos/. "$colheita/eventos/"; fi
+          if [ -f scripts/estado_coletor.json ]; then
+            cp scripts/estado_coletor.json "$colheita/scripts/"
+          fi
+
+          for tentativa in 1 2 3; do
+            git fetch --quiet origin main
+            git reset --hard --quiet FETCH_HEAD
+
+            mkdir -p dados eventos scripts
+            cp -R "$colheita/dados/."   dados/
+            cp -R "$colheita/eventos/." eventos/
+            if [ -f "$colheita/scripts/estado_coletor.json" ]; then
+              cp "$colheita/scripts/estado_coletor.json" scripts/estado_coletor.json
+            fi
+
+            git add -A -- dados eventos scripts/estado_coletor.json
+            if git diff --staged --quiet; then
+              echo "Nada mudou nesta rodada."
+              break
+            fi
+
+            git commit -q -m "agentes: coleta de $(date -u +%Y-%m-%d)"
+            if git push --quiet origin HEAD:main; then
+              echo "Coleta gravada na tentativa $tentativa."
+              break
+            fi
+
+            echo "Push recusado: alguem escreveu no main durante esta coleta."
+            if [ "$tentativa" = "3" ]; then
+              echo "Tres tentativas sem gravar. A coleta desta rodada nao entrou;"
+              echo "rode este workflow a mao por workflow_dispatch, ou espere a"
+              echo "proxima segunda."
+              exit 1
+            fi
+            echo "Reaplicando a coleta sobre o main novo (tentativa $tentativa de 3)."
+          done
 
       - name: Falhar alto se algum coletor quebrou
         if: always()
