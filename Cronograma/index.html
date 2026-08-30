@@ -380,7 +380,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-29-eventos1";
+const APP_VERSION = "2026-08-29-eventos2";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1213,6 +1213,12 @@ const ACERVO_LA_FORA_KEY = "cron:la-fora";
 function pisoJaGasto(base){
   var fora = LS(ACERVO_LA_FORA_KEY, null);
   if(!fora) return 0;
+  /* `piso` vem do HISTORICO, e nao so das secoes. Faz diferenca num caso: uma
+     meta publicada pelo botao e editada depois carrega na secao o instante da
+     EDICAO, e o instante do piso sobrevive so no historico. Olhando apenas as
+     secoes, o relogio poderia reemitir aquele instante — e a dobra descartaria
+     o toque novo como ja visto. */
+  if(base === new Date(ACERVO_EM).getTime() && fora.piso) return fora.piso;
   var maior = 0;
   ["metas","eventos"].forEach(function(s){
     var m = fora[s] || {};
@@ -1301,6 +1307,20 @@ function eventosParaPublicar(){
 }
 
 function publicarAcervoUmaVez(){
+  /* SEM A FOTOGRAFIA, NAO PUBLICA.
+     O contador ate funciona sem ela, por uma regra de reserva; a publicacao,
+     nao. Ela precisa saber qual instante do piso ja foi gasto, senao os toques
+     nascem com ids que a dobra ja viu e sao descartados EM SILENCIO. E ela e
+     gravada pelo buscarEstado, que corre depois do boot: apertar o botao nos
+     primeiros instantes da pagina caia bem nessa janela. Recusar e visivel;
+     publicar no vazio nao seria. */
+  if(LS(ACERVO_LA_FORA_KEY, null) === null){
+    alert("Este aparelho ainda n\u00e3o leu o estado publicado.\n\n" +
+          "Sem isso n\u00e3o d\u00e1 para saber o que j\u00e1 est\u00e1 l\u00e1 fora, e a publica\u00e7\u00e3o poderia " +
+          "repetir instantes j\u00e1 usados \u2014 o que faria os toques sumirem em sil\u00eancio.\n\n" +
+          "Saia da aba e volte, ou recarregue, e tente de novo em alguns segundos.");
+    return;
+  }
   var metas = metasParaPublicar(), eventos = eventosParaPublicar();
   if(!metas.length && !eventos.length){
     renderAcervoEstado();
@@ -2454,11 +2474,17 @@ function buscarEstado(){
          Fora dos if() de cada secao de proposito: "publicado, e vazio" precisa
          ficar gravado tanto quanto "publicado, e cheio". */
       try{
-        var laFora = {metas:{}, eventos:{}};
+        var laFora = {metas:{}, eventos:{}, piso:0};
+        var pisoMs = new Date(ACERVO_EM).getTime(), lim = pisoMs + 86400000;
+        var olha = function(q){
+          var ms = new Date(q).getTime();
+          if(isFinite(ms) && ms >= pisoMs && ms < lim && ms > laFora.piso) laFora.piso = ms;
+        };
         ["metas","eventos"].forEach(function(s){
           var sec = est[s] || {};
-          Object.keys(sec).forEach(function(k){ laFora[s][k] = sec[k].quando || ""; });
+          Object.keys(sec).forEach(function(k){ laFora[s][k] = sec[k].quando || ""; olha(sec[k].quando); });
         });
+        (est.historico || []).forEach(function(x){ if(x) olha(x.quando); });
         save(ACERVO_LA_FORA_KEY, laFora);
       }catch(e){}
       var mudou = false;
