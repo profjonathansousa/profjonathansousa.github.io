@@ -146,13 +146,25 @@ def valor(t):
     elif tipo == "triagem":
         v = {"st": d.get("st")}
     elif tipo == "evento":
-        # O TITULO NAO VIAJA, e nao e esquecimento: o repositorio e publico e o
-        # `historico` nunca e podado, entao um titulo publicado uma vez ficaria
-        # publico para sempre — inclusive depois de o evento ser apagado. Parte
-        # destes eventos e pastoral. Decisao do autor em 29/08. So a data
-        # atravessa; o nome mora no aparelho, como o `motivo` dos subitens.
+        # O TITULO VIAJA, salvo quando o evento esta marcado como privado. A
+        # primeira versao de 29/08 nao publicava titulo nenhum; o autor reverteu
+        # no mesmo dia, porque data sem nome chega no outro aparelho como um
+        # numero solto e nao serve. A marca e por evento, e nao global, porque o
+        # risco tambem e: um retiro de igreja e um compromisso pastoral nao
+        # correm o mesmo risco.
+        #
+        # O motivo de a marca existir e o `historico`, que nunca e podado: um
+        # titulo publicado uma vez fica publico para sempre, inclusive depois de
+        # o evento ser apagado. Por isso marcar privado nao e retroativo — tira
+        # o titulo DESTA secao, nao do historico.
+        #
+        # O toque de um evento privado nao carrega `t`. Aqui a ausencia e
+        # respeitada: o campo simplesmente nao entra no valor, e um titulo que
+        # estivesse nesta secao some quando o evento passa a privado.
         # `del` e a lapide, pelo mesmo motivo das metas.
-        v = {"data": d.get("data"), "del": bool(d.get("del"))}
+        v = {"data": d.get("data"), "priv": bool(d.get("priv")), "del": bool(d.get("del"))}
+        if not d.get("priv") and isinstance(d.get("t"), str):
+            v["t"] = d.get("t")
     else:
         # A meta apagada vira lapide: fica no estado com del=true, para que o
         # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e

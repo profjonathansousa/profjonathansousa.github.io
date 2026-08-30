@@ -172,16 +172,25 @@
   .count .num{font-family:var(--display);font-size:34px;font-weight:600;line-height:1;color:var(--gold-soft);min-width:44px;text-align:center;}
   .count .meta .c-t{font-size:14px;font-weight:600;}
   .count .meta .c-s{font-size:12px;color:#B9C0CE;margin-top:2px;}
-  .ev{display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;
+  .ev{display:flex;align-items:center;gap:6px;padding:9px 8px;margin-bottom:6px;
     background:var(--card);border:1px solid var(--line);border-radius:10px;}
-  .ev .ev-d{font-family:var(--display);font-weight:700;color:var(--gold);font-size:14px;min-width:40px;text-align:center;flex:none;}
+  .ev .ev-d{font-family:var(--display);font-weight:700;color:var(--gold);font-size:14px;min-width:28px;text-align:center;flex:none;}
   .ev .ev-t{flex:1;font-size:13.5px;outline:none;min-width:0;}
   /* O titulo do evento nao viaja: quem recebe a data recebe a linha sem nome.
      O marcador fica no LUGAR do titulo e apagado, nao como aviso — a lista de
      datas nao pode virar uma lista de pendencias. */
   .ev .ev-t:empty::before{content:"sem nome";color:var(--muted);font-style:italic;opacity:.7;}
+  /* CADEADO. Alvo de polegar antes de tudo: 40x40 de area toc\u00e1vel, que \u00e9 o que
+     cabe nesta linha sem espremer o t\u00edtulo. O glifo \u00e9 grande o bastante para a
+     diferen\u00e7a entre aberto e fechado ler sem hover, que no celular n\u00e3o existe.
+     Fechado ganha tamb\u00e9m um fundo, porque forma sozinha n\u00e3o basta de relance. */
+  .ev .ev-priv{flex:none;border:none;background:transparent;cursor:pointer;
+    min-width:40px;height:40px;margin:-6px -7px;padding:0;font-size:17px;line-height:1;
+    display:flex;align-items:center;justify-content:center;border-radius:9px;opacity:.32;}
+  .ev .ev-priv.on{opacity:1;background:#F3E7DC;}
+  .ev .ev-priv:active{background:var(--paper-2);}
   .count .meta .c-t .sem-nome{color:#B9C0CE;font-weight:400;font-style:italic;}
-  .ev input[type=date]{border:none;background:transparent;font-family:var(--sans);font-size:11px;color:var(--muted);width:112px;flex:none;}
+  .ev input[type=date]{border:none;background:transparent;font-family:var(--sans);font-size:11px;color:var(--muted);width:96px;flex:none;}
   .wday{border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:var(--paper-2);overflow:hidden;}
   .wday summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
   .wday summary::-webkit-details-marker{display:none;}
@@ -367,11 +376,16 @@
           aparelho antes da sincronia n\u00e3o t\u00eam instante, ent\u00e3o n\u00e3o viajam
           sozinhas. Publique-as a partir do aparelho que tem o acervo certo \u2014
           sobem com data antiga, para que qualquer edi\u00e7\u00e3o feita depois ven\u00e7a.</p>
-        <p class="s-nota">Das datas importantes viaja <b>s\u00f3 a data</b>. O t\u00edtulo fica
-          neste aparelho: o reposit\u00f3rio \u00e9 p\u00fablico e o hist\u00f3rico nunca \u00e9 podado,
-          ent\u00e3o um nome publicado uma vez ficaria p\u00fablico para sempre. No outro
-          aparelho a data aparece com a contagem certa e sem nome, at\u00e9 voc\u00ea
-          nome\u00e1-la l\u00e1.</p>
+        <p class="s-nota">Das datas importantes viaja a data <b>e o t\u00edtulo</b>. Cada
+          data tem um cadeado: fechado, o t\u00edtulo deixa de subir e fica s\u00f3 nos
+          aparelhos onde voc\u00ea o escrever \u2014 a data continua atravessando, e o outro
+          aparelho a mostra com a contagem certa e <i>sem nome</i>.</p>
+        <p class="s-nota">O cadeado existe porque o reposit\u00f3rio \u00e9 p\u00fablico e o
+          <b>hist\u00f3rico nunca \u00e9 podado</b>: um nome publicado uma vez fica p\u00fablico para
+          sempre, mesmo depois de a data ser apagada. Por isso fech\u00e1-lo <b>n\u00e3o \u00e9
+          retroativo</b> \u2014 tira o t\u00edtulo do estado atual, n\u00e3o desfaz o que j\u00e1 subiu.
+          Para um nome que nunca pode sair daqui, feche o cadeado <b>antes</b> de
+          escrev\u00ea-lo.</p>
         <div class="s-linha"><button onclick="publicarAcervoUmaVez()">Publicar o acervo deste aparelho</button></div>
         <span class="backup-aviso" id="acervo-estado"></span>
       </div>
@@ -380,7 +394,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-29-eventos2";
+const APP_VERSION = "2026-08-29-eventos4";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1223,7 +1237,9 @@ function pisoJaGasto(base){
   ["metas","eventos"].forEach(function(s){
     var m = fora[s] || {};
     Object.keys(m).forEach(function(k){
-      var ms = new Date(m[k]).getTime();
+      /* metas guardam a string do instante; eventos guardam um objeto */
+      var q = (typeof m[k] === "string") ? m[k] : (m[k] && m[k].q);
+      var ms = new Date(q).getTime();
       if(isFinite(ms) && ms >= base && ms < base + 86400000 && ms > maior) maior = ms;
     });
   });
@@ -1234,10 +1250,11 @@ function pisoJaGasto(base){
    botao duas vezes antes de o estado.json voltar nao republique o mesmo. Se o
    envio falhar, a proxima leitura desfaz esta anotacao sozinha: a fotografia e
    sempre reescrita pelo que o servidor realmente tem. */
-function marcarLaForaLocal(secao, chave, quando){
+function marcarLaForaLocal(secao, chave, valor){
   var fora = LS(ACERVO_LA_FORA_KEY, null) || {metas:{}, eventos:{}};
   if(!fora[secao]) fora[secao] = {};
-  fora[secao][chave] = quando;
+  /* metas guardam a string do instante; eventos guardam {q, t, p} */
+  fora[secao][chave] = valor;
   save(ACERVO_LA_FORA_KEY, fora);
 }
 
@@ -1296,12 +1313,30 @@ function eventoEhSementeIntocado(ev){
 }
 
 function eventosParaPublicar(){
+  var snap = LS(ACERVO_LA_FORA_KEY, null);
+  var conhece = !!(snap && snap.eventos);
   var fora = [];
   (getEventos()||[]).forEach(function(ev){
     if(!ev || !ev.id || !ev.data) return;
     if(eventoEhSementeIntocado(ev)) return;
-    if(jaEstaLaFora("eventos", ev.id, ev.em)) return;
-    fora.push(ev);
+    if(!jaEstaLaFora("eventos", ev.id, ev.em)){ fora.push({ev:ev, novo:true}); return; }
+    if(!conhece) return;
+    var la = snap.eventos[ev.id];
+    if(!la || typeof la !== "object") return;
+    /* Ja esta la fora, mas o que esta la nao corresponde mais. Dois casos, e os
+       dois nascem de 29/08, quando os eventos subiram sem titulo nenhum:
+         · o titulo devia estar publicado e nao esta  -> publica para completar
+         · o titulo esta publicado e agora e privado  -> publica para retirar
+       Nos dois a condicao para de casar assim que o toque e dobrado e a
+       fotografia e relida, o que faz isto acontecer uma vez e nao virar laco. */
+    var falta   = !ev.priv && String(ev.t||"").trim() && !la.t;
+    var retirar =  ev.priv && la.t;
+    /* A MARCA TAMBEM PRECISA ATRAVESSAR, mesmo quando nao ha titulo a retirar.
+       Sem esta terceira condicao, um evento ja publicado sem titulo e marcado
+       como privado aqui nunca contaria ao outro aparelho que e privado — e o
+       outro publicaria o titulo na primeira edicao. */
+    var marca   = (!!ev.priv) !== (!!la.p);
+    if(falta || retirar || marca) fora.push({ev:ev, novo:false});
   });
   return fora;
 }
@@ -1333,12 +1368,19 @@ function publicarAcervoUmaVez(){
   if(!confirm("Publicar " + partes.join(" e ") + " deste aparelho para os outros?\n\n" +
       "Sobem com data de 1\u00ba de janeiro de 2026, de prop\u00f3sito: assim qualquer edi\u00e7\u00e3o feita depois disso, " +
       "em qualquer aparelho, vence.\n\n" +
-      "O T\u00cdTULO das datas importantes N\u00c3O sobe \u2014 s\u00f3 a data. O reposit\u00f3rio \u00e9 p\u00fablico, " +
-      "e o nome fica neste aparelho.\n\n" +
+      "Das datas sobem a data E o t\u00edtulo, exceto as que est\u00e3o com o cadeado fechado \u2014 " +
+      "dessas sobe s\u00f3 a data. O reposit\u00f3rio \u00e9 p\u00fablico.\n\n" +
       "Fa\u00e7a a partir do aparelho que tem o acervo certo.")) return;
-  eventos.forEach(function(ev){
-    var iso = enfileirarToque("evento", {eid:ev.id, data:ev.data, del:false}, ACERVO_EM);
-    marcarLaForaLocal("eventos", ev.id, iso);
+  eventos.forEach(function(x){
+    var ev = x.ev;
+    /* O PISO SO VALE PARA O ACERVO DE VERDADE — o que nunca subiu e nao tem
+       instante proprio. Corrigir o titulo ou a marca de um evento que JA esta
+       la fora e um ato de agora: com o piso, o toque nasceria mais velho do que
+       o estado que ele quer corrigir, a dobra o descartaria como atrasado, e o
+       contador mostraria a mesma pendencia para sempre. Medido: a "Prova TOEFL",
+       cujo estado veio de uma edicao das 01:35, nao recebia o titulo. */
+    var iso = enfileirarToque("evento", dadosDoEvento(ev, false), x.novo ? ACERVO_EM : null);
+    marcarLaForaLocal("eventos", ev.id, {q:iso, t:(!ev.priv && !!String(ev.t||"").trim()), p:!!ev.priv});
     if(!ev.em){
       var lista = getEventos();
       for(var i=0;i<lista.length;i++){ if(lista[i].id===ev.id){ lista[i].em = iso; break; } }
@@ -1397,8 +1439,12 @@ function renderEventos(){
   }
   evts.forEach((e,i)=>{
     const d=diasAte(e.data), badge = d<0 ? "—" : d;
+    const priv = !!e.priv;
     h+=`<div class="ev">
       <span class="ev-d">${badge}</span>
+      <button class="ev-priv${priv?" on":""}" onclick="privEv(${i})"
+        title="${priv?"privada: o título fica nos aparelhos onde você o escrever":"pública: o título sobe para o repositório"}"
+        aria-label="${priv?"privada":"pública"}">${priv?"\u{1F512}":"\u{1F513}"}</button>
       <div class="ev-t" contenteditable="true" onblur="editEv(${i},this.innerText)">${escapeHtml(e.t)}</div>
       <input type="date" value="${e.data}" onchange="dateEv(${i},this.value)">
       <button class="del" onclick="delEv(${i})" aria-label="Remover">&times;</button></div>`;
@@ -1407,18 +1453,77 @@ function renderEventos(){
   box.innerHTML=h;
 }
 function sortedRef(i){return getEventos().slice().sort((a,b)=>a.data<b.data?-1:1)[i];}
-/* UM EVENTO VIAJA POR ID, E SO A DATA VIAJA.
-   O titulo NAO sobe. Decisao do autor em 29/08, e o motivo e o historico: ele
-   nunca e podado, entao um titulo publicado uma vez fica publico para sempre,
-   mesmo depois de o evento ser apagado. Parte destes eventos e pastoral. A
-   data atravessa, o nome fica no aparelho — a mesma disciplina que o `motivo`
-   dos subitens ja segue desde o Passo 5.
+/* UM EVENTO VIAJA POR ID, E O TITULO VIAJA COM ELE — SALVO SE FOR PRIVADO.
+   Primeira versao desta sessao nao publicava titulo nenhum. Estava errado, e o
+   autor reverteu em 29/08: data sem nome nao e data importante, chega no outro
+   aparelho como um numero solto. A maioria dos eventos nao e sensivel, e os
+   titulos dos subitens de artigo ja sao publicos ha tempo — deixar a minoria
+   decidir por todos custava caro e resolvia pouco.
+
+   A MARCA E POR EVENTO, e nao um interruptor global, porque o risco tambem e
+   por evento: um retiro de igreja e um compromisso pastoral nao correm o mesmo
+   risco, e uma chave unica obrigaria a escolher o pior caso para os dois.
+
+   O MOTIVO DA MARCA EXISTIR CONTINUA O MESMO: o `historico` nunca e podado.
+   Um titulo publicado uma vez fica publico para sempre — inclusive depois de o
+   evento ser apagado, porque a lapide tira da tela e nao do historico. Por
+   isso marcar privado NAO e retroativo: tira o titulo do estado atual, nao
+   desfaz o que ja subiu. E o que o aviso na interface diz, nas duas direcoes.
+
    `del` e a lapide: sem ela, quem apaga no celular veria o evento voltar do
    Mac no carregamento seguinte, porque ausencia nao se distingue de
    desconhecimento. */
+/* Este evento ja consta do estado.json publicado, segundo a ultima leitura. */
+function eventoJaSubiu(eid){
+  var fora = LS(ACERVO_LA_FORA_KEY, null);
+  if(!fora || !fora.eventos) return false;
+  return Object.prototype.hasOwnProperty.call(fora.eventos, eid);
+}
+
+/* UMA fonte para o que o toque de evento carrega. O botao do acervo montava o
+   proprio payload e ficou para tras quando o titulo passou a viajar: publicava
+   sem `t` e sem `priv`, justamente na hora em que existia para republicar os
+   titulos que faltavam. Com uma funcao so, nao ha como um caminho envelhecer
+   sem o outro. */
+function dadosDoEvento(ev, apagado){
+  var d = {eid:ev.id, data:ev.data||null, priv:!!ev.priv, del:!!apagado};
+  /* O titulo entra so quando pode sair daqui. Num evento privado ele nem chega
+     a ser montado: nao ha o que vazar por engano mais adiante. */
+  if(!ev.priv) d.t = ev.t || "";
+  return d;
+}
+
 function tocarEvento(ev, apagado){
   if(!ev || !ev.id) return;
-  enfileirarToque("evento", {eid:ev.id, data:ev.data||null, del:!!apagado});
+  enfileirarToque("evento", dadosDoEvento(ev, apagado));
+}
+
+/* A marca de privado e do EVENTO e atravessa como tudo o mais: vai no toque,
+   entra no estado.json e desce pela regra do relogio. Sem isso, ligar no
+   celular nao impediria o Mac de publicar o titulo na proxima edicao. */
+function privEv(i){
+  const ref=sortedRef(i); const e=getEventos(); const j=e.findIndex(x=>x.id===ref.id);
+  if(j<0) return;
+  const ligando = !e[j].priv;
+  const nome = (e[j].t||"").trim();
+  if(ligando){
+    if(!confirm("Marcar \u201c" + (nome||"esta data") + "\u201d como privada?\n\n" +
+      "O t\u00edtulo deixa de subir e passa a existir s\u00f3 nos aparelhos onde voc\u00ea o " +
+      "escrever. A data continua atravessando.\n\n" +
+      "ISTO N\u00c3O \u00c9 RETROATIVO. Se o t\u00edtulo j\u00e1 subiu alguma vez, aquela publica\u00e7\u00e3o " +
+      "continua no hist\u00f3rico, que nunca \u00e9 podado. Marcar como privada agora tira o " +
+      "t\u00edtulo do estado atual, mas n\u00e3o desfaz o que j\u00e1 foi publicado.")) return;
+  } else {
+    if(!confirm("Tirar a marca de privada de \u201c" + (nome||"esta data") + "\u201d?\n\n" +
+      "O t\u00edtulo passa a subir para o reposit\u00f3rio, que \u00e9 p\u00fablico.\n\n" +
+      "O hist\u00f3rico nunca \u00e9 podado: uma vez publicado, o nome fica p\u00fablico para " +
+      "sempre \u2014 mesmo que voc\u00ea apague o evento ou marque como privada de novo depois.")) return;
+  }
+  e[j].priv = ligando;
+  e[j].em = new Date().toISOString();
+  setEventos(e);
+  tocarEvento(e[j], false);
+  renderEventos();
 }
 /* Sai do onblur do contenteditable: so grava se o texto mudou de verdade,
    senao cada clique fora do campo viraria um toque. O editMeta ja fazia esta
@@ -1426,9 +1531,12 @@ function tocarEvento(ev, apagado){
 function editEv(i,t){const ref=sortedRef(i);const e=getEventos();const j=e.findIndex(x=>x.id===ref.id);
   if(j<0)return;const novo=t.trim();if(novo===e[j].t)return;
   e[j].t=novo;e[j].em=new Date().toISOString();setEventos(e);
-  /* O titulo nao sobe, mas nomear e o ato que torna o evento real: e aqui que
-     ele passa a existir para os outros aparelhos, levando a data. */
-  tocarEvento(e[j],false);renderEventos();}
+  /* Num evento PRIVADO que ja subiu, renomear nao muda nada la fora — o toque
+     seria um commit e uma reconstrucao do Pages a troco de nada. Mas se ele
+     ainda nem subiu, o toque sai: nomear e o ato que o torna real, e a DATA
+     precisa viajar mesmo que o nome fique aqui. */
+  if(!e[j].priv || !eventoJaSubiu(e[j].id)) tocarEvento(e[j],false);
+  renderEventos();}
 function dateEv(i,v){const ref=sortedRef(i);const e=getEventos();const j=e.findIndex(x=>x.id===ref.id);
   if(j<0||!v||e[j].data===v)return;
   e[j].data=v;e[j].em=new Date().toISOString();setEventos(e);tocarEvento(e[j],false);renderEventos();}
@@ -2480,9 +2588,16 @@ function buscarEstado(){
           var ms = new Date(q).getTime();
           if(isFinite(ms) && ms >= pisoMs && ms < lim && ms > laFora.piso) laFora.piso = ms;
         };
-        ["metas","eventos"].forEach(function(s){
-          var sec = est[s] || {};
-          Object.keys(sec).forEach(function(k){ laFora[s][k] = sec[k].quando || ""; olha(sec[k].quando); });
+        var sm = est.metas || {};
+        Object.keys(sm).forEach(function(k){ laFora.metas[k] = sm[k].quando || ""; olha(sm[k].quando); });
+        /* Do evento a fotografia guarda mais do que o instante: se o titulo ja
+           esta la fora e se a marca de privado ja chegou. E o que permite o
+           botao do acervo saber que falta publicar um titulo, ou que falta
+           retirar um que agora e privado. */
+        var se = est.eventos || {};
+        Object.keys(se).forEach(function(k){
+          laFora.eventos[k] = {q: se[k].quando || "", t: !!(se[k].t), p: !!se[k].priv};
+          olha(se[k].quando);
         });
         (est.historico || []).forEach(function(x){ if(x) olha(x.quando); });
         save(ACERVO_LA_FORA_KEY, laFora);
@@ -2578,8 +2693,19 @@ function buscarEstado(){
           if(j > -1 && (evs[j].em || "") >= r.quando) return;
           if(r.del){ if(j > -1){ evs.splice(j,1); mudouEv = true; } return; }
           if(!r.data) return;
-          if(j < 0){ evs.push({id:eid, t:"", data:r.data, em:r.quando}); }
-          else { evs[j].data = r.data; evs[j].em = r.quando; }
+          /* O titulo so e escrito quando ele viajou. Num evento privado o nome
+             local e a UNICA copia que existe: sobrescreve-lo com vazio apagaria
+             o que voce escreveu aqui. Por isso a marca desce sempre, e o titulo
+             so quando vem junto. */
+          if(j < 0){
+            evs.push({id:eid, t:(!r.priv && typeof r.t === "string") ? r.t : "",
+                      data:r.data, em:r.quando, priv:!!r.priv});
+          } else {
+            evs[j].data = r.data;
+            evs[j].priv = !!r.priv;
+            if(!r.priv && typeof r.t === "string") evs[j].t = r.t;
+            evs[j].em = r.quando;
+          }
           mudouEv = true;
         });
         if(mudouEv){ setEventos(evs); try{ renderEventos(); }catch(e){} }
