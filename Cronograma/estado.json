@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:37:57.733Z",
+ "_dobrado_em": "2026-08-30T01:38:09.717Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1086,6 +1086,38 @@
     "de": "2026-07",
     "del": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-38-09-218Z-ipkt72",
+   "quando": "2026-08-30T01:38:09.218Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-3",
+    "t": "Construir o agente de vagas e concursos",
+    "done": true,
+    "de": "2026-07",
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-38-09-717Z-ipkt72",
+   "quando": "2026-08-30T01:38:09.717Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-2",
+    "t": "Construir o agente de chamadas de publicação",
+    "done": true,
+    "de": "2026-07",
+    "del": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1163,7 +1195,9 @@
   "2026-08-30T01-35-43-237Z-s41hky",
   "2026-08-30T01-37-55-102Z-ipkt72",
   "2026-08-30T01-37-57-182Z-ipkt72",
-  "2026-08-30T01-37-57-733Z-ipkt72"
+  "2026-08-30T01-37-57-733Z-ipkt72",
+  "2026-08-30T01-38-09-218Z-ipkt72",
+  "2026-08-30T01-38-09-717Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1436,6 +1470,22 @@
    "de": "2026-07",
    "del": true,
    "quando": "2026-08-30T01:37:57.733Z",
+   "aparelho": "ipkt72"
+  },
+  "2026-08/m1787798153953-3": {
+   "t": "Construir o agente de vagas e concursos",
+   "done": true,
+   "de": "2026-07",
+   "del": true,
+   "quando": "2026-08-30T01:38:09.218Z",
+   "aparelho": "ipkt72"
+  },
+  "2026-08/m1787798153953-2": {
+   "t": "Construir o agente de chamadas de publicação",
+   "done": true,
+   "de": "2026-07",
+   "del": true,
+   "quando": "2026-08-30T01:38:09.717Z",
    "aparelho": "ipkt72"
   }
  },
