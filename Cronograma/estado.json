@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:39:46.590Z",
+ "_dobrado_em": "2026-08-30T01:40:04.487Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1150,6 +1150,54 @@
     "de": null,
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-39-58-018Z-ipkt72",
+   "quando": "2026-08-30T01:39:58.018Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-0",
+    "t": "Artigo \"Patriotismo Cristão\": ajustar e expandir páginas",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-40-04-486Z-s41hky",
+   "quando": "2026-08-30T01:40:04.486Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1788054004486-0",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+    "done": false,
+    "de": "2026-07",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-40-04-487Z-s41hky",
+   "quando": "2026-08-30T01:40:04.487Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-07",
+    "mid": "m1784121670357",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+    "done": false,
+    "de": null,
+    "del": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1231,7 +1279,10 @@
   "2026-08-30T01-38-09-218Z-ipkt72",
   "2026-08-30T01-38-09-717Z-ipkt72",
   "2026-08-30T01-38-23-154Z-ipkt72",
-  "2026-08-30T01-39-46-590Z-s41hky"
+  "2026-08-30T01-39-46-590Z-s41hky",
+  "2026-08-30T01-39-58-018Z-ipkt72",
+  "2026-08-30T01-40-04-486Z-s41hky",
+  "2026-08-30T01-40-04-487Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1446,8 +1497,8 @@
    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
    "done": false,
    "de": null,
-   "del": false,
-   "quando": "2026-08-30T01:39:46.590Z",
+   "del": true,
+   "quando": "2026-08-30T01:40:04.487Z",
    "aparelho": "s41hky"
   },
   "2026-07/m1784232788117": {
@@ -1521,6 +1572,22 @@
    "del": true,
    "quando": "2026-08-30T01:38:09.717Z",
    "aparelho": "ipkt72"
+  },
+  "2026-08/m1787798153953-0": {
+   "t": "Artigo \"Patriotismo Cristão\": ajustar e expandir páginas",
+   "done": false,
+   "de": "2026-07",
+   "del": true,
+   "quando": "2026-08-30T01:39:58.018Z",
+   "aparelho": "ipkt72"
+  },
+  "2026-08/m1788054004486-0": {
+   "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+   "done": false,
+   "de": "2026-07",
+   "del": false,
+   "quando": "2026-08-30T01:40:04.486Z",
+   "aparelho": "s41hky"
   }
  },
  "eventos": {
