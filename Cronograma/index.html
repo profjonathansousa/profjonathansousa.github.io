@@ -364,7 +364,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-29-envio1";
+const APP_VERSION = "2026-08-29-relogio1";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1290,18 +1290,67 @@ function aparelhoId(){
   return a;
 }
 
+/* ================= RELOGIO MONOTONICO DO APARELHO =================
+   O id do toque nasce do instante. Dois toques no mesmo milissegundo geravam
+   o mesmo id — e trazerTodas() produz 2xN toques num laco, todos no mesmo
+   milissegundo. A dobra descartaria os repetidos como "ja vistos", ou os
+   contaria duas vezes; de um jeito ou de outro, o id deixa de identificar.
+
+   O GUARDA MORA AQUI, na geracao, e nao em quem chama. Assim vale para
+   trazerMeta, trazerTodas e para qualquer laco que venha depois, sem que
+   ninguem precise lembrar de somar milissegundo na mao.
+
+   POR APARELHO, e nao por aba: a marca fica no localStorage, entao duas abas
+   do mesmo navegador nao entregam o mesmo instante. Nao ha tranca entre abas,
+   mas a leitura e sincrona e a janela fica desprezivel perto da que havia.
+
+   AS BASES EXPLICITAS SAO CONTADAS A PARTE. A migracao publica com instante
+   ANTIGO de proposito (§8.2 do briefing de 27/08): se houvesse um contador
+   unico, um toque de agora empurraria a migracao para o presente e mataria a
+   retroacao — que existe justamente para o toque antigo NAO vencer o recente.
+   ================================================================= */
+const RELOGIO_KEY = "cron:relogio";
+/* Um relogio de aparelho errado, e depois corrigido, deixaria a marca gravada
+   no futuro — e dali em diante todo toque daqui venceria todo toque do outro
+   aparelho, para sempre. Passando desta folga, a marca e descartada. */
+const RELOGIO_FOLGA = 86400000;   /* 24h */
+var RELOGIO_BASES = {};           /* base explicita -> ultimo entregue dela */
+
+function instanteDoToque(quandoISO){
+  if(quandoISO){
+    var base = new Date(quandoISO).getTime();
+    if(!isFinite(base)) base = Date.now();
+    var chave = String(base);
+    var v = (chave in RELOGIO_BASES) ? RELOGIO_BASES[chave] + 1 : base;
+    RELOGIO_BASES[chave] = v;
+    return v;
+  }
+  var agora = Date.now();
+  var ultimo = LS(RELOGIO_KEY, 0);
+  if(typeof ultimo !== "number" || !isFinite(ultimo)) ultimo = 0;
+  if(ultimo - agora > RELOGIO_FOLGA) ultimo = 0;
+  var ms = (agora <= ultimo) ? ultimo + 1 : agora;
+  save(RELOGIO_KEY, ms);
+  return ms;
+}
+
 /* Hora de verdade, não a do carregamento da página: o `now` do topo é fixado
-   quando o app abre, e um celular que passa a noite aberto carimbaria ontem. */
+   quando o app abre, e um celular que passa a noite aberto carimbaria ontem.
+
+   Devolve o instante que usou, em ISO. Quem migra precisa gravar no aparelho
+   exatamente o mesmo instante que subiu no toque — se o relogio deslocar um
+   milissegundo e o aparelho guardar o outro valor, os dois passam a discordar
+   sobre quando aquilo aconteceu. */
 function enfileirarToque(tipo, dados, quandoISO){
   /* quandoISO existe para UM caso: publicar, uma vez, o que ja estava
      marcado no aparelho antes de este mecanismo existir. Sem ele, uma
      marcacao de semana passada subiria com a data de hoje e venceria uma
      marcacao recente feita no outro aparelho. */
-  var t = quandoISO ? new Date(quandoISO) : new Date();
+  var iso = new Date(instanteDoToque(quandoISO)).toISOString();
   var f = getToques();
   f.push({ v:TOQUES_SCHEMA,
-           id: t.toISOString().replace(/[:.]/g,"-") + "-" + aparelhoId(),
-           quando: t.toISOString(),
+           id: iso.replace(/[:.]/g,"-") + "-" + aparelhoId(),
+           quando: iso,
            aparelho: aparelhoId(),
            app: APP_VERSION,
            tipo: tipo,
@@ -1314,6 +1363,7 @@ function enfileirarToque(tipo, dados, quandoISO){
   setToques(f);
   renderToquesAviso();
   agendarEnvio();
+  return iso;
 }
 
 /* Só desenha se o elemento existir. A tela de ajustes ainda não foi construída,
