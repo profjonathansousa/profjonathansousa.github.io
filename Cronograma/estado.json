@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:55:53.169Z",
+ "_dobrado_em": "2026-08-30T01:57:37.067Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1359,6 +1359,21 @@
     "del": false,
     "t": "Jogo Ana - Realengo"
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-57-37-067Z-ipkt72",
+   "quando": "2026-08-30T01:57:37.067Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1788053719412",
+    "data": "2026-11-30",
+    "priv": false,
+    "del": true,
+    "t": "TOEFL Test"
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1454,7 +1469,8 @@
   "2026-08-30T01-55-53-166Z-s41hky",
   "2026-08-30T01-55-53-167Z-s41hky",
   "2026-08-30T01-55-53-168Z-s41hky",
-  "2026-08-30T01-55-53-169Z-s41hky"
+  "2026-08-30T01-55-53-169Z-s41hky",
+  "2026-08-30T01-57-37-067Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1828,10 +1844,10 @@
   "e1788053719412": {
    "data": "2026-11-30",
    "priv": false,
-   "del": false,
+   "del": true,
    "t": "TOEFL Test",
-   "quando": "2026-08-30T01:55:53.168Z",
-   "aparelho": "s41hky"
+   "quando": "2026-08-30T01:57:37.067Z",
+   "aparelho": "ipkt72"
   },
   "e1788054149537": {
    "data": "2026-09-05",
