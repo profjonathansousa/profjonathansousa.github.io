@@ -1,0 +1,41 @@
+{
+ "v": 1,
+ "lote": "2026-08-30T01-38-09-218Z-ipkt72",
+ "quando": "2026-08-30T01:38:13.719Z",
+ "aparelho": "ipkt72",
+ "app": "2026-08-29-eventos2",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-08-30T01-38-09-218Z-ipkt72",
+   "quando": "2026-08-30T01:38:09.218Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-3",
+    "t": "Construir o agente de vagas e concursos",
+    "done": true,
+    "de": "2026-07",
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-38-09-717Z-ipkt72",
+   "quando": "2026-08-30T01:38:09.717Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-2",
+    "t": "Construir o agente de chamadas de publicação",
+    "done": true,
+    "de": "2026-07",
+    "del": true
+   }
+  }
+ ]
+}
