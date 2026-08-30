@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:38:09.717Z",
+ "_dobrado_em": "2026-08-30T01:38:23.154Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1118,6 +1118,22 @@
     "de": "2026-07",
     "del": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-38-23-154Z-ipkt72",
+   "quando": "2026-08-30T01:38:23.154Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1785639854911-0",
+    "t": "Artigo \"Patriotismo Cristão\": ajustar e expandir páginas",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1197,7 +1213,8 @@
   "2026-08-30T01-37-57-182Z-ipkt72",
   "2026-08-30T01-37-57-733Z-ipkt72",
   "2026-08-30T01-38-09-218Z-ipkt72",
-  "2026-08-30T01-38-09-717Z-ipkt72"
+  "2026-08-30T01-38-09-717Z-ipkt72",
+  "2026-08-30T01-38-23-154Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1436,9 +1453,9 @@
    "t": "Artigo \"Patriotismo Cristão\": ajustar e expandir páginas",
    "done": false,
    "de": "2026-07",
-   "del": false,
-   "quando": "2026-01-01T00:00:00.005Z",
-   "aparelho": "s41hky"
+   "del": true,
+   "quando": "2026-08-30T01:38:23.154Z",
+   "aparelho": "ipkt72"
   },
   "2026-08/m1785639854911-1": {
    "t": "Pós-doc: preparação de candidatura",
