@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:28:01.950Z",
+ "_dobrado_em": "2026-08-30T01:35:30.558Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1012,6 +1012,19 @@
     "data": "2026-11-30",
     "del": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-35-30-558Z-s41hky",
+   "quando": "2026-08-30T01:35:30.558Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos2",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1788053719412",
+    "data": "2026-11-30",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1084,7 +1097,8 @@
   "2026-01-01T00-00-00-012Z-s41hky",
   "2026-01-01T00-00-00-013Z-s41hky",
   "2026-01-01T00-00-00-014Z-s41hky",
-  "2026-08-30T01-28-01-950Z-ipkt72"
+  "2026-08-30T01-28-01-950Z-ipkt72",
+  "2026-08-30T01-35-30-558Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1383,6 +1397,12 @@
    "data": "2026-08-16",
    "del": false,
    "quando": "2026-01-01T00:00:00.014Z",
+   "aparelho": "s41hky"
+  },
+  "e1788053719412": {
+   "data": "2026-11-30",
+   "del": false,
+   "quando": "2026-08-30T01:35:30.558Z",
    "aparelho": "s41hky"
   }
  }
