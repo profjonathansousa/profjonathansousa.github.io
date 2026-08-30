@@ -1,0 +1,113 @@
+{
+ "v": 1,
+ "lote": "2026-01-01T00-00-00-007Z-s41hky",
+ "quando": "2026-08-30T01:25:52.370Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-29-eventos1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-007Z-s41hky",
+   "quando": "2026-01-01T00:00:00.007Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784113286830",
+    "data": "2026-08-22",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-008Z-s41hky",
+   "quando": "2026-01-01T00:00:00.008Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784121891277",
+    "data": "2026-08-01",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-009Z-s41hky",
+   "quando": "2026-01-01T00:00:00.009Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784121912017",
+    "data": "2026-08-08",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-010Z-s41hky",
+   "quando": "2026-01-01T00:00:00.010Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784128386938",
+    "data": "2026-11-30",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-011Z-s41hky",
+   "quando": "2026-01-01T00:00:00.011Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784152318489",
+    "data": "2026-07-25",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-012Z-s41hky",
+   "quando": "2026-01-01T00:00:00.012Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784469006747",
+    "data": "2026-08-15",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-013Z-s41hky",
+   "quando": "2026-01-01T00:00:00.013Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1785785320542",
+    "data": "2026-08-16",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-014Z-s41hky",
+   "quando": "2026-01-01T00:00:00.014Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1786418679033",
+    "data": "2026-08-16",
+    "del": false
+   }
+  }
+ ]
+}
