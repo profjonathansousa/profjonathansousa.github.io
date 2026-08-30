@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:35:43.237Z",
+ "_dobrado_em": "2026-08-30T01:37:57.733Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1038,6 +1038,54 @@
     "data": "2026-11-30",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-37-55-102Z-ipkt72",
+   "quando": "2026-08-30T01:37:55.102Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-1",
+    "t": "Pós-doc: enviar 1 candidatura",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-37-57-182Z-ipkt72",
+   "quando": "2026-08-30T01:37:57.182Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-4",
+    "t": "TOEFL: completar 1 simulado no formato 2026",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-37-57-733Z-ipkt72",
+   "quando": "2026-08-30T01:37:57.733Z",
+   "aparelho": "ipkt72",
+   "app": "2026-08-29-eventos2",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1787798153953-5",
+    "t": "TOEFL: subir Reading e Writing para 24+",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1112,7 +1160,10 @@
   "2026-01-01T00-00-00-014Z-s41hky",
   "2026-08-30T01-28-01-950Z-ipkt72",
   "2026-08-30T01-35-30-558Z-s41hky",
-  "2026-08-30T01-35-43-237Z-s41hky"
+  "2026-08-30T01-35-43-237Z-s41hky",
+  "2026-08-30T01-37-55-102Z-ipkt72",
+  "2026-08-30T01-37-57-182Z-ipkt72",
+  "2026-08-30T01-37-57-733Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1362,6 +1413,30 @@
    "del": false,
    "quando": "2026-01-01T00:00:00.006Z",
    "aparelho": "s41hky"
+  },
+  "2026-08/m1787798153953-1": {
+   "t": "Pós-doc: enviar 1 candidatura",
+   "done": false,
+   "de": "2026-07",
+   "del": true,
+   "quando": "2026-08-30T01:37:55.102Z",
+   "aparelho": "ipkt72"
+  },
+  "2026-08/m1787798153953-4": {
+   "t": "TOEFL: completar 1 simulado no formato 2026",
+   "done": false,
+   "de": "2026-07",
+   "del": true,
+   "quando": "2026-08-30T01:37:57.182Z",
+   "aparelho": "ipkt72"
+  },
+  "2026-08/m1787798153953-5": {
+   "t": "TOEFL: subir Reading e Writing para 24+",
+   "done": false,
+   "de": "2026-07",
+   "del": true,
+   "quando": "2026-08-30T01:37:57.733Z",
+   "aparelho": "ipkt72"
   }
  },
  "eventos": {
