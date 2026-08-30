@@ -358,13 +358,19 @@
         <span class="backup-aviso" id="sync-estado"></span><br>
         <span class="backup-aviso" id="toques-aviso"></span>
         <div class="s-linha"><button onclick="enviarToques()">Enviar agora</button></div>
+        <p class="s-nota">As metas que j\u00e1 estavam neste aparelho antes da sincronia
+          n\u00e3o t\u00eam instante, ent\u00e3o n\u00e3o viajam sozinhas. Publique-as <b>uma vez</b>,
+          e a partir do aparelho que tem o acervo certo \u2014 elas sobem com data
+          antiga, para que qualquer edi\u00e7\u00e3o feita depois ven\u00e7a.</p>
+        <div class="s-linha"><button onclick="publicarAcervoUmaVez()">Publicar o acervo deste aparelho</button></div>
+        <span class="backup-aviso" id="acervo-estado"></span>
       </div>
     </details>
     <span id="ver"></span>
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-29-relogio1";
+const APP_VERSION = "2026-08-29-metas1";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1158,6 +1164,106 @@ function delMeta(i){const k=mesAtivo;const m=getMetas();const fora=m[i];if(!fora
    editMeta, ja com o que voce escreveu. */
 function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:false, em:new Date().toISOString()});setMetas(m);renderMetas();
   const b=document.querySelectorAll("#metas-wrap .goal-text");if(b.length)b[b.length-1].focus();}
+
+/* ============ PUBLICAR O ACERVO QUE JA ESTAVA NO APARELHO ============
+   O toque so publica marcacao NOVA. A meta que voce escreveu antes de a
+   sincronia existir mora so no aparelho que a escreveu, e nao viajaria nunca.
+   A triagem teve o mesmo problema em 27/08 e ganhou o migrarTriagemUmaVez.
+
+   POR QUE UM BOTAO, E NAO UMA ROTINA. A triagem podia migrar sozinha porque
+   guardava o dia da marcacao: havia um instante verdadeiro a usar. A meta nao
+   guarda data nenhuma. Sem instante verdadeiro, os dois aparelhos publicariam
+   o proprio acervo com a mesma data inventada, e o empate seria decidido no
+   servidor pelo nome do arquivo — que nao e dado, e ordem de leitura de
+   diretorio. Com botao, quem decide qual aparelho e a fonte e voce.
+
+   POR QUE UMA DATA ANTIGA. 1o de janeiro de 2026 nao e um instante verdadeiro,
+   e ninguem finge que seja: e um piso. Publicar com a data de hoje faria este
+   acervo vencer qualquer edicao real ja feita no outro aparelho. Com um piso,
+   qualquer edicao feita depois — em qualquer aparelho — vence. E a licao do
+   Passo 8 do briefing de 27/08, aplicada de novo.
+
+   Cada meta recebe um instante distinto porque o relogio monotonico conta as
+   bases explicitas a parte; sem isso as N metas nasceriam com o mesmo id.
+   ==================================================================== */
+const ACERVO_EM = "2026-01-01T00:00:00.000Z";
+const ACERVO_METAS_KEY = "cron:metas-publicadas";
+
+/* A semente e identica nos dois aparelhos: METAS_SEED reconstroi as metas
+   art-* em qualquer navegador que carregue esta pagina, e o mes de inicio
+   nasce com METAS_DEFAULT. Publicar uma que ninguem tocou so engordaria o
+   estado.json com o que o outro lado ja tem igual. Feita ou trazida de outro
+   mes, ja nao e semente intocada: viaja. */
+function metaEhSementeIntocada(mes, m){
+  if(m.done || m.de) return false;
+  var r = (typeof ROTEIRO !== "undefined" && ROTEIRO[mes]) || [];
+  for(var i=0;i<r.length;i++){ if(m.id === "art-"+mes+"-"+i) return m.t === r[i]; }
+  if(mes === MES_INICIO){
+    for(var j=0;j<METAS_DEFAULT.length;j++){
+      if(m.id === METAS_DEFAULT[j].id) return m.t === METAS_DEFAULT[j].t;
+    }
+  }
+  return false;
+}
+
+/* null = este aparelho ja publicou. [] = nao ha o que publicar. */
+function metasParaPublicar(){
+  if(LS(ACERVO_METAS_KEY, false)) return null;
+  var fora = [];
+  listaMeses().forEach(function(mes){
+    (getMetas(mes)||[]).forEach(function(m){
+      if(!m || !m.id) return;
+      if(!String(m.t||"").trim()) return;        /* meta em branco nao e meta */
+      if(metaEhSementeIntocada(mes, m)) return;
+      fora.push({mes:mes, m:m});
+    });
+  });
+  return fora;
+}
+
+function publicarAcervoUmaVez(){
+  var metas = metasParaPublicar();
+  if(metas === null){
+    alert("O acervo deste aparelho j\u00e1 foi publicado.\n\nDaqui em diante cada meta viaja no momento em que voc\u00ea a edita.");
+    return;
+  }
+  if(!metas.length){
+    save(ACERVO_METAS_KEY, true); renderAcervoEstado();
+    alert("Nada a publicar: as metas deste aparelho s\u00e3o as que a p\u00e1gina cria sozinha, e o outro aparelho j\u00e1 as tem iguais.");
+    return;
+  }
+  if(!confirm("Publicar " + metas.length + " meta(s) deste aparelho para os outros?\n\n" +
+      "Elas sobem com data de 1\u00ba de janeiro de 2026, de prop\u00f3sito: assim qualquer edi\u00e7\u00e3o feita depois disso, " +
+      "em qualquer aparelho, vence.\n\n" +
+      "Isto acontece UMA vez por aparelho. Fa\u00e7a a partir do aparelho que tem o acervo certo.")) return;
+  metas.forEach(function(c){
+    var iso = enfileirarToque("meta", {mes:c.mes, mid:c.m.id, t:c.m.t||"", done:!!c.m.done,
+                                       de:c.m.de||null, del:false}, ACERVO_EM);
+    /* Meta que nunca teve instante passa a ter o que subiu: assim ela deixa de
+       ser "tempo desconhecido" aqui dentro e a mesclagem seguinte nao a devolve
+       como se fosse novidade de fora. Meta que JA tinha instante fica como
+       estava — aquele instante e verdadeiro e mais novo, e rebaixa-lo seria
+       mentir sobre quando voce a editou. */
+    if(!c.m.em){
+      var lista = getMetas(c.mes);
+      for(var i=0;i<lista.length;i++){ if(lista[i].id===c.m.id){ lista[i].em = iso; break; } }
+      setMetas(lista, c.mes);
+    }
+  });
+  save(ACERVO_METAS_KEY, true);
+  renderAcervoEstado();
+  alert(metas.length + " meta(s) entraram na fila. Sobem em alguns segundos, e o outro aparelho as mostra em um a tr\u00eas minutos.");
+}
+
+function renderAcervoEstado(){
+  var el = document.getElementById("acervo-estado"); if(!el) return;
+  var m;
+  try{ m = metasParaPublicar(); }catch(e){ return; }
+  if(m === null){ el.textContent = "Acervo j\u00e1 publicado a partir deste aparelho."; el.className = "backup-aviso"; return; }
+  el.textContent = m.length ? m.length + " meta(s) daqui ainda n\u00e3o publicadas."
+                            : "Nada a publicar: as metas daqui s\u00e3o as que a p\u00e1gina cria sozinha.";
+  el.className = "backup-aviso" + (m.length ? " velho" : "");
+}
 function getEventos(){return LS("cron:eventos", JSON.parse(JSON.stringify(EVENTOS_DEFAULT)));}
 function setEventos(e){save("cron:eventos",e);}
 function diasAte(iso){const [y,m,dd]=iso.split("-").map(Number);
@@ -2166,6 +2272,9 @@ if(LS("cron:metas-seed", null) !== METAS_SEED){
   save("cron:metas-seed", METAS_SEED);
 }
 renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();
+/* Depois do bloco de sementes de proposito: renderAcervoEstado le ROTEIRO,
+   que so existe a partir da linha acima. */
+try{ renderAcervoEstado(); }catch(e){ console.error("estado do acervo:", e); }
 checkUpdate();
 
 /* ---- Entrada: o Cowork escreve, a pagina mescla ----
