@@ -45,28 +45,75 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Dobrar os toques
-        run: python scripts/dobrar_toques.py
-
-      - name: Gravar no repositorio
+      # POR QUE UM LACO, E POR QUE RECALCULAR EM VEZ DE REBASEAR.
+      # Ate 29/08 este passo dobrava uma vez, commitava, e so entao fazia
+      # `git pull --rebase`. Duas dobras concorrentes se perdiam ai: a segunda
+      # tentava rebasear um estado.json ja calculado sobre outro estado.json ja
+      # calculado, e o git nao tem como fundir dois resultados. Aconteceu em
+      # 29/08 as 23:59:25 — CONFLICT em Cronograma/estado.json, rodada inteira
+      # descartada, 2 toques do celular deixados sem consolidar.
+      #
+      # A dobra e funcao pura de (estado.json, toques/). Entao, em vez de tentar
+      # fundir resultados, cada tentativa RECALCULA sobre o main de agora. Nao
+      # existe conflito a resolver: o que houver de novo no main ja entra como
+      # entrada da conta. Recalcular custa segundos; rebasear nao funciona.
+      - name: Dobrar e gravar
         id: gravar
         run: |
           git config user.name  "dobra-de-toques"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # `Cronograma` inteiro, e nao os dois caminhos: entre dobras a pasta
-          # toques/ fica vazia, e o Git nao versiona pasta vazia. Nomear um
-          # caminho que nao existe faria o `git add` falhar, e a varredura de 15
-          # em 15 minutos ficaria vermelha justamente quando nao ha nada a fazer.
-          git add -A Cronograma
-          if git diff --staged --quiet; then
-            echo "Nada a dobrar nesta rodada."
-            echo "mudou=nao" >> "$GITHUB_OUTPUT"
-          else
-            git commit -m "dobra: toques consolidados em estado.json"
-            git pull --rebase --autostash
-            git push
-            echo "mudou=sim" >> "$GITHUB_OUTPUT"
+
+          # O laco reescreve a arvore inteira a partir do main a cada tentativa.
+          # O que torna isso inofensivo e uma invariante: este job nao escreve
+          # nada fora de Cronograma/. Se um dia alguem acrescentar um passo que
+          # escreva fora, e melhor o job parar aqui do que engolir a mudanca em
+          # silencio no primeiro `git reset --hard`.
+          sujo=$(git status --porcelain -uno -- . ':(exclude)Cronograma')
+          if [ -n "$sujo" ]; then
+            echo "Ha mudanca rastreada fora de Cronograma/ antes da dobra:"
+            echo "$sujo"
+            echo "O laco abaixo a descartaria. Corrija o workflow."
+            exit 1
           fi
+
+          mudou=nao
+          for tentativa in 1 2 3; do
+            git fetch --quiet origin main
+            git reset --hard --quiet FETCH_HEAD
+
+            python scripts/dobrar_toques.py
+
+            # SO O QUE A DOBRA ESCREVE. `git add -A Cronograma` varria junto
+            # qualquer arquivo nao rastreado que estivesse na pasta — medido:
+            # commitava um rascunho solto sem ninguem pedir. Nomear os dois
+            # caminhos era o que se queria desde o inicio, mas `toques/` nao
+            # existe entre dobras (o Git nao versiona pasta vazia) e o `git add`
+            # falhava por pathspec. Dai a condicao: so nomeia `toques` quando ha
+            # o que nomear, seja no disco, seja como entrada apagada no indice.
+            git add -A -- Cronograma/estado.json
+            if [ -d Cronograma/toques ] || [ -n "$(git ls-files -- Cronograma/toques)" ]; then
+              git add -A -- Cronograma/toques
+            fi
+            if git diff --staged --quiet; then
+              echo "Nada a dobrar nesta rodada."
+              break
+            fi
+
+            git commit -q -m "dobra: toques consolidados em estado.json"
+            if git push --quiet origin HEAD:main; then
+              mudou=sim
+              break
+            fi
+
+            echo "Push recusado: alguem escreveu no main durante esta dobra."
+            if [ "$tentativa" = "3" ]; then
+              echo "Tres tentativas sem gravar. Os toques continuam em"
+              echo "Cronograma/toques/ e a proxima rodada os pega — nada se perdeu."
+              exit 1
+            fi
+            echo "Refazendo a dobra sobre o main novo (tentativa $tentativa de 3)."
+          done
+          echo "mudou=$mudou" >> "$GITHUB_OUTPUT"
 
       # O site le o estado.json servido pelo Pages. Um push feito pelo
       # GITHUB_TOKEN nem sempre dispara a reconstrucao sozinho, entao ela e
