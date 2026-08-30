@@ -331,6 +331,63 @@
     padding:22px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
   .vg-vazio b{display:block;color:var(--ink-soft);font-family:var(--display);font-size:15px;
     margin-bottom:6px;font-weight:600;}
+
+  /* ===== Reforma das abas. Nenhuma cor nova, nenhuma fonte nova: so arranjo,
+     sobre os mesmos tokens, os mesmos raios de canto e os mesmos pesos. ===== */
+
+  /* A proxima acao do trilho, dentro da tarefa do dia. Usa de proposito o
+     MESMO ponto e o MESMO texto da aba Trilhos, porque e o MESMO subitem —
+     a tela nao pode sugerir que sejam duas coisas. */
+  .task .sub{margin-top:8px;padding:8px 0 0;border-top:1px solid var(--line);}
+  .task .sub .sub-text{cursor:pointer;}
+  .task .sub .sub-onde{border-style:dashed;}
+
+  /* Painel da Semana: cartao claro com numero grande, irmao do .count escuro
+     que ja conta os dias das datas importantes. */
+  .nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .num-c{background:var(--card);border:1px solid var(--line);border-radius:11px;
+    padding:12px 13px;box-shadow:var(--shadow);}
+  .num-c .n{font-family:var(--display);font-size:27px;line-height:1;font-weight:600;
+    color:var(--ink);font-variant-numeric:tabular-nums;}
+  .num-c .n small{font-family:var(--sans);font-size:13px;font-weight:400;color:var(--muted);}
+  .num-c .t{font-size:11.5px;color:var(--ink-soft);margin-top:5px;line-height:1.3;}
+  .num-c .s{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.35;}
+  .num-c.largo{grid-column:1 / -1;}
+  .num-c.atencao{border-color:var(--gold-line);background:#F6EFDD;}
+  .num-c.atencao .n{color:var(--gold);}
+
+  /* A DATA VIROU AVISO. Este bloco e o lugar onde o calendario passou a
+     falar, depois de deixar de mandar: no TOEFL, na esteira e nas metas. */
+  .aviso-cal{margin:2px 0 12px;padding:9px 13px;border:1px dashed var(--gold-line);
+    border-radius:10px;background:rgba(231,213,162,0.22);font-size:12px;
+    line-height:1.45;color:var(--ink-soft);}
+  .aviso-cal b{font-family:var(--display);color:var(--gold);font-weight:600;}
+
+  /* Guia TOEFL: nucleo e reforco. */
+  .g-grupo{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+    margin:12px 0 2px;padding-top:10px;border-top:1px solid rgba(169,124,30,.18);}
+  .g-grupo.primeiro{border-top:none;padding-top:2px;margin-top:4px;}
+  .g-grupo em{font-style:normal;color:var(--gold);}
+  .g-acao{width:100%;margin-top:12px;padding:9px;background:var(--card);
+    border:1px solid var(--gold-soft);border-radius:9px;font-family:var(--sans);
+    font-size:12.5px;color:var(--ink-soft);cursor:pointer;text-align:center;}
+  .g-acao:active{background:#EFEDE2;}
+
+  /* "Ficou para tras": reaproveita o cartao das metas pendentes, que ja e
+     exatamente esta forma — marca, texto, acao. */
+  .carry.recolhido{padding:0;}
+  .carry.recolhido > summary{list-style:none;cursor:pointer;padding:11px 13px;
+    font-family:var(--display);font-size:13px;color:var(--ink);}
+  .carry.recolhido > summary::-webkit-details-marker{display:none;}
+  .carry.recolhido > summary::before{content:"\203A";display:inline-block;margin-right:9px;
+    color:var(--muted);transition:transform .18s;}
+  .carry.recolhido[open] > summary::before{transform:rotate(90deg);}
+  .carry.recolhido > summary .c-sub{display:block;font-family:var(--sans);font-size:11px;
+    color:var(--muted);padding-left:19px;margin-top:2px;letter-spacing:.01em;}
+  .carry .c-corpo{padding:0 13px 11px;}
+  .carry-dia{flex:none;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);padding-top:2px;min-width:58px;}
+  .carry-acoes{flex:none;align-self:center;display:flex;gap:10px;}
 </style>
 </head>
 <body>
@@ -394,7 +451,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-30-registro1";
+const APP_VERSION = "2026-08-30-abas1";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -910,6 +967,86 @@ function restaurarArquivo(k){
 }
 let checks = LS("cron:checks:"+dateKey, {});
 function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,checks);renderHoje();}
+
+/* ================== O QUE FICOU PARA TRAS ==================
+   As marcacoes do dia sao por DATA (cron:checks:AAAA-MM-DD). Isso e certo — o
+   dia de ontem nao pode ser reescrito por um toque de hoje —, mas tem um
+   custo: a tarefa que nao foi marcada simplesmente evapora com o dia. Nunca
+   houve onde ve-la de novo.
+
+   A JANELA E DE SETE DIAS, E ELA MESMA E A REGRA. Passados sete dias o item
+   sai sozinho, sem ninguem dispensar nada. Nao ha ritual noturno para
+   alimentar e nao ha lista que so cresce: o esquecimento e o padrao, e as duas
+   acoes existem para as excecoes.
+
+   MARCAR GRAVA NA DATA DE ORIGEM, e nao em hoje. Se a aula de quarta foi dada
+   e voce so lembrou no sabado, quem recebe a marca e a quarta. Marcar em hoje
+   faria a semana mentir duas vezes: quarta vazia e sabado cheio.
+
+   ISTO NAO VIAJA, e nao e esquecimento: cron:checks: sempre foi por aparelho,
+   e nada aqui muda o que atravessa. O bloco le e escreve a mesma chave que a
+   aba Hoje ja usava.
+   =========================================================== */
+const ATRASO_DIAS = 7;
+const ATRASO_KEY = "cron:hoje-dispensados";
+/* A chave de dispensa so precisa viver os sete dias da janela: passado isso o
+   item ja saiu por conta propria e a marca vira lixo. Podar na escrita evita
+   que o mapa cresca para sempre por causa de um bloco cujo proposito e
+   justamente esquecer. */
+function podarDispensados(){
+  var disp = LS(ATRASO_KEY, {}) || {}, out = {};
+  var limite = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate()-ATRASO_DIAS));
+  Object.keys(disp).forEach(function(k){ if(String(k).slice(0,10) >= limite) out[k] = disp[k]; });
+  return out;
+}
+function atrasadas(){
+  var out = [], disp = LS(ATRASO_KEY, {}) || {};
+  for(var k=ATRASO_DIAS; k>=1; k--){
+    var dt = new Date(now.getFullYear(), now.getMonth(), now.getDate()-k);
+    var dia = ymd(dt), D = DIAS[dt.getDay()];
+    if(!D) continue;
+    var ck = LS("cron:checks:"+dia, {}) || {};
+    D.tasks.forEach(function(t){
+      if(ck[t.id]) return;
+      if(disp[dia+"|"+t.id]) return;
+      out.push({dia:dia, id:t.id, t:t.t, nome:D.nome});
+    });
+  }
+  return out;
+}
+function marcarAtrasada(dia, id){
+  var ck = LS("cron:checks:"+dia, {}) || {};
+  ck[id] = true;
+  save("cron:checks:"+dia, ck);
+  if(dia === dateKey) checks = ck;
+  renderHoje();
+}
+function dispensarAtrasada(dia, id){
+  var disp = podarDispensados();
+  disp[dia+"|"+id] = true;
+  save(ATRASO_KEY, disp);
+  renderHoje();
+}
+function renderAtrasadas(){
+  var a = atrasadas();
+  if(!a.length) return "";
+  var aberto = LS("cron:atrasadas-open", false);
+  var h = '<details class="carry recolhido" '+(aberto?"open":"")+
+          ' ontoggle="save(\'cron:atrasadas-open\', this.open)">'+
+          '<summary>'+a.length+' ficou'+(a.length===1?'':'ram')+' para tr\u00e1s'+
+          '<span class="c-sub">nos \u00faltimos '+ATRASO_DIAS+' dias \u00b7 some sozinho depois disso</span>'+
+          '</summary><div class="c-corpo">';
+  a.forEach(function(o){
+    h += '<div class="carry-i">'+
+         '<span class="carry-dia">'+o.nome.slice(0,3)+' '+Number(o.dia.slice(8,10))+'</span>'+
+         '<span class="carry-t">'+escapeHtml(o.t)+'</span>'+
+         '<span class="carry-acoes">'+
+         '<button class="carry-b" onclick="marcarAtrasada(\''+o.dia+'\',\''+o.id+'\')">marcar</button>'+
+         '<button class="carry-b" onclick="dispensarAtrasada(\''+o.dia+'\',\''+o.id+'\')">dispensar</button>'+
+         '</span></div>';
+  });
+  return h + '</div></details>';
+}
 function weekOfMonth(d){return Math.min(4, Math.ceil(d.getDate()/7));}
 const wom = weekOfMonth(now);
 const phase = wom<=2 ? "livre" : (wom===3 ? "ebd1" : "ebd2");
@@ -929,39 +1066,66 @@ function renderOrdo(){
 }
 function tag(t){return t?`<span class="tag">${t}</span>`:"";}
 const CHK='<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>';
-/* Plano TOEFL — edite estas 4 datas para recalibrar as janelas */
+/* Plano TOEFL — as datas do desenho original. NAO SAO MAIS GATILHO.
+   Ate 30/08 elas decidiam a fase: passou de 17/08, voce estava na Fase 2,
+   tivesse feito o diagnostico ou nao. Isso mentia nos dois sentidos —
+   empurrava para a frente quem estava atrasado e nao servia para nada de
+   quem estava adiantado. Agora quem decide a fase e o NUCLEO cumprido, e
+   estas datas viram AVISO: "o calendario original previa X desde Y". */
 const TOEFL_PLANO = {
   inicio: "2026-07-20",   // começo do preparo
-  fase2:  "2026-08-17",   // entra a Fase 2 (drilagem)
-  fase3:  "2026-10-26",   // entra a Fase 3 (simulados)
-  prova:  "2026-11-30"    // dia da prova
+  fase2:  "2026-08-17",   // o calendário original punha a Fase 2 aqui
+  fase3:  "2026-10-26",   // o calendário original punha a Fase 3 aqui
+  prova:  "2026-11-30"    // dia da prova — esta continua sendo uma data dura
 };
+const TOEFL_FASES = ["f1","f2","f3"];
+const TOEFL_ROTULO = {
+  f1:{fase:"Fase 1 · Fundamentos", foco:"Formato 2026, diagnóstico, vocabulário, notas e templates."},
+  f2:{fase:"Fase 2 · Drilagem dirigida", foco:"Reading e Writing (técnica) e firmar Listening, sempre cronometrado."},
+  f3:{fase:"Fase 3 · Simulados & refino", foco:"Provas completas no formato 2026, ritmo e feedback em Speaking."}
+};
+/* A fase que o CALENDARIO previa. Só serve para o aviso. */
+function faseDoCalendario(){
+  const P=TOEFL_PLANO, h=ymd(now);
+  return h < P.fase2 ? "f1" : (h < P.fase3 ? "f2" : "f3");
+}
 function toeflFase(){
   try{
-    const P = TOEFL_PLANO, dias = diasAte(P.prova);
+    const dias = diasAte(TOEFL_PLANO.prova);
     if(dias < 0) return null;              // prova já passou
-    const hoje = ymd(now);
-    let fase, foco;
-    if(hoje < P.fase2){ fase="Fase 1 · Fundamentos"; foco="Formato 2026, diagnóstico, vocabulário, notas e templates."; }
-    else if(hoje < P.fase3){ fase="Fase 2 · Drilagem dirigida"; foco="Reading e Writing (técnica) e firmar Listening, sempre cronometrado."; }
-    else { fase="Fase 3 · Simulados & refino"; foco="Provas completas no formato 2026, ritmo e feedback em Speaking."; }
-    return {dias, sem: Math.max(0, Math.ceil(dias/7)), fase, foco};
+    const fid = currentFaseId(); if(!fid) return null;
+    const r = TOEFL_ROTULO[fid], falta = nucleoQueFalta(fid);
+    return {dias, sem: Math.max(0, Math.ceil(dias/7)), fid,
+            fase:r.fase, foco:r.foco, falta:falta.length};
   }catch(e){ return null; }
 }
-/* Guia TOEFL — conteúdo por fase, marcável e com links (persistido) */
+/* Guia TOEFL — conteúdo por fase, marcável e com links (persistido)
+
+   NUCLEO E REFORCO. `n:true` e nucleo: e o que a fase SEGUINTE precisa para
+   fazer sentido, e o que da para fazer sozinho. `n:false` e reforco: vale a
+   pena, mas nao tranca nada — tipicamente o que depende de terceiro, de
+   dinheiro ou de agenda que nao e sua. Foi assim que a Fase 3 pos "feedback
+   externo (tutor)" no reforco: uma tarefa que pode ser inviavel nao pode
+   congelar a trilha inteira.
+
+   A ORDEM DOS ITENS NAO PODE MUDAR. As marcacoes moram em
+   cron:toefl-guia:<fase> indexadas por POSICAO. Reordenar aqui moveria as
+   marcacoes para os itens errados, em silencio. A separacao visual entre
+   nucleo e reforco acontece na hora de desenhar, e cada item leva consigo o
+   indice original. */
 const TOEFL_GUIA = {
   f1:{
     titulo:"Fase 1 · Fundamentos",
-    meta:"Objetivo até 16/08: dominar o formato 2026, ter um template por tarefa (Speaking e Writing), um método de notas de Listening, o Anki rodando e saber quais 2 seções puxam a nota para baixo.",
+    meta:"Dominar o formato 2026, ter um template por tarefa (Speaking e Writing), um método de notas de Listening, o Anki rodando e saber quais 2 seções puxam a nota para baixo.",
     itens:[
-      "Criar conta gratuita no TestReady",
-      "Fazer a experiência oficial de 40 min (formato 2026)",
-      "Ler as rubricas de Speaking e Writing",
-      "Simulado-diagnóstico completo e cronometrado (anotar as 4 notas)",
-      "Instalar o Anki + baralho Academic Word List",
-      "Montar template de Writing: Write an Email + Academic Discussion",
-      "Definir o método de notas de Listening",
-      "Montar roteiro de Speaking: Listen and Repeat + Take an Interview"
+      {t:"Criar conta gratuita no TestReady", n:true},
+      {t:"Fazer a experiência oficial de 40 min (formato 2026)", n:false},
+      {t:"Ler as rubricas de Speaking e Writing", n:false},
+      {t:"Simulado-diagnóstico completo e cronometrado (anotar as 4 notas)", n:true},
+      {t:"Instalar o Anki + baralho Academic Word List", n:false},
+      {t:"Montar template de Writing: Write an Email + Academic Discussion", n:true},
+      {t:"Definir o método de notas de Listening", n:true},
+      {t:"Montar roteiro de Speaking: Listen and Repeat + Take an Interview", n:false}
     ],
     links:[
       {t:"TestReady — portal oficial da ETS", u:"https://testready.ets.org"},
@@ -972,14 +1136,14 @@ const TOEFL_GUIA = {
   },
   f2:{
     titulo:"Fase 2 · Drilagem dirigida",
-    meta:"17/08 a 25/10: volume focado nas 2 seções mais fracas. Alvo: subir Reading e Writing para 24+ e firmar Listening.",
+    meta:"Volume focado nas 2 seções mais fracas — as que o diagnóstico apontou. Alvo: subir Reading e Writing para 24+ e firmar Listening.",
     itens:[
-      "Reading: drills cronometrados + revisar cada erro por tipo",
-      "Writing: 2 tarefas por semana, cronometradas, com feedback",
-      "Listening: 1 set por dia com notas ativas",
-      "Speaking: gravar e comparar com exemplares (sábado)",
-      "1 simulado a cada 2–3 semanas",
-      "Anki diário"
+      {t:"Reading: drills cronometrados + revisar cada erro por tipo", n:true},
+      {t:"Writing: 2 tarefas por semana, cronometradas, com feedback", n:true},
+      {t:"Listening: 1 set por dia com notas ativas", n:true},
+      {t:"Speaking: gravar e comparar com exemplares (sábado)", n:false},
+      {t:"1 simulado a cada 2–3 semanas", n:true},
+      {t:"Anki diário", n:false}
     ],
     links:[
       {t:"TestReady — Section Practice (feedback + exemplos)", u:"https://testready.ets.org"},
@@ -989,13 +1153,13 @@ const TOEFL_GUIA = {
   },
   f3:{
     titulo:"Fase 3 · Simulados & refino",
-    meta:"26/10 a 29/11: provas completas, ritmo e feedback. Reserve a última semana para taper (revisão leve e descanso).",
+    meta:"Provas completas, ritmo e feedback. Reserve a última semana para taper (revisão leve e descanso).",
     itens:[
-      "1 simulado completo por semana no formato 2026",
-      "Revisar cada simulado por tipo de erro",
-      "Speaking e Writing: buscar feedback externo (tutor)",
-      "Fixar o timing de cada seção",
-      "Semana final: revisão leve + descanso (sem simulado pesado na véspera)"
+      {t:"1 simulado completo por semana no formato 2026", n:true},
+      {t:"Revisar cada simulado por tipo de erro", n:true},
+      {t:"Speaking e Writing: buscar feedback externo (tutor)", n:false},
+      {t:"Fixar o timing de cada seção", n:true},
+      {t:"Semana final: revisão leve + descanso (sem simulado pesado na véspera)", n:false}
     ],
     links:[
       {t:"TestReady — provas oficiais (TPO)", u:"https://testready.ets.org"},
@@ -1003,25 +1167,117 @@ const TOEFL_GUIA = {
     ]
   }
 };
-function currentFaseId(){
-  const P=TOEFL_PLANO; if(diasAte(P.prova)<0) return null;
-  const h=ymd(now); return h<P.fase2?"f1":(h<P.fase3?"f2":"f3");
-}
 function guiaChecks(fid){return LS("cron:toefl-guia:"+fid, {});}
+/* Itens de uma fase com o INDICE ORIGINAL preso a cada um. Tudo o que desenha
+   ou conta passa por aqui, para que ninguem precise lembrar de que a chave de
+   marcacao e a POSICAO no array. */
+function guiaItens(fid){
+  const g=TOEFL_GUIA[fid]; if(!g) return [];
+  const st=guiaChecks(fid);
+  return g.itens.map((it,i)=>({i:i, t:it.t, nucleo:!!it.n, feito:!!st[i]}));
+}
+function nucleoQueFalta(fid){ return guiaItens(fid).filter(x=>x.nucleo && !x.feito); }
+function guiaQueFalta(fid){ return guiaItens(fid).filter(x=>!x.feito); }
+/* A FASE AVANCA PELO NUCLEO, E NAO PELO CALENDARIO.
+   A primeira fase cujo nucleo ainda nao fechou e a fase corrente. Fechados
+   todos, a corrente e a ultima: a Fase 3 nao tem para onde avancar, e a
+   prova continua sendo a unica data dura deste plano. */
+function currentFaseId(){
+  if(diasAte(TOEFL_PLANO.prova) < 0) return null;
+  for(let k=0;k<TOEFL_FASES.length;k++){
+    if(nucleoQueFalta(TOEFL_FASES[k]).length) return TOEFL_FASES[k];
+  }
+  return TOEFL_FASES[TOEFL_FASES.length-1];
+}
 function toggleGuia(fid,i){const s=guiaChecks(fid);s[i]=!s[i];save("cron:toefl-guia:"+fid,s);renderHoje();}
+
+/* ---- RECALIBRAR ----
+   Nao mexe em tarefa nenhuma: refaz a CONTA. Pega o que falta da fase
+   corrente em diante, divide pelos dias que restam ate a prova e devolve o
+   numero honesto de tarefas por semana. As janelas novas saem da mesma
+   divisao, proporcionais ao que sobrou em cada fase — quem tem mais pendente
+   fica com mais dias.
+
+   O TOEFL_PLANO nao e reescrito, de proposito: ele e a memoria do que se
+   previu, e e contra ela que o aviso compara. Recalibrar acrescenta uma
+   leitura nova; nao apaga a antiga. */
+const RECALIBRE_KEY = "cron:toefl-recalibrado";
+function calcularRecalibragem(){
+  const dias = diasAte(TOEFL_PLANO.prova);
+  if(dias < 0) return null;
+  const atual = currentFaseId(); if(!atual) return null;
+  const desde = TOEFL_FASES.indexOf(atual);
+  const fases = TOEFL_FASES.slice(desde).map(fid=>({fid:fid, falta:guiaQueFalta(fid).length}));
+  const total = fases.reduce((s,f)=>s+f.falta, 0);
+  const semanas = Math.max(1, dias/7);
+  /* Fase sem nada pendente ainda ocupa tempo: dividir a janela pelo numero de
+     pendencias faria a dela virar zero e empurraria a fase seguinte para
+     comecar hoje. O piso de 1 mantem a ordem das janelas legivel. */
+  const peso = fases.map(f=>Math.max(1, f.falta));
+  const somaPeso = peso.reduce((s,x)=>s+x, 0);
+  let acumulado = 0;
+  const janelas = fases.map((f,k)=>{
+    acumulado += dias * (peso[k]/somaPeso);
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + Math.round(acumulado));
+    return {fid:f.fid, falta:f.falta, ate:ymd(d)};
+  });
+  if(janelas.length) janelas[janelas.length-1].ate = TOEFL_PLANO.prova;
+  return {quando:new Date().toISOString(), dias:dias, restantes:total,
+          semanas:Math.round(semanas*10)/10,
+          porSemana:Math.round((total/semanas)*10)/10, janelas:janelas};
+}
+function recalibrarToefl(){
+  const r = calcularRecalibragem();
+  if(!r){ alert("A prova j\u00e1 passou \u2014 n\u00e3o h\u00e1 o que recalibrar."); return; }
+  save(RECALIBRE_KEY, r);
+  renderHoje();
+}
+/* O AVISO. E tudo o que restou do calendario: ele diz o que previa e nao manda
+   mais em nada. So aparece quando a previsao e o estado real divergem —
+   batendo, nao ha o que avisar. */
+function avisoDoCalendario(){
+  const real=currentFaseId(), cal=faseDoCalendario();
+  if(!real || TOEFL_FASES.indexOf(cal) <= TOEFL_FASES.indexOf(real)) return "";
+  const marco = cal==="f2" ? TOEFL_PLANO.fase2 : TOEFL_PLANO.fase3;
+  const nome = TOEFL_ROTULO[cal].fase.replace(/ \u00b7 .*$/, "");
+  const atraso = diasAte(marco);
+  return `<div class="aviso-cal">O calend\u00e1rio original previa a <b>${nome}</b> desde ${
+    fmtData(marco)}${atraso<0?" \u2014 h\u00e1 "+(-atraso)+" dia"+(atraso===-1?"":"s"):""}.
+    A fase agora anda pelo n\u00facleo, ent\u00e3o a data virou aviso: nada avan\u00e7a sozinho e nada congela.</div>`;
+}
+function renderRecalibragem(){
+  const r = LS(RECALIBRE_KEY, null);
+  if(!r || !r.janelas || !r.janelas.length) return "";
+  const nomes = r.janelas.map(j=>TOEFL_ROTULO[j.fid].fase.replace(/ \u00b7 .*$/, "")+" at\u00e9 "+fmtData(j.ate));
+  return `<div class="aviso-cal"><b>${r.porSemana}</b> tarefa${r.porSemana===1?"":"s"} por semana \u2014
+    ${r.restantes} pendente${r.restantes===1?"":"s"} em ${r.semanas} semana${r.semanas===1?"":"s"}.
+    <span style="display:block;margin-top:3px;color:var(--muted);">${escapeHtml(nomes.join(" \u00b7 "))}
+    \u00b7 recalibrado em ${fmtData(String(r.quando).slice(0,10))}</span></div>`;
+}
 function renderGuia(){
   const fid=currentFaseId(); if(!fid) return "";
   const g=TOEFL_GUIA[fid]; if(!g) return "";
-  const st=guiaChecks(fid), aberto=LS("cron:toefl-guia-open", false);
+  const itens=guiaItens(fid), aberto=LS("cron:toefl-guia-open", false);
+  const nucleo=itens.filter(x=>x.nucleo), reforco=itens.filter(x=>!x.nucleo);
+  const faltaN=nucleo.filter(x=>!x.feito).length;
+  const linha=(x)=>`<div class="g-item ${x.feito?'on':''}" onclick="toggleGuia('${fid}',${x.i})">
+      <span class="box">${CHK}</span><span class="g-x">${escapeHtml(x.t)}</span></div>`;
   let h=`<details class="tguia" ${aberto?"open":""} ontoggle="save('cron:toefl-guia-open', this.open)">
-    <summary><span class="g-t">Guia TOEFL · ${g.titulo}</span><span class="g-sub">como começar</span></summary>
+    <summary><span class="g-t">Guia TOEFL \u00b7 ${g.titulo}</span><span class="g-sub">${
+      faltaN ? faltaN+" no n\u00facleo" : "n\u00facleo fechado"}</span></summary>
     <div class="g-body"><p class="g-meta">${g.meta}</p>`;
-  g.itens.forEach((it,i)=>{
-    h+=`<div class="g-item ${st[i]?'on':''}" onclick="toggleGuia('${fid}',${i})">
-      <span class="box">${CHK}</span><span class="g-x">${it}</span></div>`;
-  });
+  h+=avisoDoCalendario();
+  h+=`<div class="g-grupo primeiro">N\u00facleo <em>\u00b7 ${
+        faltaN ? "trava o avan\u00e7o para a pr\u00f3xima fase" : "cumprido"}</em></div>`;
+  nucleo.forEach(x=>{ h+=linha(x); });
+  if(reforco.length){
+    h+=`<div class="g-grupo">Refor\u00e7o <em>\u00b7 vale a pena, n\u00e3o trava nada</em></div>`;
+    reforco.forEach(x=>{ h+=linha(x); });
+  }
+  h+=renderRecalibragem();
+  h+=`<button class="g-acao" onclick="recalibrarToefl()">Recalibrar o que falta at\u00e9 ${fmtData(TOEFL_PLANO.prova)}</button>`;
   h+=`<div class="g-links">`;
-  g.links.forEach(l=>{ h+=`<a href="${l.u}" target="_blank" rel="noopener">${l.t} ↗</a>`; });
+  g.links.forEach(l=>{ h+=`<a href="${l.u}" target="_blank" rel="noopener">${l.t} \u2197</a>`; });
   h+=`</div></div></details>`;
   return h;
 }
@@ -1047,19 +1303,35 @@ function renderHoje(){
   }
   const temToefl = d.tasks.some(t=>/toefl/i.test(t.id));
   if(temToefl){ const f=toeflFase(); if(f){
-    html+=`<div class="toefl-fase">TOEFL · faltam ${f.dias} dia${f.dias===1?"":"s"} (~${f.sem} sem) · <b>${f.fase}</b><span>${f.foco}</span></div>`;
+    html+=`<div class="toefl-fase">TOEFL · faltam ${f.dias} dia${f.dias===1?"":"s"} (~${f.sem} sem) · <b>${f.fase}</b><span>${
+      f.falta ? "faltam "+f.falta+" do núcleo para a fase avançar. "+f.foco : "núcleo cumprido. "+f.foco}</span></div>`;
   }}
+  /* O aviso da esteira NAO vem aqui: o bloco de metas, que e desenhado dentro
+     desta mesma aba, ja o traz. Duas vezes na mesma tela e uma vez a mais. */
   html+=`<ul class="tasks">`;
   const pc=pecaDoMes();
   d.tasks.forEach(t=>{
     const done=!!checks[t.id];
     let extra="";
-    if(t.link==="pipeline" && pc){
-      extra=`<div class="task-live">${pc.proxima?"a seguir \u00b7 ":""}${escapeHtml(pc.curto)} \u00b7 ${escapeHtml(pc.etapa)}</div>`;
-    }
     if(t.link){
-      const P=painelDef(t.link);
-      const alvo=(t.link==="pipeline"&&pc)?`'${pc.id}'`:"null";
+      /* DE QUAL TRILHO ESTE BLOCO SE ALIMENTA, e qual e a proxima acao exata.
+         Antes o bloco so dizia o nome da peca e da etapa, em texto morto: para
+         marcar era preciso ir ate os Trilhos, achar o item e voltar. Agora o
+         subitem vem inteiro — texto real e caixa — e a caixa escreve NO MESMO
+         item, pelo marcarSub. Nao ha copia do estado aqui: o que a linha
+         mostra e lido do trilho a cada desenho. */
+      const P=painelDef(t.link), prox=proximaDoTrilho(t.link);
+      const alvo=(t.link==="pipeline"&&pc)?`'${pc.id}'`:(prox?`'${prox.projId}'`:"null");
+      if(t.link==="pipeline" && pc){
+        extra+=`<div class="task-live">${pc.proxima?"a seguir \u00b7 ":""}${escapeHtml(pc.curto)}</div>`;
+      }
+      if(prox){
+        const selo = prox.vida && prox.vida!=="ativo"
+          ? `<span class="sub-onde">${escapeHtml(VIDA_LBL[prox.vida]||prox.vida)}</span>` : "";
+        extra+=`<div class="sub st-${prox.st}" onclick="event.stopPropagation();marcarDoHoje('${prox.pid}','${prox.projId}','${prox.subId}',true)">
+          <span class="st-dot" title="marcar como conclu\u00edda"></span>
+          <div class="sub-text">${escapeHtml(prox.subT)}</div>${selo}</div>`;
+      }
       extra+=`<button class="ptr" onclick="event.stopPropagation();irAoTrilho('${t.link}',${alvo})">${P?P.titulo:t.link}<span class="seta">\u203A</span></button>`;
     }
     html+=`<li class="task ${done?'done':''}" onclick="toggleCheck('${t.id}')">
@@ -1068,6 +1340,7 @@ function renderHoje(){
       ${tag(t.tag)}</li>`;
   });
   html+=`</ul>`;
+  html+=renderAtrasadas();
   html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
   html+=`<div id="metas-wrap"></div>`;
@@ -1111,6 +1384,12 @@ function renderMetas(){
   h+=`</select></div>`;
   if(!corrente) h+=`<div class="offmonth">Você está ${mesAtivo<monthKey?"revendo":"planejando"} ${mesLabel(mesAtivo)}. O mês atual é ${mesLabel(monthKey)}.
     <button class="voltar" onclick="trocarMes('${monthKey}')">voltar ao atual</button></div>`;
+  /* MESMO PRINCIPIO DO TOEFL, aplicado a esteira que alimenta estas metas.
+     A entrega do mes e a peca corrente; se ela ficou para tras, quem diz isso
+     e um aviso — nao uma troca silenciosa de peca. O bloco de pendencias
+     abaixo ja era assim desde o inicio: nenhuma meta atravessa o mes sozinha,
+     e "trazer" continua sendo um ato seu. */
+  if(corrente) h+=avisoDaEsteira();
   if(corrente) h+=renderPendencias();
   const metas=getMetas(); let g="";
   metas.forEach(function(m,i){
@@ -1555,14 +1834,76 @@ const ST_LBL=["A fazer","Em andamento","Concluída"];
 function abertos(){return LS("cron:paineis-open",{});}
 function projAberto(pid,id,emAnd){var a=abertos(),k=pid+"/"+id;return (k in a)?a[k]:emAnd;}
 function setProjAberto(pid,id,v){var a=abertos();a[pid+"/"+id]=v;save("cron:paineis-open",a);}
-function cycleSub(pid,pi,si){
-  var p=getProjs(pid),x=normSub(p[pi].subs[si]);
-  var de=x.st;
-  x.st=(x.st+1)%3;
-  x.em=new Date().toISOString();
-  setProjs(pid,p);
+/* ================= A ESCRITA DO SUBITEM MORA AQUI, E SO AQUI =================
+   Ate agora o cycleSub era o unico jeito de mudar o `st` de um subitem, e ele
+   so sabia falar por indice (painel, posicao do projeto, posicao do subitem).
+   A aba Hoje passou a marcar o MESMO subitem, e o caminho dela e por id.
+
+   A tentacao seria escrever um segundo caminho. Nao: e exatamente o defeito do
+   `dadosDoEvento` em 29/08 — o botao do acervo montava o proprio payload, e
+   ficou para tras no dia em que o titulo passou a viajar. Dois escritores do
+   mesmo dado significa que um dia um deles nao aprende o que o outro aprendeu.
+
+   Entao ha um escritor so. Quem chama decide QUAL estado; este decide COMO se
+   escreve — gravar o `em`, chamar o logar(), e portanto gerar UM toque do tipo
+   `itens`, que ja existe e ja viaja. O cycleSub virou quem calcula o proximo
+   estado do ciclo, e nada mais.
+
+   Devolve null quando nao houve mudanca: marcar o que ja estava marcado nao e
+   um toque, e um toque a toa vira uma linha a toa no registro dos dois
+   aparelhos. E a mesma guarda que o editEv ganhou em 29/08.
+   ============================================================================ */
+function marcarSub(pid, projId, subId, novoSt){
+  var p = getProjs(pid), pi = -1, si = -1;
+  for(var i=0;i<p.length && pi<0;i++){
+    if(p[i].id !== projId) continue;
+    for(var j=0;j<(p[i].subs||[]).length;j++){
+      if(p[i].subs[j].id === subId){ pi = i; si = j; break; }
+    }
+  }
+  if(pi < 0 || si < 0) return null;
+  var x = normSub(p[pi].subs[si]), de = x.st;
+  if(novoSt === de) return null;
+  x.st = novoSt;
+  x.em = new Date().toISOString();
+  setProjs(pid, p);
   logar(pid, p[pi], x, de, x.st);
+  return {pid:pid, pi:pi, si:si, de:de, para:x.st};
+}
+function cycleSub(pid,pi,si){
+  var p=getProjs(pid), pr=p[pi], x=pr && pr.subs && normSub(pr.subs[si]);
+  if(!x) return;
+  if(!marcarSub(pid, pr.id, x.id, (x.st+1)%3)) return;
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
+}
+/* A caixa que a aba Hoje mostra. Marcar conclui; desmarcar volta para "a
+   fazer" — a caixa tem dois estados, e nao ha como ela adivinhar que o item
+   estava "em andamento" antes. Quem precisa dos tres estados usa o ponto da
+   aba Trilhos, que continua girando o ciclo inteiro. */
+function marcarDoHoje(pid, projId, subId, concluir){
+  if(!marcarSub(pid, projId, subId, concluir ? 2 : 0)) return;
+  renderHoje();
+  try{ if(!document.getElementById("view-trilhos").hidden) renderTrilhos(); }catch(e){}
+}
+/* A PROXIMA ACAO DE UM TRILHO: o primeiro subitem nao concluido, na ordem em
+   que o trilho esta, dentro do primeiro projeto que ainda nao ficou pronto.
+   Pula "nao se aplica" pela mesma razao que o pecaDoMes ja pulava: e uma etapa
+   que o proprio trilho declarou que nao acontece, e mandar o dia para ela seria
+   apontar para o nada. Hoje isso e o caso real do a00-3. */
+function proximaDoTrilho(pid){
+  var projs = getProjs(pid) || [];
+  for(var i=0;i<projs.length;i++){
+    var pr = projs[i];
+    if(projConcluido(pr)) continue;
+    for(var j=0;j<(pr.subs||[]).length;j++){
+      var x = normSub(pr.subs[j]);
+      if(x.vida === "inaplicavel") continue;
+      if(x.st === 2) continue;
+      return {pid:pid, projId:pr.id, projT:pr.t, subId:x.id, subT:x.t, st:x.st,
+              vida:x.vida, motivo:x.motivo};
+    }
+  }
+  return null;
 }
 /* Ciclo de vida: ativo -> adiado -> abandonado -> ativo. Pede motivo, e
    no caso de adiar pergunta também para quando voltar. O progresso (st)
@@ -2071,7 +2412,10 @@ function addProj(pid){var p=getProjs(pid);p.push(normProj({id:"p"+Date.now(),t:"
   var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj-name');if(b.length)b[b.length-1].focus();}
 function addSub(pid,pi){var p=getProjs(pid);p[pi].subs.push(normSub({id:"s"+Date.now(),t:"",st:0,origem:"manual"}));setProjs(pid,p);renderPainel(pid);
   var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-pi="'+pi+'"] .sub-text');if(b.length)b[b.length-1].focus();}
-function sincronizarHoje(pid){ if(pid==="pipeline") renderHoje(); }
+/* Antes so a esteira alimentava o Hoje, entao so ela precisava avisar. Agora
+   qualquer trilho pode estar mostrando a proxima acao dele la, e um `if` por
+   painel seria uma lista para alguem esquecer de atualizar. */
+function sincronizarHoje(pid){ renderHoje(); }
 function renderPainel(pid){
   var alvos=document.querySelectorAll('[data-painel="'+pid+'"]');
   if(!alvos.length) return;
@@ -2113,19 +2457,51 @@ function renderPainel(pid){
   alvos.forEach(function(el){el.innerHTML=h;});
 }
 function renderTecnico(){renderPainel("tecnico");}
-/* Peça do mês corrente na esteira, com a etapa em que ela está */
+/* Uma peca esta pronta quando toda etapa que CONTA esta concluida. "Nao se
+   aplica" nao conta — e a mesma regra que o contador do painel ja usava. */
+function projConcluido(p){
+  var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel"; });
+  return conta.length > 0 && conta.every(function(x){ return x.st === 2; });
+}
+/* A PECA CORRENTE DA ESTEIRA — e por que ela deixou de ser "a peca do mes".
+
+   ANTES: `mes === monthKey`. A esteira avancava porque o calendario virou. Em
+   1o de setembro a peca de agosto que nao ficou pronta simplesmente sumia do
+   Hoje e da chamada dos Trilhos, e a de setembro tomava o lugar sem ninguem
+   decidir nada — exatamente o que a fase do TOEFL fazia em 17/08.
+
+   AGORA: a corrente e a PRIMEIRA que ainda nao esta pronta, na ordem da
+   esteira. O mes vira aviso: se ela ja devia ter saido, a tela diz isso, em
+   vez de trocar de peca pelas costas. Uma peca so sai de cena quando fica
+   pronta, que e a unica coisa que significa "entregue".
+
+   `atraso` e em meses, e alimenta o aviso. `adiantada` cobre o caso de tudo
+   estar pronto ate aqui e a proxima ser de um mes que ainda nao chegou. */
+function mesesEntre(a, b){
+  var pa=String(a).split("-"), pb=String(b).split("-");
+  return (Number(pb[0])-Number(pa[0]))*12 + (Number(pb[1])-Number(pa[1]));
+}
 function pecaDoMes(){
-  var projs=getProjs("pipeline"), p=null, proxima=false;
-  for(var i=0;i<projs.length;i++){ if(projs[i].mes===monthKey){p=projs[i];break;} }
-  if(!p){ for(var i=0;i<projs.length;i++){ if(projs[i].mes>monthKey){p=projs[i];proxima=true;break;} } }
+  var projs=getProjs("pipeline"), p=null;
+  for(var i=0;i<projs.length;i++){ if(!projConcluido(projs[i])){ p=projs[i]; break; } }
   if(!p) return null;
   var etapa=null;
   for(var j=0;j<p.subs.length;j++){
     if(p.subs[j].vida==="inaplicavel") continue;
     if(p.subs[j].st!==2){etapa=p.subs[j].t;break;}
   }
-  return {id:p.id, curto:p.t.replace(/^[^\u00b7]*\u00b7\s*/,""), mes:p.mes, proxima:proxima,
+  var atraso = (p.mes && p.mes < monthKey) ? mesesEntre(p.mes, monthKey) : 0;
+  return {id:p.id, curto:p.t.replace(/^[^\u00b7]*\u00b7\s*/,""), mes:p.mes,
+          proxima: !!(p.mes && p.mes > monthKey), atraso: atraso,
           etapa: etapa || "pronta para submeter"};
+}
+/* O aviso da esteira, irmao do aviso do TOEFL e pela mesma razao. */
+function avisoDaEsteira(){
+  var pc = pecaDoMes();
+  if(!pc || !pc.atraso) return "";
+  return '<div class="aviso-cal">O calend\u00e1rio previa <b>' + escapeHtml(pc.curto) +
+         '</b> em ' + escapeHtml(mesLabel(pc.mes)) + ', h\u00e1 ' + pc.atraso + ' m\u00eas' +
+         (pc.atraso===1?'':'es') + '. A esteira n\u00e3o pula: ela s\u00f3 anda quando a pe\u00e7a fica pronta.</div>';
 }
 function renderTrilhos(){
   var h='<p class="plate-eyebrow">Trilhos</p>'+
@@ -2133,6 +2509,7 @@ function renderTrilhos(){
         '<p class="plate-eixo">Uma pe\u00e7a pronta para submeter por m\u00eas</p>'+
         '<p class="plate-date">Ler e fichar nas semanas III e IV do m\u00eas anterior. Redigir nas semanas I e II.</p>';
   var pc=pecaDoMes();
+  h+=avisoDaEsteira();
   if(pc) h+='<div class="anchor"><span class="t">'+(pc.proxima?"a seguir":mesCurto(pc.mes))+'</span>'+
             '<span class="n">'+escapeHtml(pc.curto)+'<br><span style="color:#B9C0CE;font-size:12px;">'+escapeHtml(pc.etapa)+'</span></span></div>';
   h+='<div class="trilho-nota"><b>Como usar.</b> Toque no ponto para girar a etapa entre a fazer, em andamento e conclu\u00edda. '+
@@ -2157,8 +2534,136 @@ function renderTrilhos(){
   renderRegistro();
   renderArquivo();
 }
+/* ================== A ABA SEMANA VIROU PAINEL ==================
+   Ela repetia a grade fixa dos sete dias — a mesma que esta no DIAS, a mesma
+   que ele sabe de cor. Uma tela que so repete o que voce ja sabe nao informa
+   nada: gasta a aba inteira para nao dizer nada sobre hoje.
+
+   Agora ela responde com NUMERO. Cada um sai de dado que ja existe no
+   aparelho: nenhuma chave nova, nenhum registro novo, nada para alimentar a
+   mao. A grade continua ali, recolhida no rodape, para conferir a forma da
+   semana quando for o caso.
+   ============================================================== */
+
+/* Segunda-feira desta semana: a semana do app comeca na segunda, que e a
+   ordem do ORDEM_SEMANA e o eixo de cada dia. */
+function segundaDaSemana(){
+  return ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay()+6)%7)));
+}
+/* Marcacoes no registro: esta semana contra a media semanal desde a primeira
+   linha. Depois da descida do registro isto conta os DOIS aparelhos — e o que
+   torna a media honesta, porque antes cada um media so a propria metade. */
+function ritmoDoRegistro(){
+  var r = getReg().filter(function(o){ return o && /^\d{4}-\d{2}-\d{2}$/.test(o.d||""); });
+  if(!r.length) return null;
+  var seg = segundaDaSemana();
+  var nSemana = r.filter(function(o){ return o.d >= seg; }).length;
+  var primeira = r.reduce(function(a,o){ return (!a || o.d < a) ? o.d : a; }, null);
+  var span = Math.max(1, Math.ceil((-diasAte(primeira) + 1) / 7));
+  return {semana:nSemana, media:Math.round((r.length/span)*10)/10, total:r.length, semanas:span};
+}
+/* Artigos entregues contra previstos. "Previsto" e a peca cujo mes ja chegou;
+   "entregue" e a peca com todas as etapas que contam concluidas — a mesma
+   regra do pecaDoMes, e nao uma segunda contagem paralela que um dia
+   discordaria dela. */
+function entregaDosArtigos(){
+  var projs = (getProjs("pipeline") || []).filter(function(p){ return p.mes; });
+  var previstos = projs.filter(function(p){ return p.mes <= monthKey; });
+  return {previstos:previstos.length, entregues:previstos.filter(projConcluido).length,
+          total:projs.length};
+}
+/* Prazos ordenados por proximidade. Sai do mesmo feed e da mesma triagem da
+   aba Vagas: o que voce marcou "nao" ou arquivou nao aparece, e o que ja
+   venceu tambem nao. Nenhuma ordem inventada — e a data, so. */
+function prazosProximos(n){
+  var itens = (VG_VAGAS.itens||[]).concat(VG_CHAMADAS.itens||[]);
+  var hoje = ymd(now);
+  var abertas = itens.filter(function(i){
+    if(!i || !/^\d{4}-\d{2}-\d{2}$/.test(i.prazo||"")) return false;
+    if(i.prazo < hoje) return false;
+    var st = vgEstado(i.id);
+    return st !== VG_ST.NAO && st !== VG_ST.ARQ;
+  });
+  abertas.sort(function(a,b){ return a.prazo < b.prazo ? -1 : (a.prazo > b.prazo ? 1 : 0); });
+  /* De quando e o feed que esta na tela. O painel abre pelo cache, que pode
+     ser de dias atras: sem esta linha, "31 em aberto" parece de agora. */
+  var quando = [VG_VAGAS._gerado_em, VG_CHAMADAS._gerado_em].filter(Boolean).sort().pop() || "";
+  return {lista:abertas.slice(0,n), total:abertas.length, temFeed:itens.length>0,
+          coletado: quando ? String(quando).slice(0,10) : ""};
+}
+const FASE_LBL = {livre:"produção livre", ebd1:"sprint EBD · Momento 1", ebd2:"sprint EBD · Momento 2"};
+const ROMANOS = ["I","II","III","IV"];
 function renderSemana(){
-  let html=`<p class="plate-eyebrow">Visão geral</p><h1 class="plate-day" style="font-size:30px;margin-bottom:16px;">A semana</h1>`;
+  const alvo=document.getElementById("view-semana"); if(!alvo) return;
+  let html=`<p class="plate-eyebrow">Visão geral</p>`+
+           `<h1 class="plate-day" style="font-size:30px;margin-bottom:4px;">A semana</h1>`+
+           `<p class="plate-date">Desde ${fmtData(segundaDaSemana())} · onde as coisas estão.</p>`;
+
+  const dias = diasAte(TOEFL_PLANO.prova);
+  const art = entregaDosArtigos();
+  const rit = ritmoDoRegistro();
+  const pz = prazosProximos(5);
+  const fase = toeflFase();
+
+  html+=`<div class="nums">`;
+  html+=`<div class="num-c largo${(dias>=0&&dias<=30)?" atencao":""}"><div class="n">${
+    dias>=0?dias:"—"}<small> dia${dias===1?"":"s"}</small></div>
+    <div class="t">até ${fmtData(TOEFL_PLANO.prova)} — a prova do TOEFL</div>
+    <div class="s">${fase ? escapeHtml(fase.fase)+(fase.falta?" · "+fase.falta+" no núcleo":" · núcleo fechado")
+                          : "a prova já passou"}</div></div>`;
+
+  const emAberto = art.previstos - art.entregues;
+  html+=`<div class="num-c${emAberto>0?" atencao":""}"><div class="n">${art.entregues}<small> de ${art.previstos}</small></div>
+    <div class="t">artigos entregues contra previstos</div>
+    <div class="s">${emAberto>0 ? emAberto+" em aberto · "+art.total+" na esteira"
+                                : "em dia · "+art.total+" na esteira"}</div></div>`;
+
+  if(rit && rit.semanas >= 2){
+    const dif = Math.round((rit.semana - rit.media)*10)/10;
+    html+=`<div class="num-c"><div class="n">${rit.semana}<small> / ${rit.media}</small></div>
+      <div class="t">marcações nesta semana contra a média</div>
+      <div class="s">${dif===0?"na média":(dif>0?"+"+dif+" acima":dif+" abaixo")} · ${rit.total} em ${rit.semanas} semanas</div></div>`;
+  } else if(rit){
+    /* MEDIA DE UMA SEMANA SO NAO E MEDIA. Medido: com o registro comecando em
+       26/08, as 14 linhas do Mac caem todas na semana corrente e o cartao dizia
+       "14 / 14 · na media" — verdadeiro e vazio, porque a media E esta semana.
+       Enquanto nao houver duas semanas, o cartao diz o que tem: a contagem. */
+    html+=`<div class="num-c"><div class="n">${rit.semana}</div>
+      <div class="t">marcações nesta semana</div>
+      <div class="s">a média chega quando houver duas semanas de registro</div></div>`;
+  } else {
+    html+=`<div class="num-c"><div class="n">—</div>
+      <div class="t">marcações nesta semana contra a média</div>
+      <div class="s">o registro ainda está vazio</div></div>`;
+  }
+
+  html+=`<div class="num-c largo${phase!=="livre"?" atencao":""}"><div class="n">Semana ${ROMANOS[wom-1]}</div>
+    <div class="t">a fase do mês — ${FASE_LBL[phase]}</div>
+    <div class="s">${escapeHtml(mesLabel(monthKey))}</div></div>`;
+  html+=`</div>`;
+
+  html+=`<div class="shead">Prazos mais próximos<span class="sub">${
+    pz.temFeed ? pz.total+" em aberto"+(pz.coletado?" · coleta de "+fmtData(pz.coletado):"")
+               : "carregando o feed…"}</span></div>`;
+  if(pz.lista.length){
+    pz.lista.forEach(i=>{
+      const d = diasAte(i.prazo);
+      const marca = vgEstado(i.id)===VG_ST.SIM ? ' · <i>marcada</i>' : '';
+      html+=`<div class="reg-i"><span class="reg-d">${d}</span>
+        <span class="reg-t">${escapeHtml(i.titulo||"(sem título)")}
+        <span>${escapeHtml(i.instituicao||i.fonte||"")} · ${fmtData(i.prazo)}${marca}</span></span></div>`;
+    });
+  } else {
+    html+=`<div class="vazio">${pz.temFeed ? "Nenhum prazo em aberto na lista."
+                                           : "Abrindo o feed de vagas e chamadas…"}</div>`;
+  }
+
+  /* A grade fixa continua existindo, recolhida. Ele sabe de cor, mas conferir
+     a forma da semana ainda tem uso — e ela nao custa nada estando fechada. */
+  html+=`<details class="tecbloco" ${LS("cron:grade-open", false)?"open":""}
+    ontoggle="save('cron:grade-open', this.open)">
+    <summary><span class="tb-t">A grade fixa</span><span class="tb-sub">os sete dias, como sempre</span></summary>
+    <div class="tb-body">`;
   ORDEM_SEMANA.forEach(idx=>{
     const d=DIAS[idx], isToday=idx===todayIdx?1:0, linhas=[];
     d.anchors.forEach(a=>linhas.push(`<b>${a.t}</b> — ${a.n}`));
@@ -2167,7 +2672,17 @@ function renderSemana(){
       <summary><span class="w-day">${d.nome}${isToday?" · hoje":""}</span><span class="w-eixo">${d.eixo}</span></summary>
       <div class="w-body">${linhas.map(l=>`<div>${l}</div>`).join("")}</div></details>`;
   });
-  document.getElementById("view-semana").innerHTML=html;
+  html+=`</div></details>`;
+  alvo.innerHTML=html;
+
+  /* O feed so e buscado com a aba NA FRENTE. renderSemana roda tambem no boot,
+     com a aba escondida: sem esta guarda, todo carregamento da pagina baixaria
+     vagas.json e chamadas.json — cerca de 340 KB — mesmo de quem nunca abre
+     nem a Semana nem as Vagas. No celular, isso e a rede do bolso. Aberta a
+     aba, o setView chama renderSemana de novo e a busca acontece ali. */
+  if(!pz.temFeed && !VG_BUSCOU && !alvo.hidden){
+    vgCarregar().then(function(){ try{ if(!alvo.hidden) renderSemana(); }catch(e){} });
+  }
 }
 function escapeHtml(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function setView(v){
@@ -2176,6 +2691,7 @@ function setView(v){
     document.getElementById("tab-"+k).classList.toggle("active", k===v);
   });
   if(v==="trilhos") renderTrilhos();
+  if(v==="semana") renderSemana();   /* os numeros mudam a cada marcacao */
   if(v==="vagas") vgAbrir();
   try{window.scrollTo(0,0);}catch(e){}}
 function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
@@ -2369,24 +2885,33 @@ function vgBuscar(u){
 }
 
 /* Cache primeiro, rede depois. No metro o painel abre com o que ja tinha em
-   vez de abrir vazio; se a rede responder, atualiza e regrava o cache. */
-function vgAbrir(){
+   vez de abrir vazio; se a rede responder, atualiza e regrava o cache.
+
+   CARREGAR E DESENHAR VIRARAM DUAS COISAS. O painel da aba Semana tambem
+   precisa dos prazos, e ate agora o feed so era buscado por quem abrisse a aba
+   Vagas: quem fosse direto para a Semana veria uma lista vazia sem saber por
+   que. Agora uma funcao carrega e devolve promessa, a outra desenha. */
+function vgCarregar(){
   var cache = LS("cron:feed-cache", null);
   if(cache){
     VG_VAGAS = cache.vagas || {itens:[]};
     VG_CHAMADAS = cache.chamadas || {itens:[]};
   }
-  vgRender();
-  if(VG_BUSCOU) return;
+  if(VG_BUSCOU) return Promise.resolve(false);
   VG_BUSCOU = true;
-  Promise.all([vgBuscar("../dados/vagas.json"), vgBuscar("../dados/chamadas.json")])
+  return Promise.all([vgBuscar("../dados/vagas.json"), vgBuscar("../dados/chamadas.json")])
     .then(function(r){
       if(r[0]) VG_VAGAS = r[0];
       if(r[1]) VG_CHAMADAS = r[1];
-      if(r[0] || r[1]) save("cron:feed-cache", {vagas:VG_VAGAS, chamadas:VG_CHAMADAS,
-                                                quando:new Date().toISOString()});
-      vgRender();
+      if(r[0] || r[1]){ save("cron:feed-cache", {vagas:VG_VAGAS, chamadas:VG_CHAMADAS,
+                                                 quando:new Date().toISOString()}); return true; }
+      return false;
     });
+}
+function vgAbrir(){
+  var pronto = vgCarregar();
+  vgRender();
+  pronto.then(function(mudou){ if(mudou) vgRender(); });
 }
 
 /* ---- Backup: exportar / importar todos os dados cron: ---- */
