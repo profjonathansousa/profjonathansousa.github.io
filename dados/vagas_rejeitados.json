@@ -1,8 +1,526 @@
 {
   "_o_que_e": "O que o filtro barrou, com a razao. Serve para afinar criterios_vagas.json com evidencia em vez de palpite.",
   "_teto": 200,
-  "_barrados_nesta_rodada": 70,
+  "_barrados_nesta_rodada": 74,
   "itens": [
+    {
+      "id": "philjobs-31925",
+      "titulo": "Assistant Professor of Philosophy",
+      "url": "https://philjobs.org/job/show/31925",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof--selecoes-selecao-do-mestrado-em-filosofia-do-ppgf-ufam-2027",
+      "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM 2027",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgf-ufam-2027",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-gfilufes-abre-selecao-para-doutorado-em-filosofia-turma-2027",
+      "titulo": "PPGFIL/UFES abre seleção para Doutorado em Filosofia - Turma 2027",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/ppgfilufes-abre-selecao-para-doutorado-em-filosofia--turma-2027",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-ocesso-seletivo-mestrado-e-doutorado-em-filosofia-ppgfil-unb",
+      "titulo": "Processo Seletivo - Mestrado e Doutorado em Filosofia (PPGFIL-UnB)",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo--mestrado-e-doutorado-em-filosofia-ppgfil-unb",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-losofia-do-ppgf-ufam-edital-exclusivo-para-pessoas-indigenas",
+      "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM - Edital exclusivo para pessoas indígenas",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgf-ufam--edital-exclusivo-para-pessoas-indigenas",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-enda-concursos-e-selecoes-selecao-doutorado-em-filosofia-ufg",
+      "titulo": "Seleção Doutorado em Filosofia UFG",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-doutorado-em-filosofia-ufg",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-genda-concursos-e-selecoes-selecao-mestrado-em-filosofia-ufg",
+      "titulo": "Seleção Mestrado em Filosofia UFG",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-mestrado-em-filosofia-ufg",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-lecoes-processo-seletivo-mestrado-e-doutorado-filosofia-ufsc",
+      "titulo": "Processo Seletivo - Mestrado e Doutorado Filosofia UFSC",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo--mestrado-e-doutorado-filosofia-ufsc",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-s-e-selecoes-selecao-do-mestrado-em-filosofia-do-ppgfil-ufsj",
+      "titulo": "Seleção do Mestrado em Filosofia do PPGFIL-UFSJ",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgfil-ufsj",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-rama-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-2026",
+      "titulo": "Edital extraordinário - Inclusão étnico-racial Processo de Seleção para ingresso no Programa de Pós-Graduação em Filosofia Mestrado e Doutorado 2026",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/edital-extraordinario--inclusao-etnico-racial-processo-de-selecao-para-ingresso-no-programa-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-selecoes-processo-seletivo-mestrado-e-doutorado-em-filosofia",
+      "titulo": "PROCESSO SELETIVO MESTRADO E DOUTORADO EM FILOSOFIA",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo-mestrado-e-doutorado-em-filosofia",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-outorado-profissional-em-filosofia-e-ensino-do-ppfencefet-rj",
+      "titulo": "Seleção para o Mestrado e Doutorado Profissional em Filosofia e Ensino do PPFEN/Cefet-RJ",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-para-o-mestrado-e-doutorado-profissional-em-filosofia-e-ensino-do-ppfencefet-rj",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-selecoes-selecao-do-mestrado-em-filosofia-do-ppgf-ufam-20261",
+      "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM 2026/1",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgf-ufam-20261",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-cao-de-candidatosas-ao-mestrado-e-doutorado-em-filosofia-unb",
+      "titulo": "Processo de seleção de candidatos(as) ao Mestrado e Doutorado em Filosofia (UnB)",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-de-selecao-de-candidatosas-ao-mestrado-e-doutorado-em-filosofia-unb",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof--em-estudos-africanos-e-representacoes-da-africa-ppgearauneb",
+      "titulo": "Mestrado em Estudos Africanos e Representações da África (PPGEARA/UNEB)",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/mestrado-em-estudos-africanos-e-representacoes-da-africa-ppgearauneb",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-eas-de-filosofia-antiga-e-de-praticas-de-ensino-de-filosofia",
+      "titulo": "Professor/a visitante nas áreas de Filosofia Antiga e de Práticas de Ensino de Filosofia",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/professora-visitante-nas-areas-de-filosofia-antiga-e-de-praticas-de-ensino-de-filosofia",
+      "motivo_saida": "veto no cabeca: filosofia antiga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-genda-concursos-e-selecoes-selecao-mestrado-e-doutorado-2027",
+      "titulo": "Seleção Mestrado e Doutorado 2026",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-mestrado-e-doutorado-2027",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-elecoes-processo-de-selecao-doutorado-e-mestrado-1-2025-faje",
+      "titulo": "Processo de seleção Doutorado e Mestrado 1º 2025 - FAJE",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-de-selecao-doutorado-e-mestrado-1-2025--faje",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-ecoes-processo-seletivo-mestrado-e-doutorado-ppgfilufop-2026",
+      "titulo": "Processo Seletivo Mestrado e Doutorado PPGFIL/UFOP 2026",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo-mestrado-e-doutorado-ppgfilufop-2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-elecao-para-mestrado-e-doutorado-em-filosofia-uem-turma-2026",
+      "titulo": "Edital de Seleção para Mestrado e Doutorado em Filosofia - UEM (Turma 2026)",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/edital-de-selecao-para-mestrado-e-doutorado-em-filosofia--uem-turma-2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-mestrado-e-doutorado-em-filosofia-no-ppgfil-ufrrj-turma-2026",
+      "titulo": "Editais de Seleção para Mestrado e Doutorado em Filosofia no PPGFil-UFRRJ - Turma 2026",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/editais-de-selecao-para-mestrado-e-doutorado-em-filosofia-no-ppgfil-ufrrj--turma-2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-rocesso-seletivo-mestrado-e-doutorado-ppgfilufes-turmas-2026",
+      "titulo": "Processo seletivo Mestrado e Doutorado PPGFIL/UFES (Turmas 2026)",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo-mestrado-e-doutorado-ppgfilufes-turmas-2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-aduacao-em-filosofia-mestrado-e-doutorado-ingresso-marco2026",
+      "titulo": "Edital extraordinário - Inclusão étnico-racial Processo de Seleção para ingresso no Programa de Pós-Graduação em Filosofia Mestrado e Doutorado Ingresso Março/2026",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/edital-extraordinario--inclusao-etnico-racial-processo-de-selecao-para-ingresso-no-programa-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-ingresso-marco2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-aduacao-em-filosofia-mestrado-e-doutorado-ingresso-marco2026",
+      "titulo": "EDITAL Nº 25/2025 Processo Seletivo de Inverno para ingresso no Programa de Pós-Graduação em Filosofia ? Mestrado e Doutorado Ingresso Março/2026",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/edital-n-252025-processo-seletivo-de-inverno-para-ingresso-no-programa-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-ingresso-marco2026",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-a-concursos-e-selecoes-concurso-para-professor-auxiliar-uefs",
+      "titulo": "Concurso para Professor Auxiliar - UEFS",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/concurso-para-professor-auxiliar--uefs",
+      "motivo_saida": "veto no cabeca: filosofia da ciencia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-oes-selecao-para-mestrado-e-doutorado-em-filosofia-2026-ufpi",
+      "titulo": "SELEÇÃO PARA MESTRADO E DOUTORADO EM FILOSOFIA 2026 / UFPI",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/selecao-para-mestrado-e-doutorado-em-filosofia-2026-ufpi",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-e-selecoes-processo-seletivo-mestrado-e-doutorado-ppgfiluerj",
+      "titulo": "Processo seletivo Mestrado e Doutorado PPGFIL/UERJ",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo-mestrado-e-doutorado-ppgfiluerj",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "anpof-e-selecoes-processo-seletivo-para-mestrado-e-doutorado-20252",
+      "titulo": "Processo Seletivo para Mestrado e Doutorado 2025/2",
+      "url": "https://anpof.org.br/agenda/concursos-e-selecoes/processo-seletivo-para-mestrado-e-doutorado-20252",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "docentefederal-repositorio",
+      "titulo": "Repositório",
+      "url": "https://docentefederal.com.br/repositorio/",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "docentefederal-recursos",
+      "titulo": "Recursos",
+      "url": "https://docentefederal.com.br/recursos/",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "docentefederal-politica-de-privacidade",
+      "titulo": "Política de Privacidade",
+      "url": "https://docentefederal.com.br/politica-de-privacidade",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "docentefederal-copyrights",
+      "titulo": "Copyrights e Termos de Uso",
+      "url": "https://docentefederal.com.br/copyrights",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "docentefederal-responsabilidade-social",
+      "titulo": "Responsabilidade Social",
+      "url": "https://docentefederal.com.br/responsabilidade-social",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "docentefederal-creditos-das-imagens",
+      "titulo": "Créditos das Imagens",
+      "url": "https://docentefederal.com.br/creditos-das-imagens/",
+      "motivo_saida": "areas do edital lidas, sem filosofia",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-nfraestrutura_de_Hospitais_Universitários_Sediados_no_RJ-pdf",
+      "titulo": "Edital FAPERJ Nº 01/2026 - Apoio à Recuperação e Modernização da Infraestrutura de Hospitais Universitários Sediados no Estado do Rio de Janeiro",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_01_2026_-_Apoio_à_Recuperação_e_Modernização_da_Infraestrutura_de_Hospitais_Universitários_Sediados_no_RJ.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj--_Ciências_Forenses-_Ciências_Policiais_e_Saúde_Policial-pdf",
+      "titulo": "Edital FAPERJ Nº 02/2026 – Programa de Apoio a Projetos de Inova",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_02_2026_–_Programa_de_Apoio_a_Projetos_de_Inovação_no_Campo_da_Segurança_Pública_-_Ciências_Forenses,_Ciências_Policiais_e_Saúde_Policial.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-dital_FAPERJ_Nº_03_2026_-_Programa_de_Apoio_à_Editoração-pdf",
+      "titulo": "Edital FAPERJ Nº 03/2026 – Programa de Apoio à Editoração",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_03_2026_–_Programa_de_Apoio_à_Editoração.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-l_FAPERJ_Nº_04_2026_-_Bolsa_Nota_10_Mestrado_e_Doutorado-pdf",
+      "titulo": "Edital FAPERJ Nº 04/2026 – Programa Bolsa Nota 10 Mestrado e Doutorado",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_04_2026_–_Bolsa_Nota_10_Mestrado_e_Doutorado.pdf",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-l_FAPERJ_Nº_05_2026_-_Programa_Pesquisador_Visitante_-PV-pdf",
+      "titulo": "Edital FAPERJ Nº 05/2026 – Pesquisador Visitante (PV)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_05_2026_-_Programa_Pesquisador_Visitante_(PV).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-Nº_06_2026_-_Programa_Pesquisador_Visitante_Emérito_-PVE-pdf",
+      "titulo": "Edital FAPERJ Nº 06/2026 – Pesquisador Visitante Emérito (PVE)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_06_2026_-_Programa_Pesquisador_Visitante_Emérito_(PVE).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-ma_de_Apoio_à_Jovem_Cientista_Mulher_Dra_Tatiana_Sampaio-pdf",
+      "titulo": "Edital FAPERJ Nº 08/2026 – Programa de Apoio à Jovem Cientista Mulher – Dra Tatiana Sampaio",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_08_2026_–_Programa_de_Apoio_à_Jovem_Cientista_Mulher_Dra_Tatiana_Sampaio.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_-_Prêmio_Transforma-RJ_Reconhecimento_à_Inovação_-_2026-pdf",
+      "titulo": "Edital FAPERJ Nº 09/2026 – Prêmio Transforma.RJ: Reconhecimento à Inovação",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_09_2026_–_Prêmio_Transforma.RJ_Reconhecimento_à_Inovação_–_2026.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-oads-Edital_FAPERJ_Nº_10_2026_-_Programa_Jovens_Talentos-pdf",
+      "titulo": "Edital FAPERJ Nº 10/2026 – Programa Jovens Talentos",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_10_2026_–_Programa_Jovens_Talentos.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-o_de_Listas_Tríplices_Para_o_Conselho_Superior_da_FAPERJ-pdf",
+      "titulo": "Edital FAPERJ Nº 11/2026 – Chamada Pública Para Composição de Listas Tríplices para o Conselho Superior da FAPERJ",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_11_2026_–_Chamada_Pública_Para_Composição_de_Listas_Tríplices_Para_o_Conselho_Superior_da_FAPERJ.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-Edital_FAPERJ_Nº_12_2026_Programa_CENTELHA_3_16_jun_2026-pdf",
+      "titulo": "Edital FAPERJ Nº 12/2026 – Programa Nacional de Apoio à Geração de Empreendimentos Inovadores (Programa Centelha 3 RJ)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_12_2026_Programa_CENTELHA_3_16_jun_2026.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-Academias_Nacionais_Sediadas_no_Estado_do_Rio_de_Janeiro-pdf",
+      "titulo": "Edital FAPERJ Nº 13/2026 - Programa de Apoio às Academias Nacionais Sediadas no Estado do Rio de Janeiro",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_13_2026_–_Programa_de_Apoio_às_Academias_Nacionais_Sediadas_no_Estado_do_Rio_de_Janeiro.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-PERJ_Nº_14_2026_-_Treinamento_e_Capacitação_Técnica_-TCT-pdf",
+      "titulo": "Edital FAPERJ Nº 14/2026 – Programa Treinamento e Capacitação Técnica (TCT)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_14_2026_–_Treinamento_e_Capacitação_Técnica_(TCT).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_FAPERJ_Nº15_2026_-_Programa_Prioridade_Indústria_RJ_4-0-pdf",
+      "titulo": "Edital FAPERJ Nº15/2026 – Programa Prioridade Indústria RJ 4.0",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº15_2026_–_Programa_Prioridade_Indústria_RJ_4.0.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_a_diversidade_étnico-racial_e_religiosa_no_Estado_do_RJ-pdf",
+      "titulo": "Edital FAPERJ Nº 16/2026 – Programa Raízes - Estudos sobre a Diversidade Étnico-Racial e Religiosa no Estado do Rio de Janeiro",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_16_2026_–_Raízes_Estudos_sobre_a_diversidade_étnico-racial_e_religiosa_no_Estado_do_RJ.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-e_Políticas_Sociais_Carlos_Walter_Porto-Gonçalves_da_UFF-pdf",
+      "titulo": "Edital FAPERJ Nº 17/2026 – Programa de Apoio ao Observatório Fluminense de Políticas Sociais Carlos Walter Porto-Gonçalves da UFF",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_17_2026_–_Programa_de_Apoio_ao_Observatório_Fluminense_de_Políticas_Sociais_Carlos_Walter_Porto-Gonçalves_da_UFF.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-ojetos_em_Tecnologias_Quânticas_-_2025_Diretrizes_FAPERJ-pdf",
+      "titulo": "Chamada de Propostas FAPESP-FAPERJ para Projetos em Tecnologias Quânticas – 2025_Diretrizes FAPERJ",
+      "url": "https://www.faperj.br/rp/downloads/Chamada_de_Propostas_FAPESP-FAPERJ_para_Projetos_em_Tecnologias_Quânticas_–_2025_Diretrizes_FAPERJ.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-ovação_em_Tecnologia_Digital_no_Estado_do_Rio_de_Janeiro-pdf",
+      "titulo": "Edital FAPERJ Nº 04/2025 – Programa HUB RJ STARTUP 2025: Apoio à Difusão de Ambiente de Inovação em Tecnologia Digital no Estado do Rio de Janeiro",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_04_2025_–_Programa_Startup_RJ_2025_Apoio_à_Difusão_de_Ambiente_de_Inovação_em_Tecnologia_Digital_no_Estado_do_Rio_de_Janeiro.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-rp-downloads-ERRATA_Programa_HUB_RJ_STARTUP_2025-pdf",
+      "titulo": "Confira aqui outras alterações feitas em trechos do Programa HUB RJ Startup 2025",
+      "url": "https://www.faperj.br/rp/downloads/ERRATA_Programa_HUB_RJ_STARTUP_2025.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_Edital_FAPERJ_Nº_04_2025_-_Programa_HUB_RJ_Startup_2025-pdf",
+      "titulo": "veja a lista final das propostas aprovadas para a 1ª fase do programa",
+      "url": "https://www.faperj.br/rp/downloads/Resultado_final_Edital_FAPERJ_Nº_04_2025_–_Programa_HUB_RJ_Startup_2025.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-rp-downloads-Resultado_Final_2_fase_HUB-pdf",
+      "titulo": "confira a lista final dos projetos aprovados para a 2ª fase do programa",
+      "url": "https://www.faperj.br/rp/downloads/Resultado_Final_2_fase_HUB.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-ograma_Pesquisa_Para_o_SUS_Gestão_Compartilhada_em_Saúde-pdf",
+      "titulo": "Edital FAPERJ Nº 11/2025 – Programa Pesquisa para o SUS: Gestão Compartilhada em Saúde – 2025",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_11_2025_–_Programa_Pesquisa_Para_o_SUS_Gestão_Compartilhada_em_Saúde.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-as_de_Saúde_Hospitalar_e_Ambulatorial_Vinculadas_a_SECTI-pdf",
+      "titulo": "Edital FAPERJ Nº 18/2025 – Programa de Apoio à Infraestrutura de Unidades Universitárias de Saúde Hospitalar e Ambulatorial Vinculadas a SECTI",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_18_2025_–_Programa_de_Apoio_à_Infraestrutura_de_Unidades_Universitárias_de_Saúde_Hospitalar_e_Ambulatorial_Vinculadas_a_SECTI.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-zação_de_Eventos_Científicos-_Tecnológicos_e_de_Inovação-pdf",
+      "titulo": "Edital FAPERJ Nº 26/2025 – Programa de Apoio à Organização de Eventos Científicos, Tecnológicos e de Inovação no Estado do Rio de Janeiro",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_26_2025_-_Apoio_à_Organização_de_Eventos_Científicos,_Tecnológicos_e_de_Inovação.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-erativo_de_Aprendizagem_na_Escola_de_Belas_Artes_da_UFRJ-pdf",
+      "titulo": "Edital FAPERJ N° 27/2025 – Programa de Apoio à Promoção de Ambiente Inovador e Interativo de Aprendizagem na Escola de Belas Artes da UFRJ",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N°_27_2025_–_Programa_de_Apoio_à_Promoção_de_Ambiente_Inovador_e_Interativo_de_Aprendizagem_na_Escola_de_Belas_Artes_da_UFRJ.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_Programa_de_Apoio_as_Pesquisas_Sobre_Doen-C3-A7as_Raras-pdf",
+      "titulo": "Edital FAPERJ Nº 30/2025 – Programa de Apoio às Pesquisas Sobre Doenças Raras",
+      "url": "https://www.faperj.br/rp/downloads/EDITAL_FAPERJ_N%C2%BA_30_2025_-_Programa_de_Apoio_as_Pesquisas_Sobre_Doen%C3%A7as_Raras.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-der_de_Inova-C3-A7-C3-A3o_do_Nosso_Estado_-E2-80-93_LINE-pdf",
+      "titulo": "Edital FAPERJ Nº 31/2025 – Líder de Inovação do Nosso Estado – LINE",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_31_2025_%E2%80%93_Programa_L%C3%ADder_de_Inova%C3%A7%C3%A3o_do_Nosso_Estado_%E2%80%93_LINE.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-nova-C3-A7-C3-A3o_Tecnol-C3-B3gica_-E2-80-93_TECNOVA_III-pdf",
+      "titulo": "Edital FAPERJ Nº 32/2025 – Programa Nacional de Apoio à Inovação Tecnológica – TECNOVA III",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_32_2025_%E2%80%93_Programa_Nacional_de_Apoio_%C3%A0_Inova%C3%A7%C3%A3o_Tecnol%C3%B3gica_%E2%80%93_TECNOVA_III.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-al_FAPERJ_Nº_33_2025_-_Bolsa_de_Iniciação_Científica_-IC-pdf",
+      "titulo": "Edital FAPERJ Nº 33/2025 – Bolsa de Iniciação Científica (IC)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_33_2025_–_Bolsa_de_Iniciação_Científica_(IC).pdf",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-loads-Edital_FAPERJ_Nº_34_2025_-_Programa_Prioridade_Rio-pdf",
+      "titulo": "Edital FAPERJ Nº 34/2025 – Programa Prioridade Rio",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_34_2025_–_Programa_Prioridade_Rio.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_e_Desenvolvimento_do_Setor_Agropecuário_do_RJ_-TCT_Agro-pdf",
+      "titulo": "Edital FAPERJ N° 36/2025 – Programa de Bolsa de Treinamento e Capacitação Técnica em Apoio à Pesquisa e Desenvolvimento do Setor Agropecuário, da Agroindústria, da Pesca, Aquicultura e Meio Ambiente do Estado do Rio de Janeiro (TCT Agro 2025)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_36_2025_–_Programa_de_Bolsa_de_Treinamento_e_Capacitação_Técnica_em_Apoio_à_Pesquisa_e_Desenvolvimento_do_Setor_Agropecuário_do_RJ_(TCT_Agro).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-l_FAPERJ_N-_37_2025_-_Bolsa_de_Pós-Doutorado_Sênior_-PDS-pdf",
+      "titulo": "Edital FAPERJ N° 37/2025 –",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N°_37_2025_–_Bolsa_de_Pós-Doutorado_Sênior_(PDS).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-icos_e_Tecnológicos_em_Ciencias_Agrarias_no_Estado_do_RJ-pdf",
+      "titulo": "Edital FAPERJ N° 38/2025 – Programa de Apoio a Projetos Científicos e Tecnológicos em Ciências Agrárias no Estado do Rio de Janeiro",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N°_38_2025_Programa_de_Apoio_a_Projetos_Cientificos_e_Tecnológicos_em_Ciencias_Agrarias_no_Estado_do_RJ.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-Edital_FAPERJ_Nº_39_2025_-_Pós-doutorado_Nota_10_-PDR-10-pdf",
+      "titulo": "Edital FAPERJ N° 39/2025 –",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_39_2025_-_Pós-doutorado_Nota_10_(PDR-10).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_de_inovação_e_laboratórios_compartilhados_para_startups-pdf",
+      "titulo": "Edital FAPERJ N° 40/2025 – Apoio à Infraestrutura de Ambientes de Inovação e Laboratórios Compartilhados para Startups (INFRALAB)",
+      "url": "https://www.faperj.br/rp/downloads/Lancamento_Edital_N°_40_2025_INFRALAB_Apoio_a_infraestrutura_de_ambientes_de_inovação_e_laboratórios_compartilhados_para_startups.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-m_ICTs_do_Estado_do_Rio_de_Janeiro_-_3ª_Edição_-20252026-pdf",
+      "titulo": "Edital FAPERJ Nº 41/2025 – Programa Luiz Pinguelli Rosa de Apoio à Mobilidade e Instalação de Pesquisadores Originários de Regiões em Conflito em ICTs do Estado do Rio de Janeiro – 3ª Edição (2025/2026)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_41_2025_–_Programa_Luiz_Pinguelli_Rosa_de_Apoio_à_Mobilidade_e_Instalação_de_Pesquisadores_Originários_de_Regiões_em_Conflito_em_ICTs_do_Estado_do_Rio_de_Janeiro_–_3ª_Edição_(20252026).pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj--Gradua-C3-A7-C3-A3o_Stricto_Sensu_6_e_7_-E2-80-93_CAPES-pdf",
+      "titulo": "Edital FAPERJ Nº 42/2025 – Programa de Apoio Emergencial para Programas de Pós-Graduação Stricto Sensu 6 e 7 – CAPES",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_42_2025_%E2%80%93_Programa_de_Apoio_Emergencial_Para_Programas_de_P%C3%B3s-Gradua%C3%A7%C3%A3o_Stricto_Sensu_6_e_7_%E2%80%93_CAPES.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-co_Especial_Para_Cursos_Emergentes-_Mestrado_e_Doutorado-pdf",
+      "titulo": "Edital FAPERJ Nº 43/2025 – Programa Básico Especial para Cursos Emergentes, Mestrado e Doutorado 2025",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_43_2025_%E2%80%93_Programa_B%C3%A1sico_Especial_Para_Cursos_Emergentes,_Mestrado_e_Doutorado.pdf",
+      "motivo_saida": "tipo 'discente' nao e vaga",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj-_FAPERJ_N-C2-BA_44_2025_-E2-80-93_Pesquisador_na_Empresa-pdf",
+      "titulo": "Edital FAPERJ Nº 44/2025 – Pesquisador na Empresa",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_44_2025_%E2%80%93_Pesquisador_na_Empresa.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
+    {
+      "id": "faperj--A7-C3-B5es_Geogr-C3-A1ficas_no_Estado_do_Rio_de_Janeiro-pdf",
+      "titulo": "Edital FAPERJ Nº 45/2025 - Programa de Apoio à Estruturação e Consolidação de Indicações Geográficas (IGs)",
+      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_45_2025_%E2%80%93_Programa_Apoio_%C3%A0_Estrutura%C3%A7%C3%A3o_e_Consolida%C3%A7%C3%A3o_de_Indica%C3%A7%C3%B5es_Geogr%C3%A1ficas_no_Estado_do_Rio_de_Janeiro.pdf",
+      "motivo_saida": "edital lido, nao e de pos-doutorado",
+      "visto_em": "2026-08-30"
+    },
     {
       "id": "anpof--selecoes-selecao-do-mestrado-em-filosofia-do-ppgf-ufam-2027",
       "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM 2027",
@@ -883,524 +1401,6 @@
       "titulo": "Edital FAPERJ Nº 41/2025 – Programa Luiz Pinguelli Rosa de Apoio à Mobilidade e Instalação de Pesquisadores Originários de Regiões em Conflito em ICTs do Estado do Rio de Janeiro – 3ª Edição (2025/2026)",
       "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_41_2025_–_Programa_Luiz_Pinguelli_Rosa_de_Apoio_à_Mobilidade_e_Instalação_de_Pesquisadores_Originários_de_Regiões_em_Conflito_em_ICTs_do_Estado_do_Rio_de_Janeiro_–_3ª_Edição_(20252026).pdf",
       "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj--Gradua-C3-A7-C3-A3o_Stricto_Sensu_6_e_7_-E2-80-93_CAPES-pdf",
-      "titulo": "Edital FAPERJ Nº 42/2025 – Programa de Apoio Emergencial para Programas de Pós-Graduação Stricto Sensu 6 e 7 – CAPES",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_42_2025_%E2%80%93_Programa_de_Apoio_Emergencial_Para_Programas_de_P%C3%B3s-Gradua%C3%A7%C3%A3o_Stricto_Sensu_6_e_7_%E2%80%93_CAPES.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-co_Especial_Para_Cursos_Emergentes-_Mestrado_e_Doutorado-pdf",
-      "titulo": "Edital FAPERJ Nº 43/2025 – Programa Básico Especial para Cursos Emergentes, Mestrado e Doutorado 2025",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_43_2025_%E2%80%93_Programa_B%C3%A1sico_Especial_Para_Cursos_Emergentes,_Mestrado_e_Doutorado.pdf",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-_FAPERJ_N-C2-BA_44_2025_-E2-80-93_Pesquisador_na_Empresa-pdf",
-      "titulo": "Edital FAPERJ Nº 44/2025 – Pesquisador na Empresa",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N%C2%BA_44_2025_%E2%80%93_Pesquisador_na_Empresa.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof--selecoes-selecao-do-mestrado-em-filosofia-do-ppgf-ufam-2027",
-      "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM 2027",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgf-ufam-2027",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-gfilufes-abre-selecao-para-doutorado-em-filosofia-turma-2027",
-      "titulo": "PPGFIL/UFES abre seleção para Doutorado em Filosofia - Turma 2027",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/ppgfilufes-abre-selecao-para-doutorado-em-filosofia--turma-2027",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-ocesso-seletivo-mestrado-e-doutorado-em-filosofia-ppgfil-unb",
-      "titulo": "Processo Seletivo - Mestrado e Doutorado em Filosofia (PPGFIL-UnB)",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/processo-seletivo--mestrado-e-doutorado-em-filosofia-ppgfil-unb",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-losofia-do-ppgf-ufam-edital-exclusivo-para-pessoas-indigenas",
-      "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM - Edital exclusivo para pessoas indígenas",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgf-ufam--edital-exclusivo-para-pessoas-indigenas",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-enda-concursos-e-selecoes-selecao-doutorado-em-filosofia-ufg",
-      "titulo": "Seleção Doutorado em Filosofia UFG",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-doutorado-em-filosofia-ufg",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-genda-concursos-e-selecoes-selecao-mestrado-em-filosofia-ufg",
-      "titulo": "Seleção Mestrado em Filosofia UFG",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-mestrado-em-filosofia-ufg",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-lecoes-processo-seletivo-mestrado-e-doutorado-filosofia-ufsc",
-      "titulo": "Processo Seletivo - Mestrado e Doutorado Filosofia UFSC",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/processo-seletivo--mestrado-e-doutorado-filosofia-ufsc",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-s-e-selecoes-selecao-do-mestrado-em-filosofia-do-ppgfil-ufsj",
-      "titulo": "Seleção do Mestrado em Filosofia do PPGFIL-UFSJ",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgfil-ufsj",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-rama-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-2026",
-      "titulo": "Edital extraordinário - Inclusão étnico-racial Processo de Seleção para ingresso no Programa de Pós-Graduação em Filosofia Mestrado e Doutorado 2026",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/edital-extraordinario--inclusao-etnico-racial-processo-de-selecao-para-ingresso-no-programa-de-pos-graduacao-em-filosofia-mestrado-e-doutorado-2026",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-selecoes-processo-seletivo-mestrado-e-doutorado-em-filosofia",
-      "titulo": "PROCESSO SELETIVO MESTRADO E DOUTORADO EM FILOSOFIA",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/processo-seletivo-mestrado-e-doutorado-em-filosofia",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-outorado-profissional-em-filosofia-e-ensino-do-ppfencefet-rj",
-      "titulo": "Seleção para o Mestrado e Doutorado Profissional em Filosofia e Ensino do PPFEN/Cefet-RJ",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-para-o-mestrado-e-doutorado-profissional-em-filosofia-e-ensino-do-ppfencefet-rj",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "anpof-selecoes-selecao-do-mestrado-em-filosofia-do-ppgf-ufam-20261",
-      "titulo": "Seleção do Mestrado em Filosofia do PPGF-UFAM 2026/1",
-      "url": "https://anpof.org.br/agenda/agenda/concursos-e-selecoes/selecao-do-mestrado-em-filosofia-do-ppgf-ufam-20261",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "docentefederal-repositorio",
-      "titulo": "Repositório",
-      "url": "https://docentefederal.com.br/repositorio/",
-      "motivo_saida": "areas do edital lidas, sem filosofia",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "docentefederal-recursos",
-      "titulo": "Recursos",
-      "url": "https://docentefederal.com.br/recursos/",
-      "motivo_saida": "areas do edital lidas, sem filosofia",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "docentefederal-politica-de-privacidade",
-      "titulo": "Política de Privacidade",
-      "url": "https://docentefederal.com.br/politica-de-privacidade",
-      "motivo_saida": "areas do edital lidas, sem filosofia",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "docentefederal-copyrights",
-      "titulo": "Copyrights e Termos de Uso",
-      "url": "https://docentefederal.com.br/copyrights",
-      "motivo_saida": "areas do edital lidas, sem filosofia",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "docentefederal-responsabilidade-social",
-      "titulo": "Responsabilidade Social",
-      "url": "https://docentefederal.com.br/responsabilidade-social",
-      "motivo_saida": "areas do edital lidas, sem filosofia",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "docentefederal-creditos-das-imagens",
-      "titulo": "Créditos das Imagens",
-      "url": "https://docentefederal.com.br/creditos-das-imagens/",
-      "motivo_saida": "areas do edital lidas, sem filosofia",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-",
-      "titulo": "Valores de Bolsas e Auxílios",
-      "url": "https://www.faperj.br/?id=45.5.1",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-nfraestrutura_de_Hospitais_Universitários_Sediados_no_RJ-pdf",
-      "titulo": "Edital FAPERJ Nº 01/2026 - Apoio à Recuperação e Modernização da Infraestrutura de Hospitais Universitários Sediados no Estado do Rio de Janeiro",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_01_2026_-_Apoio_à_Recuperação_e_Modernização_da_Infraestrutura_de_Hospitais_Universitários_Sediados_no_RJ.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj--_Ciências_Forenses-_Ciências_Policiais_e_Saúde_Policial-pdf",
-      "titulo": "Edital FAPERJ Nº 02/2026 – Programa de Apoio a Projetos de Inova",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_02_2026_–_Programa_de_Apoio_a_Projetos_de_Inovação_no_Campo_da_Segurança_Pública_-_Ciências_Forenses,_Ciências_Policiais_e_Saúde_Policial.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-dital_FAPERJ_Nº_03_2026_-_Programa_de_Apoio_à_Editoração-pdf",
-      "titulo": "Edital FAPERJ Nº 03/2026 – Programa de Apoio à Editoração",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_03_2026_–_Programa_de_Apoio_à_Editoração.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-l_FAPERJ_Nº_04_2026_-_Bolsa_Nota_10_Mestrado_e_Doutorado-pdf",
-      "titulo": "Edital FAPERJ Nº 04/2026 – Programa Bolsa Nota 10 Mestrado e Doutorado",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_04_2026_–_Bolsa_Nota_10_Mestrado_e_Doutorado.pdf",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-l_FAPERJ_Nº_05_2026_-_Programa_Pesquisador_Visitante_-PV-pdf",
-      "titulo": "Edital FAPERJ Nº 05/2026 – Pesquisador Visitante (PV)",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_05_2026_-_Programa_Pesquisador_Visitante_(PV).pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-Nº_06_2026_-_Programa_Pesquisador_Visitante_Emérito_-PVE-pdf",
-      "titulo": "Edital FAPERJ Nº 06/2026 – Pesquisador Visitante Emérito (PVE)",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_06_2026_-_Programa_Pesquisador_Visitante_Emérito_(PVE).pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-_Tecnologia_e_Soberania_Alimentar_-Foodtechs_e_Agritechs-pdf",
-      "titulo": "Edital FAPERJ Nº 07/2026 –  Programa Agro do Futuro – Tecnologia e Soberania Alimentar (FoodTechs e Agritechs)",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_N°07_2026_Programa_Agro_do_Futuro_–_Tecnologia_e_Soberania_Alimentar_(Foodtechs_e_Agritechs).pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-ma_de_Apoio_à_Jovem_Cientista_Mulher_Dra_Tatiana_Sampaio-pdf",
-      "titulo": "Edital FAPERJ Nº 08/2026 – Programa de Apoio à Jovem Cientista Mulher – Dra Tatiana Sampaio",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_08_2026_–_Programa_de_Apoio_à_Jovem_Cientista_Mulher_Dra_Tatiana_Sampaio.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-_-_Prêmio_Transforma-RJ_Reconhecimento_à_Inovação_-_2026-pdf",
-      "titulo": "Edital FAPERJ Nº 09/2026 – Prêmio Transforma.RJ: Reconhecimento à Inovação",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_09_2026_–_Prêmio_Transforma.RJ_Reconhecimento_à_Inovação_–_2026.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-oads-Edital_FAPERJ_Nº_10_2026_-_Programa_Jovens_Talentos-pdf",
-      "titulo": "Edital FAPERJ Nº 10/2026 – Programa Jovens Talentos",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_10_2026_–_Programa_Jovens_Talentos.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-o_de_Listas_Tríplices_Para_o_Conselho_Superior_da_FAPERJ-pdf",
-      "titulo": "Edital FAPERJ Nº 11/2026 – Chamada Pública Para Composição de Listas Tríplices para o Conselho Superior da FAPERJ",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_11_2026_–_Chamada_Pública_Para_Composição_de_Listas_Tríplices_Para_o_Conselho_Superior_da_FAPERJ.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-Edital_FAPERJ_Nº_12_2026_Programa_CENTELHA_3_16_jun_2026-pdf",
-      "titulo": "Edital FAPERJ Nº 12/2026 – Programa Nacional de Apoio à Geração de Empreendimentos Inovadores (Programa Centelha 3 RJ)",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_12_2026_Programa_CENTELHA_3_16_jun_2026.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-Academias_Nacionais_Sediadas_no_Estado_do_Rio_de_Janeiro-pdf",
-      "titulo": "Edital FAPERJ Nº 13/2026 - Programa de Apoio às Academias Nacionais Sediadas no Estado do Rio de Janeiro",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_13_2026_–_Programa_de_Apoio_às_Academias_Nacionais_Sediadas_no_Estado_do_Rio_de_Janeiro.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-PERJ_Nº_14_2026_-_Treinamento_e_Capacitação_Técnica_-TCT-pdf",
-      "titulo": "Edital FAPERJ Nº 14/2026 – Programa Treinamento e Capacitação Técnica (TCT)",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_14_2026_–_Treinamento_e_Capacitação_Técnica_(TCT).pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-_FAPERJ_Nº15_2026_-_Programa_Prioridade_Indústria_RJ_4-0-pdf",
-      "titulo": "Edital FAPERJ Nº15/2026 – Programa Prioridade Indústria RJ 4.0",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº15_2026_–_Programa_Prioridade_Indústria_RJ_4.0.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-_a_diversidade_étnico-racial_e_religiosa_no_Estado_do_RJ-pdf",
-      "titulo": "Edital FAPERJ Nº 16/2026 – Programa Raízes - Estudos sobre a Diversidade Étnico-Racial e Religiosa no Estado do Rio de Janeiro",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_16_2026_–_Raízes_Estudos_sobre_a_diversidade_étnico-racial_e_religiosa_no_Estado_do_RJ.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-e_Políticas_Sociais_Carlos_Walter_Porto-Gonçalves_da_UFF-pdf",
-      "titulo": "Edital FAPERJ Nº 17/2026 – Programa de Apoio ao Observatório Fluminense de Políticas Sociais Carlos Walter Porto-Gonçalves da UFF",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_17_2026_–_Programa_de_Apoio_ao_Observatório_Fluminense_de_Políticas_Sociais_Carlos_Walter_Porto-Gonçalves_da_UFF.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-ojetos_em_Tecnologias_Quânticas_-_2025_Diretrizes_FAPERJ-pdf",
-      "titulo": "Chamada de Propostas FAPESP-FAPERJ para Projetos em Tecnologias Quânticas – 2025_Diretrizes FAPERJ",
-      "url": "https://www.faperj.br/rp/downloads/Chamada_de_Propostas_FAPESP-FAPERJ_para_Projetos_em_Tecnologias_Quânticas_–_2025_Diretrizes_FAPERJ.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-ovação_em_Tecnologia_Digital_no_Estado_do_Rio_de_Janeiro-pdf",
-      "titulo": "Edital FAPERJ Nº 04/2025 – Programa HUB RJ STARTUP 2025: Apoio à Difusão de Ambiente de Inovação em Tecnologia Digital no Estado do Rio de Janeiro",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_04_2025_–_Programa_Startup_RJ_2025_Apoio_à_Difusão_de_Ambiente_de_Inovação_em_Tecnologia_Digital_no_Estado_do_Rio_de_Janeiro.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-rp-downloads-ERRATA_Programa_HUB_RJ_STARTUP_2025-pdf",
-      "titulo": "Confira aqui outras alterações feitas em trechos do Programa HUB RJ Startup 2025",
-      "url": "https://www.faperj.br/rp/downloads/ERRATA_Programa_HUB_RJ_STARTUP_2025.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-_Edital_FAPERJ_Nº_04_2025_-_Programa_HUB_RJ_Startup_2025-pdf",
-      "titulo": "veja a lista final das propostas aprovadas para a 1ª fase do programa",
-      "url": "https://www.faperj.br/rp/downloads/Resultado_final_Edital_FAPERJ_Nº_04_2025_–_Programa_HUB_RJ_Startup_2025.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-rp-downloads-Resultado_Final_2_fase_HUB-pdf",
-      "titulo": "confira a lista final dos projetos aprovados para a 2ª fase do programa",
-      "url": "https://www.faperj.br/rp/downloads/Resultado_Final_2_fase_HUB.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-ograma_Pesquisa_Para_o_SUS_Gestão_Compartilhada_em_Saúde-pdf",
-      "titulo": "Edital FAPERJ Nº 11/2025 – Programa Pesquisa para o SUS: Gestão Compartilhada em Saúde – 2025",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_11_2025_–_Programa_Pesquisa_Para_o_SUS_Gestão_Compartilhada_em_Saúde.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-as_de_Saúde_Hospitalar_e_Ambulatorial_Vinculadas_a_SECTI-pdf",
-      "titulo": "Edital FAPERJ Nº 18/2025 – Programa de Apoio à Infraestrutura de Unidades Universitárias de Saúde Hospitalar e Ambulatorial Vinculadas a SECTI",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_18_2025_–_Programa_de_Apoio_à_Infraestrutura_de_Unidades_Universitárias_de_Saúde_Hospitalar_e_Ambulatorial_Vinculadas_a_SECTI.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "faperj-zação_de_Eventos_Científicos-_Tecnológicos_e_de_Inovação-pdf",
-      "titulo": "Edital FAPERJ Nº 26/2025 – Programa de Apoio à Organização de Eventos Científicos, Tecnológicos e de Inovação no Estado do Rio de Janeiro",
-      "url": "https://www.faperj.br/rp/downloads/Edital_FAPERJ_Nº_26_2025_-_Apoio_à_Organização_de_Eventos_Científicos,_Tecnológicos_e_de_Inovação.pdf",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-ro-de-inovacao-em-resiliencia-urbana-e-energetica-cirue-9723",
-      "titulo": "Bolsa de Doutorado em Sistemas de Energia Elétrica \n Instituição: Centro de Engenharia, Modelagem e Ciências Sociais Aplicadas, Universidade Federal do ABC (CECS-UFABC)\n Cidade: Santo André \n Inscrições até: 28/08/2026\n O objetivo do projeto “Metodologia de Identificação da Composição da Carga para Gerenciamento em Condições Críticas” no âmbito do CIRUE, um Centro de Ciências para o Desenvolvimento (CCD)  apoiado pela FAPESP, é propor um método para a identificação das cargas em uma comunidade energética durante...\n-->",
-      "url": "https://fapesp.br/oportunidades/centro-de-inovacao-em-resiliencia-urbana-e-energetica-(cirue)/9723/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-ediadores-do-metabolismo-hepatico-e-sindrome-metabolica-9495",
-      "titulo": "Bolsa de Doutorado Direto em Metabólitos / Expressão Gênica \n Instituição: Instituto de Biologia, Universidade Estadual de Campinas (IB-Unicamp)\n Cidade: Campinas \n Inscrições até: 30/08/2026\n O Laboratório de Exploração Metabólica (MetaEx), coordenado pelo Prof. Dr. Vitor Muñoz, oferece uma vaga de Doutorado Direto para ser executada no Instituto de Biologia da Unicamp. O bolsista investigará os efeitos do itaconato e mesaconato sobre a regulação da expressão gênica no fígado de...\n-->",
-      "url": "https://fapesp.br/oportunidades/metabolitos-derivados-do-microbioma-intestinal-como-mediadores-do-metabolismo-hepatico-e-sindrome-metabolica/9495/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-anas-glicolipidios-membranas-bacterianas-e-assimetricas-9574",
-      "titulo": "Bolsa de Mestrado em Biofísica de Membranas \n Instituição: Departamento de Biofísica – Escola Pauilsta de Medicina, Universidade Federal de São Paulo (EPM-Unifesp)\n Cidade: São Paulo \n Inscrições até: 30/08/2026\n Membranas biológicas são altamente assimétricas quanto à sua distribuição lipídica. Uma maneira de criar assimetria lipídica em uma membrana é por meio da ação da enzima fosfolipase D, que hidrolisa a cabeça polar de um lipídio. Aqui, pretendemos obter e caracterizar membranas assimétricas a partir...\n-->",
-      "url": "https://fapesp.br/oportunidades/modelos-mimeticos-de-biomembranas:-glicolipidios-membranas-bacterianas-e-assimetricas/9574/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-s-para-melhorar-o-rendimento-e-a-qualidade-das-culturas-9588",
-      "titulo": "Bolsas de TT-III em Fisiologia Vegetal \n Instituição: Departamento de Botânica – Instituto de Biociências, Universidade de São Paulo (IB-USP)\n Cidade: São Paulo \n Inscrições até: 31/08/2026\n O bolsista auxiliará:\n- Na realização de transformações genéticas estáveis de plantas de tomateiro;\n- No cultivo e manutenção das linhagens de plantas transgênicas e mutantes;\n- Na seleção de plantas homozigotas para os transgenes e/ou mutações;\n- Na multiplicação de sementes das linhagens selecionadas; e\n- No gerenciamento dos...\n-->",
-      "url": "https://fapesp.br/oportunidades/rotas-de-transducao-de-sinal-luminoso-e-de-estress:-como-otimizar-multiplas-respostas-para-melhorar-o-rendimento-e-a-qualidade-das-culturas/9588/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-uturo-programavel-para-arquiteturas-e-softwares-seguros-9605",
-      "titulo": "Bolsa de TT-V em Internet das Coisas \n Instituição: Centro de Matemática, Computação e Cognição, Universidade Federal do ABC (CMCC-UFABC)\n Cidade: Santo André \n Inscrições até: 31/08/2026\n O objetivo desta bolsa de Treinamento Técnico nível cinco (TT-V) é projetar, implementar e avaliar mecanismos de redes programáveis para o contínuo computacional de IoT, unindo a experiência do grupo em programação do plano de dados com P4 – incluindo os ambientes de experimentação P4Docker e...\n-->",
-      "url": "https://fapesp.br/oportunidades/profissa-–-internet-do-futuro-programavel-para-arquiteturas-e-softwares-seguros/9605/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-uturo-programavel-para-arquiteturas-e-softwares-seguros-9606",
-      "titulo": "Bolsa de TT-IV em Redes Programáveis \n Instituição: Centro de Matemática, Computação e Cognição, Universidade Federal do ABC (CMCC-UFABC)\n Cidade: Santo André \n Inscrições até: 31/08/2026\n O tema da bolsa de Treinamento Técnico nível quatro (TT-IV) é a orquestração de funções de rede programáveis no contínuo computacional, considerando ambientes distribuídos compostos por camadas de mist, fog e nuvem. O foco será o uso do p4d – o switch P4 executado em...\n-->",
-      "url": "https://fapesp.br/oportunidades/profissa-–-internet-do-futuro-programavel-para-arquiteturas-e-softwares-seguros/9606/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-racterizacao-ultraestrutural-de-nanoscaffolds-bioativos-9636",
-      "titulo": "Bolsa de Iniciação Científica em Biofísica Molecular \n Instituição: Escola Paulista de Medicina, Universidade Federal de São Paulo (EPM-Unifesp)\n Cidade: São Paulo \n Inscrições até: 31/08/2026\n As atividades terão como foco o desenvolvimento de protocolos para medidas de ângulo de contato em filmes e hidrogéis peptídicos depositados sobre substratos sólidos, utilizando como ferramentas principais a goniometria e a microscopia de força atômica (AFM). O bolsista irá aprender a operar de maneira...\n-->",
-      "url": "https://fapesp.br/oportunidades/caracterizacao-ultraestrutural-de-nanoscaffolds-bioativos/9636/",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-nas-unidades-de-saude-municipais-da-cidade-de-sao-paulo-9665",
-      "titulo": "Bolsa de JC-IV em Saúde \n Instituição: Hospital Universitário da Universidade de São Paulo (HU-USP)\n Cidade: São Paulo \n Inscrições até: 31/08/2026\n O projeto “Coprodução e implementação de um modelo de assistência e formação profissional nas unidades de saúde municipais da cidade de São Paulo”, apoiado pela FAPESP por meio de seu Programa para Pesquisa em Políticas Públicas (PPP) oferece uma oportunidade de bolsa de Jornalismo Científico...\n-->",
-      "url": "https://fapesp.br/oportunidades/coproducao-e-implementacao-de-um-modelo-de-assistencia-e-formacao-profissional-nas-unidades-de-saude-municipais-da-cidade-de-sao-paulo/9665/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-r-manufatura-aditiva-sls-com-modelagem-auxiliada-por-ia-9678",
-      "titulo": "Bolsa de TT-V em Inteligência Artificial aplicada à Saúde \n Instituição: C3M Soluções em Medicina de Catástrofe Ltda.\n Cidade: Campinas \n Inscrições até: 31/08/2026\n Bolsa FAPESP de Treinamento Técnico nível cinco (TT-V) de 12 meses (40 h semanais). O bolsista atuará no refinamento e na consolidação de rede neural profunda própria para segmentação automática de defeitos cranianos e geração de próteses personalizadas. Atividades: medir a linha de base do modelo (Dice/IoU...\n-->",
-      "url": "https://fapesp.br/oportunidades/desenvolvimento-de-processo-para-cranioplastia-por-manufatura-aditiva-sls-com-modelagem-auxiliada-por-ia/9678/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-ponibilizacao-de-acervos-digitais-de-arte-e-arquitetura-9694",
-      "titulo": "Bolsa de TT-IV-A em TI / Banco de Dados / Inteligência Artificial \n Instituição: Museu de Arte Contemporânea, Universidade de São Paulo (MAC-USP)\n Cidade: São Paulo \n Inscrições até: 31/08/2026\n O bolsista de Treinamento Técnico nível quatro “a” (TT-IV-A) atuará no desenvolvimento, integração e customização de sistemas de gerenciamento de acervos e preservação digital em software livre, sob supervisão da TI do MAC-USP. No 1º ano, implementará a integração dos sistemas CollectiveAccess, Archivematica e ResourceSpace,...\n-->",
-      "url": "https://fapesp.br/oportunidades/emu-infraestrutura-de-preservacao-digital-em-acervos-museologicos-e-arquivisticos:-aquisicao-de-storages-e-servidores-para-a-guarda-pesquisa-e-disponibilizacao-de-acervos-digitais-de-arte-e-arquitetura/9694/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-sponibilidade-de-acervos-digitais-de-arte-e-arquitetura-9695",
-      "titulo": "Bolsa de TT-V em Direito \n Instituição: Museu de Arte Contemporânea, Universidade de São Paulo (MAC-USP)\n Cidade: São Paulo \n Inscrições até: 31/08/2026\n As atividades do bolsista de Treinamento Técnico nível quatro (TT-IV) envolverão a análise de casos concretos e a proposição de manuais, termos e pareceres sobre disponibilização, reprodução e difusão dos acervos, em conformidade com a legislação vigente. Incluem levantamento e análise de casos jurídicos dos...\n-->",
-      "url": "https://fapesp.br/oportunidades/emu-infraestrutura-de-preservacao-digital-em-acervos-museologicos-e-arquivisticos:-aquisicao-de-storages-e-servidores-para-guarda-pesquisa-e-disponibilidade-de-acervos-digitais-de-arte-e-arquitetura/9695/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp--profissional-para-digitalizacao-de-documentos-musicais-9718",
-      "titulo": "Bolsa de TT-III em Organização da Informação \n Instituição: Centro de Integração, Documentação e Difusão Cultural, Universidade Estadual de Campinas (CDMC-Unicamp)\n Cidade: Campinas \n Inscrições até: 31/08/2026\n Processamento técnico de livros e partituras do CDMC-Unicamp:\n- Catalogação;\n- Tombamento;\n- Atividades de suporte (qualidade dos registros, etiquetagem, arquivamento etc.).\n...\n-->",
-      "url": "https://fapesp.br/oportunidades/emu-infraestrutura-de-pesquisa-em-acervos-museologicos-bibliograficos-e-arquivisticos:-aquisicao-de-scanner-profissional-para-digitalizacao-de-documentos-musicais/9718/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-er-de-prostata-uma-avaliacao-i-in-vitro-i-e-i-in-vivo-i-9733",
-      "titulo": "Bolsa de Mestrado em Nanomateriais / Novas Drogas Terapêuticas \n Instituição: Departamento de Ciências Biológicas – Faculdade de Ciências Farmacêuticas de Araraquara, Universidade Estadual Paulista (FCFAr-Unesp)\n Cidade: Araraquara \n Inscrições até: 31/08/2026\n O bolsista participará das seguintes atividades: desenho de peptídeos anticancerígenos com aprendizado de máquina; síntese, purificação e caracterização dos peptídeos (SPFS-Fmoc); avaliação da citotoxicidade em células PC3 e DU145 (ensaio com resazurina); avaliação da seletividade em células RAW 264.7; avaliação da atividade hemolítica (HC50); avaliação...\n-->",
-      "url": "https://fapesp.br/oportunidades/explorando-o-potencial-das-nanoparticulas-de-silica-mesoporosas-funcionalizadas-com-peptideos-anti-psma-na-terapia-do-cancer-de-prostata:-uma-avaliacao-<i>in-vitro<-i>-e-<i>in-vivo<-i>/9733/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-desemaranhando-excitacoes-eletronicas-em-metais-de-hund-9752",
-      "titulo": "Bolsa de Doutorado em Física da Matéria Condensada \n Instituição: Instituto de Física, Universidade de São Paulo (IF-USP)\n Cidade: São Paulo \n Inscrições até: 31/08/2026\n No contexto do projeto “Desemaranhando excitações eletrônicas em metais de Hund”, anunciamos uma bolsa de Doutorado para início imediato (setembro de 2026) no projeto “Estrutura e excitações eletrônicas em materiais quasi-1D com correlações de Hund”. O candidato deverá realizar e analisar experimentos de XAS/RIXS de...\n-->",
-      "url": "https://fapesp.br/oportunidades/desemaranhando-excitacoes-eletronicas-em-metais-de-hund/9752/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp-ticos-imobilizacao-de-lipases-e-valorizacao-de-residuos-9679",
-      "titulo": "Bolsa de Mestrado em Biotecnologia e Biocatálise \n Instituição: Centro de Ciências Naturais e Humanas, Universidade Federal do ABC (CCNH-UFABC)\n Cidade: Santo André \n Inscrições até: 01/09/2026\n O bolsista será responsável pela realização de experimentos em laboratório com o intuito de: coletar e processar sementes de goiaba; caracterizar e imobilizar lipases; realizar a produção de óleos modificados utilizando a lipase imobilizada em diferentes reatores, como reator tanque agitado, reator tanque agitado com...\n-->",
-      "url": "https://fapesp.br/oportunidades/estrategias-sustentaveis-para-producao-de-lipidios-nutraceuticos:-imobilizacao-de-lipases-e-valorizacao-de-residuos/9679/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "fapesp--mitigacao-ambiental-e-otimizacao-do-mercado-de-carbono-9716",
-      "titulo": "Bolsa de Doutorado Direto em Catálise por Plasma e Conversão de CO2 \n Instituição: Instituto de Química de Araraquara, Universidade Estadual Paulista (IQAr-Unesp)\n Cidade: Araraquara \n Inscrições até: 01/09/2026\n O(A) bolsista atuará em uma área emergente e ainda pouco explorada no Brasil: a catálise por plasma. Desenvolverá catalisadores e investigará a conversão de CO2 em metanol em reator de plasma não térmico DBD. As atividades incluirão síntese de materiais, caracterização avançada, testes catalíticos, estudos...\n-->",
-      "url": "https://fapesp.br/oportunidades/reciclagem-de-co2-utilizando-catalise-por-plasma-para-mitigacao-ambiental-e-otimizacao-do-mercado-de-carbono/9716/",
-      "motivo_saida": "edital lido, nao e de pos-doutorado",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31837",
-      "titulo": "Assistant Professor",
-      "url": "https://philjobs.org/job/show/31837",
-      "motivo_saida": "veto no cabeca: biomedical ethics",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31841",
-      "titulo": "PhD Student in Philosophy of Science",
-      "url": "https://philjobs.org/job/show/31841",
-      "motivo_saida": "veto no cabeca: philosophy of science",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31845",
-      "titulo": "PhD student in Theoretical Philosophy",
-      "url": "https://philjobs.org/job/show/31845",
-      "motivo_saida": "tipo 'discente' nao e vaga",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31857",
-      "titulo": "Assistant Professor",
-      "url": "https://philjobs.org/job/show/31857",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31861",
-      "titulo": "Assistant Professor",
-      "url": "https://philjobs.org/job/show/31861",
-      "motivo_saida": "veto no cabeca: ancient greek",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31869",
-      "titulo": "Postdoctoral Fellow",
-      "url": "https://philjobs.org/job/show/31869",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31873",
-      "titulo": "Open-Rank Position in Philosophy",
-      "url": "https://philjobs.org/job/show/31873",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31877",
-      "titulo": "Cluster hire in AI for Modeling the Physical World and Living Systems",
-      "url": "https://philjobs.org/job/show/31877",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31889",
-      "titulo": "Researcher",
-      "url": "https://philjobs.org/job/show/31889",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31893",
-      "titulo": "Researcher",
-      "url": "https://philjobs.org/job/show/31893",
-      "motivo_saida": "veto no cabeca: philosophy of science",
-      "visto_em": "2026-08-25"
-    },
-    {
-      "id": "philjobs-31901",
-      "titulo": "PhD student in Practical Philosophy",
-      "url": "https://philjobs.org/job/show/31901",
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "visto_em": "2026-08-25"
     }
   ]
