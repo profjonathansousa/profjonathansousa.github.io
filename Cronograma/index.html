@@ -176,6 +176,11 @@
     background:var(--card);border:1px solid var(--line);border-radius:10px;}
   .ev .ev-d{font-family:var(--display);font-weight:700;color:var(--gold);font-size:14px;min-width:40px;text-align:center;flex:none;}
   .ev .ev-t{flex:1;font-size:13.5px;outline:none;min-width:0;}
+  /* O titulo do evento nao viaja: quem recebe a data recebe a linha sem nome.
+     O marcador fica no LUGAR do titulo e apagado, nao como aviso — a lista de
+     datas nao pode virar uma lista de pendencias. */
+  .ev .ev-t:empty::before{content:"sem nome";color:var(--muted);font-style:italic;opacity:.7;}
+  .count .meta .c-t .sem-nome{color:#B9C0CE;font-weight:400;font-style:italic;}
   .ev input[type=date]{border:none;background:transparent;font-family:var(--sans);font-size:11px;color:var(--muted);width:112px;flex:none;}
   .wday{border:1px solid var(--line);border-radius:11px;margin-bottom:8px;background:var(--paper-2);overflow:hidden;}
   .wday summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
@@ -358,10 +363,15 @@
         <span class="backup-aviso" id="sync-estado"></span><br>
         <span class="backup-aviso" id="toques-aviso"></span>
         <div class="s-linha"><button onclick="enviarToques()">Enviar agora</button></div>
-        <p class="s-nota">As metas que j\u00e1 estavam neste aparelho antes da sincronia
-          n\u00e3o t\u00eam instante, ent\u00e3o n\u00e3o viajam sozinhas. Publique-as <b>uma vez</b>,
-          e a partir do aparelho que tem o acervo certo \u2014 elas sobem com data
-          antiga, para que qualquer edi\u00e7\u00e3o feita depois ven\u00e7a.</p>
+        <p class="s-nota">As metas e as datas importantes que j\u00e1 estavam neste
+          aparelho antes da sincronia n\u00e3o t\u00eam instante, ent\u00e3o n\u00e3o viajam
+          sozinhas. Publique-as a partir do aparelho que tem o acervo certo \u2014
+          sobem com data antiga, para que qualquer edi\u00e7\u00e3o feita depois ven\u00e7a.</p>
+        <p class="s-nota">Das datas importantes viaja <b>s\u00f3 a data</b>. O t\u00edtulo fica
+          neste aparelho: o reposit\u00f3rio \u00e9 p\u00fablico e o hist\u00f3rico nunca \u00e9 podado,
+          ent\u00e3o um nome publicado uma vez ficaria p\u00fablico para sempre. No outro
+          aparelho a data aparece com a contagem certa e sem nome, at\u00e9 voc\u00ea
+          nome\u00e1-la l\u00e1.</p>
         <div class="s-linha"><button onclick="publicarAcervoUmaVez()">Publicar o acervo deste aparelho</button></div>
         <span class="backup-aviso" id="acervo-estado"></span>
       </div>
@@ -370,7 +380,7 @@
   </div>
 </div>
 <script>
-const APP_VERSION = "2026-08-29-metas1";
+const APP_VERSION = "2026-08-29-eventos1";
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
@@ -1187,7 +1197,53 @@ function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:fals
    bases explicitas a parte; sem isso as N metas nasceriam com o mesmo id.
    ==================================================================== */
 const ACERVO_EM = "2026-01-01T00:00:00.000Z";
-const ACERVO_METAS_KEY = "cron:metas-publicadas";
+
+/* FOTOGRAFIA DO QUE JA ESTA LA FORA.
+   Gravada pela mesclagem a cada leitura do estado.json. Existe para o contador
+   distinguir dois casos que o campo `em` sozinho nao separa:
+     · esta meta tem instante porque ja foi publicada ou recebida  -> nao conta
+     · esta meta tem instante mas nunca chegou ao estado.json      -> CONTA
+   O segundo caso e real: um toque destruido pelo defeito do 422 (achado 1,
+   corrigido em 29/08) deixava a meta com instante e sem nunca ter viajado. Sem
+   esta fotografia ela ficaria encalhada em silencio, para sempre. */
+const ACERVO_LA_FORA_KEY = "cron:la-fora";
+
+/* O maior instante ja publicado dentro do mesmo dia daquele piso. Serve para
+   o relogio nao reemitir um id que o estado.json ja conhece. */
+function pisoJaGasto(base){
+  var fora = LS(ACERVO_LA_FORA_KEY, null);
+  if(!fora) return 0;
+  var maior = 0;
+  ["metas","eventos"].forEach(function(s){
+    var m = fora[s] || {};
+    Object.keys(m).forEach(function(k){
+      var ms = new Date(m[k]).getTime();
+      if(isFinite(ms) && ms >= base && ms < base + 86400000 && ms > maior) maior = ms;
+    });
+  });
+  return maior;
+}
+
+/* Anota na fotografia local o que acabou de entrar na fila, para que apertar o
+   botao duas vezes antes de o estado.json voltar nao republique o mesmo. Se o
+   envio falhar, a proxima leitura desfaz esta anotacao sozinha: a fotografia e
+   sempre reescrita pelo que o servidor realmente tem. */
+function marcarLaForaLocal(secao, chave, quando){
+  var fora = LS(ACERVO_LA_FORA_KEY, null) || {metas:{}, eventos:{}};
+  if(!fora[secao]) fora[secao] = {};
+  fora[secao][chave] = quando;
+  save(ACERVO_LA_FORA_KEY, fora);
+}
+
+function jaEstaLaFora(secao, chave, temInstante){
+  var fora = LS(ACERVO_LA_FORA_KEY, null);
+  /* Ainda nao lemos o estado publicado — primeira carga sem rede, tipicamente.
+     Sem a fotografia, a regra conservadora e o instante: quem tem instante ou
+     ja publicou ou ja recebeu. Nao republica por engano, e volta a acertar
+     assim que a primeira leitura chegar. */
+  if(!fora || !fora[secao]) return !!temInstante;
+  return Object.prototype.hasOwnProperty.call(fora[secao], chave);
+}
 
 /* A semente e identica nos dois aparelhos: METAS_SEED reconstroi as metas
    art-* em qualquer navegador que carregue esta pagina, e o mes de inicio
@@ -1206,39 +1262,73 @@ function metaEhSementeIntocada(mes, m){
   return false;
 }
 
-/* null = este aparelho ja publicou. [] = nao ha o que publicar. */
 function metasParaPublicar(){
-  if(LS(ACERVO_METAS_KEY, false)) return null;
   var fora = [];
   listaMeses().forEach(function(mes){
     (getMetas(mes)||[]).forEach(function(m){
       if(!m || !m.id) return;
       if(!String(m.t||"").trim()) return;        /* meta em branco nao e meta */
       if(metaEhSementeIntocada(mes, m)) return;
+      /* Nao ha mais trava de "uma vez por aparelho": ela impedia o conserto
+         acima de acontecer. Quem decide, meta a meta, e se ela ja esta la fora
+         — e isso ja impede o aparelho que RECEBEU de republicar o que recebeu,
+         que era a unica coisa que a trava protegia. */
+      if(jaEstaLaFora("metas", mes + "/" + m.id, m.em)) return;
       fora.push({mes:mes, m:m});
     });
   });
   return fora;
 }
 
+/* A semente de eventos tambem e identica nos dois aparelhos: EVENTOS_DEFAULT
+   nasce igual em qualquer navegador. Data mudada ja nao e semente intocada. */
+function eventoEhSementeIntocado(ev){
+  for(var i=0;i<EVENTOS_DEFAULT.length;i++){
+    if(ev.id === EVENTOS_DEFAULT[i].id) return ev.data === EVENTOS_DEFAULT[i].data;
+  }
+  return false;
+}
+
+function eventosParaPublicar(){
+  var fora = [];
+  (getEventos()||[]).forEach(function(ev){
+    if(!ev || !ev.id || !ev.data) return;
+    if(eventoEhSementeIntocado(ev)) return;
+    if(jaEstaLaFora("eventos", ev.id, ev.em)) return;
+    fora.push(ev);
+  });
+  return fora;
+}
+
 function publicarAcervoUmaVez(){
-  var metas = metasParaPublicar();
-  if(metas === null){
-    alert("O acervo deste aparelho j\u00e1 foi publicado.\n\nDaqui em diante cada meta viaja no momento em que voc\u00ea a edita.");
+  var metas = metasParaPublicar(), eventos = eventosParaPublicar();
+  if(!metas.length && !eventos.length){
+    renderAcervoEstado();
+    alert("Nada a publicar: o que est\u00e1 neste aparelho ou j\u00e1 est\u00e1 l\u00e1 fora, ou \u00e9 o que a p\u00e1gina cria sozinha.");
     return;
   }
-  if(!metas.length){
-    save(ACERVO_METAS_KEY, true); renderAcervoEstado();
-    alert("Nada a publicar: as metas deste aparelho s\u00e3o as que a p\u00e1gina cria sozinha, e o outro aparelho j\u00e1 as tem iguais.");
-    return;
-  }
-  if(!confirm("Publicar " + metas.length + " meta(s) deste aparelho para os outros?\n\n" +
-      "Elas sobem com data de 1\u00ba de janeiro de 2026, de prop\u00f3sito: assim qualquer edi\u00e7\u00e3o feita depois disso, " +
+  var partes = [];
+  if(metas.length)   partes.push(metas.length + " meta(s)");
+  if(eventos.length) partes.push(eventos.length + " data(s) importante(s)");
+  if(!confirm("Publicar " + partes.join(" e ") + " deste aparelho para os outros?\n\n" +
+      "Sobem com data de 1\u00ba de janeiro de 2026, de prop\u00f3sito: assim qualquer edi\u00e7\u00e3o feita depois disso, " +
       "em qualquer aparelho, vence.\n\n" +
-      "Isto acontece UMA vez por aparelho. Fa\u00e7a a partir do aparelho que tem o acervo certo.")) return;
+      "O T\u00cdTULO das datas importantes N\u00c3O sobe \u2014 s\u00f3 a data. O reposit\u00f3rio \u00e9 p\u00fablico, " +
+      "e o nome fica neste aparelho.\n\n" +
+      "Fa\u00e7a a partir do aparelho que tem o acervo certo.")) return;
+  eventos.forEach(function(ev){
+    var iso = enfileirarToque("evento", {eid:ev.id, data:ev.data, del:false}, ACERVO_EM);
+    marcarLaForaLocal("eventos", ev.id, iso);
+    if(!ev.em){
+      var lista = getEventos();
+      for(var i=0;i<lista.length;i++){ if(lista[i].id===ev.id){ lista[i].em = iso; break; } }
+      setEventos(lista);
+    }
+  });
   metas.forEach(function(c){
     var iso = enfileirarToque("meta", {mes:c.mes, mid:c.m.id, t:c.m.t||"", done:!!c.m.done,
                                        de:c.m.de||null, del:false}, ACERVO_EM);
+    marcarLaForaLocal("metas", c.mes + "/" + c.m.id, iso);
     /* Meta que nunca teve instante passa a ter o que subiu: assim ela deixa de
        ser "tempo desconhecido" aqui dentro e a mesclagem seguinte nao a devolve
        como se fosse novidade de fora. Meta que JA tinha instante fica como
@@ -1250,19 +1340,21 @@ function publicarAcervoUmaVez(){
       setMetas(lista, c.mes);
     }
   });
-  save(ACERVO_METAS_KEY, true);
   renderAcervoEstado();
-  alert(metas.length + " meta(s) entraram na fila. Sobem em alguns segundos, e o outro aparelho as mostra em um a tr\u00eas minutos.");
+  try{ renderEventos(); }catch(e){}
+  alert(partes.join(" e ") + " entraram na fila. Sobem em alguns segundos, e o outro aparelho as mostra em um a tr\u00eas minutos.");
 }
 
 function renderAcervoEstado(){
   var el = document.getElementById("acervo-estado"); if(!el) return;
-  var m;
-  try{ m = metasParaPublicar(); }catch(e){ return; }
-  if(m === null){ el.textContent = "Acervo j\u00e1 publicado a partir deste aparelho."; el.className = "backup-aviso"; return; }
-  el.textContent = m.length ? m.length + " meta(s) daqui ainda n\u00e3o publicadas."
-                            : "Nada a publicar: as metas daqui s\u00e3o as que a p\u00e1gina cria sozinha.";
-  el.className = "backup-aviso" + (m.length ? " velho" : "");
+  var m, e;
+  try{ m = metasParaPublicar(); e = eventosParaPublicar(); }catch(err){ return; }
+  var partes = [];
+  if(m.length) partes.push(m.length + " meta(s)");
+  if(e.length) partes.push(e.length + " data(s)");
+  el.textContent = partes.length ? partes.join(" e ") + " daqui ainda sem publicar."
+                                 : "Nada a publicar: tudo daqui j\u00e1 est\u00e1 l\u00e1 fora.";
+  el.className = "backup-aviso" + (partes.length ? " velho" : "");
 }
 function getEventos(){return LS("cron:eventos", JSON.parse(JSON.stringify(EVENTOS_DEFAULT)));}
 function setEventos(e){save("cron:eventos",e);}
@@ -1278,8 +1370,9 @@ function renderEventos(){
   let h="";
   if(futuros.length){
     const nx=futuros[0], d=diasAte(nx.data);
+    const nome = (nx.t||"").trim() ? escapeHtml(nx.t) : '<span class="sem-nome">sem nome</span>';
     h+=`<div class="count"><span class="num">${d}</span><div class="meta">
-      <div class="c-t">${escapeHtml(nx.t)}</div>
+      <div class="c-t">${nome}</div>
       <div class="c-s">${fmtData(nx.data)} · faltam ${d} dia${d===1?"":"s"}</div></div></div>`;
   }
   evts.forEach((e,i)=>{
@@ -1294,11 +1387,35 @@ function renderEventos(){
   box.innerHTML=h;
 }
 function sortedRef(i){return getEventos().slice().sort((a,b)=>a.data<b.data?-1:1)[i];}
+/* UM EVENTO VIAJA POR ID, E SO A DATA VIAJA.
+   O titulo NAO sobe. Decisao do autor em 29/08, e o motivo e o historico: ele
+   nunca e podado, entao um titulo publicado uma vez fica publico para sempre,
+   mesmo depois de o evento ser apagado. Parte destes eventos e pastoral. A
+   data atravessa, o nome fica no aparelho — a mesma disciplina que o `motivo`
+   dos subitens ja segue desde o Passo 5.
+   `del` e a lapide: sem ela, quem apaga no celular veria o evento voltar do
+   Mac no carregamento seguinte, porque ausencia nao se distingue de
+   desconhecimento. */
+function tocarEvento(ev, apagado){
+  if(!ev || !ev.id) return;
+  enfileirarToque("evento", {eid:ev.id, data:ev.data||null, del:!!apagado});
+}
+/* Sai do onblur do contenteditable: so grava se o texto mudou de verdade,
+   senao cada clique fora do campo viraria um toque. O editMeta ja fazia esta
+   guarda; o editEv nao fazia, e sem ela o tipo novo multiplicaria marcacao. */
 function editEv(i,t){const ref=sortedRef(i);const e=getEventos();const j=e.findIndex(x=>x.id===ref.id);
-  if(j>-1){e[j].t=t.trim()||e[j].t;setEventos(e);renderEventos();}}
+  if(j<0)return;const novo=t.trim();if(novo===e[j].t)return;
+  e[j].t=novo;e[j].em=new Date().toISOString();setEventos(e);
+  /* O titulo nao sobe, mas nomear e o ato que torna o evento real: e aqui que
+     ele passa a existir para os outros aparelhos, levando a data. */
+  tocarEvento(e[j],false);renderEventos();}
 function dateEv(i,v){const ref=sortedRef(i);const e=getEventos();const j=e.findIndex(x=>x.id===ref.id);
-  if(j>-1&&v){e[j].data=v;setEventos(e);renderEventos();}}
-function delEv(i){const ref=sortedRef(i);const e=getEventos().filter(x=>x.id!==ref.id);setEventos(e);renderEventos();}
+  if(j<0||!v||e[j].data===v)return;
+  e[j].data=v;e[j].em=new Date().toISOString();setEventos(e);tocarEvento(e[j],false);renderEventos();}
+function delEv(i){const ref=sortedRef(i);const fora=getEventos().find(x=>x.id===ref.id);if(!fora)return;
+  setEventos(getEventos().filter(x=>x.id!==ref.id));tocarEvento(fora,true);renderEventos();}
+/* Nasce sem nome e com a data de hoje, e por isso nao enfileira nada: o toque
+   sai no primeiro editEv ou dateEv, ja com o que voce quis dizer. */
 function addEv(){const e=getEventos();e.push({id:"e"+Date.now(),t:"",data:ymd(now)});setEventos(e);renderEventos();}
 /* ---- Painéis de projetos: estado persistente, sem data ---- */
 function painelDef(pid){ for(var i=0;i<PAINEIS.length;i++){ if(PAINEIS[i].id===pid) return PAINEIS[i]; } return null; }
@@ -1420,15 +1537,31 @@ const RELOGIO_KEY = "cron:relogio";
    no futuro — e dali em diante todo toque daqui venceria todo toque do outro
    aparelho, para sempre. Passando desta folga, a marca e descartada. */
 const RELOGIO_FOLGA = 86400000;   /* 24h */
-var RELOGIO_BASES = {};           /* base explicita -> ultimo entregue dela */
+/* AS BASES TAMBEM MORAM NO DISCO, e nao so em memoria.
+   Ficaram em memoria ate 29/08 e isso era um furo no proprio principio deste
+   relogio: recarregar a pagina zerava o contador, e a migracao seguinte sobre
+   o MESMO piso regenerava os ids ja gastos pela anterior. Medido: o acervo de
+   metas gastou 2026-01-01T00:00:00.000Z ate .006Z; a publicacao dos eventos,
+   depois de um recarregamento, saiu com .000Z e .001Z outra vez, e a dobra
+   descartou os dois como "ja vistos". Os eventos nunca teriam viajado.
+   O mapa e pequeno por construcao: so ganha chave quem chama enfileirarToque
+   com instante explicito, e isso e a migracao da triagem (uma vez, uma base
+   por dia de marcacao) e o botao do acervo (uma base, o piso). */
+const RELOGIO_BASES_KEY = "cron:relogio-bases";
 
 function instanteDoToque(quandoISO){
   if(quandoISO){
     var base = new Date(quandoISO).getTime();
     if(!isFinite(base)) base = Date.now();
     var chave = String(base);
-    var v = (chave in RELOGIO_BASES) ? RELOGIO_BASES[chave] + 1 : base;
-    RELOGIO_BASES[chave] = v;
+    var mapa = LS(RELOGIO_BASES_KEY, {}) || {};
+    /* Primeira vez nesta base: comeca no piso, ou logo depois do ultimo
+       instante que o estado.json publicado ja mostra naquele mesmo piso. A
+       segunda metade cobre o aparelho que publicou ANTES desta correcao
+       existir e nao tem o mapa: a memoria dele esta la fora, no estado.json. */
+    var v = (chave in mapa) ? mapa[chave] + 1 : Math.max(base, pisoJaGasto(base) + 1);
+    mapa[chave] = v;
+    save(RELOGIO_BASES_KEY, mapa);
     return v;
   }
   var agora = Date.now();
@@ -2317,6 +2450,17 @@ function buscarEstado(){
     .catch(function(){ return null; })
     .then(function(est){
       if(!est) return;
+      /* Fotografia do que o estado.json ja contem, para o contador do acervo.
+         Fora dos if() de cada secao de proposito: "publicado, e vazio" precisa
+         ficar gravado tanto quanto "publicado, e cheio". */
+      try{
+        var laFora = {metas:{}, eventos:{}};
+        ["metas","eventos"].forEach(function(s){
+          var sec = est[s] || {};
+          Object.keys(sec).forEach(function(k){ laFora[s][k] = sec[k].quando || ""; });
+        });
+        save(ACERVO_LA_FORA_KEY, laFora);
+      }catch(e){}
       var mudou = false;
       if(est.itens) PAINEIS.forEach(function(P){
         var projs = getProjs(P.id), mudouAqui = false;
@@ -2391,6 +2535,30 @@ function buscarEstado(){
         });
         if(mudouAlgumaMeta){ try{ renderMetas(); }catch(e){} }
       }
+      /* ---- Datas importantes ----
+         Chave e o id do evento. SO A DATA ATRAVESSA: o titulo fica no aparelho
+         que o escreveu, porque o repositorio e publico e o historico nunca e
+         podado. Evento novo nasce aqui sem nome, e a tela mostra um marcador
+         apagado no lugar do titulo.
+         O aviso de dias restantes nao precisa de nada: renderEventos recalcula
+         diasAte() e o proximo evento a cada chamada, entao basta chamar. */
+      if(est.eventos){
+        var evs = getEventos(), mudouEv = false;
+        Object.keys(est.eventos).forEach(function(eid){
+          var r = est.eventos[eid];
+          if(!r || !r.quando) return;
+          var j = -1;
+          for(var n=0;n<evs.length;n++){ if(evs[n].id === eid){ j = n; break; } }
+          if(j > -1 && (evs[j].em || "") >= r.quando) return;
+          if(r.del){ if(j > -1){ evs.splice(j,1); mudouEv = true; } return; }
+          if(!r.data) return;
+          if(j < 0){ evs.push({id:eid, t:"", data:r.data, em:r.quando}); }
+          else { evs[j].data = r.data; evs[j].em = r.quando; }
+          mudouEv = true;
+        });
+        if(mudouEv){ setEventos(evs); try{ renderEventos(); }catch(e){} }
+      }
+      try{ renderAcervoEstado(); }catch(e){}
       if(mudou){ renderOrdo(); renderHoje(); renderSemana(); renderTrilhos(); }
     });
 }

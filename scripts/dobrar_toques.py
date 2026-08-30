@@ -19,10 +19,11 @@ NADA SE PERDE. Um toque dobrado sai da pasta, mas o seu conteúdo fica em
 duas vezes não conte duas vezes. Toque que este script não entende continua onde
 está, e é relatado no fim.
 
-TRES COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
+QUATRO COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
     registro -> progresso dos subitens dos trilhos, em `itens`
     triagem  -> a marca de cada vaga na aba Vagas, em `triagem`
     meta     -> as metas do mes, uma a uma, em `metas`
+    evento   -> as datas importantes, SO A DATA, em `eventos`
 Toque de tipo que este script nao conhece nao e descartado: vai para o
 historico e o id fica em _ids_dobrados, para nao ser contado duas vezes.
 
@@ -55,7 +56,7 @@ DIR_TOQUES = os.path.join(RAIZ, "Cronograma", "toques")
 DIR_DOBRADOS = os.path.join(DIR_TOQUES, "_dobrados")
 ARQ_ESTADO = os.path.join(RAIZ, "Cronograma", "estado.json")
 ARQ_ENTRADA = os.path.join(RAIZ, "Cronograma", "entrada.json")
-ESTADO_VERSAO = 2
+ESTADO_VERSAO = 3
 
 
 def estado_vazio():
@@ -69,6 +70,7 @@ def estado_vazio():
         "itens": {},
         "triagem": {},
         "metas": {},
+        "eventos": {},
         "historico": [],
         "_ids_dobrados": [],
     }
@@ -123,6 +125,10 @@ def alvo(t):
         if not d.get("mes") or not d.get("mid"):
             return (None, None)
         return ("metas", "%s/%s" % (d.get("mes"), d.get("mid")))
+    if tipo == "evento":
+        if not d.get("eid"):
+            return (None, None)
+        return ("eventos", str(d.get("eid")))
     return (None, None)
 
 
@@ -139,6 +145,14 @@ def valor(t):
              "subT": d.get("subT")}
     elif tipo == "triagem":
         v = {"st": d.get("st")}
+    elif tipo == "evento":
+        # O TITULO NAO VIAJA, e nao e esquecimento: o repositorio e publico e o
+        # `historico` nunca e podado, entao um titulo publicado uma vez ficaria
+        # publico para sempre — inclusive depois de o evento ser apagado. Parte
+        # destes eventos e pastoral. Decisao do autor em 29/08. So a data
+        # atravessa; o nome mora no aparelho, como o `motivo` dos subitens.
+        # `del` e a lapide, pelo mesmo motivo das metas.
+        v = {"data": d.get("data"), "del": bool(d.get("del"))}
     else:
         # A meta apagada vira lapide: fica no estado com del=true, para que o
         # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e
@@ -355,6 +369,7 @@ def main():
     print("Trilhos no estado:   %d" % len(estado.get("itens") or {}))
     print("Vagas triadas:       %d" % len(estado.get("triagem") or {}))
     print("Metas:               %d" % len(estado.get("metas") or {}))
+    print("Datas importantes:   %d" % len(estado.get("eventos") or {}))
 
     if seco:
         print("\n--seco: nada foi escrito nem movido.")
@@ -369,6 +384,9 @@ def main():
             elif secao == "metas":
                 detalhe = "meta %s  ->  %s" % (
                     k, "apagada" if d.get("del") else ("feita" if d.get("done") else "aberta"))
+            elif secao == "eventos":
+                detalhe = "data %s  ->  %s" % (
+                    k, "apagada" if d.get("del") else d.get("data"))
             else:
                 detalhe = "(tipo %s, sem alvo)" % (t.get("tipo") or "?")
             print("  %s  %s" % ((t.get("quando") or "")[:16], detalhe))
