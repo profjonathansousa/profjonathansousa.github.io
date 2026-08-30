@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T01:57:37.067Z",
+ "_dobrado_em": "2026-08-30T01:58:51.991Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1374,6 +1374,122 @@
     "del": true,
     "t": "TOEFL Test"
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-40-669Z-s41hky",
+   "quando": "2026-08-30T01:58:40.669Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784113286830",
+    "data": "2026-08-22",
+    "priv": true,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-42-538Z-s41hky",
+   "quando": "2026-08-30T01:58:42.538Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1786418679033",
+    "data": "2026-08-16",
+    "priv": true,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-43-972Z-s41hky",
+   "quando": "2026-08-30T01:58:43.972Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1785785320542",
+    "data": "2026-08-16",
+    "priv": true,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-45-365Z-s41hky",
+   "quando": "2026-08-30T01:58:45.365Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784469006747",
+    "data": "2026-08-15",
+    "priv": true,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-48-189Z-s41hky",
+   "quando": "2026-08-30T01:58:48.189Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784469006747",
+    "data": "2026-08-15",
+    "priv": false,
+    "del": false,
+    "t": "Culto jovem"
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-49-506Z-s41hky",
+   "quando": "2026-08-30T01:58:49.506Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1785785320542",
+    "data": "2026-08-16",
+    "priv": false,
+    "del": false,
+    "t": "Aniversário Igreja AD Fonte das Águas"
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-50-774Z-s41hky",
+   "quando": "2026-08-30T01:58:50.774Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1786418679033",
+    "data": "2026-08-16",
+    "priv": false,
+    "del": false,
+    "t": "Master Class Victor"
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-30T01-58-51-991Z-s41hky",
+   "quando": "2026-08-30T01:58:51.991Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-eventos4",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1784113286830",
+    "data": "2026-08-22",
+    "priv": false,
+    "del": false,
+    "t": "Encontro Romântico - Projeto ACOLHER"
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1470,7 +1586,15 @@
   "2026-08-30T01-55-53-167Z-s41hky",
   "2026-08-30T01-55-53-168Z-s41hky",
   "2026-08-30T01-55-53-169Z-s41hky",
-  "2026-08-30T01-57-37-067Z-ipkt72"
+  "2026-08-30T01-57-37-067Z-ipkt72",
+  "2026-08-30T01-58-40-669Z-s41hky",
+  "2026-08-30T01-58-42-538Z-s41hky",
+  "2026-08-30T01-58-43-972Z-s41hky",
+  "2026-08-30T01-58-45-365Z-s41hky",
+  "2026-08-30T01-58-48-189Z-s41hky",
+  "2026-08-30T01-58-49-506Z-s41hky",
+  "2026-08-30T01-58-50-774Z-s41hky",
+  "2026-08-30T01-58-51-991Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1784,7 +1908,7 @@
    "priv": false,
    "del": false,
    "t": "Encontro Romântico - Projeto ACOLHER",
-   "quando": "2026-08-30T01:55:53.161Z",
+   "quando": "2026-08-30T01:58:51.991Z",
    "aparelho": "s41hky"
   },
   "e1784121891277": {
@@ -1822,7 +1946,7 @@
    "priv": false,
    "del": false,
    "t": "Culto jovem",
-   "quando": "2026-08-30T01:55:53.165Z",
+   "quando": "2026-08-30T01:58:48.189Z",
    "aparelho": "s41hky"
   },
   "e1785785320542": {
@@ -1830,7 +1954,7 @@
    "priv": false,
    "del": false,
    "t": "Aniversário Igreja AD Fonte das Águas",
-   "quando": "2026-08-30T01:55:53.166Z",
+   "quando": "2026-08-30T01:58:49.506Z",
    "aparelho": "s41hky"
   },
   "e1786418679033": {
@@ -1838,7 +1962,7 @@
    "priv": false,
    "del": false,
    "t": "Master Class Victor",
-   "quando": "2026-08-30T01:55:53.167Z",
+   "quando": "2026-08-30T01:58:50.774Z",
    "aparelho": "s41hky"
   },
   "e1788053719412": {
