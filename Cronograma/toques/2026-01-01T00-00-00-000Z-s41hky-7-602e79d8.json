@@ -1,0 +1,121 @@
+{
+ "v": 1,
+ "lote": "2026-01-01T00-00-00-000Z-s41hky",
+ "quando": "2026-08-30T00:35:32.121Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-29-metas1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-000Z-s41hky",
+   "quando": "2026-01-01T00:00:00.000Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-07",
+    "mid": "m3",
+    "t": "Construir o agente de chamadas de publicação",
+    "done": true,
+    "de": null,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-001Z-s41hky",
+   "quando": "2026-01-01T00:00:00.001Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-07",
+    "mid": "m4",
+    "t": "Construir o agente de vagas e concursos",
+    "done": true,
+    "de": null,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-002Z-s41hky",
+   "quando": "2026-01-01T00:00:00.002Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-07",
+    "mid": "m1784121670357",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+    "done": true,
+    "de": null,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-003Z-s41hky",
+   "quando": "2026-01-01T00:00:00.003Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-07",
+    "mid": "m1784232788117",
+    "t": "Agente de pesquisa das universidades internacionais com match para aplicação",
+    "done": true,
+    "de": null,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-004Z-s41hky",
+   "quando": "2026-01-01T00:00:00.004Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1785256952988",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+    "done": false,
+    "de": null,
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-005Z-s41hky",
+   "quando": "2026-01-01T00:00:00.005Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1785639854911-0",
+    "t": "Artigo \"Patriotismo Cristão\": ajustar e expandir páginas",
+    "done": false,
+    "de": "2026-07",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-006Z-s41hky",
+   "quando": "2026-01-01T00:00:00.006Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-29-metas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1785639854911-1",
+    "t": "Pós-doc: preparação de candidatura",
+    "done": false,
+    "de": "2026-07",
+    "del": false
+   }
+  }
+ ]
+}
