@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-30T16:07:13.130Z",
+ "_dobrado_em": "2026-08-31T10:47:02.179Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -21,6 +21,15 @@
    "subT": "Janela 0 · 1.0-FIL · mapa argumentativo",
    "quando": "2026-08-30T16:07:13.130Z",
    "aparelho": "ipkt72"
+  },
+  "leituras/l1/l1-1": {
+   "st": 0,
+   "vida": "ativo",
+   "temMotivo": false,
+   "projT": "A · Clássicos fundadores",
+   "subT": "Durkheim · As formas elementares da vida religiosa",
+   "quando": "2026-08-31T10:47:02.179Z",
+   "aparelho": "s41hky"
   }
  },
  "historico": [
@@ -1550,6 +1559,46 @@
     "vida": "inaplicavel",
     "temMotivo": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-31T10-46-56-643Z-s41hky",
+   "quando": "2026-08-31T10:46:56.643Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-08-31",
+    "pid": "leituras",
+    "projId": "l1",
+    "subId": "l1-1",
+    "projT": "A · Clássicos fundadores",
+    "subT": "Durkheim · As formas elementares da vida religiosa",
+    "de": 0,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-08-31T10-47-02-179Z-s41hky",
+   "quando": "2026-08-31T10:47:02.179Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-08-31",
+    "pid": "leituras",
+    "projId": "l1",
+    "subId": "l1-1",
+    "projT": "A · Clássicos fundadores",
+    "subT": "Durkheim · As formas elementares da vida religiosa",
+    "de": 2,
+    "para": 0,
+    "vida": "ativo",
+    "temMotivo": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1657,7 +1706,9 @@
   "2026-08-30T01-58-51-991Z-s41hky",
   "2026-08-30T15-29-50-500Z-s41hky",
   "2026-08-30T16-07-12-664Z-ipkt72",
-  "2026-08-30T16-07-13-130Z-ipkt72"
+  "2026-08-30T16-07-13-130Z-ipkt72",
+  "2026-08-31T10-46-56-643Z-s41hky",
+  "2026-08-31T10-47-02-179Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
