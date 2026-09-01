@@ -19,11 +19,18 @@ NADA SE PERDE. Um toque dobrado sai da pasta, mas o seu conteúdo fica em
 duas vezes não conte duas vezes. Toque que este script não entende continua onde
 está, e é relatado no fim.
 
-QUATRO COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
-    registro -> progresso dos subitens dos trilhos, em `itens`
-    triagem  -> a marca de cada vaga na aba Vagas, em `triagem`
-    meta     -> as metas do mes, uma a uma, em `metas`
-    evento   -> as datas importantes, SO A DATA, em `eventos`
+CINCO COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
+    registro   -> progresso dos subitens dos trilhos, em `itens`
+    triagem    -> a marca de cada vaga na aba Vagas, em `triagem`
+    meta       -> as metas do mes, uma a uma, em `metas`
+    evento     -> as datas importantes, SO A DATA, em `eventos`
+    prioridade -> o que voce elegeu para a semana no Hoje, em `prioridades`
+
+A prioridade entrou na Fase 2 (Hoje 2.0), e entrou aqui em vez de ficar so no
+aparelho porque ela e a decisao central do novo Hoje: eleger no computador na
+segunda e nao ver nada no celular na terca esvaziaria a funcao. Ela seguiu o
+molde da meta, que e o caso mais proximo — chave "periodo/id", lapide `del`,
+e o relogio decidindo quem vence.
 Toque de tipo que este script nao conhece nao e descartado: vai para o
 historico e o id fica em _ids_dobrados, para nao ser contado duas vezes.
 
@@ -71,6 +78,7 @@ def estado_vazio():
         "triagem": {},
         "metas": {},
         "eventos": {},
+        "prioridades": {},
         "historico": [],
         "_ids_dobrados": [],
     }
@@ -129,6 +137,13 @@ def alvo(t):
         if not d.get("eid"):
             return (None, None)
         return ("eventos", str(d.get("eid")))
+    if tipo == "prioridade":
+        # Mesma forma da meta: periodo/id. A semana e ISO ("2026-W36"), que e a
+        # unidade que o Hoje 2.0 usa — voce elege na segunda e a escolha vale
+        # ate domingo, sem redigitar.
+        if not d.get("sem") or not d.get("prid"):
+            return (None, None)
+        return ("prioridades", "%s/%s" % (d.get("sem"), d.get("prid")))
     return (None, None)
 
 
@@ -165,6 +180,21 @@ def valor(t):
         v = {"data": d.get("data"), "priv": bool(d.get("priv")), "del": bool(d.get("del"))}
         if not d.get("priv") and isinstance(d.get("t"), str):
             v["t"] = d.get("t")
+    elif tipo == "prioridade":
+        # A PRIORIDADE DE TRILHO NAO CARREGA O TEXTO DA ETAPA. Ela carrega o
+        # ENDERECO do projeto (painel + projId), e o texto e lido do trilho no
+        # aparelho que desenha. E a regra dura da Fase 2: o Hoje nunca inventa
+        # nem congela o estagio de um projeto. Se o texto viajasse, o celular
+        # mostraria a etapa de quando a prioridade foi criada, e nao a de agora
+        # — exatamente o que o pipeline existe para evitar.
+        #
+        # O `t` que viaja e o rotulo da prioridade LIVRE, e o titulo do projeto
+        # so como legenda. Nenhum dos dois substitui o estagio.
+        v = {"tipo": d.get("tipo") or "livre",
+             "painel": d.get("painel") or "",
+             "projId": d.get("projId") or "",
+             "t": d.get("t", ""),
+             "del": bool(d.get("del"))}
     else:
         # A meta apagada vira lapide: fica no estado com del=true, para que o
         # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e
@@ -382,6 +412,7 @@ def main():
     print("Vagas triadas:       %d" % len(estado.get("triagem") or {}))
     print("Metas:               %d" % len(estado.get("metas") or {}))
     print("Datas importantes:   %d" % len(estado.get("eventos") or {}))
+    print("Prioridades:         %d" % len(estado.get("prioridades") or {}))
 
     if seco:
         print("\n--seco: nada foi escrito nem movido.")
@@ -399,6 +430,11 @@ def main():
             elif secao == "eventos":
                 detalhe = "data %s  ->  %s" % (
                     k, "apagada" if d.get("del") else d.get("data"))
+            elif secao == "prioridades":
+                detalhe = "prioridade %s  ->  %s" % (
+                    k, "apagada" if d.get("del")
+                    else ("trilho %s/%s" % (d.get("painel"), d.get("projId"))
+                          if d.get("tipo") == "trilho" else (d.get("t") or "(sem texto)")))
             else:
                 detalhe = "(tipo %s, sem alvo)" % (t.get("tipo") or "?")
             print("  %s  %s" % ((t.get("quando") or "")[:16], detalhe))

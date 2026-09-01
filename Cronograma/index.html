@@ -284,6 +284,57 @@
   .backup-aviso{margin-top:8px;font-size:11px;color:var(--muted);}
   .backup-aviso.velho{color:var(--crimson);}
 
+  /* ===== Fase 2 — Hoje 2.0. Nenhuma cor nova, nenhuma fonte nova: as
+     variaveis e as classes ja existentes (.sub, .box, .carry, .shead, .ptr)
+     fazem quase tudo. So o arranjo e novo. ===== */
+  .ctx-barra{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:14px 0 4px;}
+  .ctx-barra button{background:var(--paper-2);border:1px solid var(--line);color:var(--ink-soft);
+    border-radius:999px;padding:6px 12px;font-size:12.5px;font-family:var(--sans);cursor:pointer;}
+  .ctx-barra button.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2);}
+  .ctx-nota{font-size:11px;color:var(--muted);flex:1 1 100%;}
+  .ctx-aviso{display:inline-block;margin-top:6px;font-size:10.5px;line-height:1;
+    padding:4px 7px;border-radius:999px;border:1px dashed var(--line-strong);color:var(--muted);}
+
+  .prio-head{display:flex;align-items:baseline;gap:8px;}
+  .prio-sem{font-size:11px;color:var(--muted);font-family:var(--sans);font-weight:400;
+    letter-spacing:0;margin-left:auto;}
+  .prio-vazio{border:1px dashed var(--line);border-radius:10px;padding:14px;
+    font-size:12.5px;color:var(--muted);}
+  .prio-vazio b{display:block;color:var(--ink-soft);margin-bottom:3px;font-weight:600;}
+  .prio-lista{display:flex;flex-direction:column;gap:8px;}
+  .pr-card{position:relative;background:var(--card);border:1px solid var(--line);
+    border-left:3px solid var(--gold);border-radius:10px;padding:11px 34px 11px 12px;}
+  .pr-x{position:absolute;top:7px;right:7px;background:none;border:0;color:var(--muted);
+    font-size:17px;line-height:1;cursor:pointer;padding:2px 5px;}
+  .pr-t{font-size:14px;color:var(--ink);line-height:1.35;}
+  .pr-vazio{font-size:12px;color:var(--muted);margin-top:5px;font-style:italic;}
+  .pr-livre{display:flex;align-items:flex-start;gap:9px;cursor:pointer;}
+  .pr-livre.done .pr-t{color:var(--muted);text-decoration:line-through;
+    text-decoration-color:var(--line-strong);}
+  .pr-estrela{display:inline-block;margin-left:7px;font-size:10px;line-height:1;
+    padding:3px 6px;border-radius:999px;border:1px solid var(--gold-line);color:var(--gold);}
+  .prio-add{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
+  .prio-add select,.prio-add button{flex:1 1 auto;background:var(--paper-2);
+    border:1px solid var(--line);color:var(--ink-soft);border-radius:8px;padding:8px 10px;
+    font-size:12.5px;font-family:var(--sans);cursor:pointer;min-width:0;}
+
+  .retomadas .ret-i{padding:9px 0;border-bottom:1px solid var(--line);}
+  .retomadas .ret-i:last-child{border-bottom:0;}
+  .ret-cab{display:flex;align-items:baseline;gap:8px;}
+  .ret-dias{font-size:11px;font-weight:600;color:var(--crimson);white-space:nowrap;}
+  .ret-proj{font-size:13px;color:var(--ink);}
+  .ret-sub{font-size:12px;color:var(--ink-soft);margin:3px 0 6px;padding-left:1px;}
+  .ret-acoes{display:flex;gap:6px;}
+
+  .ev-mais{width:100%;background:none;border:0;color:var(--muted);font-size:12px;
+    font-family:var(--sans);cursor:pointer;padding:9px 0 3px;text-align:left;}
+  .hoje-vagas{display:flex;align-items:center;gap:9px;width:100%;margin-top:18px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:12px 13px;cursor:pointer;font-family:var(--sans);text-align:left;}
+  .hv-t{font-size:13px;color:var(--ink);font-weight:600;}
+  .hv-n{font-size:12px;color:var(--muted);}
+  .hoje-vagas .seta{margin-left:auto;color:var(--muted);}
+
   /* ===== Passo 4 — aba Vagas. Prefixo vg- para nao colidir com nada. ===== */
   .vg-topo{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:12px;}
   .vg-titulo{font-family:var(--display);font-size:21px;letter-spacing:.2px;}
@@ -456,45 +507,62 @@
 </div>
 <script>
 const APP_VERSION = "2026-08-30-abas1";
+/* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
+
+   `painel` e so o botao: leva ao trilho e nao escolhe nada.
+   `link`  e o botao MAIS um estagio desenhado ao vivo — e ele so sobrevive
+           onde nao ha escolha a fazer (ver trilhoSemEscolha).
+
+   O que saiu daqui em 2026-09-01, e por que:
+
+   · "Planejar a semana" (seg-plan) foi removida. Planejar nao e tarefa: e o
+     que o bloco de PRIORIDADES faz. Uma caixa que voce marca por ter pensado
+     na semana nao move a semana.
+   · seg-acad, ter-art, sex-esc e sab-consol perderam o `link`. Eram rotinas
+     academicas que apontavam para um painel com DOZE artigos dentro, e o
+     Hoje escolhia o primeiro do array — sempre o mesmo, para sempre. A rotina
+     continua dizendo O QUE fazer ("Escrita academica"); QUAL artigo e decisao
+     sua, e ela mora nas Prioridades.
+   · `ctx:"computador"` marca a rotina que o telefone nao resolve. Fora de
+     casa isso vira um aviso, nunca um rebaixamento. */
 const DIAS = {
   1:{nome:"Segunda", eixo:"Abertura ministerial & planejamento", anchors:[],
      tasks:[
        {id:"seg-min", t:"Manutenção ministerial", n:"Pendências da igreja, mensagens, o que ficou aberto"},
-       {id:"seg-plan", t:"Planejar a semana", n:"Definir a tarefa principal de cada dia antes que a semana comece", tag:"âncora"},
-       {id:"seg-acad", t:"Produção acadêmica leve", n:"Reabrir o artigo, uma ideia, um parágrafo", link:"leituras"},
-       {id:"seg-toefl", t:"TOEFL · Reading", n:"Use o TestReady, seção Reading Practice. Aproximadamente 20 min", tag:"pulverizado"}
+       {id:"seg-acad", t:"Produção acadêmica leve", n:"Reabrir o artigo, uma ideia, um parágrafo", painel:"leituras"},
+       {id:"seg-toefl", t:"TOEFL · Reading: exercício + revisão dos erros", n:"TestReady, seção Reading Practice. Fazer o exercício e revisar cada erro. ~20 min", tag:"pulverizado"}
      ], uber:"Cowork quando der, nas duas janelas (~6–7h e ~14h30)"},
   2:{nome:"Terça", eixo:"Internacionalização — produção", anchors:[],
      tasks:[
-       {id:"ter-art", t:"Artigo: escrever e expandir", n:"Bloco principal do dia. Aumentar páginas do recorte ativo", link:"pipeline"},
+       {id:"ter-art", t:"Artigo: escrever e expandir", n:"Bloco principal do dia. Aumentar páginas do recorte ativo", painel:"pipeline", ctx:"computador"},
        {id:"ter-phd", t:"PhD no exterior", n:"Alvos por polo, SOP, writing sample, cartas, contato com docentes", link:"candidatura"},
        {id:"ter-pos", t:"Pós-doutorado", n:"FAPERJ (janela de dezembro a janeiro), FAPESP e exterior", link:"posdoc"},
-       {id:"ter-toefl", t:"TOEFL · Listening", n:"Use o TestReady, seção Listening Practice, com o método dos 4 quadrantes. Aproximadamente 20 min", tag:"pulverizado"}
+       {id:"ter-toefl", t:"TOEFL · Listening: prática + 4 quadrantes", n:"TestReady, seção Listening Practice, com o método dos 4 quadrantes. ~20 min", tag:"pulverizado"}
      ], uber:"Cowork quando der. Na fase de sprint: Momento 1 da EBD aqui"},
   3:{nome:"Quarta", eixo:"Preparo Joel de Oliveira", anchors:[],
      tasks:[
-       {id:"qua-aula", t:"Preparar aulas", n:"O preparo de quinta já cobre a sexta (as duas turmas são 3º ano)", tag:"exclusivo"},
-       {id:"qua-aval", t:"Preparar e revisar avaliações", n:"Correções, provas, o que vence na semana"},
+       {id:"qua-aula", t:"Preparar aulas", n:"O preparo de quinta já cobre a sexta (as duas turmas são 3º ano)", tag:"exclusivo", ctx:"computador"},
+       {id:"qua-aval", t:"Preparar e revisar avaliações", n:"Correções, provas, o que vence na semana", ctx:"computador"},
        {id:"qua-outras", t:"Revisar EM1 / EM2 se houver", n:"Só o que a semana pedir"},
-       {id:"qua-toefl", t:"TOEFL · Vocabulário + shadowing", n:"Use o Anki (Academic Word List) + shadowing de qualquer áudio em inglês. Aproximadamente 15 min", tag:"pulverizado"}
+       {id:"qua-toefl", t:"TOEFL · Vocabulário (Anki) + shadowing", n:"Baralho Academic Word List no Anki, depois shadowing de um áudio em inglês. ~15 min", tag:"pulverizado"}
      ], uber:"Cowork quando der."},
   4:{nome:"Quinta", eixo:"Aula no Joel de Oliveira",
      anchors:[{t:"7h–14h30", n:"Aula no C.E. Prof. Joel de Oliveira"}],
      tasks:[
        {id:"qui-rec", t:"Livre a partir das 16h", n:"Uber da tarde, descanso ou uma tarefa leve já definida"},
-       {id:"qui-toefl", t:"TOEFL · Writing", n:"Use o TestReady, seção Writing Practice, alternando Write an Email e Academic Discussion. Aproximadamente 20 min", tag:"pulverizado"}
+       {id:"qui-toefl", t:"TOEFL · Writing: um texto completo", n:"TestReady, seção Writing Practice, alternando Write an Email e Academic Discussion. ~20 min", tag:"pulverizado"}
      ], uber:"Só à tarde/noite (a manhã é aula). Cowork curto"},
   5:{nome:"Sexta", eixo:"Aula + escrita acadêmica",
      anchors:[{t:"7h–10h30", n:"Aula no Joel (3º ano) — preparada na quarta"}],
      tasks:[
-       {id:"sex-esc", t:"Escrita acadêmica", n:"Na janela livre 11h30–15h00. O artigo é o dono do dia até sair", tag:"âncora", link:"pipeline"},
-       {id:"sex-toefl", t:"TOEFL · Speaking + simulado", n:"Use o TestReady, seção Speaking Practice (esqueleto PREP). A cada 2–3 semanas, troque por 1 simulado completo no Magoosh. Aproximadamente 30 min", tag:"pulverizado"}
+       {id:"sex-esc", t:"Escrita acadêmica", n:"Na janela livre 11h30–15h00. O artigo é o dono do dia até sair", tag:"âncora", painel:"pipeline", ctx:"computador"},
+       {id:"sex-toefl", t:"TOEFL · Speaking (PREP) ou 1 simulado", n:"TestReady, seção Speaking Practice, esqueleto PREP. A cada 2–3 semanas, troque por um simulado completo no Magoosh. ~30 min", tag:"pulverizado"}
      ], uber:"Depois das 15h. Cowork quando der"},
   6:{nome:"Sábado", eixo:"Consolidação, pós-doc & técnico", anchors:[], tecnico:true,
      tasks:[
        {id:"sab-agentes", t:"Processar o que os agentes trouxeram", n:"Chamadas de publicação, vagas de pós-doc e concursos da semana", link:"concursos"},
-       {id:"sab-consol", t:"Consolidar a semana", n:"O que andou, o que fica para a próxima", link:"pipeline"},
-       {id:"sab-tec", t:"Bloco técnico", n:"Dar andamento a 1 projeto: Sites, Canais dark, Ordo App, Workshop", link:"tecnico"}
+       {id:"sab-consol", t:"Consolidar a semana", n:"O que andou, o que fica para a próxima", painel:"pipeline"},
+       {id:"sab-tec", t:"Bloco técnico", n:"Dar andamento a 1 projeto: Sites, Canais dark, Ordo App, Workshop", link:"tecnico", ctx:"computador"}
      ], uber:"Cowork quando der, nas duas janelas"},
   0:{nome:"Domingo", eixo:"EBD, igreja & descanso",
      anchors:[{t:"9h00", n:"Escola Bíblica Dominical — IBFC"}],
@@ -1285,6 +1353,104 @@ function renderGuia(){
   h+=`</div></div></details>`;
   return h;
 }
+/* O cartao de uma prioridade. Se ela aponta para um trilho, o texto grande e
+   o ESTAGIO REAL, lido agora, e a caixa e a mesma do trilho — marcar aqui e
+   marcar la, pelo marcarDoHoje, sem nenhum mecanismo paralelo. */
+function cartaoDePrioridade(p){
+  var corpo = "", acoes = "";
+  if(p.tipo === "trilho"){
+    var et = estagioDoTrilho(p.painel, p.projId);
+    var P = painelDef(p.painel);
+    var legenda = escapeHtml(p.t || (et && et.projT) || p.projId);
+    if(!et){
+      corpo = '<div class="pr-t">' + legenda + '</div>' +
+              '<div class="pr-vazio">este projeto n\u00e3o est\u00e1 mais no trilho</div>';
+    } else if(et.concluido){
+      corpo = '<div class="pr-t">' + legenda + '</div>' +
+              '<div class="pr-vazio">trilho conclu\u00eddo</div>';
+    } else {
+      var selo = et.prova === "estrela"
+        ? '<span class="pr-estrela" title="esta etapa depende de uma decis\u00e3o sua: o pipeline n\u00e3o a fecha sozinho">depende de voc\u00ea</span>' : "";
+      corpo = '<div class="pr-t">' + legenda + '</div>' +
+              '<div class="sub st-' + et.st + '" onclick="event.stopPropagation();marcarDoHoje(\''+p.painel+'\',\''+p.projId+'\',\''+et.subId+'\',true)">' +
+                '<span class="st-dot" title="marcar como conclu\u00edda"></span>' +
+                '<div class="sub-text">' + escapeHtml(et.subT) + '</div>' + selo +
+              '</div>';
+      acoes = '<button class="ptr" onclick="event.stopPropagation();irAoTrilho(\''+p.painel+'\',\''+p.projId+'\')">' +
+              (P?escapeHtml(P.titulo):p.painel) + '<span class="seta">\u203a</span></button>';
+    }
+  } else {
+    var feito = !!checks[p.id];
+    corpo = '<div class="pr-livre ' + (feito?"done":"") + '" onclick="toggleCheck(\''+p.id+'\')">' +
+              '<span class="box">' + CHK + '</span>' +
+              '<div class="pr-t" contenteditable="true" onclick="event.stopPropagation()"' +
+              ' onblur="editPrioridade(\''+p.id+'\',this.innerText)">' + escapeHtml(p.t) + '</div>' +
+            '</div>';
+  }
+  return '<div class="pr-card">' +
+    '<button class="pr-x" onclick="delPrioridade(\''+p.id+'\')" aria-label="Tirar das prioridades">&times;</button>' +
+    corpo + acoes + '</div>';
+}
+function renderPrioridades(){
+  var pr = prioridadesDoDia();
+  /* manuais SEMPRE antes. Nesta fase sugeridas e vazio; a ordem ja esta
+     escrita para quando deixar de ser. */
+  var lista = pr.manuais.concat(pr.sugeridas);
+  var h = '<div class="shead prio-head">Prioridades da semana' +
+          '<span class="prio-sem">' + semanaAtual.replace("-W", " \u00b7 semana ") + '</span></div>';
+  if(!lista.length){
+    h += '<div class="prio-vazio"><b>Nenhuma prioridade esta semana.</b>' +
+         'O que voc\u00ea escolher aqui fica acima das rotinas, em todos os aparelhos.</div>';
+  } else {
+    h += '<div class="prio-lista">' + lista.map(cartaoDePrioridade).join("") + '</div>';
+  }
+  /* O seletor lista os projetos ATIVOS de todos os paineis. Escolher e um
+     toque; nao ha formulario. */
+  var ops = '<option value="">+ eleger um projeto do trilho\u2026</option>';
+  PAINEIS.forEach(function(P){
+    var ativos = projetosAtivos(P.id);
+    if(!ativos.length) return;
+    ops += '<optgroup label="' + escapeHtml(P.titulo) + '">';
+    ativos.forEach(function(pj){
+      ops += '<option value="' + P.id + '/' + pj.id + '">' + escapeHtml(pj.t || pj.id) + '</option>';
+    });
+    ops += '</optgroup>';
+  });
+  h += '<div class="prio-add">' +
+       '<select onchange="addPrioridadeTrilho(this.value);this.value=\'\'">' + ops + '</select>' +
+       '<button onclick="addPrioridadeLivre()">+ texto livre</button></div>';
+  return h;
+}
+function renderRetomadas(){
+  var r = retomadas();
+  if(!r.length) return "";
+  var aberto = LS("cron:retomadas-open", false);
+  var h = '<details class="carry retomadas" ' + (aberto?"open":"") +
+          ' ontoggle="save(\'cron:retomadas-open\', this.open)">' +
+          '<summary>' + r.length + ' projeto' + (r.length===1?'':'s') + ' sem avan\u00e7o' +
+          '<span class="c-sub">h\u00e1 ' + RETOMADA_DIAS + ' dias ou mais \u00b7 lembrete, n\u00e3o cobran\u00e7a</span>' +
+          '</summary><div class="c-corpo">';
+  r.forEach(function(o){
+    h += '<div class="ret-i">' +
+         '<div class="ret-cab"><span class="ret-dias">' + o.dias + ' dias</span>' +
+         '<span class="ret-proj">' + escapeHtml(o.projT || o.projId) + '</span></div>' +
+         '<div class="ret-sub">' + escapeHtml(o.subT) + '</div>' +
+         '<div class="ret-acoes">' +
+           '<button class="carry-b" onclick="promoverRetomada(\''+o.pid+'\',\''+o.projId+'\')">tornar prioridade</button>' +
+           '<button class="carry-b" onclick="adiarRetomada(\''+o.pid+'\',\''+o.projId+'\')">agora n\u00e3o</button>' +
+         '</div></div>';
+  });
+  return h + '</div></details>';
+}
+function renderContexto(){
+  var c = getContexto();
+  return '<div class="ctx-barra">' +
+    '<button class="' + (c==="casa"?"on":"") + '" onclick="setContexto(\'casa\')">Em casa</button>' +
+    '<button class="' + (c==="fora"?"on":"") + '" onclick="setContexto(\'fora\')">Fora de casa</button>' +
+    '<span class="ctx-nota">' + (c==="fora"
+      ? "s\u00f3 o telefone \u00b7 o que pede computador fica marcado"
+      : "computador e telefone \u00b7 voc\u00ea escolhe") + '</span></div>';
+}
 function renderHoje(){
   const d=DIAS[todayIdx];
   const dateStr=now.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
@@ -1312,31 +1478,40 @@ function renderHoje(){
   }}
   /* O aviso da esteira NAO vem aqui: o bloco de metas, que e desenhado dentro
      desta mesma aba, ja o traz. Duas vezes na mesma tela e uma vez a mais. */
+  html+=renderContexto();
+  /* PRIORIDADES ANTES DAS ROTINAS. A ordem no HTML e a garantia: o que voce
+     elegeu aparece primeiro, e nenhum calculo pode empurra-lo para baixo
+     porque nao ha calculo nenhum entre os dois blocos. */
+  html+=renderPrioridades();
+  html+=`<div class="shead">Rotinas de ${d.nome.toLowerCase()}</div>`;
   html+=`<ul class="tasks">`;
   const pc=pecaDoMes();
   d.tasks.forEach(t=>{
     const done=!!checks[t.id];
     let extra="";
-    if(t.link){
-      /* DE QUAL TRILHO ESTE BLOCO SE ALIMENTA, e qual e a proxima acao exata.
-         Antes o bloco so dizia o nome da peca e da etapa, em texto morto: para
-         marcar era preciso ir ate os Trilhos, achar o item e voltar. Agora o
-         subitem vem inteiro — texto real e caixa — e a caixa escreve NO MESMO
-         item, pelo marcarSub. Nao ha copia do estado aqui: o que a linha
-         mostra e lido do trilho a cada desenho. */
-      const P=painelDef(t.link), prox=proximaDoTrilho(t.link);
-      const alvo=(t.link==="pipeline"&&pc)?`'${pc.id}'`:(prox?`'${prox.projId}'`:"null");
+    extra+=avisoDeContexto(t);
+    /* `painel` NAVEGA E NAO ESCOLHE. E o que sobrou das rotinas academicas
+       depois da Fase 2: o botao continua levando ao trilho, mas quem diz em
+       qual artigo trabalhar e a prioridade, la em cima. */
+    const alvoPainel = t.link || t.painel;
+    if(alvoPainel){
+      const P=painelDef(alvoPainel);
+      /* `link` ainda desenha o estagio, mas so onde nao ha escolha a fazer.
+         Com dois projetos ativos o trilhoSemEscolha devolve null e a rotina
+         fica sendo rotina. */
+      const prox = t.link ? trilhoSemEscolha(t.link) : null;
       if(t.link==="pipeline" && pc){
         extra+=`<div class="task-live">${pc.proxima?"a seguir \u00b7 ":""}${escapeHtml(pc.curto)}</div>`;
       }
-      if(prox){
+      if(prox && !prox.concluido){
         const selo = prox.vida && prox.vida!=="ativo"
           ? `<span class="sub-onde">${escapeHtml(VIDA_LBL[prox.vida]||prox.vida)}</span>` : "";
         extra+=`<div class="sub st-${prox.st}" onclick="event.stopPropagation();marcarDoHoje('${prox.pid}','${prox.projId}','${prox.subId}',true)">
           <span class="st-dot" title="marcar como conclu\u00edda"></span>
           <div class="sub-text">${escapeHtml(prox.subT)}</div>${selo}</div>`;
       }
-      extra+=`<button class="ptr" onclick="event.stopPropagation();irAoTrilho('${t.link}',${alvo})">${P?P.titulo:t.link}<span class="seta">\u203A</span></button>`;
+      const alvo=(alvoPainel==="pipeline"&&pc)?`'${pc.id}'`:(prox?`'${prox.projId}'`:"null");
+      extra+=`<button class="ptr" onclick="event.stopPropagation();irAoTrilho('${alvoPainel}',${alvo})">${P?P.titulo:alvoPainel}<span class="seta">\u203A</span></button>`;
     }
     html+=`<li class="task ${done?'done':''}" onclick="toggleCheck('${t.id}')">
       <span class="box">${CHK}</span>
@@ -1344,11 +1519,13 @@ function renderHoje(){
       ${tag(t.tag)}</li>`;
   });
   html+=`</ul>`;
+  html+=renderRetomadas();
   html+=renderAtrasadas();
   html+=renderGuia();
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
   html+=`<div id="metas-wrap"></div>`;
   html+=`<div class="shead">Datas importantes</div><div id="eventos"></div>`;
+  html+=renderVagasIndicador();
   document.getElementById("view-hoje").innerHTML=html;
   renderMetas(); renderEventos();
 }
@@ -1708,10 +1885,25 @@ function diasAte(iso){const [y,m,dd]=iso.split("-").map(Number);
   return Math.round((new Date(y,m-1,dd)-t0)/86400000);}
 function fmtData(iso){const [y,m,dd]=iso.split("-").map(Number);
   return new Date(y,m-1,dd).toLocaleDateString("pt-BR",{day:"numeric",month:"long"});}
+/* CINCO NA PRIMEIRA TELA — Fase 2.
+   A lista inteira nao cabe num celular sem empurrar tudo o mais para fora, e a
+   sexta data nunca foi a que decide o dia. As demais NAO somem: ficam atras de
+   um "ver todas", e continuam inteiras no cron:eventos. O contador grande
+   continua sendo o da data mais proxima, como sempre foi.
+
+   OS BOTOES PASSARAM A ANDAR POR ID, e isto nao e estilo — e correcao de um
+   defeito que o corte teria criado. editEv/dateEv/delEv/privEv recebiam o
+   INDICE da lista ordenada e o resolviam pelo sortedRef(i). Desenhando so
+   cinco, o indice da tela deixaria de ser o indice da lista: o botao da sexta
+   data editaria e APAGARIA a data errada. O id do evento e estavel e nao
+   depende de quantos estao na tela. */
+const EVENTOS_NA_TELA = 5;
 function renderEventos(){
   const box=document.getElementById("eventos"); if(!box)return;
-  let evts=getEventos().slice().sort((a,b)=>a.data<b.data?-1:1);
+  const evts=getEventos().slice().sort((a,b)=>a.data<b.data?-1:1);
   const futuros=evts.filter(e=>diasAte(e.data)>=0);
+  const passados=evts.filter(e=>diasAte(e.data)<0);
+  const tudo=LS("cron:eventos-tudo", false);
   let h="";
   if(futuros.length){
     const nx=futuros[0], d=diasAte(nx.data);
@@ -1720,22 +1912,37 @@ function renderEventos(){
       <div class="c-t">${nome}</div>
       <div class="c-s">${fmtData(nx.data)} · faltam ${d} dia${d===1?"":"s"}</div></div></div>`;
   }
-  evts.forEach((e,i)=>{
-    const d=diasAte(e.data), badge = d<0 ? "—" : d;
-    const priv = !!e.priv;
-    h+=`<div class="ev">
-      <span class="ev-d">${badge}</span>
-      <button class="ev-priv${priv?" on":""}" onclick="privEv(${i})"
-        title="${priv?"privada: o título fica nos aparelhos onde você o escrever":"pública: o título sobe para o repositório"}"
-        aria-label="${priv?"privada":"pública"}">${priv?"\u{1F512}":"\u{1F513}"}</button>
-      <div class="ev-t" contenteditable="true" onblur="editEv(${i},this.innerText)">${escapeHtml(e.t)}</div>
-      <input type="date" value="${e.data}" onchange="dateEv(${i},this.value)">
-      <button class="del" onclick="delEv(${i})" aria-label="Remover">&times;</button></div>`;
-  });
+  /* Da mais proxima para a mais distante — que e a ordem em que `evts` ja
+     esta, porque o sort e por data crescente. */
+  const naTela = tudo ? evts : futuros.slice(0, EVENTOS_NA_TELA);
+  naTela.forEach(e=>{ h+=linhaDeEvento(e); });
+  const escondidos = evts.length - naTela.length;
+  if(escondidos > 0 || tudo){
+    h+=`<button class="ev-mais" onclick="save('cron:eventos-tudo',${!tudo});renderEventos()">`+
+       (tudo ? "mostrar s\u00f3 as cinco pr\u00f3ximas"
+             : "ver todas \u00b7 mais " + escondidos +
+               (passados.length ? " (inclui " + passados.length + " que j\u00e1 " +
+                 (passados.length===1?"passou":"passaram") + ")" : ""))+
+       `</button>`;
+  }
   h+=`<button class="add-row" onclick="addEv()">+ Nova data importante</button>`;
   box.innerHTML=h;
 }
-function sortedRef(i){return getEventos().slice().sort((a,b)=>a.data<b.data?-1:1)[i];}
+function linhaDeEvento(e){
+  const d=diasAte(e.data), badge = d<0 ? "\u2014" : d;
+  const priv = !!e.priv;
+  return `<div class="ev">
+      <span class="ev-d">${badge}</span>
+      <button class="ev-priv${priv?" on":""}" onclick="privEv('${e.id}')"
+        title="${priv?"privada: o título fica nos aparelhos onde você o escrever":"pública: o título sobe para o repositório"}"
+        aria-label="${priv?"privada":"pública"}">${priv?"\u{1F512}":"\u{1F513}"}</button>
+      <div class="ev-t" contenteditable="true" onblur="editEv('${e.id}',this.innerText)">${escapeHtml(e.t)}</div>
+      <input type="date" value="${e.data}" onchange="dateEv('${e.id}',this.value)">
+      <button class="del" onclick="delEv('${e.id}')" aria-label="Remover">&times;</button></div>`;
+}
+/* sortedRef saiu na Fase 2. Ela existia para traduzir o indice da tela em
+   evento, e o indice da tela deixou de ser confiavel no momento em que a lista
+   passou a mostrar so cinco. Quem endereca um evento agora e o id dele. */
 /* UM EVENTO VIAJA POR ID, E O TITULO VIAJA COM ELE — SALVO SE FOR PRIVADO.
    Primeira versao desta sessao nao publicava titulo nenhum. Estava errado, e o
    autor reverteu em 29/08: data sem nome nao e data importante, chega no outro
@@ -1784,8 +1991,8 @@ function tocarEvento(ev, apagado){
 /* A marca de privado e do EVENTO e atravessa como tudo o mais: vai no toque,
    entra no estado.json e desce pela regra do relogio. Sem isso, ligar no
    celular nao impediria o Mac de publicar o titulo na proxima edicao. */
-function privEv(i){
-  const ref=sortedRef(i); const e=getEventos(); const j=e.findIndex(x=>x.id===ref.id);
+function privEv(eid){
+  const e=getEventos(); const j=e.findIndex(x=>x.id===eid);
   if(j<0) return;
   const ligando = !e[j].priv;
   const nome = (e[j].t||"").trim();
@@ -1811,7 +2018,7 @@ function privEv(i){
 /* Sai do onblur do contenteditable: so grava se o texto mudou de verdade,
    senao cada clique fora do campo viraria um toque. O editMeta ja fazia esta
    guarda; o editEv nao fazia, e sem ela o tipo novo multiplicaria marcacao. */
-function editEv(i,t){const ref=sortedRef(i);const e=getEventos();const j=e.findIndex(x=>x.id===ref.id);
+function editEv(eid,t){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0)return;const novo=t.trim();if(novo===e[j].t)return;
   e[j].t=novo;e[j].em=new Date().toISOString();setEventos(e);
   /* Num evento PRIVADO que ja subiu, renomear nao muda nada la fora — o toque
@@ -1820,11 +2027,12 @@ function editEv(i,t){const ref=sortedRef(i);const e=getEventos();const j=e.findI
      precisa viajar mesmo que o nome fique aqui. */
   if(!e[j].priv || !eventoJaSubiu(e[j].id)) tocarEvento(e[j],false);
   renderEventos();}
-function dateEv(i,v){const ref=sortedRef(i);const e=getEventos();const j=e.findIndex(x=>x.id===ref.id);
+function dateEv(eid,v){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0||!v||e[j].data===v)return;
   e[j].data=v;e[j].em=new Date().toISOString();setEventos(e);tocarEvento(e[j],false);renderEventos();}
-function delEv(i){const ref=sortedRef(i);const fora=getEventos().find(x=>x.id===ref.id);if(!fora)return;
-  setEventos(getEventos().filter(x=>x.id!==ref.id));tocarEvento(fora,true);renderEventos();}
+function delEv(eid){const fora=getEventos().find(x=>x.id===eid);if(!fora)return;
+  if(!confirm("Remover \u201c"+((fora.t||"").trim()||"esta data")+"\u201d?"))return;
+  setEventos(getEventos().filter(x=>x.id!==eid));tocarEvento(fora,true);renderEventos();}
 /* Nasce sem nome e com a data de hoje, e por isso nao enfileira nada: o toque
    sai no primeiro editEv ou dateEv, ja com o que voce quis dizer. */
 function addEv(){const e=getEventos();e.push({id:"e"+Date.now(),t:"",data:ymd(now)});setEventos(e);renderEventos();}
@@ -1894,21 +2102,310 @@ function marcarDoHoje(pid, projId, subId, concluir){
    Pula "nao se aplica" pela mesma razao que o pecaDoMes ja pulava: e uma etapa
    que o proprio trilho declarou que nao acontece, e mandar o dia para ela seria
    apontar para o nada. Hoje isso e o caso real do a00-3. */
-function proximaDoTrilho(pid){
+function estagioDoTrilho(pid, projId){
   var projs = getProjs(pid) || [];
   for(var i=0;i<projs.length;i++){
     var pr = projs[i];
-    if(projConcluido(pr)) continue;
+    if(projId){ if(pr.id !== projId) continue; }
+    else if(projConcluido(pr)) continue;
     for(var j=0;j<(pr.subs||[]).length;j++){
       var x = normSub(pr.subs[j]);
       if(x.vida === "inaplicavel") continue;
       if(x.st === 2) continue;
       return {pid:pid, projId:pr.id, projT:pr.t, subId:x.id, subT:x.t, st:x.st,
-              vida:x.vida, motivo:x.motivo};
+              vida:x.vida, motivo:x.motivo, prova:x.prova||"", em:x.em||""};
     }
+    /* Pedido por projeto e o projeto acabou: dizer "concluido" e diferente de
+       devolver nada. Prioridade apontada para um artigo pronto merece dizer
+       que ele esta pronto, e nao sumir da tela sem explicacao. */
+    if(projId) return {pid:pid, projId:pr.id, projT:pr.t, concluido:true};
   }
   return null;
 }
+function proximaDoTrilho(pid){ return estagioDoTrilho(pid, null); }
+
+/* QUANDO A ROTINA AINDA PODE APONTAR UM ESTAGIO SOZINHA: quando nao ha escolha
+   a fazer. Um painel com um projeto ativo so tem uma proxima etapa possivel, e
+   mostra-la nao e o sistema decidindo nada. Com dois ou mais, mostrar o
+   primeiro do array E decidir — e essa decisao passou a ser sua, nas
+   Prioridades. A regra le o dado, entao ela se corrige sozinha conforme os
+   paineis enchem e esvaziam; nao ha lista de excecao para manter. */
+function projetosAtivos(pid){
+  return (getProjs(pid) || []).filter(function(pr){ return !projConcluido(pr); });
+}
+function trilhoSemEscolha(pid){
+  var ativos = projetosAtivos(pid);
+  return ativos.length === 1 ? estagioDoTrilho(pid, ativos[0].id) : null;
+}
+
+/* ==================== PRIORIDADES — Fase 2 ====================
+   O QUE VOCE ELEGEU PARA A SEMANA. E a unica coisa no Hoje que decide QUAL
+   projeto concreto recebe o dia; a rotina diz o que fazer, a prioridade diz
+   em que.
+
+   POR SEMANA, E NAO POR DIA. Voce elege na segunda e a escolha vale ate
+   domingo. Prioridade diaria seria uma lista para alimentar todo dia — o
+   oposto do que este sistema existe para fazer.
+
+   ATRAVESSA APARELHOS, pelo mecanismo que ja existia. Nenhuma arquitetura
+   nova: toque tipo "prioridade" -> dobrar_toques.py -> estado.prioridades ->
+   descida pelo relogio, item a item. E o mesmo caminho da meta, que era o
+   caso mais proximo. O frontend NUNCA escreve no estado.json.
+
+   A PRIORIDADE DE TRILHO NAO GUARDA O TEXTO DA ETAPA. Guarda o endereco do
+   projeto (painel + projId). O estagio e lido do trilho toda vez que a tela
+   desenha — por isso, se o pipeline fechar uma etapa pelo --registrar, o Hoje
+   mostra a proxima sem ninguem tocar em nada. Congelar o texto aqui seria
+   inventar um estagio, que e o que a Fase 2 proibe.
+   ============================================================== */
+function semanaISO(d){
+  /* Semana ISO: a que contem a quinta-feira. Sem isto, virada de ano parte a
+     semana em duas chaves e a prioridade de 31/12 some no dia 1o. */
+  var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var dia = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dia);
+  var ano = t.getUTCFullYear();
+  var jan1 = Date.UTC(ano, 0, 1);
+  var n = Math.ceil(((t.getTime() - jan1) / 86400000 + 1) / 7);
+  return ano + "-W" + String(n).padStart(2, "0");
+}
+var semanaAtual = semanaISO(now);
+function getPrio(sem){ var v = LS("cron:prioridades:" + (sem||semanaAtual), []); return (v&&v.forEach)?v:[]; }
+function setPrio(lista, sem){ save("cron:prioridades:" + (sem||semanaAtual), lista); }
+
+/* Os dados que viajam. O texto da ETAPA nunca entra aqui — ver o bloco acima.
+   `t` e o rotulo da prioridade livre, ou o titulo do projeto como legenda. */
+function dadosDaPrioridade(p, sem, apagada){
+  return {sem: sem || semanaAtual, prid: p.id, tipo: p.tipo || "livre",
+          painel: p.painel || "", projId: p.projId || "",
+          t: p.t || "", del: !!apagada};
+}
+function tocarPrioridade(p, sem, apagada){
+  var iso = enfileirarToque("prioridade", dadosDaPrioridade(p, sem, apagada));
+  return iso;
+}
+function addPrioridadeTrilho(valor){
+  if(!valor) return;
+  var corte = valor.indexOf("/");
+  var painel = valor.slice(0, corte), projId = valor.slice(corte+1);
+  var pr = (getProjs(painel)||[]).filter(function(x){ return x.id === projId; })[0];
+  var lista = getPrio();
+  if(lista.some(function(x){ return x.painel===painel && x.projId===projId; })) return;
+  var p = {id:"pr"+Date.now(), tipo:"trilho", painel:painel, projId:projId,
+           t:(pr&&pr.t)||"", em:new Date().toISOString()};
+  lista.push(p); setPrio(lista);
+  p.em = tocarPrioridade(p, semanaAtual, false) || p.em;
+  setPrio(lista); renderHoje();
+}
+function addPrioridadeLivre(){
+  var t = prompt("Prioridade da semana:", "");
+  if(t === null) return;
+  t = t.trim(); if(!t) return;
+  var lista = getPrio();
+  var p = {id:"pr"+Date.now(), tipo:"livre", painel:"", projId:"", t:t,
+           em:new Date().toISOString()};
+  lista.push(p); setPrio(lista);
+  p.em = tocarPrioridade(p, semanaAtual, false) || p.em;
+  setPrio(lista); renderHoje();
+}
+function delPrioridade(prid){
+  var lista = getPrio(), j = -1;
+  for(var i=0;i<lista.length;i++){ if(lista[i].id === prid){ j = i; break; } }
+  if(j < 0) return;
+  var fora = lista[j];
+  lista.splice(j, 1); setPrio(lista);
+  tocarPrioridade(fora, semanaAtual, true);   /* lapide: ausencia nao e desconhecimento */
+  renderHoje();
+}
+function editPrioridade(prid, texto){
+  var lista = getPrio(), p = null;
+  for(var i=0;i<lista.length;i++){ if(lista[i].id === prid){ p = lista[i]; break; } }
+  if(!p) return;
+  var novo = (texto||"").trim();
+  if(!novo || novo === p.t) return;
+  p.t = novo; p.em = new Date().toISOString(); setPrio(lista);
+  p.em = tocarPrioridade(p, semanaAtual, false) || p.em;
+  setPrio(lista);
+}
+
+/* A ORDEM E A GARANTIA. `manuais` primeiro, sempre; `sugeridas` existe vazia
+   de proposito, para que a Fase 3 preencha sem que ninguem precise lembrar da
+   regra de precedencia — ela ja esta na forma do retorno. */
+/* A DESCIDA DAS PRIORIDADES. Isolada de proposito: o buscarEstado depende de
+   fetch, e esta parte precisa poder ser testada sem rede — e e ela que prova
+   que o computador e o celular veem a mesma prioridade.
+
+   Molde da meta, linha por linha: chave "periodo/id", lapide `del`, e o
+   relogio decidindo item a item. Mais novo manda; empate fica como esta. */
+function aplicarPrioridadesDoEstado(est){
+  if(!est || !est.prioridades) return false;
+  var porSemana = {};
+  Object.keys(est.prioridades).forEach(function(k){
+    var corte = k.indexOf("/");
+    if(corte < 0) return;
+    (porSemana[k.slice(0,corte)] = porSemana[k.slice(0,corte)] || [])
+      .push({prid:k.slice(corte+1), r:est.prioridades[k]});
+  });
+  var mudou = false;
+  Object.keys(porSemana).forEach(function(sem){
+    var lista = getPrio(sem), mudouSem = false;
+    porSemana[sem].forEach(function(o){
+      var r = o.r;
+      if(!r || !r.quando) return;
+      var j = -1;
+      for(var n=0;n<lista.length;n++){ if(lista[n].id === o.prid){ j = n; break; } }
+      if(j > -1 && (lista[j].em || "") >= r.quando) return;
+      if(r.del){ if(j > -1){ lista.splice(j,1); mudouSem = true; } return; }
+      var novo = {id:o.prid, tipo:r.tipo || "livre", painel:r.painel || "",
+                  projId:r.projId || "", t:r.t || "", em:r.quando};
+      if(j < 0) lista.push(novo); else lista[j] = novo;
+      mudouSem = true;
+    });
+    if(mudouSem){ setPrio(lista, sem); mudou = true; }
+  });
+  return mudou;
+}
+
+function prioridadesDoDia(){
+  return {manuais: getPrio(), sugeridas: []};
+}
+
+/* ==================== RETOMADAS — Fase 2 ====================
+   PROJETO IMPORTANTE QUE PAROU. Nao e cobranca e nao e abandono: e memoria
+   externa, para que um artigo nao desapareca so porque nenhuma tela o
+   mencionou por tres semanas.
+
+   DE ONDE VEM A DATA: de `sub.em`, que ja existia e ja atravessa aparelhos. O
+   `em` e gravado pelo logar() quando voce marca aqui, e sobrescrito pela
+   descida do estado.json quando o outro aparelho marcou. Ou seja: e o instante
+   do ultimo movimento CONHECIDO POR TODOS, e nao o deste aparelho. Nao foi
+   preciso inventar campo nenhum.
+
+   QUATRO FILTROS, e cada um evita um falso diferente:
+
+     1. so projeto JA COMECADO. Sem isto, um artigo de dezembro que nunca foi
+        aberto apareceria com "45 dias sem avanco" — e nao ha nada para
+        retomar em algo que nao comecou. Comecado = algum subitem com `em` ou
+        com st > 0.
+     2. `vida` adiado/abandonado/inaplicavel fica de fora. Voce DECIDIU parar;
+        chamar isso de esquecimento e transformar uma decisao sua em cobranca.
+     3. `voltar_em` no futuro fica de fora. Adiar ate 15/10 e ser lembrado em
+        20/09 e o mesmo erro, so que pior, porque voce ja tinha respondido.
+     4. concluido fica de fora.
+
+   O TEXTO NUNCA E INVENTADO. A linha diz "N dias sem avanco" e o subtitulo e o
+   estagio real do trilho, lido pelo estagioDoTrilho. Nunca "trabalhar no
+   artigo".
+
+   NAO VIRA PRIORIDADE SOZINHA. Esta fase nao tem motor de recomendacao: a
+   retomada lembra, e quem promove e voce, no botao. */
+var RETOMADA_DIAS = 14;
+var RETOMADA_KEY = "cron:retomadas-adiadas";
+function diasDesde(iso){
+  if(!iso) return null;
+  var t = new Date(iso).getTime();
+  if(!isFinite(t)) return null;
+  return Math.floor((now.getTime() - t) / 86400000);
+}
+function retomadas(limite){
+  limite = (typeof limite === "number") ? limite : RETOMADA_DIAS;
+  var adiadas = LS(RETOMADA_KEY, {}) || {}, hojeStr = ymd(now), out = [];
+  PAINEIS.forEach(function(P){
+    (getProjs(P.id) || []).forEach(function(pr){
+      if(projConcluido(pr)) return;
+      var chave = P.id + "/" + pr.id;
+      if(adiadas[chave] && adiadas[chave] > hojeStr) return;   /* silenciada */
+      var ultimo = "", comecou = false, temAtivo = false;
+      (pr.subs || []).forEach(function(sx){
+        var x = normSub(sx);
+        if(x.em){ comecou = true; if(x.em > ultimo) ultimo = x.em; }
+        if(x.st > 0) comecou = true;
+        if(x.st === 2) return;
+        if(x.vida === "inaplicavel" || x.vida === "abandonado") return;
+        if(x.vida === "adiado"){
+          /* Adiada COM data no futuro nao conta; adiada sem data nenhuma
+             tambem nao, porque continua sendo uma decisao sua. */
+          return;
+        }
+        temAtivo = true;
+      });
+      if(!comecou) return;          /* filtro 1: nunca comecou */
+      if(!temAtivo) return;         /* filtros 2 e 3: so restou o que voce parou */
+      var dias = diasDesde(ultimo);
+      if(dias === null || dias < limite) return;
+      var et = estagioDoTrilho(P.id, pr.id);
+      if(!et || et.concluido) return;
+      out.push({pid:P.id, painelT:P.titulo, projId:pr.id, projT:pr.t,
+                dias:dias, subT:et.subT, subId:et.subId, st:et.st,
+                prova:et.prova||""});
+    });
+  });
+  out.sort(function(a, b){ return b.dias - a.dias; });
+  return out;
+}
+function adiarRetomada(pid, projId){
+  var m = LS(RETOMADA_KEY, {}) || {};
+  var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
+  m[pid + "/" + projId] = ymd(d);
+  save(RETOMADA_KEY, m);
+  renderHoje();
+}
+function promoverRetomada(pid, projId){
+  addPrioridadeTrilho(pid + "/" + projId);   /* decisao sua, num toque */
+}
+
+/* ==================== CONTEXTO — Fase 2 ====================
+   DOIS ESTADOS, e so dois: casa e fora. Fora de casa quer dizer que o telefone
+   e o que existe.
+
+   ISTO NAO PONTUA NADA E NAO REORDENA NADA. Uma prioridade que voce escolheu
+   continua no topo estando voce onde estiver — ela so ganha um aviso de que
+   pede computador. Rebaixar a escolha do usuario por causa do lugar seria o
+   sistema decidindo por ele, que e exatamente o que este Cronograma nao faz. */
+function getContexto(){ return LS("cron:contexto", "casa") || "casa"; }
+function setContexto(c){ save("cron:contexto", c); renderHoje(); }
+function exigeComputador(o){ return (o && o.ctx === "computador") || false; }
+function avisoDeContexto(o){
+  return (getContexto() === "fora" && exigeComputador(o))
+    ? '<span class="ctx-aviso" title="fora de casa: isto pede computador">pede computador</span>' : "";
+}
+
+/* ==================== INDICADOR DE VAGAS — Fase 2 ====================
+   UMA LINHA, e nada mais. A triagem continua inteira na aba Vagas: trazer os
+   cartoes para ca obrigaria a decidir sobre vagas no meio do dia, que e
+   justamente o que a secao 18 do briefing separa.
+
+   Nao custa requisicao: o vgCarregar() ja e chamado no boot, porque a aba
+   Semana tambem precisa dos prazos. */
+function contagemDeVagas(){
+  var itens = ((typeof VG_VAGAS !== "undefined" && VG_VAGAS.itens) || [])
+    .concat((typeof VG_CHAMADAS !== "undefined" && VG_CHAMADAS.itens) || []);
+  var novas = 0, revisar = 0, marcadas = 0;
+  itens.forEach(function(i){
+    var st = (typeof vgEstado === "function") ? vgEstado(i.id) : 0;
+    if(i.veredicto === "rejeitado") return;
+    if(st === 3) return;
+    if(st === 1) marcadas++;
+    if(st === 0 && i.novo) novas++;
+    if(i.veredicto === "revisar" && st !== 2) revisar++;
+  });
+  return {novas:novas, revisar:revisar, marcadas:marcadas, total:itens.length};
+}
+function renderVagasIndicador(){
+  var c = contagemDeVagas();
+  if(!c.total) return "";
+  var partes = [];
+  if(c.novas)    partes.push(c.novas + " nova" + (c.novas===1?"":"s"));
+  if(c.revisar)  partes.push(c.revisar + " para revisar");
+  if(c.marcadas) partes.push(c.marcadas + " selecionada" + (c.marcadas===1?"":"s"));
+  if(!partes.length) partes.push("nada novo");
+  return '<button class="hoje-vagas" onclick="setView(\'vagas\')">' +
+         '<span class="hv-t">Vagas</span>' +
+         '<span class="hv-n">' + partes.join(" \u00b7 ") + '</span>' +
+         '<span class="seta">\u203a</span></button>';
+}
+
+
 /* Ciclo de vida: ativo -> adiado -> abandonado -> ativo. Pede motivo, e
    no caso de adiar pergunta também para quando voltar. O progresso (st)
    não é tocado: uma peça 60% escrita e adiada continua 60% escrita. */
@@ -3256,6 +3753,9 @@ function buscarEstado(){
         });
         if(mudouEv){ setEventos(evs); try{ renderEventos(); }catch(e){} }
       }
+      /* ---- Prioridades da semana (Fase 2) ----
+         O que voce elegeu no computador chega aqui, e vice-versa. */
+      if(aplicarPrioridadesDoEstado(est)){ try{ renderHoje(); }catch(e){} }
       /* ---- Registro datado: a metade que faltava ----
          A subida ja existia inteira. logar() passa a MESMA linha que grava em
          cron:registro para o toque, e a dobra guarda o toque cru no `historico`
