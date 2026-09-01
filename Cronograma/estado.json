@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-08-31T10:47:02.179Z",
+ "_dobrado_em": "2026-09-01T16:08:08.919Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1599,6 +1599,134 @@
     "vida": "ativo",
     "temMotivo": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-912Z-s41hky",
+   "quando": "2026-09-01T16:08:08.912Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-09",
+    "mid": "m1788278888911-0",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+    "done": false,
+    "de": "2026-08",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-913Z-s41hky",
+   "quando": "2026-09-01T16:08:08.913Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-09",
+    "mid": "m1788278888911-1",
+    "t": "Entrega de agosto: A consciência em Lutero e Spinoza, pronta para submeter (JAAR/MTSR)",
+    "done": false,
+    "de": "2026-08",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-914Z-s41hky",
+   "quando": "2026-09-01T16:08:08.914Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-09",
+    "mid": "m1788278888912-2",
+    "t": "Pós-doc: preparação de candidatura",
+    "done": false,
+    "de": "2026-08",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-915Z-s41hky",
+   "quando": "2026-09-01T16:08:08.915Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-09",
+    "mid": "m1788278888912-3",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+    "done": false,
+    "de": "2026-08",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-916Z-s41hky",
+   "quando": "2026-09-01T16:08:08.916Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1785256952988",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+    "done": false,
+    "de": null,
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-917Z-s41hky",
+   "quando": "2026-09-01T16:08:08.917Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "art-2026-08-0",
+    "t": "Entrega de agosto: A consciência em Lutero e Spinoza, pronta para submeter (JAAR/MTSR)",
+    "done": false,
+    "de": null,
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-918Z-s41hky",
+   "quando": "2026-09-01T16:08:08.918Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1785639854911-1",
+    "t": "Pós-doc: preparação de candidatura",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-08-919Z-s41hky",
+   "quando": "2026-09-01T16:08:08.919Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "meta",
+   "dados": {
+    "mes": "2026-08",
+    "mid": "m1788054004486-0",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+    "done": false,
+    "de": "2026-07",
+    "del": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1708,7 +1836,15 @@
   "2026-08-30T16-07-12-664Z-ipkt72",
   "2026-08-30T16-07-13-130Z-ipkt72",
   "2026-08-31T10-46-56-643Z-s41hky",
-  "2026-08-31T10-47-02-179Z-s41hky"
+  "2026-08-31T10-47-02-179Z-s41hky",
+  "2026-09-01T16-08-08-912Z-s41hky",
+  "2026-09-01T16-08-08-913Z-s41hky",
+  "2026-09-01T16-08-08-914Z-s41hky",
+  "2026-09-01T16-08-08-915Z-s41hky",
+  "2026-09-01T16-08-08-916Z-s41hky",
+  "2026-09-01T16-08-08-917Z-s41hky",
+  "2026-09-01T16-08-08-918Z-s41hky",
+  "2026-09-01T16-08-08-919Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -1939,8 +2075,8 @@
    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
    "done": false,
    "de": null,
-   "del": false,
-   "quando": "2026-01-01T00:00:00.004Z",
+   "del": true,
+   "quando": "2026-09-01T16:08:08.916Z",
    "aparelho": "s41hky"
   },
   "2026-08/m1785639854911-0": {
@@ -1955,8 +2091,8 @@
    "t": "Pós-doc: preparação de candidatura",
    "done": false,
    "de": "2026-07",
-   "del": false,
-   "quando": "2026-01-01T00:00:00.006Z",
+   "del": true,
+   "quando": "2026-09-01T16:08:08.918Z",
    "aparelho": "s41hky"
   },
   "2026-08/m1787798153953-1": {
@@ -2011,8 +2147,48 @@
    "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
    "done": false,
    "de": "2026-07",
+   "del": true,
+   "quando": "2026-09-01T16:08:08.919Z",
+   "aparelho": "s41hky"
+  },
+  "2026-09/m1788278888911-0": {
+   "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+   "done": false,
+   "de": "2026-08",
    "del": false,
-   "quando": "2026-08-30T01:40:04.486Z",
+   "quando": "2026-09-01T16:08:08.912Z",
+   "aparelho": "s41hky"
+  },
+  "2026-09/m1788278888911-1": {
+   "t": "Entrega de agosto: A consciência em Lutero e Spinoza, pronta para submeter (JAAR/MTSR)",
+   "done": false,
+   "de": "2026-08",
+   "del": false,
+   "quando": "2026-09-01T16:08:08.913Z",
+   "aparelho": "s41hky"
+  },
+  "2026-09/m1788278888912-2": {
+   "t": "Pós-doc: preparação de candidatura",
+   "done": false,
+   "de": "2026-08",
+   "del": false,
+   "quando": "2026-09-01T16:08:08.914Z",
+   "aparelho": "s41hky"
+  },
+  "2026-09/m1788278888912-3": {
+   "t": "Artigo \"suicídio em Spinoza e Lutero\": ajustar e expandir páginas",
+   "done": false,
+   "de": "2026-08",
+   "del": false,
+   "quando": "2026-09-01T16:08:08.915Z",
+   "aparelho": "s41hky"
+  },
+  "2026-08/art-2026-08-0": {
+   "t": "Entrega de agosto: A consciência em Lutero e Spinoza, pronta para submeter (JAAR/MTSR)",
+   "done": false,
+   "de": null,
+   "del": true,
+   "quando": "2026-09-01T16:08:08.917Z",
    "aparelho": "s41hky"
   }
  },
