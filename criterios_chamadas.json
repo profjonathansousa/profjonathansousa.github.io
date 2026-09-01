@@ -181,6 +181,23 @@
     "regra": ["urgentes primeiro", "depois publicacao, depois evento", "dentro disso: nicho antes de competencia", "dentro disso: prazo mais proximo primeiro", "sem prazo por ultimo"]
   },
 
+  "veredicto": {
+    "_o_que_e": "O eixo da Vagas 2: relevante / revisar / rejeitado. E o veredicto da MAQUINA, e nada mais.",
+    "_nao_confundir_com_a_triagem": "A triagem e SUA, mora no aparelho (cron:triagem) e vale 'vou me candidatar' / 'descartar' / 'arquivar'. O veredicto e da maquina e mora no arquivo. Os dois eixos existem juntos e nao se sobrescrevem: a invariante do painel e 'O ARQUIVO DESCREVE, O APARELHO DECIDE'. Foi por isso que este campo NAO se chama triagem.",
+    "_nao_substitui_a_relevancia": "relevancia (nicho, competencia, aberto, nao confirmada) continua sendo o eixo semantico e continua dizendo POR QUE. O veredicto e o resumo em tres estados que a lista precisa para se ordenar e se filtrar.",
+    "_precedencia": [
+      "1. descartado -> rejeitado; MAS descartado por 'sem aderencia' com a area apagada pela validacao -> revisar, porque a decisao foi tomada sobre o que nao deu para ler",
+      "2. extracao suspeita -> revisar, sempre, antes de qualquer coisa que classifique",
+      "3. relevancia nicho ou competencia -> relevante",
+      "4. relevancia aberto E porque 'edital geral' E tipo docente reconhecido -> relevante",
+      "5. relevancia aberto no resto (AOS Open, tipo 'outro') -> revisar",
+      "6. qualquer outra coisa -> revisar"
+    ],
+    "tipos_docentes": [],
+    "_sem_tipos_docentes": "A regra 4 nao se aplica a chamada: dossie de periodico nao tem tipo de vinculo. Lista vazia desliga a regra sem precisar de excecao no codigo. Chamada brasileira sem area no titulo continua entrando como aberto e cai em revisar, que e onde ela deve ser lida.",
+    "_tipos_docentes_MEDIDO_2026-09-01": "A regra 4 e o que salva a proporcao. Mapear 'aberto -> revisar' direto, como parecia bastar, dava revisar 49 contra relevante 39: a fila de julgamento ficava MAIOR que a lista boa, e o objetivo era o contrario. A causa: 32 editais da ANPOF caem em 'edital geral', e edital geral nao e caso limitrofe — e a forma normal do edital brasileiro, que nao carrega area no cabeca (isto ja estava medido em 2026-08-25 e escrito no relevancia.aberto). Um edital que passou pela porta da filosofia e cujo titulo diz 'concurso para professor efetivo' e alta confianca, com ou sem AOS. Com a regra 4: relevante 53, revisar 23, rejeitado 12.",
+    "_AOS_Open_continua_em_revisar": "A regra 4 exige porque == 'edital geral'. AOS Open declarado pelo empregador cai na regra 5 e vai para revisar, que e o que a secao 23 do briefing pede: Open pode esconder oportunidade relevante e nunca e eliminado, mas tambem nao e tratado como compativel."
+  },
   "fontes": [
     {
       "nome": "curadas",

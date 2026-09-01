@@ -664,6 +664,120 @@ ok(any("AOS" in m for m in (env.get("marcas") or [])) or env.get("avisos_extraca
    "a marca da extracao suspeita acompanha o item ate o painel",
    env.get("marcas"))
 
+print("\n=== 23. Veredicto: relevante / revisar / rejeitado (Vagas 2) ===")
+def julgar(**campos):
+    """Um item completo, classificado e julgado — do jeito que o executar faz."""
+    # O corpo neutro nao e enfeite: item sem corpo e legitimamente 'suspeito'
+    # para a validacao da Vagas 1, e ai o veredicto seria revisar por causa do
+    # fixture, e nao por causa da regra que se quer testar.
+    it = {"id": "t", "fonte": "anpof", "url": "", "titulo": "", "aos": "", "aoc": "",
+          "texto": u"Corpo do edital, sem nada que decida.", "pais": "Brasil",
+          "prazo": "", "categoria": "", "contrato": "", "local": "",
+          "instituicao": "", "porta_passou": True}
+    it.update(campos)
+    C.validar_extracao(it, CRIT)
+    C.descarte_barato(it, CRIT) or C.descarte_pelo_corpo(it, CRIT)
+    C.classificar(it, CRIT, campos.pop("_unidade", "edital"))
+    C.veredicto(it, CRIT)
+    return it
+
+r = julgar(titulo=u"Assistant Professor", aos="Philosophy of Religion", _unidade="vaga")
+ok(r["veredicto"] == "relevante", "nicho/competencia -> relevante", r.get("porque_veredicto"))
+ok(r.get("relevancia") in ("nicho", "competencia"),
+   "e a relevancia continua existindo: o veredicto NAO a substitui", r.get("relevancia"))
+
+# A secao 23 do briefing: Open nunca e eliminado e nunca e promovido.
+r = julgar(titulo="Assistant Professor", aos="Open", _unidade="vaga")
+ok(r["veredicto"] == "revisar", "AOS Open -> revisar, nunca relevante", r.get("porque_veredicto"))
+
+# A regra que salva a proporcao: edital brasileiro nao carrega area no cabeca.
+r = julgar(titulo=u"Concurso publico para Professor Efetivo de Filosofia")
+ok(r["veredicto"] == "relevante" and r.get("tipo") == "efetivo",
+   "edital geral com tipo docente -> relevante", r.get("porque_veredicto"))
+r = julgar(titulo=u"Calendario de Auxilios e Bolsas")
+ok(r["veredicto"] == "revisar" and r.get("tipo") == "outro",
+   "edital geral com tipo 'outro' -> revisar", r.get("porque_veredicto"))
+
+# Extracao suspeita ganha de tudo que classifica.
+r = julgar(titulo="Assistant Professor of Ethics", aos=u"] junto aos orgaos competentes",
+           _unidade="vaga")
+ok(r["veredicto"] == "revisar" and r["porque_veredicto"] == "extracao suspeita",
+   "extracao suspeita -> revisar mesmo com o titulo casando competencia",
+   r.get("porque_veredicto"))
+
+# Veto continua rejeitando: ele dispara sobre evidencia POSITIVA no titulo.
+r = julgar(titulo="Assistant Professor of Bioethics", _unidade="vaga")
+ok(r["veredicto"] == "rejeitado", "veto no titulo -> rejeitado", r.get("porque_veredicto"))
+
+# Mas rejeicao feita sobre campo APAGADO nao vale: nao se rejeita pelo que nao
+# deu para ler. Aqui o AOS era lixo, foi apagado, e o titulo nao diz area.
+r = julgar(titulo="Research Position", aos=u"] junto aos orgaos competentes", _unidade="vaga")
+ok(r["veredicto"] == "revisar",
+   "rejeitada por falta de area, com a area apagada -> revisar", r.get("porque_veredicto"))
+
+print("\n=== 24. Regra A: 'mestrado' protegido por contexto docente ===")
+DISCENTES = [u"Selecao: Mestrado em Filosofia", u"Mestrado em Filosofia UFFS",
+             u"Processo Seletivo Mestrado em Filosofia UFMS",
+             u"Selecao complementar - Mestrado em Filosofia Unicap",
+             u"Processo seletivo para ingresso nos cursos de Mestrado e Doutorado"]
+for t in DISCENTES:
+    ok(julgar(titulo=t)["veredicto"] == "rejeitado", "discente rejeitada: " + t[:46])
+
+# As formas de genero e redacao que o usuario pediu para testar em 2026-09-01.
+DOCENTES = [u"Concurso para Professor Efetivo - exige mestrado ou doutorado",
+            u"Concurso para Professora Efetiva de Filosofia - mestrado na area",
+            u"Processo seletivo para professor substituto - mestrado em Filosofia",
+            u"Processo seletivo para professora substituta - titulacao minima mestrado",
+            u"Edital para docente efetivo(a) - mestrado ou doutorado em Filosofia",
+            u"Professor/a Efetivo/a - requisito: mestrado em Filosofia",
+            u"Concurso publico de professor visitante - mestrado exigido",
+            u"Professora visitante - mestrado ou doutorado",
+            u"Vaga de magisterio superior - mestrado como titulacao minima",
+            u"Concurso para docente - mestrado em Filosofia"]
+for t in DOCENTES:
+    ok(julgar(titulo=t)["veredicto"] != "rejeitado", "docente preservada: " + t[:46],
+       julgar(titulo=t).get("porque_veredicto"))
+
+# O falso positivo MEDIDO em 2026-09-01: 'mestrado e doutorado' morava na regra
+# sem salvo_se e matava um pos-doc. A frase saiu de la e virou 'mestrado' aqui.
+r = julgar(titulo=u"Bolsa de pos-doutorado - mestrado e doutorado em Filosofia")
+ok(r["veredicto"] != "rejeitado" and r.get("tipo") == "pos-doc",
+   "'mestrado e doutorado' nao mata mais um pos-doc", r.get("porque_veredicto"))
+
+print("\n=== 25. Regra B: o corpo fecha a porta, e so isso ===")
+# O caso que pediu a regra: o titulo diz so 'Processo Seletivo'.
+CORPO_PPGFIL = (u"PRORROGADO O PRAZO DE INSCRICAO no processo seletivo para "
+                u"ingresso nos cursos de mestrado e doutorado do Programa de "
+                u"Pos-Graduacao em Filosofia da UFSC, com turmas em marco de 2027.")
+r = julgar(titulo=u"PPGFIL/UFSC Processo Seletivo - Inscricoes Prorrogadas",
+           texto=CORPO_PPGFIL)
+ok(r["veredicto"] == "rejeitado" and "corpo" in r["porque_veredicto"],
+   "PPGFIL/UFSC: o corpo prova que nao e vaga", r.get("porque_veredicto"))
+
+# O salvo_se do TITULO protege: o corpo nao derruba um concurso docente.
+r = julgar(titulo=u"Concurso publico para Professor Adjunto",
+           texto=u"O curso de mestrado do programa recebe inscricoes em paralelo.")
+ok(r["veredicto"] != "rejeitado",
+   "titulo docente protege contra a frase discente no corpo", r.get("porque_veredicto"))
+
+# E o corpo continua sem poder ELEGER: so fecha porta, nunca abre.
+r = julgar(titulo=u"Calendario de Auxilios e Bolsas",
+           texto=u"Este edital menciona Spinoza, Lutero e filosofia da religiao.")
+ok(r["veredicto"] == "revisar",
+   "corpo cheio de termos de nicho NAO promove nada", r.get("porque_veredicto"))
+
+print("\n=== 26. Reextracao do cabeca: nunca perde o que era legivel ===")
+it = {"aos": "Social and Political Philosophy; Philosophy of Law"}
+C.reextrair_cabeca(it, u"corpo sem rotulo nenhum, truncado antes do AOS", "sonda_id")
+ok(it["aos"] == "Social and Political Philosophy; Philosophy of Law",
+   "AOS legivel sobrevive a uma releitura que nao achou nada", it["aos"])
+it = {"aos": u"] junto aos orgaos competentes [e] estimular"}
+C.reextrair_cabeca(it, u"corpo sem rotulo nenhum", "lista_html")
+ok(it["aos"] == "", "AOS ilegivel sem substituto e apagado", it["aos"])
+it = {"aos": u"] junto aos orgaos competentes"}
+C.reextrair_cabeca(it, u"Edital\n*Area de Conhecimento:* Filosofia da Religiao", "lista_html")
+ok(it["aos"] == u"Filosofia da Religiao", "e a releitura substitui quando acha", it["aos"])
+
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))
 for f in falhas: print("  - " + f)

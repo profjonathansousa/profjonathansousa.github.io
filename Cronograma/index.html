@@ -307,6 +307,10 @@
   .vg-card.st-2 .vg-t{text-decoration:line-through;text-decoration-color:var(--line-strong);}
   .vg-card.vencida{opacity:.55;border-left-color:var(--crimson);}
   .vg-card.st-3{display:none;}
+  /* Vagas 2: rejeitado pela MAQUINA. Nao some do arquivo nesta primeira rodada
+     — fica visivel em "Tudo" para auditoria, com o mesmo apagamento que a
+     descartada por voce ja usa. Nenhuma cor nova. */
+  .vg-card.rejeitado{opacity:.45;border-left-color:var(--line-strong);}
   .vg-t{font-size:14.5px;line-height:1.35;font-weight:600;margin-bottom:2px;}
   .vg-t a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line-strong);}
   .vg-inst{font-size:12.5px;color:var(--ink-soft);margin-bottom:7px;}
@@ -2785,7 +2789,8 @@ function vgGrupo(i){ return i.bloco || i.forma; }
 
 function vgCard(i){
   var st = vgEstado(i.id);
-  var cls = "vg-card st-" + st + (i.vencida ? " vencida" : "");
+  var cls = "vg-card st-" + st + (i.vencida ? " vencida" : "")
+            + (i.veredicto==="rejeitado" ? " rejeitado" : "");
   var tags = [];
   if(i.vencida)                       tags.push('<span class="vg-tag venceu">venceu</span>');
   else if(i.urgente)                  tags.push('<span class="vg-tag urgente">⚠ '+
@@ -2797,6 +2802,13 @@ function vgCard(i){
   if(i.relevancia==="nicho")          tags.push('<span class="vg-tag nicho">núcleo</span>');
   if(i.relevancia==="nao confirmada") tags.push('<span class="vg-tag duvida">área não confirmada</span>');
   if(i.relevancia==="aberto")         tags.push('<span class="vg-tag">AOS aberto</span>');
+  /* Vagas 2 — o veredicto da MAQUINA, que e outro eixo da sua triagem: o
+     arquivo descreve, o aparelho decide. Item coletado antes desta versao nao
+     tem o campo, e nesse caso nada muda na tela. */
+  if(i.veredicto==="revisar")         tags.push('<span class="vg-tag duvida" title="'+
+                                        vgEsc(i.porque_veredicto||"")+'">revisar</span>');
+  if(i.veredicto==="rejeitado")       tags.push('<span class="vg-tag" title="'+
+                                        vgEsc(i.porque_veredicto||"")+'">rejeitado</span>');
   if(i.tipo)                          tags.push('<span class="vg-tag">'+vgEsc(vgL(i.tipo))+'</span>');
   if(i.esforco)                       tags.push('<span class="vg-tag">esforço '+vgEsc(vgL(i.esforco))+'</span>');
   if(i.elegibilidade && i.elegibilidade!=="Aberto")
@@ -2831,8 +2843,14 @@ function vgCard(i){
 function vgVisivel(i){
   var st = vgEstado(i.id);
   if(st===VG_ST.ARQ) return false;
-  if(VG_FILTRO==="abertas") return st!==VG_ST.NAO;
-  if(VG_FILTRO==="novas")   return st===VG_ST.NOVO && i.novo;
+  /* Vagas 2. O que a maquina rejeitou sai das listas de TRABALHO e continua
+     em "Tudo" — nesta primeira rodada o coletor nao remove nada do arquivo,
+     de proposito, para que o resultado possa ser auditado antes de virar
+     remocao automatica. Item sem o campo se comporta como sempre. */
+  var rejeitado = (i.veredicto==="rejeitado");
+  if(VG_FILTRO==="abertas") return st!==VG_ST.NAO && !rejeitado;
+  if(VG_FILTRO==="novas")   return st===VG_ST.NOVO && i.novo && !rejeitado;
+  if(VG_FILTRO==="revisar") return st!==VG_ST.NAO && i.veredicto==="revisar";
   if(VG_FILTRO==="sim")     return st===VG_ST.SIM;
   if(VG_FILTRO==="nao")     return st===VG_ST.NAO;
   return true;
@@ -2855,7 +2873,10 @@ function vgRender(){
       (nSim?' · '+nSim+' marcada'+(nSim===1?'':'s'):'')+'</span>'+
     '<span class="vg-atualizado">coletado em '+vgEsc(quando.slice(0,10)||"—")+'</span>'+
   '</div>';
+  var nRev = itens.filter(function(i){
+    return i.veredicto==="revisar" && vgEstado(i.id)!==VG_ST.NAO; }).length;
   var fs = [["abertas","Em aberto"],["novas","Novas ("+nNovo+")"],
+            ["revisar","Revisar ("+nRev+")"],
             ["sim","Vou me candidatar ("+nSim+")"],["nao","Descartadas"],["tudo","Tudo"]];
   h += '<div class="vg-filtros">' + fs.map(function(f){
     return '<button class="'+(VG_FILTRO===f[0]?"on":"")+'" onclick="VG_FILTRO=\''+f[0]+'\';vgRender()">'+f[1]+'</button>';

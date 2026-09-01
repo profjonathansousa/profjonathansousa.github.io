@@ -566,6 +566,148 @@ def descarte_barato(item, criterios):
     return False
 
 
+# Os rotulos do CABECA moram aqui, e nao dentro de cada fonte, porque agora ha
+# dois lugares que precisam deles: a coleta, que le a pagina pela primeira vez,
+# e a reclassificacao, que reabre o corpo ja guardado. Duas listas divergindo
+# em silencio seria o defeito classico — a reclassificacao lendo com regua
+# diferente da coleta.
+ROTULOS_DO_CABECA = {
+    "lista_html": {
+        "aos": ["Área de Conhecimento", "Área de Concentração",
+                "Área", "Area", "Disciplina"],
+    },
+    "sonda_id": {
+        "aos": ["AOS", "Area of specialisation", "Area of specialization", "Topic"],
+        "aoc": ["AOC"],
+    },
+}
+
+
+def reextrair_cabeca(item, corpo, metodo):
+    """Refaz AOS e AOC a partir do corpo ja guardado.
+
+    So o CABECA. Prazo, instituicao e local ficam como estao, e a razao e o
+    truncamento: o corpo guardado tem 2500 caracteres (1200 no PhilJobs), e um
+    prazo que morava depois do corte sumiria numa releitura — perder prazo e
+    perder a chave de ordenacao da lista inteira. O cabeca nao corre esse
+    risco: AOS e AOC moram no topo da pagina, nos dois formatos.
+
+    GARANTIA DE NAO-PERDA: se a releitura vier vazia e o valor guardado for
+    legivel, o guardado FICA. Releitura so substitui quando tem o que pör no
+    lugar, ou quando o que estava la nao era legivel de todo jeito.
+    """
+    rotulos = ROTULOS_DO_CABECA.get(metodo) or {}
+    for chave, lista in rotulos.items():
+        novo = campo(corpo, lista)
+        if novo:
+            item[chave] = novo
+        elif _parece_prosa(item.get(chave)):
+            item[chave] = ""          # era lixo e nao ha substituto: some
+    return item
+
+
+def descarte_pelo_corpo(item, criterios):
+    """REGRA B da Vagas 2: o corpo pode provar que uma coisa NAO e vaga.
+
+    ISTO NAO VIOLA 'O CORPO NUNCA ELEGE NINGUEM'. Descartar nao e eleger, e a
+    assimetria ja existe neste arquivo: o resolver_area deixa o corpo FECHAR a
+    porta (porta_passou = False) e nunca abrir. Aqui e a mesma assimetria
+    escrita para o outro lado.
+
+    O caso que a pediu, MEDIDO em 2026-09-01: 'PPGFIL/UFSC Processo Seletivo -
+    Inscricoes Prorrogadas' entrava como vaga. O titulo diz so 'Processo
+    Seletivo', que nenhuma regra de tipo pega, e o corpo diz, sem ambiguidade,
+    'processo seletivo para ingresso nos cursos de mestrado e doutorado'.
+
+    Roda ANTES do resolver_area de proposito, pelo mesmo motivo do
+    descarte_barato: a resolucao de area custa uma requisicao, e seria absurdo
+    gasta-la numa selecao de mestrado que vai ser descartada de qualquer jeito.
+
+    O salvo_se e lido SO NO TITULO. Procurar 'professor' no corpo resgataria
+    tudo — a pagina de uma selecao de mestrado fala de orientador, banca e
+    corpo docente o tempo inteiro.
+    """
+    regras = criterios.get("descarte_pelo_corpo") or {}
+    frases = regras.get("frases") or []
+    if not frases or item.get("descartado"):
+        return False
+    titulo = normalizar(item.get("titulo", ""))
+    if casa(regras.get("salvo_se") or [], titulo):
+        return False
+    achou = casa(frases, normalizar(item.get("texto", "")))
+    if not achou:
+        return False
+    item["tipo"] = regras.get("rotulo", "discente")
+    item["descartado"] = True
+    item["motivo_saida"] = "selecao discente pelo corpo: %s" % achou[0]
+    return True
+
+
+def veredicto(item, criterios):
+    """O eixo da Vagas 2: relevante / revisar / rejeitado.
+
+    E o veredicto da MAQUINA. NAO e a triagem — a triagem e do usuario, mora no
+    aparelho (cron:triagem) e vale 'vou me candidatar' / 'descartar' /
+    'arquivar'. Os dois eixos convivem sem se sobrescrever, que e a invariante
+    do painel: O ARQUIVO DESCREVE, O APARELHO DECIDE. Foi por isso que este
+    campo nao se chama triagem.
+
+    Tambem nao substitui a relevancia: ela continua dizendo POR QUE (nicho,
+    competencia, aberto, nao confirmada) e continua desenhando as etiquetas.
+    O veredicto e o resumo em tres estados de que a lista precisa para filtrar.
+
+    DUAS REGRAS QUE NAO SAO OBVIAS, e as duas vieram de medicao:
+
+    1. Rejeicao feita sobre o que nao deu para ler vira REVISAR. Se a validacao
+       apagou o AOS e o item caiu em 'sem aderencia no cabeca', a decisao foi
+       tomada sobre um campo vazio, e campo vazio nao e prova de nada. Veto e
+       tipo continuam rejeitando, porque disparam sobre evidencia POSITIVA no
+       titulo, que a validacao nao toca.
+
+    2. Edital que passou pela porta e cujo tipo e docente reconhecido vira
+       RELEVANTE mesmo sem area declarada. Sem isto o mapeamento ingenuo
+       ('aberto' -> revisar) dava revisar 49 contra relevante 39 nos 88 itens
+       publicados: a fila de julgamento maior que a lista boa, que e o oposto
+       do que a Vagas 2 existe para fazer. 'Edital geral' nao e caso
+       limitrofe — e a forma normal do edital brasileiro, que nao carrega area
+       no cabeca. Com a regra: 53 / 23 / 12.
+
+    AOS Open NAO entra na regra 2 (ela exige porque == 'edital geral'): Open
+    declarado pelo empregador continua indo para revisar, nunca eliminado e
+    nunca promovido, que e o que a secao 23 do briefing pede.
+    """
+    regras = criterios.get("veredicto") or {}
+    docentes = regras.get("tipos_docentes") or []
+
+    def decidir(estado, porque):
+        item["veredicto"] = estado
+        item["porque_veredicto"] = porque
+        return estado
+
+    # A validacao apagou area? Entao o cabeca chegou incompleto na decisao.
+    area_apagada = any(a.startswith(("AOS", "AOC"))
+                       for a in (item.get("avisos_extracao") or []))
+
+    if item.get("descartado"):
+        motivo = item.get("motivo_saida") or "descartado"
+        if area_apagada and "sem aderencia" in motivo:
+            return decidir("revisar", "rejeitada sem area legivel")
+        return decidir("rejeitado", motivo)
+
+    if item.get("extracao") == "suspeita":
+        return decidir("revisar", "extracao suspeita")
+
+    rel = item.get("relevancia")
+    if rel in ("nicho", "competencia"):
+        return decidir("relevante", item.get("porque") or rel)
+    if rel == "aberto":
+        if item.get("porque") == "edital geral" and item.get("tipo") in docentes:
+            return decidir("relevante",
+                           "edital de %s, area nao declarada" % item.get("tipo"))
+        return decidir("revisar", item.get("porque") or "AOS aberto")
+    return decidir("revisar", rel or "sem relevancia")
+
+
 def classificar(item, criterios, unidade="vaga"):
     """CLASSIFICA. Nao pontua, nao soma, nao compara com corte.
 
@@ -875,8 +1017,8 @@ def _sondar_familia_philpapers(sessao, cfg, estado_fonte, batimento):
             "url": url,
             "titulo": titulo,
             "instituicao": instituicao,
-            "aos": campo(corpo, ["AOS", "Area of specialisation", "Area of specialization", "Topic"]),
-            "aoc": campo(corpo, ["AOC"]),
+            "aos": campo(corpo, ROTULOS_DO_CABECA["sonda_id"]["aos"]),
+            "aoc": campo(corpo, ROTULOS_DO_CABECA["sonda_id"]["aoc"]),
             "local": campo(corpo, ["Location", "Localidade", "City"]) or cidade,
             "categoria": campo(corpo, ["Job category", "Categoria", "Category"]),
             "contrato": campo(corpo, ["Contract type", "Type"]),
@@ -1074,8 +1216,7 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
             "url": url,
             "titulo": rotulo_link,
             "instituicao": campo(corpo, ["Instituição", "Universidade"]) or "",
-            "aos": campo(corpo, ["Área de Conhecimento", "Área de Concentração",
-                                 "Área", "Area", "Disciplina"]),
+            "aos": campo(corpo, ROTULOS_DO_CABECA["lista_html"]["aos"]),
             "aoc": "",
             "local": campo(corpo, ["Local", "Localidade", "Cidade"]),
             "categoria": campo(corpo, ["Tipo", "Cargo", "Categoria"]),
@@ -1334,10 +1475,64 @@ def executar(modo, diagnostico=False):
         # O descarte barato vem PRIMEIRO: veto e 'discente' nao custam
         # requisicao, e a resolucao de area custa. Sem isto, cada 'Selecao de
         # Mestrado 2027' da ANPOF gastaria uma busca para ser jogada fora.
-        if not descarte_barato(item, criterios) and unidade == "edital":
+        # O descarte pelo corpo vem junto, e pela mesma razao: ele tambem nao
+        # custa requisicao, e economiza a do resolver_area.
+        morreu = (descarte_barato(item, criterios)
+                  or descarte_pelo_corpo(item, criterios))
+        if not morreu and unidade == "edital":
             resolver_area(sessao, item, criterios, batimento, orcamento,
                           porta_de.get(item["id"], "filosofia"))
         classificar(item, criterios, unidade)
+        veredicto(item, criterios)
+
+    # ---- RECLASSIFICACAO DOS ITENS JA VIVOS (Vagas 2) ----
+    # O executar() so classificava item NOVO; os que ja estavam no arquivo eram
+    # repassados verbatim, com os campos do dia em que entraram. Isso significa
+    # que a correcao de extracao da Vagas 1 nunca alcancaria os 88 itens ja
+    # publicados: o AOS envenenado ficaria la ate a vaga vencer.
+    #
+    # Esta passada nao usa rede: o corpo ja esta guardado no item, e o
+    # porta_passou tambem. Ela tambem conserta um efeito colateral antigo —
+    # dias_ate_prazo e urgente estavam congelados na data da coleta, e sao eles
+    # que ordenam a lista.
+    #
+    # NAO REMOVE NADA. Item que a reclassificacao considerar rejeitado CONTINUA
+    # no arquivo vivo, marcado. Foi decisao explicita do usuario em 2026-09-01:
+    # a primeira rodada e para AUDITAR o resultado real antes de automatizar
+    # qualquer remocao. O peneiramento abaixo so olha `coletados`, entao basta
+    # nao mexer nele para que a garantia valha.
+    cfg_por_fonte = {f.get("nome"): f for f in (criterios.get("fontes") or [])}
+    novos_ids = {i["id"] for i in coletados}
+    antigos = [i for i in por_id.values() if i.get("id") not in novos_ids]
+
+    # Por FONTE, porque a poda so sabe o que e moldura comparando as paginas de
+    # um mesmo site. E a poda tem de acontecer aqui tambem: o corpo guardado
+    # dos itens antigos foi colhido antes da Vagas 1 e ainda carrega o menu.
+    por_fonte = {}
+    for item in antigos:
+        por_fonte.setdefault(item.get("fonte"), []).append(item)
+
+    refeitos = 0
+    for fonte, itens_da_fonte in por_fonte.items():
+        cfg = cfg_por_fonte.get(fonte) or {}
+        metodo = cfg.get("metodo")
+        corpos = [i.get("texto", "") for i in itens_da_fonte]
+        if metodo == "lista_html":
+            corpos = podar_repetido(corpos)
+        for item, corpo in zip(itens_da_fonte, corpos):
+            item["texto"] = corpo[:2500]
+            reextrair_cabeca(item, corpo, metodo)
+            item.pop("descartado", None)      # a decisao e refeita, nao herdada
+            item.pop("motivo_saida", None)
+            validar_extracao(item, criterios)
+            (descarte_barato(item, criterios)
+             or descarte_pelo_corpo(item, criterios))
+            classificar(item, criterios, cfg.get("unidade", "vaga"))
+            veredicto(item, criterios)
+            refeitos += 1
+    if refeitos:
+        batimento["avisos"].append(
+            "%d itens ja vivos reclassificados (sem rede, sem remocao)" % refeitos)
 
     # A ORDEM DESTAS PENEIRAS IMPORTA, e cada uma ja custou um defeito:
     #   descartado -> veto, tipo discente, ou sem aderencia no cabeca
