@@ -16,6 +16,15 @@
     "_acentos": "Comparacao sem acento nos dois lados. 'religiao' casa 'religiao' e 'religiao'."
   },
 
+  "validacao_da_extracao": {
+    "_o_que_e": "A camada que roda ENTRE a coleta e a classificacao. Olha cada campo e decide se ele parece o campo que diz ser; o que nao parece e APAGADO antes de chegar ao cabeca, e a razao fica na marca.",
+    "_porque_MEDIDO_2026-09-01": "Nos 42 itens da ANPOF publicados em dados/vagas.json, 22 tinham como AOS a frase institucional do rodape do site ('...representar os interesses da area [de Filosofia] junto aos orgaos competentes...') e 11 tinham o rotulo truncado ('de Conhecimento:* Historia da Filosofia'). AOS limpo: ZERO de 42. Como o AOS entra no cabeca (onde_se_decide), veto, tipo e relevancia estavam sendo decididos sobre o rodape do site. Mexer em palavra-chave nao alcanca esse defeito: ele acontece antes da classificacao.",
+    "_o_que_ela_NAO_faz": "Nao descarta ninguem. Campo suspeito e assunto de TRIAGEM, e a triagem e do usuario. Aqui so se apaga o que nao da para ler e se registra a razao.",
+    "campos_de_area": ["aos", "aoc"],
+    "titulo_minimo": 12,
+    "prazo_maximo_dias": 1095,
+    "_prazo_maximo_dias": "Tres anos. Ano lido errado e o modo classico de o prazo mentir: 02/09/2026 virando 2036 poe a vaga no topo da lista para sempre, porque nunca vence."
+  },
   "veto": {
     "_nota": "Derruba antes de tudo, e so olha o CABECA. 'Assistant Professor of Bioethics' morre no titulo; 'AOS: Open' que cita bioetica entre dez areas, nao.",
     "termos": [

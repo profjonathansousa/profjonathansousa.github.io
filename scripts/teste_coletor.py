@@ -544,6 +544,126 @@ saiu = C._links_da_pagina(html_l, "https://anpof.org.br/agenda/lancamentos-e-cha
 ok(len(saiu) == 1 and saiu[0][0].endswith("dossie-ensino-de-filosofia"),
    "o link para a propria pagina de listagem e descartado", saiu)
 
+print("\n=== 18. O rotulo precisa estar em POSICAO de rotulo (2026-09-01) ===")
+# Frase institucional do rodape da ANPOF, copiada de dados/vagas.json. Ela era
+# o AOS de 22 dos 42 itens da fonte — e o AOS entra no cabeca, que e onde veto,
+# tipo e relevancia se decidem.
+RODAPE = (u"A Associacao Nacional de Pos-Graduacao em Filosofia (Anpof) foi fundada "
+          u"em 1983 com o objetivo de representar os interesses da area "
+          u"[de Filosofia] junto aos orgaos competentes [e] estimular, em todos "
+          u"os niveis, a investigacao filosofica no Pais.")
+ok(C.campo(RODAPE, [u"Área", "Area", "Disciplina"]) == "",
+   "a frase do rodape NAO vira mais AOS", repr(C.campo(RODAPE, [u"Área", "Area"])))
+
+# O rotulo real da ANPOF e 'Area de Conhecimento', com asterisco de markdown em
+# volta. A versao antiga casava so 'Area' e devolvia 'de Conhecimento:* ...'.
+EDITAL = (u"Concurso publico para Professor do Magisterio Superior\n"
+          u"*Área de Conhecimento:* História da Filosofia\n"
+          u"*Objetos de Avaliação:*")
+ok(C.campo(EDITAL, [u"Área de Conhecimento", u"Área", "Area"]) == u"História da Filosofia",
+   "o qualificador do rotulo fica FORA do valor",
+   repr(C.campo(EDITAL, [u"Área de Conhecimento", u"Área", "Area"])))
+
+# Titulo da pagina: 'Concurso na Area de Ensino de Filosofia ... | ANPOF'. E
+# prosa, nao campo — e terminava no AOS com o separador do titulo junto.
+TITULO_PAG = u"Concurso na Área de Ensino de Filosofia na UFPB | ANPOF"
+ok(C.campo(TITULO_PAG, [u"Área", "Area"]) == "",
+   "o titulo da pagina NAO vira AOS", repr(C.campo(TITULO_PAG, [u"Área", "Area"])))
+
+print("\n=== 19. PhilJobs: metadado estruturado ganha da prosa (2026-09-01) ===")
+# No PhilJobs rotulo e valor sao duas celulas de tabela, entao viram duas
+# LINHAS — sem dois-pontos nenhum. E a mesma pagina repete o AOS na prosa do
+# anuncio, de forma abreviada. Tentar a prosa primeiro devolvia 'Early Modern'
+# no lugar de 'Early Modern Philosophy'. MEDIDO em dados/vagas.json.
+PHILJOBS = (u"Job category\n Junior faculty / Tenure-track or similar\n"
+            u" AOS\n Early Modern Philosophy\n AOS categories\n"
+            u" Early Modern Philosophy\n AOC\n Open\n Workload\n Full time\n"
+            u" Rank: Assistant Professor (tenure-track). AOS: Early Modern. "
+            u"AOC: Open. Standard teaching load.")
+ok(C.campo(PHILJOBS, ["AOS", "Area of specialisation"]) == "Early Modern Philosophy",
+   "a tabela do PhilJobs ganha da prosa do anuncio",
+   repr(C.campo(PHILJOBS, ["AOS", "Area of specialisation"])))
+ok(C.campo(PHILJOBS, ["AOC"]) == "Open", "AOC de duas linhas continua legivel",
+   repr(C.campo(PHILJOBS, ["AOC"])))
+
+# O prazo e o UNICO campo que pode casar frouxo: quem o valida e o parse_data.
+FRASE_PRAZO = u"As inscrições podem ser realizadas até as 12h do dia 02/09/2026 ."
+ok(C.parse_data(C.campo(FRASE_PRAZO, ["Prazo", u"Inscrições até", u"até"],
+                        frouxo=True))[0] == "2026-09-02",
+   "o prazo em prosa continua sendo lido (frouxo)",
+   C.campo(FRASE_PRAZO, [u"até"], frouxo=True))
+ok(C.campo(FRASE_PRAZO, [u"até"]) == "",
+   "e o mesmo casamento frouxo NAO vale para os campos do cabeca")
+
+print("\n=== 20. Poda da moldura do site (2026-09-01) ===")
+MENU = u"Histórico da ANPOF\nPodcast Anpof\nColeção XX Encontro Nacional Anpof (2024)"
+paginas = [MENU + u"\nEdital 1: Filosofia Medieval\nÁrea: Medieval",
+           MENU + u"\nEdital 2: Epistemologia\nÁrea: Epistemologia",
+           MENU + u"\nEdital 3: Etica\nÁrea: Etica"]
+podadas = C.podar_repetido(paginas)
+ok(all(u"Podcast Anpof" not in x for x in podadas), "o menu repetido sai", podadas[0])
+ok(all(u"Edital" in x for x in podadas), "o conteudo proprio de cada pagina fica")
+ok(C.podar_repetido(paginas[:2]) == paginas[:2],
+   "com menos de 3 paginas nao ha o que comparar: devolve intacto")
+
+# A guarda que custou 31 anuncios do PhilJobs no ensaio de 2026-09-01: a linha
+# 'AOS' e identica em toda pagina do PhilJobs, que e a propria definicao de
+# moldura usada aqui. Rotulo que se repete e ESTRUTURA, nao moldura.
+pj = [u"AOS\nEarly Modern Philosophy\nAOC\nOpen",
+      u"AOS\nEpistemology\nAOC\nOpen",
+      u"AOS\nEthics\nAOC\nOpen"]
+ok(all(x.startswith("AOS") for x in C.podar_repetido(pj)),
+   "a poda NAO come a linha de rotulo do PhilJobs", C.podar_repetido(pj)[0])
+ok(all(C.campo(x, ["AOS"]) for x in C.podar_repetido(pj)),
+   "e o AOS continua legivel depois da poda")
+
+print("\n=== 21. Validacao da extracao: apaga o que nao da para ler ===")
+sujo = {"id": "anpof-x", "fonte": "anpof", "titulo": u"Concurso para Professor",
+        "aos": u"] junto aos órgãos competentes [e] estimular", "aoc": "",
+        "pais": "Brasil", "texto": "edital", "prazo": ""}
+C.validar_extracao(sujo, CRIT)
+ok(sujo["aos"] == "", "AOS contaminado e APAGADO antes do cabeca", sujo["aos"])
+ok(sujo["extracao"] == "suspeita" and sujo["avisos_extracao"],
+   "e a razao fica registrada", sujo.get("avisos_extracao"))
+
+# O defeito da primeira versao desta camada, medido no mesmo ensaio: AOS
+# legitimo, longo, escrito como frase pelo empregador, era jogado fora.
+limpo = {"id": "philjobs-x", "fonte": "philjobs", "titulo": "Assistant Professor - Philosophy",
+         "aos": ("Epistemology (especially Applied Epistemology, Social Epistemology, "
+                 "Political Epistemology, Feminist Epistemology, Virtue Epistemology)"),
+         "aoc": "Open", "pais": "United States", "texto": "corpo", "prazo": ""}
+C.validar_extracao(limpo, CRIT)
+ok(limpo["aos"].startswith("Epistemology (especially"),
+   "AOS legitimo e longo NAO e apagado: comprimento nao e prova de nada",
+   limpo["aos"])
+ok(limpo["extracao"] == "ok", "e o item nao vai para revisao por causa disso",
+   limpo.get("avisos_extracao"))
+
+# Ano lido errado poe a vaga no topo para sempre, porque ela nunca vence.
+absurdo = {"id": "x", "fonte": "anpof", "titulo": u"Concurso para Professor",
+           "aos": "", "aoc": "", "pais": "Brasil", "texto": "corpo", "prazo": dia(4000)}
+C.validar_extracao(absurdo, CRIT)
+ok(absurdo["prazo"] == "", "prazo improvavel e apagado", absurdo["prazo"])
+
+print("\n=== 22. A validacao roda ANTES da classificacao ===")
+# O cabeca e titulo + aos + aoc. Se o AOS contaminado chegar inteiro ate aqui,
+# quem decide veto, tipo e relevancia e o rodape do site.
+env = {"id": "anpof-y", "fonte": "anpof", "url": "", "titulo": u"Selecao de Mestrado 2027",
+       "aos": u"] junto aos órgãos competentes, a investigacao filosofica no Pais",
+       "aoc": "", "pais": "Brasil", "texto": "corpo do edital", "prazo": "",
+       "categoria": "", "contrato": "", "local": "", "instituicao": ""}
+C.validar_extracao(env, CRIT)
+C.descarte_barato(env, CRIT)
+C.classificar(env, CRIT, "edital")
+ok(u"junto aos" not in " ".join(str(env.get(k, "")) for k in ("aos", "aoc")),
+   "o cabeca chega limpo na classificacao", env.get("aos"))
+ok(env.get("descartado") and "discente" in (env.get("motivo_saida") or ""),
+   "e a selecao de mestrado morre no descarte barato, como sempre",
+   env.get("motivo_saida"))
+ok(any("AOS" in m for m in (env.get("marcas") or [])) or env.get("avisos_extracao"),
+   "a marca da extracao suspeita acompanha o item ate o painel",
+   env.get("marcas"))
+
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))
 for f in falhas: print("  - " + f)

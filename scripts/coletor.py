@@ -204,17 +204,137 @@ def texto_limpo(bruto):
     return s.strip()
 
 
-def campo(texto, rotulos, limite=200):
+# Um rotulo em POSICAO DE ROTULO: comeco do texto, comeco de linha, ou depois
+# de um marcador. O texto limpo colapsa espaco horizontal mas preserva a quebra
+# de linha, entao a quebra e o que sobrou da estrutura da pagina — e e por ela
+# que se reconhece um campo. Palavra solta no meio de uma frase NAO e rotulo.
+INICIO_DE_ROTULO = r"(?:^|[\n•·|>*])[ \t]*"
+
+# Pontuacao de moldura que sobra na borda do valor: o asterisco do
+# '*Area de Conhecimento:*' da ANPOF, o colchete, o travessao da lista.
+LIXO_DE_BORDA = " \t*.;,-|:•·>»\"'[]"
+
+
+def _linha_de_rotulo(linha):
+    """Linha que e so um rotulo ('AOS', 'Deadline:') ou comeca por um.
+
+    ISTO E O QUE A PODA NAO PODE COMER, e custou um defeito medido em
+    2026-09-01 no ensaio contra os dados publicados: no PhilJobs o rotulo e o
+    valor sao duas celulas de tabela, entao viram duas linhas — 'AOS' sozinha
+    numa, 'Early Modern Philosophy' na seguinte. A linha 'AOS' e identica em
+    TODA pagina do PhilJobs, que e exatamente a definicao de moldura usada
+    aqui. Sem esta guarda a poda apagava o rotulo, o campo() nao achava mais
+    nada, e 31 dos 43 anuncios do PhilJobs caiam em 'sem aderencia no cabeca' —
+    o remedio matando mais do que a doenca.
+
+    Rotulo que se repete nao e moldura: e estrutura. Moldura e o menu."""
+    return bool(re.match(r"^\s*%s\b\s*:?\s*$" % ROTULOS, linha, re.IGNORECASE)
+                or re.match(r"^\s*%s\b[^\n:]{0,30}?:" % ROTULOS, linha, re.IGNORECASE))
+
+
+def podar_repetido(corpos, limiar=0.6, min_paginas=3):
+    """Tira de cada pagina as linhas que se repetem NAS OUTRAS paginas da mesma
+    fonte, na mesma rodada. Menu, rodape, barra lateral e aviso de cookie.
+
+    POR QUE ASSIM E NAO POR SELETOR DE CSS: o mesmo motivo do _links_da_pagina —
+    eu nao vi o HTML bruto destas fontes, e seletor escrito no escuro quebra na
+    primeira mudanca de tema. O que define boilerplate nao e a tag: e o fato de
+    ser IGUAL em todas as paginas. Isso da para medir sem ver o site.
+
+    MEDIDO em 2026-09-01 sobre as 42 paginas da ANPOF de dados/vagas.json:
+    100.568 caracteres viram 39.845, e 47 linhas de moldura saem — entre elas a
+    frase institucional que envenenava o AOS e as 10 linhas de 'Colecao XX
+    Encontro Nacional' que faziam toda pagina do site conter 'Filosofia'.
+
+    Tres consequencias, todas medidas:
+      1. o corte de 2500 caracteres do texto passa a guardar EDITAL, e nao
+         menu — na amostra o menu comia os primeiros ~900;
+      2. casa('filosofia') no corpo deixa de ser verdadeiro por causa do nome
+         da associacao (41 de 42 paginas antes; 39 depois, e essas 39 falam de
+         filosofia de verdade);
+      3. o campo() tem muito menos prosa onde se enganar.
+
+    DEGRADA, NAO TRAVA (principio 1): com menos de min_paginas paginas nao ha
+    o que comparar, e devolve tudo intacto. Fonte de uma pagina so nunca perde
+    conteudo por causa disto.
+    """
+    corpos = list(corpos)
+    if len(corpos) < min_paginas:
+        return corpos
+    frequencia = {}
+    for corpo in corpos:
+        for linha in {l.strip() for l in corpo.split("\n") if l.strip()}:
+            frequencia[linha] = frequencia.get(linha, 0) + 1
+    corte = max(min_paginas, int(len(corpos) * limiar))
+    comuns = {l for l, n in frequencia.items()
+              if n >= corte and not _linha_de_rotulo(l)}
+    if not comuns:
+        return corpos
+    podados = []
+    for corpo in corpos:
+        linhas = [l for l in (x.strip() for x in corpo.split("\n"))
+                  if l and l not in comuns]
+        # Se a poda levasse a pagina inteira, e a pagina que era a moldura.
+        # Melhor devolver o original e deixar a validacao marcar do que
+        # entregar vazio calado.
+        podados.append("\n".join(linhas) if linhas else corpo)
+    return podados
+
+
+def campo(texto, rotulos, limite=200, frouxo=False):
     """Procura 'Rotulo: valor' e para no proximo rotulo conhecido, na quebra de
-    linha, em dois espacos ou no fim — o que vier primeiro."""
+    linha, em dois espacos ou no fim — o que vier primeiro.
+
+    O ROTULO PRECISA ESTAR EM POSICAO DE ROTULO. MEDIDO em 2026-09-01 sobre os
+    42 itens da ANPOF publicados em dados/vagas.json: a versao antiga casava
+    \bArea\b em qualquer lugar do texto, entao a frase institucional do rodape
+    do site — "representar os interesses da area [de Filosofia] junto aos
+    orgaos competentes [e] estimular, em todos os niveis, a investigacao
+    filosofica no Pais" — virava o AOS de 22 dos 42 itens. Os outros 11 saiam
+    truncados ('de Conhecimento:* Historia da Filosofia') porque o rotulo real
+    e 'Area de Conhecimento' e o casamento parava em 'Area'. AOS limpo: zero.
+
+    Isso nao era cosmetico. O AOS entra no CABECA (onde_se_decide), que e onde
+    veto, tipo e relevancia se decidem — a decisao inteira estava sendo tomada
+    sobre o rodape do site.
+
+    A ORDEM DOS TRES PADROES importa, e cada um paga um caso medido:
+
+      1. rotulo em posicao de rotulo COM dois-pontos, aceitando qualificador
+         ('Area de Conhecimento:' conta como rotulo 'Area', e o qualificador
+         fica fora do valor);
+      2. rotulo em posicao de rotulo SEM dois-pontos — e o PhilJobs, onde
+         rotulo e valor sao duas celulas de tabela e viram duas linhas;
+      3. ultimo recurso: dois-pontos COLADOS no rotulo, em qualquer lugar. E a
+         prosa do anuncio ('AOS: Early Modern.'). Vem por ultimo de proposito:
+         VERIFICADO em 2026-09-01 que tentar este primeiro faz o PhilJobs
+         devolver 'Early Modern' (a prosa) em vez de 'Early Modern Philosophy'
+         (a tabela). Metadado estruturado ganha de prosa.
+
+    frouxo=True volta ao casamento antigo, permissivo. Existe para UM caso: o
+    prazo. 'As inscricoes podem ser realizadas ate as 12h do dia 02/09/2026'
+    nao tem rotulo nenhum, e exigir posicao de rotulo perderia a data — que e
+    a chave de ordenacao da lista inteira. E so seguro ali porque o resultado
+    passa pelo parse_data, que devolve vazio se nao for data. NAO usar frouxo
+    em campo que va para o cabeca: la nao ha validador nenhum depois.
+    """
+    fim = r"(?=\s+%s\b\s*:|\s{2,}|\n|$)" % ROTULOS
     for r in rotulos:
-        m = re.search(r"\b%s\b\s*:?\s*(.{1,%d}?)(?=\s+%s\b\s*:|\s{2,}|\n|$)"
-                      % (re.escape(r), limite, ROTULOS),
-                      texto, re.IGNORECASE)
-        if m:
-            v = m.group(1).strip(" .;,-|")
-            if v and len(v) > 1:
-                return v
+        rot = re.escape(r)
+        if frouxo:
+            padroes = [r"\b%s\b\s*:?\s*(.{1,%d}?)%s" % (rot, limite, fim)]
+        else:
+            padroes = [
+                INICIO_DE_ROTULO + r"%s\b[^\n:]{0,30}?:[ \t]*(.{1,%d}?)%s" % (rot, limite, fim),
+                INICIO_DE_ROTULO + r"%s\b[ \t]*:?\s*(.{1,%d}?)%s" % (rot, limite, fim),
+                r"%s\b[ \t]{0,3}:[ \t]*(.{1,%d}?)%s" % (rot, limite, fim),
+            ]
+        for padrao in padroes:
+            m = re.search(padrao, texto, re.IGNORECASE)
+            if m:
+                v = m.group(1).strip(LIXO_DE_BORDA)
+                if v and len(v) > 1:
+                    return v
     return ""
 
 
@@ -292,6 +412,113 @@ def achar_uf(texto, texto_norm):
     return ""
 
 
+# -------------------------------------------------- validacao da extracao
+
+# Comeco de fragmento de prosa, nao de nome de area. Uma area comeca por
+# substantivo ('Historia da Filosofia', 'Epistemologia'); um pedaco de frase
+# cortado no meio comeca por preposicao ou conjuncao. MEDIDO em 2026-09-01:
+# 'de Filosofia estao abertas', 'das Humanidades. Doutorado em qualquer area',
+# 'de Concentracao em Filosofia, oferece duas linhas de pesquisa'.
+COMECO_DE_PROSA = (
+    "de", "da", "do", "das", "dos", "e", "em", "no", "na", "nos", "nas",
+    "que", "para", "com", "por", "junto", "ao", "aos", "a", "o", "as", "os",
+)
+
+
+def _parece_prosa(valor):
+    """Devolve a razao pela qual o valor NAO parece um campo, ou '' se parece.
+
+    O QUE DENUNCIA CONTAMINACAO E ONDE O VALOR COMECA, NAO O TAMANHO DELE.
+    Custou um defeito medido em 2026-09-01, no ensaio contra os 88 itens
+    publicados: a primeira versao desta funcao barrava valor com mais de 120
+    caracteres ou 16 palavras, e com isso jogava fora dois AOS legitimos do
+    PhilJobs — 'Epistemology (especially Applied Epistemology, Social
+    Epistemology, Political Epistemology, Feminist Epistemology, Virtue
+    Epistemology)' e 'The area of research specialization is the text-based
+    approach to History of Philosophy...'. Os dois eram o campo de verdade,
+    escritos como frase pelo empregador, e os dois viravam 'sem aderencia no
+    cabeca'. Comprimento nao e prova de nada: quem anuncia escreve como quer.
+
+    O que e prova, e foi o que os 42 itens da ANPOF mostraram, e o valor
+    COMECAR NO MEIO DE OUTRA COISA — em pontuacao ou em preposicao. Isso nao
+    acontece com campo lido; acontece com frase cortada.
+
+    O teto de tamanho, alias, ja existe e mora no campo(): o valor nunca passa
+    de `limite` caracteres. Repetir isso aqui so servia para errar.
+    """
+    v = (valor or "").strip()
+    if not v:
+        return ""
+    if not v[0].isalnum():
+        return "comeca com pontuacao"
+    if normalizar(v).split()[0] in COMECO_DE_PROSA:
+        return "comeca no meio de uma frase"
+    if "|" in v:
+        return "traz separador de titulo de pagina"
+    return ""
+
+
+def validar_extracao(item, criterios):
+    """A CAMADA QUE FALTAVA: entre a coleta e a classificacao.
+
+    A cadeia era coleta -> classificacao -> triagem. O defeito medido em
+    2026-09-01 nao estava na classificacao nem nos criterios: estava ANTES
+    deles. O AOS de 22 dos 42 itens da ANPOF era a frase institucional do
+    rodape do site, e o AOS entra no CABECA, que e onde veto, tipo e relevancia
+    se decidem. Aumentar palavra-chave nao conserta isso — so faz o
+    classificador errar com mais vocabulario.
+
+    Agora a cadeia e coleta -> VALIDACAO -> classificacao -> triagem.
+
+    O QUE ELA FAZ, e nao faz mais do que isto:
+      1. olha cada campo e decide se ele PARECE o campo que diz ser;
+      2. APAGA o que nao parece, para que nao entre no cabeca;
+      3. deixa a marca do que apagou e por que.
+
+    Apagar e o ponto, e e o principio 4 do cabecalho deste arquivo — NAO MENTE
+    SOBRE O QUE NAO LEU. Area ilegivel virando area falsa e pior do que area
+    vazia: a vazia o usuario ve; a falsa decide sozinha.
+
+    Nao descarta ninguem. Campo suspeito e assunto de TRIAGEM, e a triagem e do
+    usuario (Vagas 2: Relevante / Revisar / Rejeitado). Aqui so se registra.
+    """
+    regras = criterios.get("validacao_da_extracao") or {}
+    avisos = []
+
+    for nome in (regras.get("campos_de_area") or ["aos", "aoc"]):
+        razao = _parece_prosa(item.get(nome))
+        if razao:
+            avisos.append("%s ilegivel: %s" % (nome.upper(), razao))
+            item[nome] = ""              # nao entra no cabeca
+
+    if not (item.get("titulo") or "").strip():
+        avisos.append("sem titulo")
+    elif len(item["titulo"].strip()) < regras.get("titulo_minimo", 12):
+        avisos.append("titulo curto demais para ser anuncio")
+
+    if not (item.get("texto") or "").strip():
+        avisos.append("sem corpo")
+
+    if not (item.get("pais") or "").strip():
+        avisos.append("pais nao lido")
+
+    # Ano lido errado e o modo classico de o prazo mentir: '02/09/2026' virando
+    # 2036 poe a vaga no topo da lista para sempre, porque nunca vence.
+    if item.get("prazo"):
+        try:
+            dias = (datetime.strptime(item["prazo"], "%Y-%m-%d").date() - hoje()).days
+            if dias > regras.get("prazo_maximo_dias", 1095):
+                avisos.append("prazo improvavel (%s)" % item["prazo"])
+                item["prazo"] = ""
+        except ValueError:
+            avisos.append("prazo ilegivel (%s)" % item["prazo"])
+            item["prazo"] = ""
+
+    item["avisos_extracao"] = avisos
+    item["extracao"] = "suspeita" if avisos else "ok"
+    return item
+
+
 # ------------------------------------------------------------- classificacao
 
 def _primeira_regra(regras, alvo_norm):
@@ -362,7 +589,9 @@ def classificar(item, criterios, unidade="vaga"):
     corpo = normalizar(" ".join(str(item.get(k, "")) for k in campos_corpo))
     tudo = cabeca + " \n " + corpo
 
-    marcas = []
+    # As marcas comecam com o que a validacao da extracao encontrou: o painel
+    # ja desenha "marcas", entao campo ilegivel aparece sem mexer na interface.
+    marcas = list(item.get("avisos_extracao") or [])
 
     # ---- 1. VETO — so o cabeca ----
     vetadas = casa((criterios.get("veto") or {}).get("termos"), cabeca)
@@ -636,8 +865,10 @@ def _sondar_familia_philpapers(sessao, cfg, estado_fonte, batimento):
         corpo = texto_limpo(r.text)
         titulo, instituicao, cidade = _partir_titulo(bruto)
         prazo, brando = parse_data(campo(corpo, ["Deadline", "Application deadline",
-                                                 "Submission deadline", "Closing date"]))
-        pub, _ = parse_data(campo(corpo, ["Posted", "Published", "Announced"]))
+                                                 "Submission deadline", "Closing date"],
+                                         frouxo=True))
+        pub, _ = parse_data(campo(corpo, ["Posted", "Published", "Announced"],
+                                  frouxo=True))
         novos.append({
             "id": "%s-%d" % (rotulo, ident),
             "fonte": rotulo,
@@ -798,7 +1029,10 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
             % (rotulo, cfg.get("link_padrao")))
         return []
 
-    novos, buscados, vazios = [], 0, 0
+    # DUAS PASSADAS, e a razao esta no podar_repetido: so da para saber o que e
+    # moldura do site depois de ter as paginas todas na mao. A primeira passada
+    # so BUSCA; a segunda EXTRAI, ja com o menu e o rodape fora do caminho.
+    brutos, buscados, vazios = [], 0, 0
     for url, rotulo_link in links:
         ident = "%s-%s" % (rotulo, re.sub(r"\W+", "-", urlparse(url).path).strip("-")[-60:])
         if ident in conhecidos:
@@ -820,17 +1054,28 @@ def fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico=False):
         if not corpo:
             vazios += 1
         time.sleep(PAUSA)
+        brutos.append((ident, url, rotulo_link, corpo))
 
+    corpos = podar_repetido([b[3] for b in brutos])
+    encolheu = sum(len(b[3]) for b in brutos) - sum(len(c) for c in corpos)
+    if encolheu > 0:
+        batimento["fontes"][rotulo] += " · moldura podada: %d chars" % encolheu
+
+    novos = []
+    for (ident, url, rotulo_link, _), corpo in zip(brutos, corpos):
+        # O prazo e o unico campo que pode casar frouxo: ele passa pelo
+        # parse_data logo em seguida, que devolve vazio se nao for data.
         prazo, brando = parse_data(campo(corpo, ["Prazo", "Inscrições até",
                                                  "Deadline", "até", "Data limite",
-                                                 "Encerramento"]) or rotulo_link)
+                                                 "Encerramento"], frouxo=True) or rotulo_link)
         novos.append({
             "id": ident,
             "fonte": rotulo,
             "url": url,
             "titulo": rotulo_link,
             "instituicao": campo(corpo, ["Instituição", "Universidade"]) or "",
-            "aos": campo(corpo, ["Área", "Area", "Disciplina"]),
+            "aos": campo(corpo, ["Área de Conhecimento", "Área de Concentração",
+                                 "Área", "Area", "Disciplina"]),
             "aoc": "",
             "local": campo(corpo, ["Local", "Localidade", "Cidade"]),
             "categoria": campo(corpo, ["Tipo", "Cargo", "Categoria"]),
@@ -1082,6 +1327,10 @@ def executar(modo, diagnostico=False):
         "max_seguimentos_por_rodada", 25)}
     for item in coletados:
         unidade = unidade_de.get(item["id"], "vaga")
+        # A VALIDACAO VEM ANTES DE TUDO. Se o AOS estiver contaminado, ele ja
+        # esta no cabeca quando o descarte barato roda — e o descarte barato e
+        # a primeira decisao da cadeia. Validar depois seria validar tarde.
+        validar_extracao(item, criterios)
         # O descarte barato vem PRIMEIRO: veto e 'discente' nao custam
         # requisicao, e a resolucao de area custa. Sem isto, cada 'Selecao de
         # Mestrado 2027' da ANPOF gastaria uma busca para ser jogada fora.
