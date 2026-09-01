@@ -313,6 +313,19 @@
     text-decoration-color:var(--line-strong);}
   .pr-estrela{display:inline-block;margin-left:7px;font-size:10px;line-height:1;
     padding:3px 6px;border-radius:999px;border:1px solid var(--gold-line);color:var(--gold);}
+  /* Fase 3 — a sugestao precisa ser reconhecivel num relance, e nao depois de
+     ler. Tracejada e sem a barra dourada da escolha manual. */
+  .pr-card.sugerida{border-style:dashed;border-left-color:var(--line-strong);
+    border-left-style:dashed;background:var(--paper-2);}
+  .sug-head{font-family:var(--sans);font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;margin:14px 0 7px;
+    display:flex;align-items:baseline;gap:8px;}
+  .sug-head span{text-transform:none;letter-spacing:0;font-size:11px;opacity:.8;}
+  .sug-cab{display:flex;align-items:baseline;gap:7px;margin-bottom:5px;flex-wrap:wrap;}
+  .sug-tag{font-size:10px;line-height:1;padding:3px 6px;border-radius:999px;
+    border:1px dashed var(--line-strong);color:var(--muted);}
+  .sug-motivo{font-size:11.5px;color:var(--ink-soft);}
+  .sug-acoes{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center;}
   .prio-add{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;}
   .prio-add select,.prio-add button{flex:1 1 auto;background:var(--paper-2);
     border:1px solid var(--line);color:var(--ink-soft);border-radius:8px;padding:8px 10px;
@@ -861,13 +874,34 @@ const POSDOC_DEFAULT = [
     {id:"pd4-5", t:"Lista de publicações com DOI", st:0}
   ]}
 ];
+/* O `peso` entrou na Fase 3 e e A UNICA coisa que o motor de prioridades nao
+   conseguiu deduzir do dado que ja existia.
+
+   A auditoria de 2026-09-01 procurou importancia estrategica em todo lugar:
+   nao ha campo de importancia em projeto nenhum, em painel nenhum. Ha prazo
+   (so no pipeline, pelo `mes`), ha atividade (`sub.em`), ha ciclo de vida
+   (`vida`), ha travamento por decisao do autor (`prova: "estrela"`) — e nada
+   sobre o que importa mais.
+
+   Em vez de criar uma segunda base de dados, uma palavra por painel, aqui, na
+   mesma constante que ja define os paineis. E declarativo, cabe na tela, e e o
+   unico botao que voce precisa girar se discordar do que o motor sugere.
+
+   ALTO   o que decide os proximos dois anos: sair do pais, o pos-doc, e a
+          esteira de artigos, que e o que sustenta os dois.
+   MEDIO  o que precisa estar pronto quando a janela abrir.
+   BAIXO  o que pode esperar sem que nada se perca.
+
+   O peso NAO e o unico caminho para uma sugestao: um projeto de painel medio
+   ou baixo continua podendo aparecer por prazo, por decisao travada ou por
+   inatividade. O peso decide a classe ESTRATEGICO e desempata o resto. */
 const PAINEIS = [
-  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"12 peças · ago/26 a jul/27", seed:PIPELINE_DEFAULT,   aberto:true},
-  {id:"leituras",   key:"cron:leituras",   titulo:"Leituras · religious studies", sub:"mapa do campo", seed:LEITURAS_DEFAULT,   aberto:false},
-  {id:"candidatura",key:"cron:candidatura",titulo:"Doutorado no exterior (PhD)", sub:"dossê, cartas e entrevista", seed:CANDIDATURA_DEFAULT, aberto:false},
-  {id:"posdoc",     key:"cron:posdoc",     titulo:"Pós-doutorado",       sub:"FAPERJ, FAPESP e exterior", seed:POSDOC_DEFAULT, aberto:false},
-  {id:"concursos",  key:"cron:concursos",  titulo:"Concursos no Brasil",  sub:"prontidão contínua", seed:CONCURSOS_DEFAULT,  aberto:false},
-  {id:"tecnico",    key:"cron:tecnico",    titulo:"Bloco técnico",       sub:"projetos", seed:TECNICO_DEFAULT,    aberto:false}
+  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"12 peças · ago/26 a jul/27", seed:PIPELINE_DEFAULT,   aberto:true,  peso:"alto"},
+  {id:"leituras",   key:"cron:leituras",   titulo:"Leituras · religious studies", sub:"mapa do campo", seed:LEITURAS_DEFAULT,   aberto:false, peso:"medio"},
+  {id:"candidatura",key:"cron:candidatura",titulo:"Doutorado no exterior (PhD)", sub:"dossê, cartas e entrevista", seed:CANDIDATURA_DEFAULT, aberto:false, peso:"alto"},
+  {id:"posdoc",     key:"cron:posdoc",     titulo:"Pós-doutorado",       sub:"FAPERJ, FAPESP e exterior", seed:POSDOC_DEFAULT, aberto:false, peso:"alto"},
+  {id:"concursos",  key:"cron:concursos",  titulo:"Concursos no Brasil",  sub:"prontidão contínua", seed:CONCURSOS_DEFAULT,  aberto:false, peso:"medio"},
+  {id:"tecnico",    key:"cron:tecnico",    titulo:"Bloco técnico",       sub:"projetos", seed:TECNICO_DEFAULT,    aberto:false, peso:"baixo"}
 ];
 const now = new Date();
 const todayIdx = now.getDay();
@@ -1391,18 +1425,58 @@ function cartaoDePrioridade(p){
     '<button class="pr-x" onclick="delPrioridade(\''+p.id+'\')" aria-label="Tirar das prioridades">&times;</button>' +
     corpo + acoes + '</div>';
 }
+/* O CARTAO DE UMA SUGESTAO. Tem de ser reconhecivel como sugestao NUM RELANCE,
+   e nao depois de ler: borda tracejada, o rotulo "sugestão", a classe e o
+   motivo. Voce precisa distinguir "eu escolhi isto" de "o sistema esta
+   propondo isto" sem pensar.
+
+   A acao mostrada continua sendo o ESTAGIO REAL do trilho, lido agora — a
+   sugestao aponta para painel + projeto, e nunca para um texto. */
+function cartaoDeSugestao(sg){
+  var et = estagioDoTrilho(sg.painel, sg.projId);
+  if(!et || et.concluido) return "";       /* fechou entre o calculo e o desenho */
+  var P = painelDef(sg.painel);
+  var selo = et.prova === "estrela"
+    ? '<span class="pr-estrela" title="esta etapa depende de uma decis\u00e3o sua: o pipeline n\u00e3o a fecha sozinho">depende de voc\u00ea</span>' : "";
+  /* Contexto ANOTA e nao rebaixa: o cartao continua onde esta, com o aviso. */
+  var ctx = (getContexto() === "fora" && sg.pedeComputador)
+    ? '<span class="ctx-aviso">pede computador</span>' : "";
+  return '<div class="pr-card sugerida">' +
+    '<div class="sug-cab"><span class="sug-tag">sugest\u00e3o</span>' +
+      '<span class="sug-motivo">' + escapeHtml(sg.motivo) + '</span></div>' +
+    '<div class="pr-t">' + escapeHtml(sg.projT || sg.projId) + '</div>' +
+    '<div class="sub st-' + et.st + '" onclick="event.stopPropagation();marcarDoHoje(\''+sg.painel+'\',\''+sg.projId+'\',\''+et.subId+'\',true)">' +
+      '<span class="st-dot" title="marcar como conclu\u00edda"></span>' +
+      '<div class="sub-text">' + escapeHtml(et.subT) + '</div>' + selo +
+    '</div>' + ctx +
+    '<div class="sug-acoes">' +
+      '<button class="carry-b" onclick="adotarSugestao(\''+sg.painel+'\',\''+sg.projId+'\')">adotar como prioridade</button>' +
+      '<button class="carry-b" onclick="dispensarSugestao(\''+sg.painel+'\',\''+sg.projId+'\')">agora n\u00e3o</button>' +
+      '<button class="ptr" onclick="event.stopPropagation();irAoTrilho(\''+sg.painel+'\',\''+sg.projId+'\')">' +
+        (P?escapeHtml(P.titulo):sg.painel) + '<span class="seta">\u203A</span></button>' +
+    '</div></div>';
+}
+
 function renderPrioridades(){
   var pr = prioridadesDoDia();
-  /* manuais SEMPRE antes. Nesta fase sugeridas e vazio; a ordem ja esta
-     escrita para quando deixar de ser. */
-  var lista = pr.manuais.concat(pr.sugeridas);
+  /* MANUAIS SEMPRE ANTES, e em bloco separado. Concatenar as duas listas num
+     array so foi o que a Fase 2 fez enquanto sugeridas era vazio; agora que o
+     motor devolve coisas, misturar deixaria de ser seguro — bastaria uma
+     ordenacao futura para uma sugestao subir acima de uma escolha sua. Dois
+     blocos e uma garantia estrutural, e nao uma regra para lembrar. */
   var h = '<div class="shead prio-head">Prioridades da semana' +
           '<span class="prio-sem">' + semanaAtual.replace("-W", " \u00b7 semana ") + '</span></div>';
-  if(!lista.length){
+  if(!pr.manuais.length && !pr.sugeridas.length){
     h += '<div class="prio-vazio"><b>Nenhuma prioridade esta semana.</b>' +
          'O que voc\u00ea escolher aqui fica acima das rotinas, em todos os aparelhos.</div>';
-  } else {
-    h += '<div class="prio-lista">' + lista.map(cartaoDePrioridade).join("") + '</div>';
+  }
+  if(pr.manuais.length){
+    h += '<div class="prio-lista">' + pr.manuais.map(cartaoDePrioridade).join("") + '</div>';
+  }
+  if(pr.sugeridas.length){
+    h += '<div class="sug-head">' + (pr.manuais.length ? "O sistema tamb\u00e9m sugere"
+         : "O sistema sugere") + '<span>voc\u00ea decide se entra</span></div>' +
+         '<div class="prio-lista">' + pr.sugeridas.map(cartaoDeSugestao).join("") + '</div>';
   }
   /* O seletor lista os projetos ATIVOS de todos os paineis. Escolher e um
      toque; nao ha formulario. */
@@ -2266,8 +2340,216 @@ function aplicarPrioridadesDoEstado(est){
   return mudou;
 }
 
+/* ============== MOTOR DE PRIORIDADES — Fase 3 ==============
+   CLASSIFICA, NAO PONTUA. Nenhuma soma, nenhum peso somado, nenhum corte
+   numerico — a mesma decisao que o coletor de vagas tomou na v2, e pela mesma
+   razao: nota e opaca. Aqui cada sugestao carrega a CLASSE que a elegeu e o
+   MOTIVO em portugues, e as duas coisas vao para a tela.
+
+   A HIERARQUIA E ABSOLUTA: manual > sugestao > rotina. O motor nao remove, nao
+   rebaixa e nao substitui nada que voce escolheu. Ele so preenche o que sobrou
+   de um teto de tres, e o teto e o ponto: uma tela com dez "prioridades" nao
+   tem prioridade nenhuma.
+
+   O QUE NAO EXISTE E NAO FOI INVENTADO. A auditoria de 2026-09-01 procurou
+   importancia, consequencia e dependencia no dado, e achou o seguinte:
+     · importancia: NAO existia. Ganhou uma palavra por painel (PAINEIS.peso) e
+       um sinal derivado — projeto que VOCE priorizou nas ultimas 4 semanas.
+     · consequencia: NAO existe como campo, e nao virou um. Perder uma janela
+       datada E a consequencia, e ela ja e a classe URGENTE.
+     · dependencia entre projetos: NAO existe no dado. A unica dependencia real
+       e o `prova: "estrela"`, que diz "travado esperando uma decisao sua" — e
+       essa e a classe DECISAO.
+   Descartados de proposito: prazo escrito em prosa no campo `n` (parsear prosa
+   foi exatamente o defeito da ANPOF na Fase 1), cron:eventos (tem data, nao
+   tem vinculo com projeto: ligar por texto seria inventar) e os prazos das
+   vagas (nao sao projetos de trilho, e ja tem indicador proprio).
+   ============================================================= */
+var MOTOR_TETO_TOTAL = 3;      /* manuais + sugeridas, nunca mais que isto */
+var MOTOR_TETO_SUGESTOES = 2;  /* sugestao e curta e seletiva, ou vira lista */
+var MOTOR_PRAZO_DIAS = 45;     /* dentro disto o mes-alvo ja aperta */
+
+/* A ordem E a regra. Primeira que casar vence, e nenhuma soma com a seguinte. */
+var MOTOR_CLASSES = ["URGENTE", "DECISAO", "RETOMADA", "ESTRATEGICO", "EM CURSO"];
+var MOTOR_PESO_ORDEM = {alto: 0, medio: 1, baixo: 2};
+
+/* Ultimo dia do mes-alvo. O `mes` do pipeline ("2026-09") e a unica data dura
+   que existe num projeto de trilho — e ela e de verdade: e o calendario da
+   esteira, uma peca pronta por mes. */
+function prazoDoProjeto(pr){
+  if(!pr || !pr.mes || !/^\d{4}-\d{2}$/.test(pr.mes)) return null;
+  var y = Number(pr.mes.slice(0, 4)), m = Number(pr.mes.slice(5, 7));
+  var ultimo = new Date(y, m, 0);          /* dia 0 do mes seguinte = ultimo deste */
+  return Math.round((ultimo.getTime() -
+    new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86400000);
+}
+
+/* VOCE JA PRIORIZOU ISTO? Quatro semanas para tras, pelas chaves calculadas —
+   sem varrer o localStorage, o que manteria o teste preso a uma implementacao
+   de armazenamento. E o sinal de importancia mais honesto que existe aqui: nao
+   e o sistema adivinhando o que importa, e o sistema lembrando do que VOCE
+   disse que importava. */
+function priorizadoRecentemente(painel, projId){
+  for(var k = 1; k <= 4; k++){
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7 * k);
+    var lista = getPrio(semanaISO(d));
+    for(var i = 0; i < lista.length; i++){
+      if(lista[i].painel === painel && lista[i].projId === projId) return true;
+    }
+  }
+  return false;
+}
+
+/* Um projeto so e candidato se houver o que fazer nele HOJE. Espelha os
+   filtros das retomadas, e pela mesma razao: decisao sua nao e esquecimento. */
+function candidatoDoMotor(P, pr){
+  if(projConcluido(pr)) return null;
+  var ultimo = "", comecou = false, temAtivo = false, adiadoAte = "";
+  (pr.subs || []).forEach(function(sx){
+    var x = normSub(sx);
+    if(x.em){ comecou = true; if(x.em > ultimo) ultimo = x.em; }
+    if(x.st > 0) comecou = true;
+    if(x.st === 2) return;
+    if(x.vida === "inaplicavel" || x.vida === "abandonado") return;
+    if(x.vida === "adiado"){
+      if(x.voltar_em && x.voltar_em > adiadoAte) adiadoAte = x.voltar_em;
+      return;
+    }
+    temAtivo = true;
+  });
+  if(!temAtivo) return null;         /* so restou o que voce parou, ou nada */
+  var et = estagioDoTrilho(P.id, pr.id);
+  if(!et || et.concluido || !et.subId) return null;
+  return {painel:P.id, painelT:P.titulo, peso:P.peso || "medio",
+          projId:pr.id, projT:pr.t, subId:et.subId, subT:et.subT,
+          st:et.st, prova:et.prova || "", comecou: comecou,
+          dias: comecou ? diasDesde(ultimo) : null,
+          prazo: prazoDoProjeto(pr), adiadoAte: adiadoAte};
+}
+
+/* A CLASSIFICACAO. Primeira regra que casar vence; nada abaixo dela e somado.
+   Devolve null para o que nao merece ser sugerido — que e a maioria, e e assim
+   que a lista fica curta sem precisar de corte artificial. */
+function classificarCandidato(c){
+  if(c.prazo !== null && c.prazo <= MOTOR_PRAZO_DIAS){
+    if(c.prazo < 0){
+      var meses = Math.max(1, Math.round(-c.prazo / 30));
+      return {classe:"URGENTE", motivo:"atrasado " + meses + " m\u00eas" + (meses===1?"":"es")};
+    }
+    return {classe:"URGENTE", motivo: c.prazo === 0 ? "o m\u00eas-alvo fecha hoje"
+            : "prazo em " + c.prazo + " dia" + (c.prazo===1?"":"s")};
+  }
+  /* A unica dependencia que o dado conhece: etapa que o pipeline NAO fecha
+     sozinho, porque a conclusao e decisao do autor. Enquanto ela nao for
+     decidida, nada abaixo dela anda. */
+  if(c.prova === "estrela") return {classe:"DECISAO", motivo:"depende de uma decis\u00e3o sua"};
+  if(c.dias !== null && c.dias >= RETOMADA_DIAS)
+    return {classe:"RETOMADA", motivo:c.dias + " dias sem avan\u00e7o"};
+  /* PESO ALTO NAO ELEGE SOZINHO, e isto custou um defeito medido em
+     2026-09-01, no primeiro ensaio do motor: com o pipeline zerado, os sete
+     projetos do painel de candidatura (peso alto) viraram sugestao TODOS, para
+     sempre, so por estarem nele. Um painel estrategico com doze projetos
+     dentro nao diz qual deles importa hoje — dizer "isto e estrategico" sobre
+     um artigo de julho de 2027 que ninguem abriu e recitar o painel, nao
+     recomendar nada.
+     Exige-se, portanto, um vinculo com a sua vida real: ou o projeto ja
+     comecou, ou voce ja o escolheu a mao nas ultimas quatro semanas. */
+  if(c.peso === "alto" && c.comecou)
+    return {classe:"ESTRATEGICO", motivo:"prioridade estrat\u00e9gica"};
+  if(priorizadoRecentemente(c.painel, c.projId))
+    return {classe:"ESTRATEGICO", motivo:"voc\u00ea priorizou isto recentemente"};
+  if(c.st === 1) return {classe:"EM CURSO", motivo:"come\u00e7ado e n\u00e3o terminado"};
+  return null;                        /* NORMAL: existe, mas nao se sugere */
+}
+
+/* O DESEMPATE, e ele e inteiro deterministico — nada de aleatorio, nada que
+   dependa da hora. A ultima chave e o endereco em ordem alfabetica, e ela
+   existe justamente para que duas chamadas seguidas devolvam a MESMA lista. */
+function ordenarSugestoes(a, b){
+  var ca = MOTOR_CLASSES.indexOf(a.classe), cb = MOTOR_CLASSES.indexOf(b.classe);
+  if(ca !== cb) return ca - cb;
+  var pa = a.prazo === null ? 99999 : a.prazo, pb = b.prazo === null ? 99999 : b.prazo;
+  if(pa !== pb) return pa - pb;                       /* prazo mais perto */
+  var da = a.dias === null ? -1 : a.dias, db = b.dias === null ? -1 : b.dias;
+  if(da !== db) return db - da;                       /* mais tempo parado */
+  var wa = MOTOR_PESO_ORDEM[a.peso] !== undefined ? MOTOR_PESO_ORDEM[a.peso] : 1;
+  var wb = MOTOR_PESO_ORDEM[b.peso] !== undefined ? MOTOR_PESO_ORDEM[b.peso] : 1;
+  if(wa !== wb) return wa - wb;
+  var ea = a.painel + "/" + a.projId, eb = b.painel + "/" + b.projId;
+  return ea < eb ? -1 : (ea > eb ? 1 : 0);
+}
+
+/* SEAM PARA A FASE 4. Processos (TOEFL, candidatura Notre Dame) ainda nao
+   existem como estrutura, e esta fase nao os inventa. Quando existirem, e daqui
+   que os sinais deles entram: mesma forma de candidato, mesma classificacao,
+   mesmo desempate. Devolver [] ate la mantem o motor honesto — ele nao finge
+   conhecer um processo que ninguem escreveu. */
+function sinaisDeProcesso(){ return []; }
+
+function motorDePrioridades(manuais){
+  manuais = manuais || [];
+  var vagas = Math.min(MOTOR_TETO_TOTAL - manuais.length, MOTOR_TETO_SUGESTOES);
+  if(vagas <= 0) return [];
+
+  var jaManual = {}, silenciadas = LS(RETOMADA_KEY, {}) || {}, hojeStr = ymd(now);
+  manuais.forEach(function(p){
+    if(p.tipo === "trilho") jaManual[p.painel + "/" + p.projId] = true;
+  });
+
+  var candidatos = [];
+  PAINEIS.forEach(function(P){
+    (getProjs(P.id) || []).forEach(function(pr){
+      var chave = P.id + "/" + pr.id;
+      if(jaManual[chave]) return;                       /* voce ja escolheu */
+      if(silenciadas[chave] && silenciadas[chave] > hojeStr) return;
+      var c = candidatoDoMotor(P, pr);
+      if(!c) return;
+      if(c.adiadoAte && c.adiadoAte > hojeStr) return;  /* voltar_em no futuro */
+      var cl = classificarCandidato(c);
+      if(!cl) return;
+      c.classe = cl.classe; c.motivo = cl.motivo;
+      c.pedeComputador = true;   /* etapa de trilho e trabalho de computador */
+      candidatos.push(c);
+    });
+  });
+  candidatos = candidatos.concat(sinaisDeProcesso());
+
+  /* NAO REPETIR O QUE A TELA JA MOSTRA. Se uma rotina de hoje ja desenha a
+     etapa de um projeto (trilhoSemEscolha), sugeri-lo de novo seria a mesma
+     coisa duas vezes na mesma tela. */
+  var naRotina = {};
+  ((DIAS[todayIdx] || {}).tasks || []).forEach(function(t){
+    if(!t.link) return;
+    var e = trilhoSemEscolha(t.link);
+    if(e && e.projId) naRotina[t.link + "/" + e.projId] = true;
+  });
+
+  var vistos = {}, saida = [];
+  candidatos.sort(ordenarSugestoes);
+  for(var i = 0; i < candidatos.length && saida.length < vagas; i++){
+    var c = candidatos[i], ch = c.painel + "/" + c.projId;
+    if(vistos[ch] || naRotina[ch]) continue;
+    vistos[ch] = true;
+    c.id = "sug-" + ch.replace(/[^a-zA-Z0-9]/g, "-");
+    c.tipo = "trilho";
+    c.sugerida = true;
+    saida.push(c);
+  }
+  return saida;
+}
+
+/* Dispensar uma sugestao usa A MESMA CHAVE das retomadas, de proposito: quem
+   disse "agora nao" para um projeto disse para o projeto, e nao para o bloco
+   onde ele apareceu. Dispensar num lugar silencia nos dois. */
+function dispensarSugestao(painel, projId){ adiarRetomada(painel, projId); }
+function adotarSugestao(painel, projId){ addPrioridadeTrilho(painel + "/" + projId); }
+
+/* A ORDEM E A GARANTIA. `manuais` primeiro, sempre. O motor recebe as manuais
+   para saber quantas vagas sobraram e o que NAO repetir — e nao tem como
+   devolve-las diferentes, porque nao as toca. */
 function prioridadesDoDia(){
-  return {manuais: getPrio(), sugeridas: []};
+  var manuais = getPrio();
+  return {manuais: manuais, sugeridas: motorDePrioridades(manuais)};
 }
 
 /* ==================== RETOMADAS — Fase 2 ====================

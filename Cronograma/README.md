@@ -59,9 +59,8 @@ Chave ISO por semana (`2026-W36`): você elege na segunda e vale até domingo.
 
 **Atravessa aparelhos** pelo toque `prioridade` (ver Sincronização).
 
-**Precedência**: `prioridadesDoDia()` devolve `{manuais, sugeridas}` e o desenho
-concatena nessa ordem. `sugeridas` é vazio nesta fase — a Fase 3 preenche, e a
-precedência já está garantida pela forma do retorno.
+**Precedência**: `prioridadesDoDia()` devolve `{manuais, sugeridas}` e os dois
+blocos são desenhados separados, manuais primeiro. Ver *Motor de prioridades*.
 
 ### 2. Rotinas
 As tarefas fixas do dia (`DIAS[diaDaSemana].tasks`). Marcação por data
@@ -74,6 +73,51 @@ Duas regras duras:
 - **A rotina não escolhe um Trilho.** Ela diz *o que* fazer; a prioridade diz
   *em qual projeto*. Um painel com mais de um projeto ativo nunca tem estágio
   escolhido automaticamente (`trilhoSemEscolha`).
+
+### 2b. Motor de prioridades
+
+Quando você não preencheu as três vagas, o sistema **sugere** — no máximo duas,
+e nunca ultrapassando três no total.
+
+```
+0 manuais → 2 sugestões      2 manuais → 1 sugestão
+1 manual  → 2 sugestões      3 manuais → 0
+```
+
+**Classifica, não pontua.** Nenhuma soma, nenhum corte numérico — a primeira
+regra que casa vence, e a classe vai para a tela junto do motivo:
+
+| # | Classe | Quando | Motivo exibido |
+|---|---|---|---|
+| 1 | URGENTE | mês-alvo (`proj.mes`) vencido ou a ≤45 dias | "atrasado 1 mês" |
+| 2 | DECISÃO | etapa atual é `prova: estrela` | "depende de uma decisão sua" |
+| 3 | RETOMADA | ≥14 dias sem avanço (`sub.em`) | "18 dias sem avanço" |
+| 4 | ESTRATÉGICO | painel `peso: alto` **e já começado**, ou priorizado nas últimas 4 semanas | "prioridade estratégica" |
+| 5 | EM CURSO | etapa atual com `st: 1` | "começado e não terminado" |
+| — | NORMAL | o resto | não é sugerido |
+
+Desempate: classe → prazo (asc) → dias parado (desc) → peso do painel →
+`painel/projId` alfabético. A última chave garante resultado **estável**: nada
+aleatório, nada dependente da hora.
+
+Fora sempre: concluído · sem etapa aberta · adiado com `voltar_em` futuro ·
+abandonado · inaplicável · já é prioridade manual · dispensado · já visível numa
+rotina.
+
+**Peso alto não elege sozinho.** Um painel estratégico com doze projetos dentro
+não diz qual importa hoje. Exige-se vínculo real: o projeto já começou, ou você
+já o escolheu à mão recentemente.
+
+**Sugestão não é decisão.** É derivada a cada desenho e nunca gravada. "Adotar"
+chama `addPrioridadeTrilho()` — o mecanismo e o toque que já existiam. "Agora
+não" grava em `cron:retomadas-adiadas`, a mesma chave das retomadas: dispensar
+num lugar silencia nos dois.
+
+`sinaisDeProcesso()` devolve `[]` — é por ali que os Processos (Fase 4) entram,
+sem tocar no núcleo do motor.
+
+O único botão a girar se você discordar: `peso` em `PAINEIS`, uma palavra por
+painel.
 
 ### 3. Retomadas
 Projeto importante sem avanço há 14 dias ou mais. **Lembrete, não cobrança** — e
@@ -224,7 +268,7 @@ vai para o ar, não uma cópia dele.
 | 0 — Auditoria e documentação | concluída |
 | 1 — Vagas (extração, validação, veredicto) | concluída |
 | 2 — Hoje 2.0 | concluída |
-| 3 — Motor de prioridades (prazo, importância, inatividade, contexto) | a fazer |
+| 3 — Motor de prioridades (prazo, importância, inatividade, contexto) | concluída |
 | 4 — Aba Processos (TOEFL primeiro) | a fazer |
 | 5 — Revisão dominical (digest curto) | a fazer |
 | 6 — Sincronização completa (retomadas, processos, estado do Hoje) | a fazer |
@@ -241,8 +285,11 @@ vai para o ar, não uma cópia dele.
   estruturado para calibrar os filtros com o comportamento real.
 - **Remoção automática dos itens de veredicto `rejeitado`** de `dados/vagas.json`
   — hoje eles permanecem, marcados, para auditoria.
-- **Fallback automático de prioridades** quando não houver escolha manual. A
-  decisão manual sempre prevalece.
+- **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as
+  inventou. A única dependência real hoje é `prova: "estrela"` — etapa travada
+  esperando decisão sua.
+- **Sinais de Processo** (TOEFL, candidatura Notre Dame) alimentando o motor,
+  pelo seam `sinaisDeProcesso()`. Pertence à Fase 4.
 
 ---
 

@@ -22,7 +22,7 @@ const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8"
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
 const FONTE = HTML.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1] +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, EVENTOS_NA_TELA, SCHEMA_VERSAO};";
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -142,7 +142,12 @@ B.addPrioridadeLivre();
 const pr = B.prioridadesDoDia();
 ok(pr.manuais.length === 1 && pr.manuais[0].t === "Candidatura Notre Dame",
    "prioridade livre criada", pr.manuais);
-ok(pr.sugeridas.length === 0, "nenhuma sugestao automatica nesta fase");
+/* Fase 3: sugeridas deixou de ser vazio. O que continua valendo, e e o que
+   importa, e o teto: manuais + sugeridas nunca passa de tres. */
+ok(pr.manuais.length + pr.sugeridas.length <= B.MOTOR_TETO_TOTAL,
+   "manuais + sugeridas nunca passa do teto", pr.manuais.length + pr.sugeridas.length);
+ok(pr.sugeridas.every(sg => sg.sugerida === true),
+   "e toda sugestao vem marcada como sugestao");
 B.renderHoje();
 const htmlHoje = B.document.getElementById("view-hoje").innerHTML;
 const posPrio = htmlHoje.indexOf("Prioridades da semana");
@@ -383,8 +388,13 @@ const etS2 = S2.estagioDoTrilho("pipeline", "a00");
 ok(etS2.prova === "maquina", "a etapa corrente de a00 e de maquina", etS2.prova);
 S2.addPrioridadeTrilho("pipeline/a00");
 S2.renderHoje();
-ok(!/depende de voc/.test(S2.document.getElementById("view-hoje").innerHTML),
-   "e ai o selo nao aparece");
+/* So o bloco das MANUAIS: o motor pode estar sugerindo, ao lado, um projeto
+   cuja etapa corrente e uma estrela — e ai o selo aparece por direito, no
+   cartao dele. O que se testa aqui e o cartao da escolha manual. */
+const htmlS2 = S2.document.getElementById("view-hoje").innerHTML;
+const soManuais = htmlS2.split("sug-head")[0];
+ok(!/depende de voc/.test(soManuais),
+   "e ai o selo nao aparece no cartao da escolha manual");
 
 console.log("\n=== 11. Indicador de Vagas: uma linha, sem triagem ===");
 const H = criarAparelho("vagas");
@@ -408,6 +418,206 @@ Object.keys(A.DIAS).forEach(k => (A.DIAS[k].tasks || []).forEach(t => {
 }));
 ok(typeof A.toeflFase === "function" && typeof A.renderGuia === "function",
    "e o mecanismo de fases/guia continua intacto");
+
+console.log("\n=== 13. Motor de prioridades: hierarquia e teto (Fase 3) ===");
+/* Um aparelho limpo, com o pipeline zerado, para que cada caso seja o unico
+   sinal na mesa. Sem isto o motor responde ao dado real e o teste vira
+   adivinhacao. */
+function motorLimpo(nome, prompt) {
+  const ctx = criarAparelho(nome, prompt ? { prompt } : undefined);
+  PAINEIS_TODOS(ctx).forEach(pid => {
+    const ps = ctx.getProjs(pid);
+    ps.forEach(pr => {
+      delete pr.mes;
+      (pr.subs || []).forEach(x => { x.st = 0; x.em = ""; x.vida = "ativo";
+                                     x.voltar_em = ""; x.prova = "maquina"; });
+    });
+    ctx.setProjs(pid, ps);
+  });
+  return ctx;
+}
+function PAINEIS_TODOS(ctx) { return ctx.PAINEIS.map(P => P.id); }
+function proj(ctx, pid, projId) {
+  return ctx.getProjs(pid).find(p => p.id === projId);
+}
+function gravar(ctx, pid, mut) {
+  const ps = ctx.getProjs(pid); mut(ps); ctx.setProjs(pid, ps);
+}
+const diaISO = (n) => new Date(Date.now() - n * 86400000).toISOString();
+const dataYMD = (n) => {
+  const d = new Date(Date.now() + n * 86400000);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") +
+         "-" + String(d.getDate()).padStart(2,"0");
+};
+
+const M = motorLimpo("motor");
+ok(M.motorDePrioridades([]).length === 0,
+   "pipeline zerado e sem sinal nenhum: o motor nao sugere nada",
+   M.motorDePrioridades([]).map(x => x.projId));
+
+/* prazo vence tudo */
+gravar(M, "pipeline", ps => {
+  ps.find(p => p.id === "a05").mes = M.monthKey;              /* vence este mes */
+  const a06 = ps.find(p => p.id === "a06");
+  a06.subs[0].em = diaISO(60); a06.subs[0].st = 1;            /* 60 dias parado */
+});
+let sug = M.motorDePrioridades([]);
+ok(sug[0].projId === "a05" && sug[0].classe === "URGENTE",
+   "prazo proximo vence projeto sem prazo", sug.map(x => x.projId + ":" + x.classe));
+ok(/prazo em|fecha hoje/.test(sug[0].motivo), "com o motivo do prazo", sug[0].motivo);
+ok(sug[1] && sug[1].projId === "a06" && sug[1].classe === "RETOMADA",
+   "e o parado ha 60 dias vem logo atras", sug[1] && sug[1].classe);
+ok(/(59|60) dias sem avan/.test(sug[1].motivo),
+   "com o motivo da inatividade (floor de dias inteiros)", sug[1].motivo);
+
+/* teto e hierarquia */
+ok(M.motorDePrioridades([]).length === 2, "no maximo duas sugestoes");
+ok(M.motorDePrioridades([{tipo:"livre", t:"uma"}]).length === 2, "com 1 manual: ainda duas");
+ok(M.motorDePrioridades([{tipo:"livre"},{tipo:"livre"}]).length === 1, "com 2 manuais: uma");
+ok(M.motorDePrioridades([{tipo:"livre"},{tipo:"livre"},{tipo:"livre"}]).length === 0,
+   "com 3 manuais: NENHUMA — a tela nao vira lista de dez prioridades");
+ok(M.motorDePrioridades([{tipo:"livre"},{tipo:"livre"},{tipo:"livre"},{tipo:"livre"}]).length === 0,
+   "e com mais de 3 tambem nao");
+
+/* manual nunca e substituida nem repetida */
+const jaEscolhida = [{tipo:"trilho", painel:"pipeline", projId:"a05"}];
+sug = M.motorDePrioridades(jaEscolhida);
+ok(!sug.some(x => x.projId === "a05"),
+   "o que voce ja escolheu nao volta como sugestao", sug.map(x => x.projId));
+ok(M.getPrio().length === 0, "e o motor nao gravou prioridade nenhuma");
+ok(M.getToques().length === 0, "nem emitiu toque nenhum: sugestao e derivada");
+
+console.log("\n=== 14. Motor: o que NAO pode ser sugerido ===");
+const N = motorLimpo("motor2");
+/* concluido */
+gravar(N, "pipeline", ps => {
+  ps.find(p => p.id === "a02").subs.forEach(x => { x.st = 2; });
+  ps.find(p => p.id === "a02").mes = N.monthKey;              /* prazo colado */
+});
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a02"),
+   "projeto CONCLUIDO nao aparece, nem com prazo vencendo",
+   N.motorDePrioridades([]).map(x => x.projId));
+/* abandonado */
+gravar(N, "pipeline", ps => {
+  const p = ps.find(x => x.id === "a03");
+  p.mes = N.monthKey; p.subs.forEach(x => { x.vida = "abandonado"; });
+});
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a03"),
+   "projeto ABANDONADO nao aparece", N.motorDePrioridades([]).map(x => x.projId));
+/* adiado com volta no futuro */
+gravar(N, "pipeline", ps => {
+  const p = ps.find(x => x.id === "a04");
+  p.mes = N.monthKey;
+  p.subs.forEach(x => { x.vida = "adiado"; x.voltar_em = dataYMD(30); });
+});
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a04"),
+   "projeto ADIADO nao aparece antes do voltar_em",
+   N.motorDePrioridades([]).map(x => x.projId));
+/* inaplicavel em todas as etapas */
+gravar(N, "pipeline", ps => {
+  const p = ps.find(x => x.id === "a07");
+  p.mes = N.monthKey; p.subs.forEach(x => { x.vida = "inaplicavel"; });
+});
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a07"),
+   "projeto so com etapas INAPLICAVEIS nao aparece");
+/* silenciado */
+gravar(N, "pipeline", ps => { ps.find(x => x.id === "a08").mes = N.monthKey; });
+ok(N.motorDePrioridades([]).some(x => x.projId === "a08"), "a08 aparece antes de dispensar");
+N.dispensarSugestao("pipeline", "a08");
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a08"),
+   "sugestao DISPENSADA nao reaparece imediatamente",
+   N.motorDePrioridades([]).map(x => x.projId));
+/* e a dispensa e a mesma das retomadas: um "agora nao" vale para os dois */
+ok(!N.retomadas().some(r => r.projId === "a08"),
+   "e dispensar a sugestao tambem silencia a retomada do mesmo projeto");
+
+console.log("\n=== 15. Motor: classes, motivo e estabilidade ===");
+const O = motorLimpo("motor3");
+gravar(O, "pipeline", ps => {
+  ps.find(p => p.id === "a09").subs[0].prova = "estrela";     /* decisao travada */
+  const a10 = ps.find(p => p.id === "a10");
+  a10.subs[0].em = diaISO(20); a10.subs[0].st = 1;            /* inativo */
+});
+sug = O.motorDePrioridades([]);
+const classes = sug.map(x => x.classe);
+ok(classes.indexOf("DECISAO") < classes.indexOf("RETOMADA") ||
+   classes.indexOf("RETOMADA") < 0,
+   "DECISAO vem antes de RETOMADA", classes);
+ok(sug.every(x => x.motivo && x.motivo.length > 4),
+   "toda sugestao carrega um motivo em portugues", sug.map(x => x.motivo));
+ok(sug.every(x => O.MOTOR_CLASSES.indexOf(x.classe) > -1),
+   "e uma classe conhecida", sug.map(x => x.classe));
+/* estabilidade: duas chamadas seguidas, mesma lista, mesma ordem */
+const s1 = O.motorDePrioridades([]).map(x => x.painel + "/" + x.projId).join("|");
+const s2 = O.motorDePrioridades([]).map(x => x.painel + "/" + x.projId).join("|");
+const s3 = O.motorDePrioridades([]).map(x => x.painel + "/" + x.projId).join("|");
+ok(s1 === s2 && s2 === s3, "o resultado e estavel entre chamadas", [s1, s2, s3]);
+/* e nao ha duplicata */
+const ids = O.motorDePrioridades([]).map(x => x.painel + "/" + x.projId);
+ok(new Set(ids).size === ids.length, "nenhuma sugestao repetida", ids);
+
+console.log("\n=== 16. Motor: sugestao mostra o estagio REAL do trilho ===");
+const Q = motorLimpo("motor4");
+gravar(Q, "pipeline", ps => { ps.find(p => p.id === "a11").mes = Q.monthKey; });
+sug = Q.motorDePrioridades([]);
+const alvoQ = sug.find(x => x.projId === "a11");
+ok(!!alvoQ, "a11 foi sugerido pelo prazo");
+const etQ = Q.estagioDoTrilho("pipeline", "a11");
+ok(alvoQ.subT === etQ.subT, "e o texto e o do trilho, verbatim", alvoQ.subT);
+ok(!/trabalhar no|dar andamento|avancar o/i.test(alvoQ.subT),
+   "nunca um rotulo generico", alvoQ.subT);
+/* fechar a etapa muda a acao exibida, sem tocar na sugestao */
+gravar(Q, "pipeline", ps => {
+  const p = ps.find(x => x.id === "a11");
+  p.subs.find(x => x.id === etQ.subId).st = 2;
+});
+const depoisQ = Q.motorDePrioridades([]).find(x => x.projId === "a11");
+ok(depoisQ && depoisQ.subId !== etQ.subId,
+   "etapa concluida -> a acao exibida passa a ser a seguinte",
+   depoisQ && depoisQ.subT);
+ok(depoisQ.subT === Q.estagioDoTrilho("pipeline", "a11").subT,
+   "e continua vindo do trilho");
+
+console.log("\n=== 17. Motor: contexto restringe, nao destroi ===");
+const R = motorLimpo("motor5");
+gravar(R, "pipeline", ps => { ps.find(p => p.id === "a12").mes = R.monthKey; });
+const emCasa = R.motorDePrioridades([]).map(x => x.painel + "/" + x.projId);
+R.setContexto("fora");
+const foraDeCasa = R.motorDePrioridades([]).map(x => x.painel + "/" + x.projId);
+ok(emCasa.join("|") === foraDeCasa.join("|"),
+   "fora de casa NAO apaga nem reordena recomendacao nenhuma",
+   { emCasa, foraDeCasa });
+R.renderHoje();
+const htmlR = R.document.getElementById("view-hoje").innerHTML;
+ok(/sugest/.test(htmlR), "a sugestao continua na tela fora de casa");
+ok(/pede computador/.test(htmlR), "com o aviso de que pede computador");
+
+console.log("\n=== 18. Motor: adotar usa o mecanismo que ja existia ===");
+const T = motorLimpo("motor6");
+gravar(T, "pipeline", ps => { ps.find(p => p.id === "a06").mes = T.monthKey; });
+const antesT = T.getPrio().length;
+ok(T.motorDePrioridades([]).some(x => x.projId === "a06"), "a06 e sugerido");
+T.adotarSugestao("pipeline", "a06");
+ok(T.getPrio().length === antesT + 1, "adotar cria UMA prioridade manual", T.getPrio());
+const nova = T.getPrio()[T.getPrio().length - 1];
+ok(nova.tipo === "trilho" && nova.painel === "pipeline" && nova.projId === "a06",
+   "de trilho, apontando para o projeto", nova);
+ok(!nova.sugerida, "e ela deixa de ser sugestao: virou escolha sua");
+const tq = T.getToques().filter(x => x.tipo === "prioridade");
+ok(tq.length === 1 && tq[0].dados.projId === "a06",
+   "pelo toque 'prioridade' que ja existia — nenhum estado paralelo", tq[0] && tq[0].dados);
+ok(!T.motorDePrioridades(T.getPrio()).some(x => x.projId === "a06"),
+   "e o motor para de sugerir o que virou manual");
+T.renderHoje();
+const htmlT = T.document.getElementById("view-hoje").innerHTML;
+ok(htmlT.indexOf("Prioridades da semana") < htmlT.indexOf("sug-head") ||
+   htmlT.indexOf("sug-head") < 0,
+   "manuais desenhadas antes das sugeridas");
+
+console.log("\n=== 19. Motor: o seam de Processos existe e esta vazio ===");
+ok(typeof A.sinaisDeProcesso === "function", "sinaisDeProcesso existe");
+ok(A.sinaisDeProcesso().length === 0,
+   "e devolve vazio: esta fase nao inventa estrutura de Processo");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
