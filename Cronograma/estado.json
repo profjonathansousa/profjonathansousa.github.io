@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-01T16:08:19.021Z",
+ "_dobrado_em": "2026-09-01T16:08:35.186Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1742,6 +1742,36 @@
     "del": true,
     "t": "Jogo Ana - Realengo"
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-32-079Z-s41hky",
+   "quando": "2026-09-01T16:08:32.079Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1788278899909",
+    "data": "2026-09-01",
+    "priv": false,
+    "del": false,
+    "t": "Concerto de Primavera"
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-35-186Z-s41hky",
+   "quando": "2026-09-01T16:08:35.186Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1788278899909",
+    "data": "2026-09-20",
+    "priv": false,
+    "del": false,
+    "t": "Concerto de Primavera"
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1860,7 +1890,9 @@
   "2026-09-01T16-08-08-917Z-s41hky",
   "2026-09-01T16-08-08-918Z-s41hky",
   "2026-09-01T16-08-08-919Z-s41hky",
-  "2026-09-01T16-08-19-021Z-s41hky"
+  "2026-09-01T16-08-19-021Z-s41hky",
+  "2026-09-01T16-08-32-079Z-s41hky",
+  "2026-09-01T16-08-35-186Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2285,6 +2317,14 @@
    "del": true,
    "t": "Jogo Ana - Realengo",
    "quando": "2026-09-01T16:08:19.021Z",
+   "aparelho": "s41hky"
+  },
+  "e1788278899909": {
+   "data": "2026-09-20",
+   "priv": false,
+   "del": false,
+   "t": "Concerto de Primavera",
+   "quando": "2026-09-01T16:08:35.186Z",
    "aparelho": "s41hky"
   }
  }
