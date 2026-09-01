@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-01T16:08:08.919Z",
+ "_dobrado_em": "2026-09-01T16:08:19.021Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1727,6 +1727,21 @@
     "de": "2026-07",
     "del": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-01T16-08-19-021Z-s41hky",
+   "quando": "2026-09-01T16:08:19.021Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1788054149537",
+    "data": "2026-09-05",
+    "priv": false,
+    "del": true,
+    "t": "Jogo Ana - Realengo"
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1844,7 +1859,8 @@
   "2026-09-01T16-08-08-916Z-s41hky",
   "2026-09-01T16-08-08-917Z-s41hky",
   "2026-09-01T16-08-08-918Z-s41hky",
-  "2026-09-01T16-08-08-919Z-s41hky"
+  "2026-09-01T16-08-08-919Z-s41hky",
+  "2026-09-01T16-08-19-021Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2266,9 +2282,9 @@
   "e1788054149537": {
    "data": "2026-09-05",
    "priv": false,
-   "del": false,
+   "del": true,
    "t": "Jogo Ana - Realengo",
-   "quando": "2026-08-30T01:55:53.169Z",
+   "quando": "2026-09-01T16:08:19.021Z",
    "aparelho": "s41hky"
   }
  }
