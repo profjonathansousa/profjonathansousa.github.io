@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T14:38:13.110Z",
+ "_dobrado_em": "2026-09-02T14:38:22.681Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2111,6 +2111,18 @@
     "vid": "anpof-chamadas-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-22-681Z-s41hky",
+   "quando": "2026-09-02T14:38:22.681Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-so-usp-561-dossie-nietzsche-e-em-homenagem-a-scarlett-marton",
+    "st": 2
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2258,7 +2270,8 @@
   "2026-09-02T14-37-49-113Z-s41hky",
   "2026-09-02T14-37-58-285Z-s41hky",
   "2026-09-02T14-38-07-108Z-s41hky",
-  "2026-09-02T14-38-13-110Z-s41hky"
+  "2026-09-02T14-38-13-110Z-s41hky",
+  "2026-09-02T14-38-22-681Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2544,6 +2557,11 @@
   "anpof-chamadas-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal": {
    "st": 2,
    "quando": "2026-09-02T14:38:13.110Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-so-usp-561-dossie-nietzsche-e-em-homenagem-a-scarlett-marton": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:22.681Z",
    "aparelho": "s41hky"
   }
  },
