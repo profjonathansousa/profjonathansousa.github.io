@@ -26,6 +26,13 @@ SEIS COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
     evento     -> as datas importantes, SO A DATA, em `eventos`
     prioridade -> o que voce elegeu para a semana no Hoje, em `prioridades`
     toefl      -> os itens do guia do TOEFL, um a um, em `toefl`
+    retomada   -> ate quando calar sobre um projeto parado, em `retomadas`
+
+A retomada entrou na Fase 6B. A chave e painel/projeto e o valor e a data ate
+quando o projeto fica silenciado. Tambem nao tem lapide, e por um motivo
+proprio: nao existe operacao de dessilenciar — a entrada morre pela data que
+ela mesma carrega. A data e ABSOLUTA e nao duracao, para que um toque atrasado
+nao estenda o silencio ao chegar.
 
 O toefl entrou na Fase 6A. Ele e o caso mais simples dos seis: a chave e o `id`
 do item no TOEFL_GUIA e o valor e um booleano. Nao tem lapide `del` porque o
@@ -88,6 +95,7 @@ def estado_vazio():
         "eventos": {},
         "prioridades": {},
         "toefl": {},
+        "retomadas": {},
         "historico": [],
         "_ids_dobrados": [],
     }
@@ -160,6 +168,12 @@ def alvo(t):
         if not d.get("iid"):
             return (None, None)
         return ("toefl", str(d.get("iid")))
+    if tipo == "retomada":
+        # Painel/projeto, como o registro — menos o subitem: o silencio e do
+        # PROJETO, e nao de uma etapa dele.
+        if not d.get("pid") or not d.get("projId"):
+            return (None, None)
+        return ("retomadas", "%s/%s" % (d.get("pid"), d.get("projId")))
     return (None, None)
 
 
@@ -216,6 +230,10 @@ def valor(t):
         # TOEFL_GUIA, que e estrutura da pagina, e o aparelho que desenha os le
         # de la. Mesma regra da prioridade, pelo mesmo motivo.
         v = {"feito": bool(d.get("feito"))}
+    elif tipo == "retomada":
+        # So a data. O titulo do projeto e o estagio nao viajam: sao lidos do
+        # trilho no aparelho que desenha, pela regra da Fase 2.
+        v = {"ate": d.get("ate")}
     else:
         # A meta apagada vira lapide: fica no estado com del=true, para que o
         # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e

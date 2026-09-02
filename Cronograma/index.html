@@ -3221,7 +3221,7 @@ function motorDePrioridades(manuais){
   var vagas = Math.min(MOTOR_TETO_TOTAL - manuais.length, MOTOR_TETO_SUGESTOES);
   if(vagas <= 0) return [];
 
-  var jaManual = {}, silenciadas = LS(RETOMADA_KEY, {}) || {}, hojeStr = ymd(now);
+  var jaManual = {}, silenciadas = retomadasAdiadas(), hojeStr = ymd(now);
   manuais.forEach(function(p){
     if(p.tipo === "trilho") jaManual[p.painel + "/" + p.projId] = true;
   });
@@ -3231,7 +3231,7 @@ function motorDePrioridades(manuais){
     (getProjs(P.id) || []).forEach(function(pr){
       var chave = P.id + "/" + pr.id;
       if(jaManual[chave]) return;                       /* voce ja escolheu */
-      if(silenciadas[chave] && silenciadas[chave] > hojeStr) return;
+      if(retomadaSilenciada(silenciadas, chave, hojeStr)) return;
       var c = candidatoDoMotor(P, pr);
       if(!c) return;
       if(c.adiadoAte && c.adiadoAte > hojeStr) return;  /* voltar_em no futuro */
@@ -3313,6 +3313,80 @@ function prioridadesDoDia(){
    retomada lembra, e quem promove e voce, no botao. */
 var RETOMADA_DIAS = 14;
 var RETOMADA_KEY = "cron:retomadas-adiadas";
+/* ---- O SILENCIO ATRAVESSA APARELHOS (Fase 6B) ----
+   Dispensar uma retomada era a ultima decisao sua sobre um objeto duravel que
+   nao viajava: silenciar no celular e ser cobrado no Mac pelo mesmo projeto.
+
+   A forma mudou de {chave: "AAAA-MM-DD"} para {chave: {ate, em}}. O `ate` e a
+   data ate quando calar; o `em` e o instante da ultima mudanca FEITA AQUI, e e
+   contra ele que o estado.json e comparado — a mesma regra de relogio dos
+   outros tipos.
+
+   O `ate` E DATA ABSOLUTA, e nao duracao, de proposito: um toque que chega tres
+   dias depois carrega a data que foi decidida, e nao "+14 dias" recontados na
+   chegada. Se fosse duracao, a latencia da rede mudaria o resultado.
+
+   NAO EXISTE DESSILENCIAR, e por isso nao ha lapide: a entrada morre pela data
+   que ela mesma carrega. */
+var RETOMADA_MIGRADO_KEY = "cron:retomadas-migrado";
+/* Piso fixo da migracao, no molde do TOEFL_EM: a silenciada antiga sobe bem no
+   passado, para nunca vencer uma decisao tomada depois que isto passou a
+   existir. */
+var RETOMADA_EM = "2026-01-01T00:00:00.000Z";
+function retomadasAdiadas(){ return LS(RETOMADA_KEY, {}) || {}; }
+/* Le o `ate` aceitando as duas formas. A antiga so aparece entre o carregamento
+   e a migracao, mas ler pelos dois caminhos evita que um aparelho que falhe na
+   migracao passe a ignorar silencios que ele mesmo pos. */
+function retomadaAte(m, chave){
+  var r = m[chave];
+  if(!r) return "";
+  return (typeof r === "string") ? r : (r.ate || "");
+}
+function retomadaSilenciada(m, chave, hojeStr){
+  var ate = retomadaAte(m, chave);
+  return !!ate && ate > hojeStr;
+}
+/* SO O QUE AINDA CALA SOBE — mas TUDO FICA. Sao duas coisas diferentes:
+   converter e publicar. Toda entrada e convertida para {ate, em} e continua no
+   aparelho; so as que ainda calam viram toque. Publicar uma silenciada vencida
+   seria historia publica permanente por nada, num historico que nunca e podado
+   — e apaga-la seria perder dado, que e o que este projeto nao faz. Uma vencida
+   nao afeta ninguem: os dois leitores exigem `ate > hoje`. */
+function migrarRetomadas(){
+  if(LS(RETOMADA_MIGRADO_KEY, false)) return 0;
+  var m = retomadasAdiadas(), hojeStr = ymd(now), out = {}, n = 0;
+  Object.keys(m).forEach(function(chave){
+    var r = m[chave];
+    if(typeof r !== "string"){ out[chave] = r; return; }   /* ja convertida */
+    out[chave] = {ate:r, em:RETOMADA_EM};                  /* convertida, fica */
+    if(!(r > hojeStr)) return;                             /* vencida: nao sobe */
+    var corte = chave.indexOf("/");
+    if(corte < 0) return;
+    enfileirarToque("retomada", {pid:chave.slice(0, corte),
+                                 projId:chave.slice(corte + 1), ate:r}, RETOMADA_EM);
+    n++;
+  });
+  save(RETOMADA_KEY, out);
+  save(RETOMADA_MIGRADO_KEY, true);
+  return n;
+}
+/* A DESCIDA. Molde do aplicarToeflDoEstado: mais novo manda, empate fica como
+   esta, mais antigo e ignorado. Nao emite toque — receber nao e tocar. */
+function aplicarRetomadasDoEstado(est){
+  if(!est || !est.retomadas) return false;
+  var m = retomadasAdiadas(), mudou = false;
+  Object.keys(est.retomadas).forEach(function(chave){
+    var r = est.retomadas[chave];
+    if(!r || !r.quando || !r.ate) return;
+    var loc = m[chave];
+    var emLocal = (loc && typeof loc === "object") ? (loc.em || "") : "";
+    if(loc && emLocal >= r.quando) return;
+    m[chave] = {ate:r.ate, em:r.quando};
+    mudou = true;
+  });
+  if(mudou) save(RETOMADA_KEY, m);
+  return mudou;
+}
 function diasDesde(iso){
   if(!iso) return null;
   var t = new Date(iso).getTime();
@@ -3321,12 +3395,12 @@ function diasDesde(iso){
 }
 function retomadas(limite){
   limite = (typeof limite === "number") ? limite : RETOMADA_DIAS;
-  var adiadas = LS(RETOMADA_KEY, {}) || {}, hojeStr = ymd(now), out = [];
+  var adiadas = retomadasAdiadas(), hojeStr = ymd(now), out = [];
   PAINEIS.forEach(function(P){
     (getProjs(P.id) || []).forEach(function(pr){
       if(projConcluido(pr)) return;
       var chave = P.id + "/" + pr.id;
-      if(adiadas[chave] && adiadas[chave] > hojeStr) return;   /* silenciada */
+      if(retomadaSilenciada(adiadas, chave, hojeStr)) return;  /* silenciada */
       var ultimo = "", comecou = false, temAtivo = false;
       (pr.subs || []).forEach(function(sx){
         var x = normSub(sx);
@@ -3356,9 +3430,13 @@ function retomadas(limite){
   return out;
 }
 function adiarRetomada(pid, projId){
-  var m = LS(RETOMADA_KEY, {}) || {};
+  var m = retomadasAdiadas();
   var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
-  m[pid + "/" + projId] = ymd(d);
+  var ate = ymd(d);
+  /* O instante gravado e EXATAMENTE o que subiu no toque: guardar outro faria
+     os dois lados discordarem sobre quando a decisao foi tomada. */
+  var iso = enfileirarToque("retomada", {pid:pid, projId:projId, ate:ate});
+  m[pid + "/" + projId] = {ate:ate, em:iso};
   save(RETOMADA_KEY, m);
   renderHoje();
 }
@@ -4553,6 +4631,7 @@ try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", 
 /* Antes de qualquer descida: o aparelho precisa falar por `id` para que o
    estado.json possa responder por `id`. */
 try{ migrarGuiaToefl(); }catch(e){ console.error("migracao do guia TOEFL falhou:", e); }
+try{ migrarRetomadas(); }catch(e){ console.error("migracao das retomadas falhou:", e); }
 /* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
    Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
 const TEC_SEED = "2026-07-28-limpa";
@@ -4792,6 +4871,9 @@ function buscarEstado(){
          um eco que voltaria a subir a cada carregamento, para sempre — a mesma
          razao dos subitens e do registro. */
       if(aplicarToeflDoEstado(est)){ try{ renderProcessos(); }catch(e){} mudou = true; }
+      /* ---- Retomadas silenciadas (Fase 6B) ----
+         Dispensar num aparelho cala nos dois. So a data viaja. */
+      if(aplicarRetomadasDoEstado(est)) mudou = true;
       /* ---- Registro datado: a metade que faltava ----
          A subida ja existia inteira. logar() passa a MESMA linha que grava em
          cron:registro para o toque, e a dobra guarda o toque cru no `historico`

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Prova de ponta a ponta da sincronia de PRIORIDADES (Fase 2) e do GUIA DO
-TOEFL (Fase 6A).
+"""Prova de ponta a ponta da sincronia de PRIORIDADES (Fase 2), do GUIA DO
+TOEFL (Fase 6A) e das RETOMADAS SILENCIADAS (Fase 6B).
 
     python3 scripts/teste_sincronia.py
 
@@ -355,9 +355,61 @@ ok(volta["conta"] is True and volta["reading"] is True,
 ok(volta["anki"] is False, "e o item desmarcado chega desmarcado", volta)
 ok(volta["novos"] == 0, "sem gerar toque de volta (sem eco)", volta["novos"])
 
+print("\n=== 7. Retomadas: o silencio atravessa (Fase 6B) ===")
+TMP4 = montar_repo_falso()
+saida_r = node("""
+const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
+mac.adiarRetomada("pipeline", "a01");
+console.log(JSON.stringify({toques: mac.getToques().filter(t=>t.tipo==="retomada"),
+                            ate: mac.LS("cron:retomadas-adiadas",{})["pipeline/a01"].ate}));
+""", RAIZ)
+gravar_toques(TMP4, saida_r["toques"], "lote-ret.json")
+est_r = dobrar_em(TMP4)
+R = est_r.get("retomadas", {})
+ok("retomadas" in est_r, "o estado.json ganhou a secao 'retomadas'", sorted(est_r.keys()))
+ok("pipeline/a01" in R, "o alvo e painel/projeto", sorted(R.keys()))
+ok(R["pipeline/a01"].get("ate") == saida_r["ate"],
+   "o `ate` chegou preservado", R["pipeline/a01"])
+ok(R["pipeline/a01"].get("quando") and R["pipeline/a01"].get("aparelho") == "mac",
+   "com quando e aparelho postos pela maquina existente", R["pipeline/a01"])
+ok(all(k not in R["pipeline/a01"] for k in ("t", "projT", "subT")),
+   "e nenhum titulo ou texto viajou", R["pipeline/a01"])
+
+antes_hist_r = len(est_r["historico"])
+gravar_toques(TMP4, saida_r["toques"], "lote-ret-repetido.json")
+est_r2 = dobrar_em(TMP4)
+ok(est_r2["retomadas"] == R, "redobrar o mesmo lote nao muda o estado")
+ok(len(est_r2["historico"]) == antes_hist_r,
+   "e nao duplica o historico (idempotente)",
+   (antes_hist_r, len(est_r2["historico"])))
+
+gravar_toques(TMP4, [{"v": 1, "id": "2020-01-01T00-00-00-000Z-ret",
+                      "quando": "2020-01-01T00:00:00.000Z", "aparelho": "celular",
+                      "app": "teste", "tipo": "retomada",
+                      "dados": {"pid": "pipeline", "projId": "a01",
+                                "ate": "2020-01-15"}}], "lote-ret-atrasado.json")
+est_r3 = dobrar_em(TMP4)
+ok(est_r3["retomadas"]["pipeline/a01"]["ate"] == saida_r["ate"],
+   "toque atrasado NAO derruba o silencio mais novo",
+   est_r3["retomadas"]["pipeline/a01"])
+ok(any(t.get("id") == "2020-01-01T00-00-00-000Z-ret" for t in est_r3["historico"]),
+   "mas ele fica no historico: nada se perde")
+
+saida_r2 = node("""
+const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
+cel.adiarRetomada("pipeline", "a02");
+console.log(JSON.stringify({toques: cel.getToques().filter(t=>t.tipo==="retomada")}));
+""", RAIZ)
+gravar_toques(TMP4, saida_r2["toques"], "lote-ret-cel.json")
+est_r4 = dobrar_em(TMP4)
+ok(sorted(est_r4["retomadas"].keys()) == ["pipeline/a01", "pipeline/a02"],
+   "dois aparelhos com projetos diferentes produzem uniao",
+   sorted(est_r4["retomadas"].keys()))
+
 shutil.rmtree(TMP, ignore_errors=True)
 shutil.rmtree(TMP2, ignore_errors=True)
 shutil.rmtree(TMP3, ignore_errors=True)
+shutil.rmtree(TMP4, ignore_errors=True)
 print("\n" + "=" * 62)
 print("FALHAS: %d" % len(falhas))
 for f in falhas:

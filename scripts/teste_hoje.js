@@ -1255,6 +1255,119 @@ const domDesc2 = RB.DIAS[0].tasks.filter(t => t.id === "dom-desc")[0];
 ok(domDesc2 && domDesc2.t === "Descanso", "e dom-desc continua sendo 'Descanso'",
    domDesc2 && domDesc2.t);
 
+console.log("\n=== 40. O silencio da retomada atravessa (Fase 6B) ===");
+/* um projeto parado de verdade, para que retomadas() tenha o que devolver */
+function comParado(nome, storage){
+  const ctx = criarAparelho(nome, storage ? { storage } : undefined);
+  const ps = ctx.getProjs("pipeline"), pr = ps.filter(p => p.id === "a01")[0];
+  const velho = new Date(Date.now() - 40 * 86400000).toISOString();
+  pr.subs.forEach((x, i) => { x.st = i === 0 ? 1 : 0; x.em = velho; x.vida = "ativo"; });
+  ctx.setProjs("pipeline", ps);
+  return ctx;
+}
+const R6A = comParado("ret-a");
+ok(R6A.retomadas().some(r => r.projId === "a01"), "a01 aparece como parado",
+   R6A.retomadas().map(r => r.projId));
+const antesRA = R6A.getToques().length;
+R6A.adiarRetomada("pipeline", "a01");
+const guardado = R6A.LS("cron:retomadas-adiadas", {})["pipeline/a01"];
+ok(guardado && typeof guardado === "object" && guardado.ate && guardado.em,
+   "a gravacao virou {ate, em}", guardado);
+const tqR = R6A.getToques().filter(t => t.tipo === "retomada");
+ok(R6A.getToques().length === antesRA + 1 && tqR.length === 1,
+   "e emitiu exatamente um toque `retomada`", R6A.getToques().length - antesRA);
+ok(JSON.stringify(Object.keys(tqR[0].dados).sort()) === '["ate","pid","projId"]',
+   "com o payload minimo {pid, projId, ate}", Object.keys(tqR[0].dados));
+ok(tqR[0].dados.ate === guardado.ate && tqR[0].quando === guardado.em,
+   "e o instante gravado e o mesmo que subiu");
+/* os DOIS leitores calam */
+ok(!R6A.retomadas().some(r => r.projId === "a01"), "o projeto sai de retomadas()");
+ok(!(R6A.motorDePrioridades([]) || []).some(c => c.projId === "a01"),
+   "e sai tambem do motorDePrioridades()");
+
+console.log("\n=== 41. Migracao das silenciadas antigas ===");
+const futura = (() => { const d = new Date(Date.now() + 10 * 86400000);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); })();
+const vencida = "2020-01-01";
+const R6MG = criarAparelho("mig-ret", { storage: {
+  "cron:retomadas-adiadas": JSON.stringify({"pipeline/a01": futura, "pipeline/a02": vencida})
+}});
+const mapaMG = R6MG.LS("cron:retomadas-adiadas", {});
+ok(mapaMG["pipeline/a01"] && mapaMG["pipeline/a01"].ate === futura &&
+   mapaMG["pipeline/a01"].em === "2026-01-01T00:00:00.000Z",
+   "a futura virou {ate, em} com o piso RETOMADA_EM", mapaMG["pipeline/a01"]);
+ok(mapaMG["pipeline/a02"] && mapaMG["pipeline/a02"].ate === vencida,
+   "a vencida foi PRESERVADA no aparelho, convertida", mapaMG["pipeline/a02"]);
+ok(!R6MG.retomadas().some(r => r.projId === "a02") === false ||
+   mapaMG["pipeline/a02"].ate < R6MG.ymd(R6MG.now),
+   "e a vencida nao cala ninguem: os leitores exigem ate > hoje");
+const tqMG = R6MG.getToques().filter(t => t.tipo === "retomada");
+ok(tqMG.length === 1 && tqMG[0].dados.projId === "a01",
+   "mas so a futura foi publicada: um toque", tqMG.map(t => t.dados));
+R6MG.migrarRetomadas();
+ok(R6MG.getToques().filter(t => t.tipo === "retomada").length === 1,
+   "migrar de novo nao emite o segundo lote");
+ok(R6MG.LS("cron:retomadas-migrado", false) === true, "cron:retomadas-migrado foi posto");
+
+console.log("\n=== 42. Convergencia entre aparelhos ===");
+function dobrarRetomadas(toques, base) {
+  const est = { retomadas: Object.assign({}, (base || {}).retomadas) };
+  toques.slice().sort((a, b) => (a.quando || "") < (b.quando || "") ? -1 : 1)
+    .forEach(t => {
+      if (t.tipo !== "retomada") return;
+      const k = t.dados.pid + "/" + t.dados.projId;
+      const atual = est.retomadas[k];
+      if (atual && (atual.quando || "") > (t.quando || "")) return;
+      est.retomadas[k] = { ate: t.dados.ate, quando: t.quando, aparelho: t.aparelho };
+    });
+  return est;
+}
+const R6B1 = comParado("ret-b1"); R6B1.adiarRetomada("pipeline", "a01");
+const R6B2 = comParado("ret-b2"); R6B2.adiarRetomada("pipeline", "a02");
+const uniao = dobrarRetomadas(R6B1.getToques().concat(R6B2.getToques()));
+ok(Object.keys(uniao.retomadas).sort().join(",") === "pipeline/a01,pipeline/a02",
+   "projetos diferentes coexistem", Object.keys(uniao.retomadas));
+R6B1.aplicarRetomadasDoEstado(uniao);
+const mRB1 = R6B1.LS("cron:retomadas-adiadas", {});
+ok(mRB1["pipeline/a01"] && mRB1["pipeline/a02"],
+   "e o aparelho A recebe a uniao sem perder a propria", Object.keys(mRB1));
+/* mais novo vence */
+const R6NV = comParado("ret-novo"); R6NV.adiarRetomada("pipeline", "a01");
+R6NV.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2099-12-31", quando: "2099-01-01T00:00:00.000Z" } } });
+ok(R6NV.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === "2099-12-31",
+   "remoto mais novo vence");
+/* mais antigo nao vence */
+const R6VL = comParado("ret-velho"); R6VL.adiarRetomada("pipeline", "a01");
+const ateVL = R6VL.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate;
+R6VL.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2020-01-01", quando: "2020-01-01T00:00:00.000Z" } } });
+ok(R6VL.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === ateVL,
+   "remoto mais antigo nao derruba o local");
+/* empate preserva o local */
+const R6EM = comParado("ret-empate"); R6EM.adiarRetomada("pipeline", "a01");
+const locEM = R6EM.LS("cron:retomadas-adiadas", {})["pipeline/a01"];
+R6EM.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2099-12-31", quando: locEM.em } } });
+ok(R6EM.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === locEM.ate,
+   "empate no relogio preserva o local");
+/* receber nao e tocar */
+const R6EC = comParado("ret-eco");
+const antesEC = R6EC.getToques().length;
+R6EC.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2099-12-31", quando: "2099-01-01T00:00:00.000Z" } } });
+ok(R6EC.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === "2099-12-31",
+   "o silencio de fora chega");
+ok(R6EC.getToques().length === antesEC, "e a descida NAO emite toque",
+   R6EC.getToques().length - antesEC);
+
+console.log("\n=== 43. O silencio expira sozinho ===");
+const R6EX = comParado("ret-expira");
+R6EX.save("cron:retomadas-adiadas", {"pipeline/a01": {ate:"2020-01-01", em:"2020-01-01T00:00:00.000Z"}});
+ok(R6EX.retomadas().some(r => r.projId === "a01"),
+   "vencido o `ate`, o projeto reaparece — sem toque nenhum",
+   R6EX.retomadas().map(r => r.projId));
+
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
 falhas.forEach(f => console.log("  - " + f));

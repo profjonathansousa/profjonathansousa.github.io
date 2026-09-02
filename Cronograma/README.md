@@ -358,7 +358,7 @@ Nunca criar um segundo mecanismo de conclusão.
 
 ## Sincronização
 
-Seis coisas atravessam aparelhos, cada uma com um tipo de toque:
+Sete coisas atravessam aparelhos, cada uma com um tipo de toque:
 
 | Tipo | Vai para | Chave |
 |---|---|---|
@@ -368,6 +368,7 @@ Seis coisas atravessam aparelhos, cada uma com um tipo de toque:
 | `evento` | `eventos` | id do evento |
 | `prioridade` | `prioridades` | `AAAA-Wnn/id` |
 | `toefl` | `toefl` | `id` do item do guia |
+| `retomada` | `retomadas` | `painel/projeto` |
 
 **O progresso do TOEFL atravessa aparelhos desde a Fase 6A.** Fechar o núcleo
 no computador avança a fase no celular. O mapa é `cron:toefl-guia`, plano e
@@ -388,14 +389,42 @@ marca legítima de outro. Como só sobem as verdadeiras, dois aparelhos migrando
 em ordens diferentes produzem **união**, nunca subtração. As chaves antigas
 `cron:toefl-guia:<fase>` **não são apagadas**: ficam como rede de segurança.
 
+**O silêncio da retomada atravessa desde a Fase 6B.** Dispensar uma retomada
+no celular cala no Mac. O mapa é `cron:retomadas-adiadas`, agora
+`{painel/projeto: {ate, em}}`, e o toque leva só `{pid, projId, ate}` — sem
+título, sem estágio, sem texto: o projeto é lido do trilho no aparelho que
+desenha.
+
+O `ate` é **data absoluta, não duração**. Um toque que chega três dias depois
+carrega a data que foi decidida; se viajasse "+14 dias", a latência da rede
+mudaria o resultado.
+
+**Não há lápide aqui**, e a razão é própria: não existe operação de
+dessilenciar. A entrada morre pela data que ela mesma carrega, e vencida ela
+some dos dois leitores — `retomadas()` e `motorDePrioridades()` — sem toque
+nenhum. A chave é compartilhada com o "agora não" das sugestões do motor, como
+sempre foi: silenciar num lugar silencia nos dois, agora entre aparelhos também.
+
+*Migração.* Converter e publicar são coisas diferentes: **toda** entrada vira
+`{ate, em}` e continua no aparelho, mas **só as que ainda calam viram toque** —
+publicar uma silenciada vencida seria história pública permanente por nada.
+Guardada por `cron:retomadas-migrado`, com o piso `RETOMADA_EM`.
+
 **A recalibragem continua local.** `cron:toefl-recalibrado` é cache de uma
 derivação — `calcularRecalibragem()` a refaz a partir do plano, da fase corrente
 e do que falta, e as duas últimas agora sincronizam. Sincronizar a leitura seria
 sincronizar valor derivado. Não existe tipo de toque `recalibrado`.
 
-`cron:checks:` (rotinas) e `cron:contexto` (casa/fora) seguem locais, cada um
-pela sua razão: o dia marcado é do aparelho, e o lugar onde você está é um fato
-físico dele.
+`cron:checks:` (rotinas), `cron:hoje-dispensados` e `cron:contexto` (casa/fora)
+seguem locais, cada um pela sua razão. O lugar onde você está é um fato físico
+do aparelho. O dia marcado é do aparelho por decisão — a revisão dominical
+exibe a ressalva "neste aparelho". E `cron:hoje-dispensados` **não é equivalente
+à retomada adiada**: ela endereça um projeto durável e vale até uma data; ele
+endereça a ocorrência de uma rotina numa data passada, vale sete dias, é podado
+na escrita e **depende de `cron:checks:`** — dispensar só faz sentido sobre uma
+rotina não marcada, e "não marcada" é fato local. Sincronizar algo projetado
+para ser esquecido em sete dias custaria histórico permanente, em repositório
+público, por um valor que morre numa semana.
 
 Regras invioláveis:
 
@@ -476,7 +505,7 @@ vai para o ar, não uma cópia dele.
 | 4 — Aba Processos (TOEFL primeiro) | concluída |
 | 5 — Revisão dominical (digest curto) | concluída |
 | 6A — Sincronização do guia do TOEFL (toque `toefl`, identidade por `id`) | concluída |
-| 6B — Sincronização de retomadas e do estado do Hoje | a fazer |
+| 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
 | 7 — Notificações | a fazer |
 | 8 — Refatoração (dividir o index.html) | a fazer |
 
@@ -493,12 +522,10 @@ vai para o ar, não uma cópia dele.
 - **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as
   inventou. A única dependência real hoje é `prova: "estrela"` — etapa travada
   esperando decisão sua.
-- **Sincronização das retomadas adiadas e do estado do Hoje**
-  (`cron:retomadas-adiadas`, `cron:hoje-dispensados` e, se decidido,
-  `cron:checks:`). Pertence à **Fase 6B**. Dispensar uma retomada num aparelho
-  ainda não silencia no outro. `cron:checks:` é local **por decisão** — a
-  revisão dominical exibe a ressalva "neste aparelho" —, e sincronizá-lo é
-  escolha a tomar, não pendência a saldar.
+- **Sincronização de `cron:hoje-dispensados` e `cron:checks:`.** Ficaram
+  deliberadamente **fora** da Fase 6B, pelas razões da seção *Sincronização*:
+  não são equivalentes à retomada adiada, e `cron:checks:` é local **por
+  decisão**, não pendência a saldar. Sincronizá-los é escolha de produto.
 - **Sinais de Processo** alimentando o motor de prioridades, pelo seam
   `sinaisDeProcesso()`, que devolve `[]`.
 - **Processo Notre Dame.** A estrutura o recebe sem refatoração; ele não existe.
