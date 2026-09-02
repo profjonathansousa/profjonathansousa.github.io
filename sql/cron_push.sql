@@ -16,6 +16,13 @@
 -- O INSERT público foi analisado e aceito: alguém com a chave poderia inserir
 -- linha falsa, e o efeito máximo é um envio que falha — que o próprio
 -- limpador de 404/410 remove na execução seguinte.
+--
+-- `anon` E `service_role` AQUI SÃO PAPÉIS DO POSTGRES, NÃO NOMES DE CHAVE. O
+-- cliente apresenta a chave *publishable* e o gateway a resolve para o papel
+-- `anon`; o Actions apresenta a chave *secret* e ela resolve para
+-- `service_role`. Por isso a troca das chaves antigas (anon/service_role) pelo
+-- modelo atual do Supabase não altera uma linha deste arquivo: as políticas
+-- continuam valendo exatamente do mesmo jeito.
 -- ============================================================
 
 create table if not exists public.cron_push_inscricao (

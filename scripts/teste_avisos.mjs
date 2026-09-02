@@ -145,7 +145,23 @@ for (const p of arquivos) {
   /* endpoints reais dos serviços de push, e a forma de uma chave privada */
   if (/fcm\.googleapis\.com\/fcm\/send\/|web\.push\.apple\.com\/|updates\.push\.services\.mozilla\.com\/|wns\d*\.notify\.windows\.com\//.test(t)) suspeitos.push(p + ' (endpoint de push)');
   if (/BEGIN (RSA |EC )?PRIVATE KEY/.test(t)) suspeitos.push(p + ' (chave privada)');
-  if (/service_role/.test(t) && /eyJ[A-Za-z0-9_-]{20,}\./.test(t)) suspeitos.push(p + ' (service_role)');
+  /* CREDENCIAL SE RECONHECE PELO CONTEUDO, NAO PELA VIZINHANCA. A versao
+     anterior acusava "contem a palavra service_role E contem um JWT", e isso e
+     proximidade: a chave publishable/anon tambem e credencial de leitura
+     publica, e um comentario em prosa que mencione service_role bastava para
+     um falso positivo.
+
+     Agora o payload do JWT e decodificado e o veredicto sai do claim `role`.
+     Fica MAIS estrito, e nao menos: pega uma chave service_role em qualquer
+     arquivo, com ou sem palavra nenhuma por perto. */
+  for (const m of t.matchAll(/eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]+/g)) {
+    let carga = null;
+    try { carga = JSON.parse(Buffer.from(m[1], "base64url").toString("utf8")); } catch (e) { carga = null; }
+    if (carga && carga.role && carga.role !== "anon") suspeitos.push(p + ' (JWT role=' + carga.role + ')');
+  }
+  /* O modelo atual de chaves do Supabase nao usa JWT: a secreta e um literal
+     sb_secret_..., e nenhum decodificador a pegaria. */
+  if (/\bsb_secret_[A-Za-z0-9_-]+/.test(t)) suspeitos.push(p + ' (sb_secret)');
 }
 ok(suspeitos.length === 0, '(14) nenhum endpoint ou credencial em arquivo versionado', suspeitos);
 const estadoNot = JSON.parse(fs.readFileSync(path.join(RAIZ, 'scripts', 'estado_notificador.json'), 'utf8'));

@@ -4,8 +4,8 @@
 import webpush from 'web-push';
 import { enviarAviso } from './enviar.mjs';
 
-const URL_BASE = process.env.SUPABASE_URL, CHAVE = process.env.SUPABASE_SERVICE_ROLE;
-if (!URL_BASE || !CHAVE) { console.error('Faltam SUPABASE_URL / SUPABASE_SERVICE_ROLE.'); process.exit(1); }
+const URL_BASE = process.env.SUPABASE_URL, CHAVE = process.env.SUPABASE_SECRET_KEY;
+if (!URL_BASE || !CHAVE) { console.error('Faltam SUPABASE_URL / SUPABASE_SECRET_KEY.'); process.exit(1); }
 webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:ninguem@exemplo.com',
                         process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 

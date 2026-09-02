@@ -518,9 +518,15 @@ aparecer ali.
 
 | O quê | Onde |
 |---|---|
-| URL do projeto, anon key, VAPID **pública** | `js/00-config.js`, versionadas |
-| `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `SUPABASE_SERVICE_ROLE` | GitHub Secrets |
+| URL do projeto, chave **publishable**, VAPID **pública** | `js/00-config.js`, versionadas |
+| `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `SUPABASE_SECRET_KEY` | GitHub Secrets |
 | endpoint, `p256dh`, `auth` | **só na tabela** — nunca no repositório |
+
+As chaves seguem o modelo atual do Supabase: **publishable** no navegador,
+**secret** no Actions. `anon` e `service_role` continuam existindo no
+`sql/cron_push.sql`, mas ali são **papéis do Postgres**, não nomes de chave — a
+publishable resolve para `anon` e a secret para `service_role`, com as mesmas
+permissões de sempre. Por isso a troca não alterou uma linha das políticas.
 
 O endpoint é uma **URL-capacidade**: quem o tem notifica aquele aparelho. Como o
 repositório é público e o histórico nunca é podado, ele não entra em arquivo

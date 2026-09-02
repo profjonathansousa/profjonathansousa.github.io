@@ -1,6 +1,7 @@
 /* Cronograma — avisos por Web Push (Fase 8).
-   Roda no GitHub Actions, nunca no navegador. Entra com a service_role, que
-   ignora a RLS de propósito: é o único papel que pode ler as inscrições.
+   Roda no GitHub Actions, nunca no navegador. Entra com a chave SECRET, que
+   resolve para o papel service_role e ignora a RLS de propósito: é o único que
+   pode ler as inscrições.
 
    DUAS FONTES, E SÓ DUAS: vagas relevantes do lote novo, e eventos públicos
    que entraram na janela. Retomadas ficam de fora porque o servidor não tem o
@@ -11,7 +12,7 @@
    todos.
 
    Variáveis esperadas:
-     SUPABASE_URL, SUPABASE_SERVICE_ROLE,
+     SUPABASE_URL, SUPABASE_SECRET_KEY,
      VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
    Opcionais:
      HOJE=2026-09-10  força a data (para testar)
@@ -173,10 +174,10 @@ export function lerDados(raiz, hojeISO) {
 async function principal() {
   const webpush = (await import('web-push')).default;
   const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-  const URL_BASE = process.env.SUPABASE_URL, CHAVE = process.env.SUPABASE_SERVICE_ROLE;
+  const URL_BASE = process.env.SUPABASE_URL, CHAVE = process.env.SUPABASE_SECRET_KEY;
   const SECO = process.env.SECO === '1';
   const hojeISO = process.env.HOJE || ymd(new Date());
-  if (!URL_BASE || !CHAVE) { console.error('Faltam SUPABASE_URL / SUPABASE_SERVICE_ROLE.'); process.exit(1); }
+  if (!URL_BASE || !CHAVE) { console.error('Faltam SUPABASE_URL / SUPABASE_SECRET_KEY.'); process.exit(1); }
   webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:ninguem@exemplo.com',
                           process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
   const cabecalho = { apikey: CHAVE, Authorization: 'Bearer ' + CHAVE, 'Content-Type': 'application/json' };

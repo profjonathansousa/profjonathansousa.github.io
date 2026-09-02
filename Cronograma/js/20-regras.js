@@ -1060,5 +1060,5 @@ function vgVisivel(i){
    tocar no DOM, e e ela que decide se o botao existe. Sem as tres chaves nao ha
    o que inscrever, e um botao que so pode falhar e pior do que botao nenhum. */
 function avisosConfigurados(){
-  return !!(typeof AVISOS !== "undefined" && AVISOS && AVISOS.URL && AVISOS.ANON && AVISOS.VAPID);
+  return !!(typeof AVISOS !== "undefined" && AVISOS && AVISOS.URL && AVISOS.CHAVE && AVISOS.VAPID);
 }

@@ -1079,7 +1079,7 @@ function publicarInscricao(sub){
   var j = sub.toJSON();
   return fetch(AVISOS.URL + "/rest/v1/cron_push_inscricao", {
     method: "POST",
-    headers: { apikey: AVISOS.ANON, Authorization: "Bearer " + AVISOS.ANON,
+    headers: { apikey: AVISOS.CHAVE, Authorization: "Bearer " + AVISOS.CHAVE,
                "Content-Type": "application/json", Prefer: "return=minimal" },
     body: JSON.stringify({ endpoint: sub.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth,
                            aparelho: (navigator.userAgent.indexOf("iPhone") >= 0 ? "iPhone" : "outro") })

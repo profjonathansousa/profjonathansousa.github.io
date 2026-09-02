@@ -8,10 +8,12 @@
 /* ==================== AVISOS — Fase 8 ====================
    As tres coisas publicas do Web Push. Nenhuma delas e segredo:
 
-   - a URL e a anon key so dizem "sou um visitante deste projeto"; quem decide
-     o que se pode fazer e a RLS, em sql/cron_push.sql, que da ao anon APENAS
-     inserir. Ler, atualizar e apagar inscricao e da service_role, que mora em
-     GitHub Secrets e roda so no Actions;
+   - a URL e a chave PUBLISHABLE so dizem "sou um visitante deste projeto".
+     Ela e o modelo atual do Supabase e substitui a antiga anon key, com as
+     MESMAS baixas permissoes: quem decide o que se pode fazer continua sendo a
+     RLS, em sql/cron_push.sql, que permite APENAS inserir. Ler, atualizar e
+     apagar inscricao e da chave SECRET, que mora em GitHub Secrets e roda so
+     no Actions;
    - a chave VAPID publica e publica por desenho: e ela que o navegador usa
      para amarrar a inscricao a este emissor. A PRIVADA nunca entra aqui.
 
@@ -19,7 +21,7 @@
    e quem decide, e a ausencia de configuracao nao pode quebrar tela nenhuma. */
 const AVISOS = {
   URL:   "https://mcwgiqwbbgdltzqgopcq.supabase.co",
-  ANON:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jd2dpcXdiYmdkbHR6cWdvcGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNDA1NjgsImV4cCI6MjEwMzcxNjU2OH0.tmCzVwD-d-bM4kMziKMmP77a0eBrhdyP1v4rJP1PJxE",
+  CHAVE: "sb_publishable_-k508GkeJm6-5fFp0KhBTg_7r0P8vTT",
   VAPID: ""    /* PENDENTE: `npx web-push generate-vapid-keys`. A publica vem
                   para ca; a PRIVADA vai para o Secret VAPID_PRIVATE_KEY e nao
                   entra em arquivo nenhum. Ate isto ser preenchido o botao de
