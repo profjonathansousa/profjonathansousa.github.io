@@ -1772,6 +1772,66 @@
     "del": false,
     "t": "Concerto de Primavera"
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-015Z-s41hky",
+   "quando": "2026-01-01T00:00:00.015Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-016Z-s41hky",
+   "quando": "2026-01-01T00:00:00.016Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-017Z-s41hky",
+   "quando": "2026-01-01T00:00:00.017Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-tpl-writing",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-018Z-s41hky",
+   "quando": "2026-01-01T00:00:00.018Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-notas-listening",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-01-01T00-00-00-019Z-s41hky",
+   "quando": "2026-01-01T00:00:00.019Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-rot-speaking",
+    "feito": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1892,7 +1952,12 @@
   "2026-09-01T16-08-08-919Z-s41hky",
   "2026-09-01T16-08-19-021Z-s41hky",
   "2026-09-01T16-08-32-079Z-s41hky",
-  "2026-09-01T16-08-35-186Z-s41hky"
+  "2026-09-01T16-08-35-186Z-s41hky",
+  "2026-01-01T00-00-00-015Z-s41hky",
+  "2026-01-01T00-00-00-016Z-s41hky",
+  "2026-01-01T00-00-00-017Z-s41hky",
+  "2026-01-01T00-00-00-018Z-s41hky",
+  "2026-01-01T00-00-00-019Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2325,6 +2390,34 @@
    "del": false,
    "t": "Concerto de Primavera",
    "quando": "2026-09-01T16:08:35.186Z",
+   "aparelho": "s41hky"
+  }
+ },
+ "prioridades": {},
+ "toefl": {
+  "f1-conta": {
+   "feito": true,
+   "quando": "2026-01-01T00:00:00.015Z",
+   "aparelho": "s41hky"
+  },
+  "f1-anki": {
+   "feito": true,
+   "quando": "2026-01-01T00:00:00.016Z",
+   "aparelho": "s41hky"
+  },
+  "f1-tpl-writing": {
+   "feito": true,
+   "quando": "2026-01-01T00:00:00.017Z",
+   "aparelho": "s41hky"
+  },
+  "f1-notas-listening": {
+   "feito": true,
+   "quando": "2026-01-01T00:00:00.018Z",
+   "aparelho": "s41hky"
+  },
+  "f1-rot-speaking": {
+   "feito": true,
+   "quando": "2026-01-01T00:00:00.019Z",
    "aparelho": "s41hky"
   }
  }
