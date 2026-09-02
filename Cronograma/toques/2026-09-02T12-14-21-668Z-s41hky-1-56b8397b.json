@@ -1,0 +1,26 @@
+{
+ "v": 1,
+ "lote": "2026-09-02T12-14-21-668Z-s41hky",
+ "quando": "2026-09-02T12:14:25.670Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-30-abas1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-02T12-14-21-668Z-s41hky",
+   "quando": "2026-09-02T12:14:21.668Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788351261667",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a00",
+    "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "del": false
+   }
+  }
+ ]
+}
