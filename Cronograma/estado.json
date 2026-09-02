@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-01T16:08:35.186Z",
+ "_dobrado_em": "2026-09-02T12:14:31.181Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1832,6 +1832,57 @@
     "iid": "f1-rot-speaking",
     "feito": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T12-14-21-668Z-s41hky",
+   "quando": "2026-09-02T12:14:21.668Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788351261667",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a00",
+    "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T12-14-26-701Z-s41hky",
+   "quando": "2026-09-02T12:14:26.701Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788351266701",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a01",
+    "t": "Ago · A consciência em Lutero e Spinoza",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T12-14-31-181Z-s41hky",
+   "quando": "2026-09-02T12:14:31.181Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788351271181",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a02",
+    "t": "Set · A categoria de \"religião\" e a primeira modernidade",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -1957,7 +2008,10 @@
   "2026-01-01T00-00-00-016Z-s41hky",
   "2026-01-01T00-00-00-017Z-s41hky",
   "2026-01-01T00-00-00-018Z-s41hky",
-  "2026-01-01T00-00-00-019Z-s41hky"
+  "2026-01-01T00-00-00-019Z-s41hky",
+  "2026-09-02T12-14-21-668Z-s41hky",
+  "2026-09-02T12-14-26-701Z-s41hky",
+  "2026-09-02T12-14-31-181Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2393,7 +2447,35 @@
    "aparelho": "s41hky"
   }
  },
- "prioridades": {},
+ "prioridades": {
+  "2026-W36/pr1788351261667": {
+   "tipo": "trilho",
+   "painel": "pipeline",
+   "projId": "a00",
+   "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+   "del": false,
+   "quando": "2026-09-02T12:14:21.668Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788351266701": {
+   "tipo": "trilho",
+   "painel": "pipeline",
+   "projId": "a01",
+   "t": "Ago · A consciência em Lutero e Spinoza",
+   "del": false,
+   "quando": "2026-09-02T12:14:26.701Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788351271181": {
+   "tipo": "trilho",
+   "painel": "pipeline",
+   "projId": "a02",
+   "t": "Set · A categoria de \"religião\" e a primeira modernidade",
+   "del": false,
+   "quando": "2026-09-02T12:14:31.181Z",
+   "aparelho": "s41hky"
+  }
+ },
  "toefl": {
   "f1-conta": {
    "feito": true,
