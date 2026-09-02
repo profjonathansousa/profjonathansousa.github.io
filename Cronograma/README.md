@@ -38,9 +38,14 @@ estado.json  ──► progresso (st, vida, quando)
 | Aba | O que é |
 |---|---|
 | **Hoje** | execução do dia: prioridades, rotinas, retomadas, datas, indicador de vagas |
-| **Semana** | números da semana. Pouco usada — a revisão real é o digest de domingo (Fase 5) |
+| **Processos** | a estrutura completa de um trabalho complexo. Hoje: o TOEFL |
 | **Trilhos** | estruturas de longo prazo: esteira de artigos, PhD, pós-doc, concursos, técnico |
 | **Vagas** | triagem de oportunidades acadêmicas coletadas semanalmente |
+
+A **Semana** continua existindo inteira, com toda a sua lógica — ela apenas
+perdeu o lugar na barra para Processos, porque cinco abas não cabem num
+telefone. O acesso é pelo rodapé ("A semana em números"). A Fase 5 decide se ela
+vira o digest de domingo ou sai de cena.
 
 ---
 
@@ -141,6 +146,52 @@ Uma linha (`6 novas · 2 para revisar`). A triagem inteira continua na aba Vagas
 
 ---
 
+## Processos
+
+**Processo é a estrutura completa de um trabalho complexo. Hoje é a ação que
+precisa ser feita agora.** Até a Fase 4 as duas coisas moravam na mesma tela: o
+guia inteiro do TOEFL abria numa gaveta dentro do Hoje.
+
+### TOEFL
+
+A aba responde: em que fase estou · o que falta para fechá-la · o que é núcleo e
+o que é reforço · qual o objetivo · se estou atrasado em relação ao calendário
+original · se preciso recalibrar · qual é a ação concreta agora.
+
+Três decisões do modelo, todas anteriores à Fase 4 e todas preservadas:
+
+- **A fase anda pelo núcleo, não pelo calendário.** `currentFaseId()` devolve a
+  primeira fase cujo núcleo não fechou. As datas do `TOEFL_PLANO` viraram aviso.
+- **Núcleo × reforço.** `n:true` trava a fase seguinte; `n:false` vale a pena e
+  não congela nada — é onde mora o que depende de terceiros.
+- **Recalibrar não reescreve o plano.** `TOEFL_PLANO` é a memória do que se
+  previu; a recalibragem acrescenta uma leitura.
+
+> **A ordem dos itens do `TOEFL_GUIA` não pode mudar.** As marcações moram em
+> `cron:toefl-guia:<fase>` indexadas por **posição**. Reordenar moveria as
+> marcações para os itens errados, em silêncio.
+
+### A ponte Processo → Hoje
+
+O Hoje não sabe o que o TOEFL faz na terça: **ele pergunta**.
+
+```
+TOEFL_SEMANA[diaDaSemana] ──► acaoDoDiaDoProcesso("toefl") ──► a linha do Hoje
+```
+
+As rotinas em `DIAS` carregam `processo:"toefl"` e nenhum texto. O `id` não
+mudou — é dele que `cron:checks:` depende. Sem essa inversão, mover o guia de
+aba teria sido só mudar HTML de lugar.
+
+### Sem abstração genérica
+
+`PROCESSOS` é uma lista com quatro funções por entrada (`resumo`, `acaoDoDia`,
+`corpo`, `acoes`), todas já existentes no caso do TOEFL. Notre Dame implementa
+as mesmas quatro e entra na lista. Generalizar antes do segundo caso é como se
+inventa a abstração errada.
+
+---
+
 ## Contexto: casa / fora de casa
 
 Só dois estados. Fora de casa significa que o telefone é o que existe.
@@ -192,6 +243,12 @@ Cinco coisas atravessam aparelhos, cada uma com um tipo de toque:
 | `meta` | `metas` | `AAAA-MM/id` |
 | `evento` | `eventos` | id do evento |
 | `prioridade` | `prioridades` | `AAAA-Wnn/id` |
+
+**O progresso do TOEFL não atravessa aparelhos.** `cron:toefl-guia:<fase>` é
+local, como `cron:checks:` sempre foi — fechar o núcleo no computador não
+avança a fase no celular. Isso é anterior à Fase 4 e foi deliberadamente
+mantido: **a sincronização do progresso do TOEFL é da Fase 6**, e não existe
+tipo de toque `toefl`.
 
 Regras invioláveis:
 
@@ -251,7 +308,7 @@ sobrescreve progresso, conclusão ou ciclo de vida.
 
 ```bash
 python3 scripts/teste_coletor.py     # pipeline de vagas
-node     scripts/teste_hoje.js       # Hoje 2.0, dois aparelhos simulados
+node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 ```
 
@@ -269,7 +326,7 @@ vai para o ar, não uma cópia dele.
 | 1 — Vagas (extração, validação, veredicto) | concluída |
 | 2 — Hoje 2.0 | concluída |
 | 3 — Motor de prioridades (prazo, importância, inatividade, contexto) | concluída |
-| 4 — Aba Processos (TOEFL primeiro) | a fazer |
+| 4 — Aba Processos (TOEFL primeiro) | concluída |
 | 5 — Revisão dominical (digest curto) | a fazer |
 | 6 — Sincronização completa (retomadas, processos, estado do Hoje) | a fazer |
 | 7 — Notificações | a fazer |
@@ -288,8 +345,11 @@ vai para o ar, não uma cópia dele.
 - **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as
   inventou. A única dependência real hoje é `prova: "estrela"` — etapa travada
   esperando decisão sua.
-- **Sinais de Processo** (TOEFL, candidatura Notre Dame) alimentando o motor,
-  pelo seam `sinaisDeProcesso()`. Pertence à Fase 4.
+- **Sincronização do progresso do TOEFL entre aparelhos.** Exige um tipo de
+  toque novo; pertence à **Fase 6**. Hoje `cron:toefl-*` é local por aparelho.
+- **Sinais de Processo** alimentando o motor de prioridades, pelo seam
+  `sinaisDeProcesso()`, que devolve `[]`.
+- **Processo Notre Dame.** A estrutura o recebe sem refatoração; ele não existe.
 
 ---
 

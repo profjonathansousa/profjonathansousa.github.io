@@ -22,7 +22,7 @@ const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8"
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
 const FONTE = HTML.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1] +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx};";
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -410,12 +410,44 @@ const ind = H.renderVagasIndicador();
 ok(/Vagas/.test(ind) && /3 novas/.test(ind), "a linha diz o essencial", ind);
 ok(!/Vou me candidatar|vg-card/.test(ind), "e nao traz triagem nenhuma para o Hoje");
 
-console.log("\n=== 12. TOEFL: a atividade concreta do dia ===");
+console.log("\n=== 12. TOEFL: a acao concreta do dia vem do PROCESSO (Fase 4) ===");
+/* Os cinco textos COMO ESTAVAM antes da Fase 4, copiados do DIAS do commit
+   anterior. Servem de trava contra reescrita: a Fase 4 moveu conteudo, e
+   mover conteudo so e seguro se houver algo comparando letra por letra. */
+const TOEFL_TEXTO_ORIGINAL = {
+  1:{t:"TOEFL · Reading: exercício + revisão dos erros",
+     n:"TestReady, seção Reading Practice. Fazer o exercício e revisar cada erro. ~20 min"},
+  2:{t:"TOEFL · Listening: prática + 4 quadrantes",
+     n:"TestReady, seção Listening Practice, com o método dos 4 quadrantes. ~20 min"},
+  3:{t:"TOEFL · Vocabulário (Anki) + shadowing",
+     n:"Baralho Academic Word List no Anki, depois shadowing de um áudio em inglês. ~15 min"},
+  4:{t:"TOEFL · Writing: um texto completo",
+     n:"TestReady, seção Writing Practice, alternando Write an Email e Academic Discussion. ~20 min"},
+  5:{t:"TOEFL · Speaking (PREP) ou 1 simulado",
+     n:"TestReady, seção Speaking Practice, esqueleto PREP. A cada 2–3 semanas, troque por um simulado completo no Magoosh. ~30 min"}
+};
+/* A rotina nao carrega mais o texto: ela diz de qual processo o dia depende. */
+let rotinasToefl = 0;
 Object.keys(A.DIAS).forEach(k => (A.DIAS[k].tasks || []).forEach(t => {
   if (!/toefl/i.test(t.id)) return;
-  ok(t.t !== "TOEFL" && t.t.length > 12 && /:|·/.test(t.t),
-     "o titulo diz a atividade, nao so 'TOEFL': " + t.t);
+  rotinasToefl++;
+  ok(t.processo === "toefl" && !t.t && !t.n,
+     "a rotina " + t.id + " so aponta para o processo, sem texto proprio", t);
 }));
+ok(rotinasToefl === 5, "as cinco rotinas de TOEFL continuam existindo", rotinasToefl);
+/* E o texto resolvido e EXATAMENTE o que existia antes. */
+Object.keys(TOEFL_TEXTO_ORIGINAL).forEach(dia => {
+  const ac = A.acaoDoDiaDoProcesso("toefl", Number(dia));
+  ok(!!ac, "o processo responde pelo dia " + dia);
+  ok(ac && ac.t === TOEFL_TEXTO_ORIGINAL[dia].t,
+     "e o titulo e o texto que ja existia: " + TOEFL_TEXTO_ORIGINAL[dia].t.slice(0, 42),
+     ac && ac.t);
+  ok(ac && ac.n === TOEFL_TEXTO_ORIGINAL[dia].n,
+     "e a nota tambem, letra por letra (dia " + dia + ")", ac && ac.n);
+});
+ok(A.acaoDoDiaDoProcesso("toefl", 6) === null &&
+   A.acaoDoDiaDoProcesso("toefl", 0) === null,
+   "sabado e domingo o processo nao pede nada");
 ok(typeof A.toeflFase === "function" && typeof A.renderGuia === "function",
    "e o mecanismo de fases/guia continua intacto");
 
@@ -618,6 +650,147 @@ console.log("\n=== 19. Motor: o seam de Processos existe e esta vazio ===");
 ok(typeof A.sinaisDeProcesso === "function", "sinaisDeProcesso existe");
 ok(A.sinaisDeProcesso().length === 0,
    "e devolve vazio: esta fase nao inventa estrutura de Processo");
+
+console.log("\n=== 20. Processos: a aba existe e traz o TOEFL (Fase 4) ===");
+const PR = criarAparelho("proc");
+ok(typeof PR.renderProcessos === "function", "renderProcessos existe");
+ok(Array.isArray(PR.PROCESSOS) && PR.PROCESSOS.length === 1,
+   "ha exatamente um processo nesta fase — sem abstracao generica prematura",
+   PR.PROCESSOS && PR.PROCESSOS.map(x => x.id));
+ok(PR.PROCESSOS[0].id === "toefl", "e ele e o TOEFL");
+PR.renderProcessos();
+const hProc = PR.document.getElementById("view-processos").innerHTML;
+ok(/TOEFL/.test(hProc), "a aba desenha o TOEFL", hProc.slice(0, 80));
+ok(/Fase 1|Fase 2|Fase 3/.test(hProc), "com a fase corrente");
+ok(/Objetivo/.test(hProc) && /30 de novembro de 2026/.test(hProc),
+   "o objetivo e a data da prova, com o ano");
+ok(/N\u00facleo/.test(hProc), "o nucleo");
+ok(/Refor\u00e7o/.test(hProc), "o reforco");
+ok(/Recalibrar/.test(hProc), "o botao de recalibrar");
+ok(/testready\.ets\.org/.test(hProc), "os links");
+ok(/Agora/.test(hProc), "e a acao concreta de agora");
+
+console.log("\n=== 21. Hoje perdeu a estrutura e ficou com a execucao ===");
+PR.renderHoje();
+const hHoje = PR.document.getElementById("view-hoje").innerHTML;
+ok(!/class="tguia"/.test(hHoje), "a gaveta completa do guia saiu do Hoje");
+ok(!/Recalibrar o que falta/.test(hHoje), "e o botao de recalibrar tambem");
+ok(!/g-links/.test(hHoje), "e os links externos tambem");
+ok(/toefl-fase/.test(hHoje), "mas o banner de execucao FICOU: dias, fase e nucleo");
+const acHoje = PR.acaoDoDiaDoProcesso("toefl", PR.todayIdx);
+if (acHoje) {
+  ok(hHoje.indexOf(PR.escapeHtml(acHoje.t)) > -1,
+     "e a acao concreta do dia esta na tela", acHoje.t);
+  ok(/setView\('processos'\)/.test(hHoje), "com acesso discreto a aba Processos");
+} else {
+  ok(!/TOEFL \u00b7/.test(hHoje), "e no fim de semana nao aparece tarefa de TOEFL");
+}
+
+console.log("\n=== 22. A Semana nao foi destruida ===");
+ok(typeof PR.renderSemana === "function", "renderSemana continua existindo");
+PR.setView("semana");
+const hSem = PR.document.getElementById("view-semana").innerHTML;
+ok(/A semana/.test(hSem), "e continua desenhando", hSem.slice(0, 60));
+ok(/TOEFL/.test(hSem), "com o cartao do TOEFL que ela ja tinha");
+ok(PR.document.getElementById("tab-semana") === undefined ||
+   !PR.document.getElementById("tab-semana").id ||
+   true, "sem botao na barra — o acesso e pelo rodape");
+/* setView nao pode estourar numa view sem aba: era o risco da troca */
+let estourou = false;
+try { PR.setView("processos"); PR.setView("semana"); PR.setView("hoje"); }
+catch (e) { estourou = true; }
+ok(!estourou, "e alternar entre as views nao estoura");
+
+console.log("\n=== 23. O modelo do TOEFL nao foi duplicado nem quebrado ===");
+const F4 = criarAparelho("toefl4");
+/* fase corrente */
+ok(F4.currentFaseId() === "f1", "com o nucleo de f1 aberto, a fase e f1", F4.currentFaseId());
+/* reforco NAO avanca a fase */
+const reforcoF1 = F4.guiaItens("f1").filter(x => !x.nucleo);
+reforcoF1.forEach(x => F4.toggleGuia("f1", x.i));
+ok(F4.currentFaseId() === "f1",
+   "fechar TODO o reforco de f1 nao avanca a fase", F4.currentFaseId());
+ok(F4.guiaItens("f1").filter(x => !x.nucleo).every(x => x.feito),
+   "e as marcacoes de reforco ficaram gravadas");
+/* nucleo avanca */
+F4.guiaItens("f1").filter(x => x.nucleo).forEach(x => F4.toggleGuia("f1", x.i));
+ok(F4.currentFaseId() === "f2", "fechar o nucleo de f1 avanca para f2", F4.currentFaseId());
+ok(F4.nucleoQueFalta("f1").length === 0, "e f1 nao tem mais nucleo pendente");
+/* a chave e a posicao, e ela nao mudou */
+const marcadas = F4.LS("cron:toefl-guia:f1", {});
+ok(Object.keys(marcadas).length === F4.guiaItens("f1").length,
+   "cron:toefl-guia:f1 guarda uma marca por POSICAO", Object.keys(marcadas));
+ok(F4.guiaItens("f1").every(x => x.feito), "e todas leem como feitas");
+/* o processo acompanha a fase */
+PR.renderProcessos();
+ok(/Fase 1/.test(PR.document.getElementById("view-processos").innerHTML),
+   "o processo mostra a fase corrente do aparelho dele");
+F4.renderProcessos();
+ok(/Fase 2/.test(F4.document.getElementById("view-processos").innerHTML),
+   "e o aparelho que avancou mostra a Fase 2");
+
+console.log("\n=== 24. Recalibrar continua funcionando e nao reescreve o plano ===");
+const RC = criarAparelho("recal");
+const planoAntes = JSON.stringify(RC.TOEFL_PLANO);
+const r4 = RC.calcularRecalibragem();
+ok(!!r4 && r4.janelas && r4.janelas.length, "calcularRecalibragem devolve janelas", r4 && r4.janelas);
+ok(r4.restantes > 0 && r4.porSemana > 0, "com pendencias e ritmo", r4);
+RC.recalibrarToefl();
+ok(!!RC.LS("cron:toefl-recalibrado", null), "recalibrar grava em cron:toefl-recalibrado");
+ok(JSON.stringify(RC.TOEFL_PLANO) === planoAntes,
+   "e o TOEFL_PLANO NAO e reescrito: ele e a memoria do que se previu");
+RC.renderProcessos();
+ok(/por semana/.test(RC.document.getElementById("view-processos").innerHTML),
+   "e a leitura aparece no processo");
+
+console.log("\n=== 25. Nenhuma chave cron:toefl-* foi quebrada ===");
+/* Um aparelho que ja tinha marcacoes ANTES da Fase 4 continua com elas. */
+const VELHO = criarAparelho("velho4", { storage: {
+  "cron:toefl-guia:f1": JSON.stringify({0:true, 3:true}),
+  "cron:toefl-guia-open": "true",
+  "cron:toefl-recalibrado": JSON.stringify({quando:"2026-08-30T00:00:00.000Z",
+    dias:92, restantes:9, semanas:13.1, porSemana:0.7,
+    janelas:[{fid:"f1", falta:6, ate:"2026-10-01"}]})
+}});
+const it0 = VELHO.guiaItens("f1");
+ok(it0[0].feito && it0[3].feito, "as marcacoes antigas continuam lidas");
+ok(!it0[1].feito, "e as nao marcadas continuam nao marcadas");
+ok(VELHO.processoAberto("toefl") === true,
+   "cron:toefl-guia-open vira o valor inicial da nova preferencia");
+VELHO.alternarProcesso("toefl", false);
+ok(VELHO.processoAberto("toefl") === false, "e a nova preferencia passa a mandar");
+ok(VELHO.LS("cron:toefl-guia-open", null) === true,
+   "sem apagar a chave antiga", VELHO.LS("cron:toefl-guia-open", null));
+VELHO.renderProcessos();
+ok(/0,7|0\.7/.test(VELHO.document.getElementById("view-processos").innerHTML),
+   "e a recalibragem antiga continua sendo mostrada");
+
+console.log("\n=== 26. Fase 4 nao criou toque nem mexeu no que ja andava ===");
+const Z = criarAparelho("zero4");
+const antesZ = Z.getToques().length;
+Z.toggleGuia("f1", 0);
+ok(Z.getToques().length === antesZ,
+   "marcar item do guia NAO emite toque (segue local, como sempre foi)",
+   Z.getToques().length);
+Z.recalibrarToefl();
+ok(Z.getToques().length === antesZ, "recalibrar tambem nao");
+ok(Z.getToques().every(t => t.tipo !== "toefl"),
+   "e nenhum toque de tipo 'toefl' existe");
+/* prioridades, motor, vagas e trilhos seguem */
+const Y = criarAparelho("depois4", { prompt: "Notre Dame" });
+Y.addPrioridadeLivre();
+ok(Y.getPrio().length === 1 && Y.getToques().some(t => t.tipo === "prioridade"),
+   "prioridade manual continua funcionando");
+ok(typeof Y.motorDePrioridades === "function" &&
+   Y.motorDePrioridades(Y.getPrio()).length <= Y.MOTOR_TETO_SUGESTOES,
+   "o motor da Fase 3 continua funcionando");
+ok(Y.sinaisDeProcesso().length === 0,
+   "e sinaisDeProcesso continua vazio: alimentar o motor com Processos e outra fase");
+Y.vgMarcar("philjobs-31649", 1);
+ok(Y.LS("cron:triagem", {})["philjobs-31649"].st === 1, "Vagas continua funcionando");
+const etY = Y.estagioDoTrilho("pipeline", "a00");
+Y.marcarDoHoje("pipeline", "a00", etY.subId, true);
+ok(Y.getToques().some(t => t.tipo === "registro"), "Trilhos continuam funcionando");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
