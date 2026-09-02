@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T14:39:00.653Z",
+ "_dobrado_em": "2026-09-02T14:39:17.937Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2171,6 +2171,54 @@
     "vid": "anpof-chamadas-s-tecnocientificos-da-transcendencia-e-da-superacao-da-morte",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-07-758Z-s41hky",
+   "quando": "2026-09-02T14:39:07.758Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-s-dossie-pensando-o-ensino-de-filosofia-a-partir-do-nordeste",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-11-889Z-s41hky",
+   "quando": "2026-09-02T14:39:11.889Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas--colombia-memoria-conflitos-e-reconfiguracoes-contemporaneas",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-14-979Z-s41hky",
+   "quando": "2026-09-02T14:39:14.979Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-e-revistas-revista-paradigmas-filosofia-realidade-arte-20261",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-17-937Z-s41hky",
+   "quando": "2026-09-02T14:39:17.937Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas--hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho2",
+    "st": 2
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2323,7 +2371,11 @@
   "2026-09-02T14-38-46-794Z-s41hky",
   "2026-09-02T14-38-49-718Z-s41hky",
   "2026-09-02T14-38-53-063Z-s41hky",
-  "2026-09-02T14-39-00-653Z-s41hky"
+  "2026-09-02T14-39-00-653Z-s41hky",
+  "2026-09-02T14-39-07-758Z-s41hky",
+  "2026-09-02T14-39-11-889Z-s41hky",
+  "2026-09-02T14-39-14-979Z-s41hky",
+  "2026-09-02T14-39-17-937Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2634,6 +2686,26 @@
   "anpof-chamadas-s-tecnocientificos-da-transcendencia-e-da-superacao-da-morte": {
    "st": 2,
    "quando": "2026-09-02T14:39:00.653Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-s-dossie-pensando-o-ensino-de-filosofia-a-partir-do-nordeste": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:07.758Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas--colombia-memoria-conflitos-e-reconfiguracoes-contemporaneas": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:11.889Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-e-revistas-revista-paradigmas-filosofia-realidade-arte-20261": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:14.979Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas--hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho2": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:17.937Z",
    "aparelho": "s41hky"
   }
  },
