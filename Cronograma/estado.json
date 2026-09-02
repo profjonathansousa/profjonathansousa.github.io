@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T14:35:28.960Z",
+ "_dobrado_em": "2026-09-02T14:35:56.692Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1955,6 +1955,30 @@
     "vid": "philjobs-31897",
     "st": 1
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-35-46-336Z-s41hky",
+   "quando": "2026-09-02T14:35:46.336Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31933",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-35-56-692Z-s41hky",
+   "quando": "2026-09-02T14:35:56.692Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31661",
+    "st": 1
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2089,7 +2113,9 @@
   "2026-09-02T14-34-21-733Z-s41hky",
   "2026-09-02T14-34-56-140Z-s41hky",
   "2026-09-02T14-35-20-431Z-s41hky",
-  "2026-09-02T14-35-28-960Z-s41hky"
+  "2026-09-02T14-35-28-960Z-s41hky",
+  "2026-09-02T14-35-46-336Z-s41hky",
+  "2026-09-02T14-35-56-692Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2310,6 +2336,16 @@
   "philjobs-31897": {
    "st": 1,
    "quando": "2026-09-02T14:35:28.960Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31933": {
+   "st": 1,
+   "quando": "2026-09-02T14:35:46.336Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31661": {
+   "st": 1,
+   "quando": "2026-09-02T14:35:56.692Z",
    "aparelho": "s41hky"
   }
  },
