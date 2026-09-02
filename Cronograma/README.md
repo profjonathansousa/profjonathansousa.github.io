@@ -42,6 +42,9 @@ estado.json  ──► progresso (st, vida, quando)
 | **Trilhos** | estruturas de longo prazo: esteira de artigos, PhD, pós-doc, concursos, técnico |
 | **Vagas** | triagem de oportunidades acadêmicas coletadas semanalmente |
 
+A **revisão dominical** não tem aba: no domingo ela abre dentro do Hoje, e nos
+outros dias fica no rodapé ("Revisão da semana").
+
 A **Semana** continua existindo inteira, com toda a sua lógica — ela apenas
 perdeu o lugar na barra para Processos, porque cinco abas não cabem num
 telefone. O acesso é pelo rodapé ("A semana em números"). A Fase 5 decide se ela
@@ -143,6 +146,74 @@ Cada evento é endereçado pelo **id**, nunca pelo índice da tela.
 
 ### 5. Indicador de Vagas
 Uma linha (`6 novas · 2 para revisar`). A triagem inteira continua na aba Vagas.
+
+---
+
+## Revisão dominical
+
+**Domingo é informação. Segunda é decisão.**
+
+No domingo o Hoje abre com a revisão da semana que termina. Ela mostra o que
+aconteceu, o que ficou aberto e o que merece atenção — e para aí. **Não escolhe
+prioridade, não cria tarefa e não diz o que fazer na semana que vem.**
+
+> "Patriotismo ficou 18 dias sem avanço" é informação.
+> "Trabalhe em Patriotismo" seria decidir por você.
+
+Quatro blocos, uma tela de celular:
+
+| Bloco | O que traz |
+|---|---|
+| **Concluído** | etapas de trilho fechadas, metas, prioridades cumpridas, rotinas marcadas |
+| **Ficou para trás** | prioridades sem avanço, rotinas não marcadas, sugestões não adotadas |
+| **Atenção** | projetos parados (`retomadas()`) e o resumo dos processos |
+| **Próxima semana** | datas, prazos de vagas e a contagem — **lista o que vem, não o que fazer** |
+
+### Cada coisa na sua fonte de verdade
+
+Nenhuma heurística nova. O digest pergunta a quem já sabe:
+
+| Item | Fonte |
+|---|---|
+| etapa de trilho | `cron:registro` (o diário) **+** `st` do subitem (o saldo) |
+| prioridade livre | `cron:checks`, o mecanismo de sempre |
+| rotina | `cron:checks`, pelo `atrasadas()` que já existia |
+| meta | a própria meta, com o seu `done` |
+| processo | `toeflFase()`, o resumo que o processo já publica |
+
+**A regra das três condições** para "concluído nesta semana", e cada uma existe
+por um caso real: o `cron:registro` grava os dois sentidos, e nas linhas reais
+de 30/08 há `de=1 para=2` seguido de `de=2 para=0` no mesmo subitem, no mesmo
+dia. Contar `para===2` ingenuamente diria duas etapas concluídas; a verdade é
+zero. Então:
+
+1. existe linha com `para===2` dentro da semana;
+2. ela é o **último** movimento daquele subitem na semana;
+3. o subitem está com `st===2` **agora**.
+
+A 3 é o saldo, a 2 é o diário. Manter as duas preserva a distinção entre
+registro histórico e estado atual: se discordarem, o item não entra.
+
+### Manual, sugestão e rotina não se confundem
+
+O digest rotula as três origens. Uma sugestão do motor aparece como *"o sistema
+sugeriu X; não foi adotada"* — **nunca** como escolha sua. Sugestão adotada
+some da lista por construção: o motor já exclui o que virou manual.
+
+### Rotinas marcadas são deste aparelho
+
+`cron:checks:` sempre foi local — marcar no computador não aparece no celular.
+Por isso a linha diz **"9 rotinas concluídas · neste aparelho"**. Apresentar
+esse número sem a ressalva seria dar dado local como estado de todos. As etapas
+de trilho, metas, prioridades e eventos são sincronizados e aparecem sem
+ressalva.
+
+### Nada é gravado
+
+A revisão é **inteiramente derivada**: nenhuma chave nova de `localStorage`,
+nenhum tipo de toque, nenhuma cópia do resumo. Calcular e desenhar duas vezes
+não muda um byte do aparelho — há teste disso. E **não existe caixa para marcar
+a revisão**: nada de `dom-revisao` ou `dom-planejar`. Ela acontece por existir.
 
 ---
 
@@ -327,17 +398,17 @@ vai para o ar, não uma cópia dele.
 | 2 — Hoje 2.0 | concluída |
 | 3 — Motor de prioridades (prazo, importância, inatividade, contexto) | concluída |
 | 4 — Aba Processos (TOEFL primeiro) | concluída |
-| 5 — Revisão dominical (digest curto) | a fazer |
+| 5 — Revisão dominical (digest curto) | concluída |
 | 6 — Sincronização completa (retomadas, processos, estado do Hoje) | a fazer |
 | 7 — Notificações | a fazer |
 | 8 — Refatoração (dividir o index.html) | a fazer |
 
 ### Previsto e ainda não implementado
 
-- **Notificações push para novas vagas e oportunidades acadêmicas.** Requisito
-  registrado; a implementação pertence à Fase 7 e não faz parte da Fase 2.
-  Notificar prazos importantes e retomadas relevantes entra junto. **Não** criar
-  notificação para cada tarefa.
+- **Notificações push para novas vagas e oportunidades acadêmicas, prazos
+  importantes e retomadas relevantes.** Requisito registrado desde a Fase 2 e
+  reafirmado na Fase 5: a implementação pertence à **Fase 7** e nenhuma fase
+  anterior a antecipa. **Não** criar notificação para cada tarefa.
 - **Aprender com os descartes das vagas** (Vagas 3): registrar motivo
   estruturado para calibrar os filtros com o comportamento real.
 - **Remoção automática dos itens de veredicto `rejeitado`** de `dados/vagas.json`

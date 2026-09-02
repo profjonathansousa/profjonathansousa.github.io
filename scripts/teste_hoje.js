@@ -792,6 +792,224 @@ const etY = Y.estagioDoTrilho("pipeline", "a00");
 Y.marcarDoHoje("pipeline", "a00", etY.subId, true);
 ok(Y.getToques().some(t => t.tipo === "registro"), "Trilhos continuam funcionando");
 
+console.log("\n=== 27. Revisao dominical: a semana vazia (Fase 5) ===");
+/* Aparelho limpo: nenhuma marcacao, nenhum registro, nenhuma prioridade. */
+const RV = criarAparelho("rev");
+const vazio = RV.revisaoDaSemana();
+ok(!!vazio && vazio.seg && vazio.dom, "a revisao calcula a janela da semana",
+   vazio && [vazio.seg, vazio.dom]);
+ok(vazio.concluido.etapas.length === 0 && vazio.concluido.rotinas === 0,
+   "semana sem atividade: Concluido vem vazio", vazio.concluido);
+const htmlVazio = RV.renderRevisao();
+ok(/Revis\u00e3o da semana/.test(htmlVazio), "e a tela desenha mesmo assim");
+ok(/Nada registrado nesta semana/.test(htmlVazio), "dizendo que nada foi registrado");
+
+console.log("\n=== 28. Concluido: cada coisa na sua fonte de verdade ===");
+const RW = criarAparelho("rev2");
+const semRW = RW.segundaDaSemana();
+const noMeio = (function(){ /* uma data dentro da semana corrente */
+  const d = new Date(semRW.slice(0,4), Number(semRW.slice(5,7))-1, Number(semRW.slice(8,10)) + 1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+})();
+/* Uma etapa de trilho fechada de verdade: registro + st===2 */
+const etRW = RW.estagioDoTrilho("pipeline", "a00");
+RW.marcarDoHoje("pipeline", "a00", etRW.subId, true);
+let rev = RW.revisaoDaSemana();
+ok(rev.concluido.etapas.length === 1 &&
+   rev.concluido.etapas[0].subId === etRW.subId,
+   "etapa fechada na semana aparece em Concluido",
+   rev.concluido.etapas.map(e => e.subId));
+ok(rev.concluido.etapas[0].subT === etRW.subT,
+   "com o texto REAL do trilho, nunca inventado", rev.concluido.etapas[0].subT);
+
+/* O caso medido em 30/08: fechada e depois desfeita. NAO conta. */
+RW.marcarDoHoje("pipeline", "a00", etRW.subId, false);
+rev = RW.revisaoDaSemana();
+ok(rev.concluido.etapas.length === 0,
+   "fechada e depois DESFEITA nao aparece em Concluido",
+   rev.concluido.etapas.map(e => e.subId));
+ok(RW.getReg().filter(o => o.subId === etRW.subId).length === 2,
+   "e as duas linhas continuam no registro: o diario nao e reescrito");
+/* fechar de novo volta a contar */
+RW.marcarDoHoje("pipeline", "a00", etRW.subId, true);
+ok(RW.revisaoDaSemana().concluido.etapas.length === 1,
+   "fechar de novo volta a contar");
+
+/* Registro de semana anterior nao entra */
+const RX = criarAparelho("rev3");
+const antiga = RX.getReg();
+antiga.push({d:"2020-01-06", pid:"pipeline", projId:"a00", subId:"a00-2",
+             projT:"antigo", subT:"etapa antiga", de:0, para:2});
+RX.save("cron:registro", antiga);
+ok(RX.revisaoDaSemana().concluido.etapas.length === 0,
+   "conclusao de semana anterior nao entra nesta");
+
+console.log("\n=== 29. Rotinas locais e o rotulo honesto ===");
+const RY = criarAparelho("rev4");
+const semRY = RY.segundaDaSemana();
+const tarefasHoje = (RY.DIAS[RY.todayIdx] || {}).tasks || [];
+if (tarefasHoje.length) {
+  const ck = {}; ck[tarefasHoje[0].id] = true;
+  RY.save("cron:checks:" + RY.ymd(new Date()), ck);
+}
+const revRY = RY.revisaoDaSemana();
+ok(revRY.concluido.rotinas >= 1, "rotina marcada entra na contagem",
+   revRY.concluido.rotinas);
+const htmlRY = RY.renderRevisao();
+ok(/neste aparelho/.test(htmlRY),
+   "e o numero vem com o rotulo 'neste aparelho' — cron:checks e local");
+ok(/rotina(s)? conclu/.test(htmlRY), "com a contagem escrita", htmlRY.slice(0,0));
+
+console.log("\n=== 30. Prioridades: manual, livre e sugestao ===");
+const RZ = criarAparelho("rev5", { prompt: "Carta de recomendacao" });
+/* prioridade livre marcada */
+RZ.addPrioridadeLivre();
+const pridLivre = RZ.getPrio()[0].id;
+const ckHoje = RZ.LS("cron:checks:" + RZ.ymd(new Date()), {}) || {};
+ckHoje[pridLivre] = true;
+RZ.save("cron:checks:" + RZ.ymd(new Date()), ckHoje);
+let revZ = RZ.revisaoDaSemana();
+ok(revZ.concluido.prioridades.some(x => x.tipo === "livre" && /Carta/.test(x.t)),
+   "prioridade LIVRE marcada aparece em Concluido",
+   revZ.concluido.prioridades);
+ok(!revZ.atras.prioridades.some(x => /Carta/.test(x.t)),
+   "e nao aparece tambem em Ficou para tras");
+
+/* prioridade de trilho: sem avanco -> ficou para tras */
+const RT = criarAparelho("rev6");
+RT.addPrioridadeTrilho("pipeline/a01");
+let revT = RT.revisaoDaSemana();
+ok(revT.atras.prioridades.some(x => x.tipo === "trilho"),
+   "prioridade de TRILHO sem avanco fica em Ficou para tras", revT.atras.prioridades);
+const linhaT = revT.atras.prioridades.filter(x => x.tipo === "trilho")[0];
+ok(linhaT.etapa === RT.estagioDoTrilho("pipeline", "a01").subT,
+   "mostrando o estagio real do trilho", linhaT.etapa);
+/* fechar a etapa move para Concluido */
+const etT = RT.estagioDoTrilho("pipeline", "a01");
+RT.marcarDoHoje("pipeline", "a01", etT.subId, true);
+revT = RT.revisaoDaSemana();
+ok(revT.concluido.prioridades.some(x => x.tipo === "trilho"),
+   "prioridade de trilho com etapa concluida vai para Concluido");
+ok(!revT.atras.prioridades.some(x => x.tipo === "trilho"),
+   "e sai de Ficou para tras");
+/* desfeita: volta para Ficou para tras */
+RT.marcarDoHoje("pipeline", "a01", etT.subId, false);
+revT = RT.revisaoDaSemana();
+ok(revT.atras.prioridades.some(x => x.tipo === "trilho"),
+   "desfeita, a prioridade volta a ficar em aberto");
+
+/* sugestao nunca adotada: aparece como sugestao, nunca como prioridade */
+const RS = criarAparelho("rev7");
+const gv = RS.getProjs("pipeline");
+gv.find(p => p.id === "a05").mes = RS.monthKey;
+RS.setProjs("pipeline", gv);
+const revS = RS.revisaoDaSemana();
+ok(revS.atras.sugeridas.length > 0, "o motor sugeriu algo",
+   revS.atras.sugeridas.map(x => x.projId));
+ok(revS.concluido.prioridades.length === 0 && revS.atras.prioridades.length === 0,
+   "e nenhuma sugestao virou prioridade");
+ok(RS.getPrio().length === 0, "getPrio continua vazio depois da revisao");
+const htmlSR5 = RS.renderRevisao();
+ok(/O sistema sugeriu/.test(htmlSR5) && /nenhuma foi adotada|n\u00e3o foi adotada/.test(htmlSR5),
+   "e a tela diz claramente que foi o sistema que sugeriu");
+
+console.log("\n=== 31. Atencao, datas e Vagas ===");
+const RA = criarAparelho("rev8");
+/* projeto parado */
+const psA = RA.getProjs("pipeline");
+psA.find(p => p.id === "a02").subs[0].em =
+  new Date(Date.now() - 25 * 86400000).toISOString();
+psA.find(p => p.id === "a02").subs[0].st = 1;
+RA.setProjs("pipeline", psA);
+let revA = RA.revisaoDaSemana();
+ok(revA.atencao.paradas.some(x => x.projId === "a02"),
+   "projeto parado 25 dias entra em Atencao", revA.atencao.paradas.map(x => x.projId));
+/* adiado e abandonado nao entram */
+let ps2 = RA.getProjs("pipeline");
+ps2.find(p => p.id === "a02").subs.forEach(x => { x.vida = "adiado"; });
+RA.setProjs("pipeline", ps2);
+ok(!RA.revisaoDaSemana().atencao.paradas.some(x => x.projId === "a02"),
+   "projeto ADIADO nao entra em Atencao");
+ps2 = RA.getProjs("pipeline");
+ps2.find(p => p.id === "a02").subs.forEach(x => { x.vida = "abandonado"; });
+RA.setProjs("pipeline", ps2);
+ok(!RA.revisaoDaSemana().atencao.paradas.some(x => x.projId === "a02"),
+   "projeto ABANDONADO tambem nao");
+/* processo TOEFL: so o resumo */
+revA = RA.revisaoDaSemana();
+ok(revA.atencao.processos.length === 1 && revA.atencao.processos[0].titulo === "TOEFL",
+   "o processo aparece como resumo", revA.atencao.processos);
+const htmlA = RA.renderRevisao();
+ok(/TOEFL \u00b7 Fase/.test(htmlA), "com fase e nucleo pendente");
+ok(!/g-item|Refor\u00e7o|testready/.test(htmlA),
+   "e sem duplicar o conteudo da aba Processos");
+/* eventos: futuro entra, passado nao */
+const dYMD = (n) => { const d = new Date(Date.now() + n * 86400000);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+RA.setEventos([{id:"ef", t:"Evento futuro", data:dYMD(3)},
+               {id:"ep", t:"Evento passado", data:dYMD(-5)},
+               {id:"el", t:"Evento longe", data:dYMD(60)}]);
+revA = RA.revisaoDaSemana();
+ok(revA.frente.eventos.some(e => e.t === "Evento futuro"), "evento em 3 dias entra");
+ok(!revA.frente.eventos.some(e => e.t === "Evento passado"), "evento que passou nao entra");
+ok(!revA.frente.eventos.some(e => e.t === "Evento longe"), "e o de 60 dias tambem nao");
+/* Vagas: so contagem */
+RA.VG_VAGAS = { itens: [{id:"v1", novo:true, veredicto:"relevante"},
+                        {id:"v2", novo:true, veredicto:"revisar"}] };
+const htmlV = RA.renderRevisao();
+ok(/Vagas \u00b7/.test(htmlV), "as Vagas aparecem como uma linha");
+ok(!/vg-card|Vou me candidatar|Descartar/.test(htmlV),
+   "sem nenhum cartao nem botao de triagem");
+
+console.log("\n=== 32. A revisao NAO grava nada ===");
+const RG = criarAparelho("rev9", { prompt: "uma prioridade" });
+RG.addPrioridadeLivre();
+const chavesAntes = Object.keys(RG.__armazem).sort().join("|");
+const toquesAntes = RG.getToques().length;
+const prioAntes = JSON.stringify(RG.getPrio());
+/* calcular e desenhar duas vezes */
+RG.revisaoDaSemana(); RG.renderRevisao();
+RG.revisaoDaSemana(); RG.renderRevisao();
+RG.setView("revisao");
+ok(Object.keys(RG.__armazem).sort().join("|") === chavesAntes,
+   "nenhuma chave nova de localStorage",
+   Object.keys(RG.__armazem).filter(k => chavesAntes.indexOf(k) < 0));
+ok(RG.getToques().length === toquesAntes, "nenhum toque criado", RG.getToques().length);
+ok(JSON.stringify(RG.getPrio()) === prioAntes, "getPrio inalterado");
+ok(!RG.__armazem["cron:revisao"] && !RG.__armazem["cron:digest"],
+   "e nenhuma copia do resumo foi guardada");
+/* a revisao e estavel: duas leituras seguidas dao o mesmo */
+const j1 = JSON.stringify(RG.revisaoDaSemana());
+const j2 = JSON.stringify(RG.revisaoDaSemana());
+ok(j1 === j2, "e o resultado e estavel entre chamadas");
+
+console.log("\n=== 33. O domingo, e o resto continua de pe ===");
+const RD = criarAparelho("rev10");
+ok(RD.DIAS[0].tasks.every(t => t.id !== "dom-revisao" && t.id !== "dom-planejar"),
+   "nao existe tarefa de revisao no domingo", RD.DIAS[0].tasks.map(t => t.id));
+ok(RD.DIAS[0].tasks.length === 2, "o domingo continua com as duas rotinas de sempre");
+const domDesc = RD.DIAS[0].tasks.find(t => t.id === "dom-desc");
+ok(!/s\u00f3 se houver energia/.test(domDesc.n),
+   "e a nota nao trata mais a revisao como tarefa", domDesc.n);
+ok(/revis\u00e3o da semana/i.test(domDesc.n), "dizendo que o domingo ja a traz", domDesc.n);
+/* as outras telas seguem */
+RD.renderHoje();
+ok(/Rotinas de/.test(RD.document.getElementById("view-hoje").innerHTML),
+   "renderHoje continua funcionando");
+RD.renderProcessos();
+ok(/TOEFL/.test(RD.document.getElementById("view-processos").innerHTML),
+   "renderProcessos continua funcionando");
+RD.setView("semana");
+ok(/A semana/.test(RD.document.getElementById("view-semana").innerHTML),
+   "renderSemana continua funcionando, intacta");
+RD.vgMarcar("philjobs-31649", 1);
+ok(RD.LS("cron:triagem", {})["philjobs-31649"].st === 1, "Vagas continua funcionando");
+const etD = RD.estagioDoTrilho("pipeline", "a00");
+RD.marcarDoHoje("pipeline", "a00", etD.subId, true);
+ok(RD.getToques().some(t => t.tipo === "registro"), "Trilhos continuam funcionando");
+ok(RD.getToques().every(t => t.tipo !== "revisao" && t.tipo !== "digest"),
+   "e nenhum tipo de toque novo foi criado");
+
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
 falhas.forEach(f => console.log("  - " + f));

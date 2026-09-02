@@ -313,6 +313,20 @@
     text-decoration-color:var(--line-strong);}
   .pr-estrela{display:inline-block;margin-left:7px;font-size:10px;line-height:1;
     padding:3px 6px;border-radius:999px;border:1px solid var(--gold-line);color:var(--gold);}
+  /* Fase 5 — a revisao dominical. Curta de proposito: quatro blocos, uma tela
+     de celular, um ou dois minutos de leitura. Reusa .shead. */
+  .rev-per{font-size:12px;color:var(--muted);margin:-6px 0 12px;}
+  .rev-b{margin-bottom:14px;}
+  .rev-h{font-family:var(--sans);font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+  .rev-i{padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;
+    display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;}
+  .rev-i:last-child{border-bottom:0;}
+  .rev-t{color:var(--ink);}
+  .rev-s{color:var(--muted);font-size:11.5px;margin-left:auto;text-align:right;}
+  .rev-vazio{font-size:12px;color:var(--muted);font-style:italic;padding:4px 0;}
+  .rev-local{font-size:11.5px;color:var(--muted);padding:6px 0 0;}
+
   /* Fase 4 — a aba Processos. Reusa .g-item, .g-grupo, .g-meta e .aviso-cal do
      guia, que ja existiam: o corpo do processo E o guia, so que sem gaveta. */
   .proc{border:1px solid var(--line);border-radius:12px;background:var(--card);
@@ -491,6 +505,10 @@
   </div>
   <main id="view-hoje"></main>
   <main id="view-processos" hidden></main>
+  <!-- A revisao tambem tem view propria, sem botao na barra: no domingo ela
+       abre dentro do Hoje, e nos outros dias fica no rodape, para quem nao
+       abriu o aparelho no domingo. Mesma funcao nos dois lugares. -->
+  <main id="view-revisao" hidden></main>
   <!-- A SEMANA NAO FOI DESTRUIDA. Ela perdeu o lugar na barra para Processos,
        porque cinco abas nao cabem num telefone: a .switch e flex com botoes de
        largura igual, e "Processos" a 13px pede mais espaco do que sobra. O
@@ -502,6 +520,7 @@
   <main id="view-vagas" hidden></main>
   <div class="foot">
     <span id="phase-note"></span><br>
+    <button onclick="setView('revisao')">Revisão da semana</button>
     <button onclick="setView('semana')">A semana em números</button><br>
     <button onclick="limparHoje()">Limpar o que marquei hoje</button><br>
     <button onclick="exportarDados()">Exportar backup</button>
@@ -615,7 +634,7 @@ const DIAS = {
      anchors:[{t:"9h00", n:"Escola Bíblica Dominical — IBFC"}],
      tasks:[
        {id:"dom-igreja", t:"Igreja", n:"Culto, ministério, presença"},
-       {id:"dom-desc", t:"Descanso e planejamento leve", n:"Revisão curta da semana só se houver energia"}
+       {id:"dom-desc", t:"Descanso e planejamento leve", n:"Domingo já traz a revisão da semana; aqui é só descanso."}
      ], uber:"Descanso. Sem Uber, sem TOEFL"}
 };
 const ORDEM_SEMANA = [1,2,3,4,5,6,0];
@@ -1689,6 +1708,287 @@ function renderRetomadas(){
   });
   return h + '</div></details>';
 }
+/* ============== REVISAO DOMINICAL — Fase 5 ==============
+   DOMINGO E INFORMACAO. SEGUNDA E DECISAO. Esta tela mostra o que aconteceu,
+   o que ficou aberto e o que merece atencao — e para por ai. Ela nao escolhe
+   prioridade, nao cria tarefa, nao grava nada e nao diz o que fazer na semana
+   que vem. Dizer "Patriotismo ficou 18 dias sem avanco" e informacao; dizer
+   "trabalhe em Patriotismo" seria decidir por voce.
+
+   E DERIVADA, INTEIRA. Nenhuma chave nova de localStorage, nenhum tipo de
+   toque, nenhuma copia do resumo guardada em lugar nenhum. Calcular a revisao
+   duas vezes seguidas nao muda um byte do aparelho — ha teste disso.
+
+   CADA COISA VEM DA SUA FONTE DE VERDADE, e nao de uma heuristica nova:
+     etapa de trilho  -> cron:registro (o diario) + st do subitem (o saldo)
+     prioridade livre -> cron:checks, o mesmo mecanismo de sempre
+     rotina           -> cron:checks, pelo atrasadas() que ja existia
+     meta             -> a meta, com o seu proprio `done`
+     processo         -> toeflFase(), o resumo que o processo ja publica
+   ======================================================== */
+var REVISAO_HORIZONTE = 14;   /* dias de "proxima semana" para datas e prazos */
+
+function _diasDaSemana(seg){
+  var out = [], base = new Date(seg.slice(0,4), Number(seg.slice(5,7))-1, seg.slice(8,10));
+  for(var k=0;k<7;k++){
+    var d = new Date(base.getFullYear(), base.getMonth(), base.getDate()+k);
+    out.push({dia:ymd(d), idx:d.getDay()});
+  }
+  return out;
+}
+
+function revisaoDaSemana(){
+  var seg = segundaDaSemana(), dias = _diasDaSemana(seg), dom = dias[6].dia;
+  var hojeStr = ymd(now);
+
+  /* ---- CONCLUIDO · etapas de trilho ----
+     A REGRA DAS TRES CONDICOES, e cada uma existe por um caso real. O
+     cron:registro grava OS DOIS SENTIDOS: nas 19 linhas reais de 30 e 31/08 ha
+     "de=1 para=2" seguido de "de=2 para=0" no mesmo subitem, no mesmo dia.
+     Contar `para===2` ingenuamente diria duas etapas concluidas naquela
+     semana; a verdade e zero.
+
+       1. existe linha com para===2 dentro da semana
+       2. ela e o ULTIMO movimento daquele subitem na semana
+       3. o subitem esta com st===2 AGORA
+
+     A 3 sozinha ja pegaria o caso acima — mas ela e o saldo, e a 2 e o
+     diario. Manter as duas e o que preserva a distincao entre registro
+     historico e estado atual: se um dia elas discordarem, o item nao entra, e
+     discordar em silencio e o defeito caro. A ordem do array e confiavel
+     porque a descida reordena por `d` com sort estavel. */
+  var ultimoNaSemana = {};
+  getReg().forEach(function(o){
+    if(!o || !o.subId || !o.d) return;
+    if(o.d < seg || o.d > dom) return;
+    ultimoNaSemana[o.pid + "/" + o.projId + "/" + o.subId] = o;
+  });
+  var etapas = [];
+  Object.keys(ultimoNaSemana).forEach(function(k){
+    var o = ultimoNaSemana[k];
+    if(o.para !== 2) return;                                  /* condicao 2 */
+    var partes = k.split("/");
+    var pr = (getProjs(partes[0]) || []).filter(function(x){ return x.id===partes[1]; })[0];
+    var sx = pr && (pr.subs||[]).filter(function(x){ return x.id===partes[2]; })[0];
+    if(!sx || sx.st !== 2) return;                            /* condicao 3 */
+    etapas.push({pid:partes[0], projId:partes[1], subId:partes[2],
+                 projT:o.projT || partes[1], subT:sx.t || o.subT || "", d:o.d});
+  });
+  etapas.sort(function(a,b){ return a.d < b.d ? -1 : (a.d > b.d ? 1 : 0); });
+
+  /* ---- CONCLUIDO · metas ----
+     A meta traz o proprio `done` e o `em` da ultima mudanca. A semana pode
+     atravessar a virada do mes, entao os dois meses sao olhados. */
+  var metasFeitas = [], meses = {};
+  meses[seg.slice(0,7)] = true; meses[dom.slice(0,7)] = true;
+  Object.keys(meses).forEach(function(mk){
+    (getMetas(mk) || []).forEach(function(m){
+      if(!m || !m.done || !m.em) return;
+      var d = String(m.em).slice(0,10);
+      if(d >= seg && d <= dom) metasFeitas.push({t:m.t || "", d:d});
+    });
+  });
+
+  /* ---- CONCLUIDO · rotinas ----
+     ISTO E DESTE APARELHO, e o rotulo na tela diz isso. cron:checks: sempre
+     foi por aparelho — marcar no Mac nao aparece no celular. Mostrar o numero
+     sem a ressalva seria apresentar dado local como se fosse o estado de
+     todos. So contam ids que sao rotina do dia: prioridade livre tambem mora
+     no cron:checks, e ela e contada a parte. */
+  var rotinasFeitas = 0;
+  dias.forEach(function(D){
+    if(D.dia > hojeStr) return;
+    var ck = LS("cron:checks:"+D.dia, {}) || {};
+    ((DIAS[D.idx] || {}).tasks || []).forEach(function(t){ if(ck[t.id]) rotinasFeitas++; });
+  });
+
+  /* ---- PRIORIDADES · cada tipo na sua fonte de verdade ---- */
+  var feitas = [], abertas = [];
+  getPrio().forEach(function(pp){
+    if(pp.tipo === "trilho"){
+      var andou = etapas.some(function(e){
+        return e.pid === pp.painel && e.projId === pp.projId; });
+      var et = estagioDoTrilho(pp.painel, pp.projId);
+      var rot = {tipo:"trilho", t:pp.t || (et && et.projT) || pp.projId,
+                 etapa: (et && !et.concluido) ? et.subT : "",
+                 concluido: !!(et && et.concluido)};
+      (andou || rot.concluido ? feitas : abertas).push(rot);
+    } else {
+      /* Prioridade livre: o mesmo cron:checks das rotinas, varrido pela
+         semana — ela pode ter sido marcada em qualquer dia. */
+      var marcada = dias.some(function(D){
+        return !!(LS("cron:checks:"+D.dia, {}) || {})[pp.id]; });
+      (marcada ? feitas : abertas).push({tipo:"livre", t:pp.t || "", etapa:""});
+    }
+  });
+
+  /* ---- SUGESTOES QUE NAO VIRARAM ESCOLHA ----
+     O motor ja exclui o que virou manual, entao o que ele devolve agora e,
+     por construcao, o que foi sugerido e nao foi adotado. Aparece rotulado
+     como sugestao e NUNCA como prioridade sua. */
+  var sugeridas = [];
+  try{ sugeridas = motorDePrioridades(getPrio()) || []; }catch(e){ sugeridas = []; }
+
+  /* ---- ATENCAO ---- */
+  var paradas = [];
+  try{ paradas = (retomadas() || []).slice(0, 3); }catch(e){ paradas = []; }
+  var processos = [];
+  (typeof PROCESSOS !== "undefined" ? PROCESSOS : []).forEach(function(P){
+    var r = P.resumo ? P.resumo() : null;
+    if(!r) return;
+    processos.push({titulo:P.titulo, fase:r.fase, falta:r.falta, dias:r.dias});
+  });
+
+  /* ---- PROXIMA SEMANA ---- */
+  var eventos = (getEventos() || []).map(function(e){
+    return {t:e.t || "", data:e.data, dias:diasAte(e.data)}; })
+    .filter(function(e){ return e.dias >= 0 && e.dias <= REVISAO_HORIZONTE; })
+    .sort(function(a,b){ return a.dias - b.dias; });
+  var prazos = [], vagas = null;
+  try{ prazos = (prazosProximos(2) || {}).lista || []; }catch(e){ prazos = []; }
+  try{
+    vagas = contagemDeVagas();
+    /* "NOVAS" NUMA REVISAO SEMANAL PRECISA QUERER DIZER "DESTA SEMANA".
+       O contagemDeVagas() conta `i.novo`, que e posto na coleta e nunca
+       apagado — no dado real de hoje isso da 160, que num digest e ruido e
+       nao informacao. O `visto_em` diz quando o item foi visto pela primeira
+       vez, e e ele que responde a pergunta que a revisao faz. O indicador do
+       Hoje continua como esta: la "novas" quer dizer "ainda nao triadas", que
+       e a pergunta certa para aquela tela. */
+    var doFeed = ((typeof VG_VAGAS !== "undefined" && VG_VAGAS.itens) || [])
+      .concat((typeof VG_CHAMADAS !== "undefined" && VG_CHAMADAS.itens) || []);
+    vagas = {total:vagas.total, revisar:vagas.revisar, marcadas:vagas.marcadas,
+             novas: doFeed.filter(function(i){
+               return i && i.visto_em && i.visto_em >= seg && i.visto_em <= dom &&
+                      i.veredicto !== "rejeitado" &&
+                      (typeof vgEstado === "function" ? vgEstado(i.id) === 0 : true);
+             }).length};
+  }catch(e){ vagas = null; }
+
+  return {
+    seg:seg, dom:dom, emCurso: hojeStr < dom,
+    concluido:{etapas:etapas, metas:metasFeitas, rotinas:rotinasFeitas,
+               prioridades:feitas},
+    atras:{rotinas:(function(){ try{ return atrasadas(); }catch(e){ return []; } })(),
+           prioridades:abertas, sugeridas:sugeridas},
+    atencao:{paradas:paradas, processos:processos},
+    frente:{eventos:eventos, prazos:prazos, vagas:vagas}
+  };
+}
+
+function _revLinha(txt, sub){
+  return '<div class="rev-i"><span class="rev-t">'+txt+'</span>'+
+         (sub ? '<span class="rev-s">'+sub+'</span>' : '')+'</div>';
+}
+function renderRevisao(){
+  var R = revisaoDaSemana();
+  var per = fmtData(R.seg) + " a " + fmtData(R.dom);
+  var h = '<div class="shead">Revis\u00e3o da semana</div>'+
+          '<p class="rev-per">Semana de '+per+
+          (R.emCurso ? ' \u00b7 <i>em curso</i>' : '')+'</p>';
+  var C = R.concluido, A = R.atras, T = R.atencao, F = R.frente;
+
+  /* ---- CONCLUIDO ---- */
+  h += '<div class="rev-b"><div class="rev-h">Conclu\u00eddo</div>';
+  var nadaFeito = !C.etapas.length && !C.metas.length && !C.rotinas && !C.prioridades.length;
+  if(nadaFeito){
+    h += '<div class="rev-vazio">Nada registrado nesta semana.</div>';
+  } else {
+    C.prioridades.forEach(function(x){
+      h += _revLinha('<b>Prioridade</b> \u00b7 '+escapeHtml(x.t),
+                     x.concluido ? "trilho conclu\u00eddo" : "");
+    });
+    C.etapas.forEach(function(e){
+      h += _revLinha(escapeHtml(e.projT), escapeHtml(e.subT));
+    });
+    C.metas.forEach(function(m){ h += _revLinha('<b>Meta</b> \u00b7 '+escapeHtml(m.t), ""); });
+    if(C.rotinas){
+      /* O rotulo nao e enfeite: cron:checks: e por aparelho, e o numero seria
+         outro no celular. */
+      h += '<div class="rev-local">'+C.rotinas+' rotina'+(C.rotinas===1?'':'s')+
+           ' conclu\u00edda'+(C.rotinas===1?'':'s')+' \u00b7 <i>neste aparelho</i></div>';
+    }
+  }
+  h += '</div>';
+
+  /* ---- FICOU PARA TRAS ---- */
+  h += '<div class="rev-b"><div class="rev-h">Ficou para tr\u00e1s</div>';
+  if(!A.prioridades.length && !A.rotinas.length && !A.sugeridas.length){
+    h += '<div class="rev-vazio">Nada em aberto.</div>';
+  } else {
+    A.prioridades.forEach(function(x){
+      h += _revLinha('<b>Prioridade</b> \u00b7 '+escapeHtml(x.t),
+                     x.etapa ? escapeHtml(x.etapa) : "sem avan\u00e7o registrado");
+    });
+    if(A.rotinas.length){
+      /* O NOME DA TAREFA, E NAO O DIA. A primeira versao mostrava "Qua 26 ·
+         Qua 26 · Qua 26": o atrasadas() devolve uma linha por TAREFA, entao
+         tres tarefas do mesmo dia viravam o mesmo rotulo tres vezes, dizendo
+         nada. Nomes distintos dizem o que ficou. */
+      var vistos = {}, nomes = [];
+      A.rotinas.forEach(function(o){
+        if(nomes.length >= 3 || vistos[o.t]) return;
+        vistos[o.t] = true; nomes.push(escapeHtml(o.t));
+      });
+      h += _revLinha(A.rotinas.length+' rotina'+(A.rotinas.length===1?'':'s')+
+                     ' n\u00e3o marcada'+(A.rotinas.length===1?'':'s'),
+                     nomes.join(" \u00b7 ") + (A.rotinas.length>nomes.length ? " \u2026" : ""));
+    }
+    if(A.sugeridas.length){
+      /* SUGESTAO NAO E ESCOLHA SUA, e a frase precisa deixar isso obvio. */
+      h += _revLinha('O sistema sugeriu ' +
+             A.sugeridas.map(function(x){ return escapeHtml(x.projT || x.projId); }).join(" e "),
+             A.sugeridas.length===1 ? "n\u00e3o foi adotada" : "nenhuma foi adotada");
+    }
+  }
+  h += '</div>';
+
+  /* ---- ATENCAO ---- */
+  h += '<div class="rev-b"><div class="rev-h">Aten\u00e7\u00e3o</div>';
+  if(!T.paradas.length && !T.processos.length){
+    h += '<div class="rev-vazio">Nada parado.</div>';
+  } else {
+    T.paradas.forEach(function(o){
+      h += _revLinha(escapeHtml(o.projT || o.projId)+' \u00b7 '+o.dias+' dias sem avan\u00e7o',
+                     escapeHtml(o.subT));
+    });
+    T.processos.forEach(function(o){
+      h += _revLinha(escapeHtml(o.titulo)+' \u00b7 '+escapeHtml(o.fase),
+                     o.falta ? o.falta+(o.falta===1?' item':' itens')+
+                               ' do n\u00facleo pendente'+(o.falta===1?'':'s')
+                             : 'n\u00facleo cumprido');
+    });
+  }
+  h += '</div>';
+
+  /* ---- PROXIMA SEMANA ----
+     LISTA O QUE VEM, e nao o que fazer. Nenhuma frase aqui e imperativa: a
+     decisao da semana que comeca continua sendo da segunda-feira, sua. */
+  h += '<div class="rev-b"><div class="rev-h">Pr\u00f3xima semana</div>';
+  var temFrente = F.eventos.length || F.prazos.length || (F.vagas && F.vagas.total);
+  if(!temFrente){
+    h += '<div class="rev-vazio">Nada marcado nos pr\u00f3ximos '+REVISAO_HORIZONTE+' dias.</div>';
+  } else {
+    F.eventos.forEach(function(e){
+      h += _revLinha(escapeHtml(e.t) || '<i>sem nome</i>',
+                     e.dias===0 ? "hoje" : "em "+e.dias+" dia"+(e.dias===1?"":"s"));
+    });
+    F.prazos.forEach(function(v){
+      h += _revLinha(escapeHtml(v.titulo||""),
+                     "prazo em "+(v.dias_ate_prazo!=null?v.dias_ate_prazo:"?")+" dias");
+    });
+    if(F.vagas && F.vagas.total){
+      var partes = [];
+      if(F.vagas.novas)   partes.push(F.vagas.novas+" nova"+(F.vagas.novas===1?"":"s")+" na semana");
+      if(F.vagas.revisar) partes.push(F.vagas.revisar+" para revisar");
+      h += '<div class="rev-local">Vagas \u00b7 '+
+           (partes.join(" \u00b7 ") || "nada novo nesta semana")+'</div>';
+    }
+  }
+  h += '</div>';
+  return h;
+}
+
 function renderContexto(){
   var c = getContexto();
   return '<div class="ctx-barra">' +
@@ -1729,6 +2029,11 @@ function renderHoje(){
   }}
   /* O aviso da esteira NAO vem aqui: o bloco de metas, que e desenhado dentro
      desta mesma aba, ja o traz. Duas vezes na mesma tela e uma vez a mais. */
+  /* NO DOMINGO A REVISAO E A TELA. Ela vem antes de tudo porque o domingo nao
+     tem trilho, nao tem TOEFL e tem duas rotinas — e porque o que importa no
+     domingo e olhar para tras, nao executar. Nao ha caixa para marcar: a
+     revisao acontece por existir. */
+  if(todayIdx === 0) html+=renderRevisao();
   html+=renderContexto();
   /* PRIORIDADES ANTES DAS ROTINAS. A ordem no HTML e a garantia: o que voce
      elegeu aparece primeiro, e nenhum calculo pode empurra-lo para baixo
@@ -3662,13 +3967,18 @@ function setView(v){
   /* A SEMANA CONTINUA NA LISTA, sem botao na barra. A guarda do `if(b)` e o
      que permite isso: uma view alcancavel so pelo rodape nao tem aba para
      acender, e antes da Fase 4 esta linha teria estourado. */
-  ["hoje","processos","semana","trilhos","vagas"].forEach(function(k){
+  ["hoje","processos","revisao","semana","trilhos","vagas"].forEach(function(k){
     var el = document.getElementById("view-"+k);
     if(el) el.hidden = (k!==v);
     var b = document.getElementById("tab-"+k);
     if(b) b.classList.toggle("active", k===v);
   });
   if(v==="processos") renderProcessos();
+  if(v==="revisao"){
+    var alvoRev = document.getElementById("view-revisao");
+    if(alvoRev) alvoRev.innerHTML =
+      '<p class="plate-eyebrow">Revis\u00e3o</p>' + renderRevisao();
+  }
   if(v==="trilhos") renderTrilhos();
   if(v==="semana") renderSemana();   /* os numeros mudam a cada marcacao */
   if(v==="vagas") vgAbrir();
