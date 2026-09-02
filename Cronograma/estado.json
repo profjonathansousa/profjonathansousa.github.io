@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T14:39:17.937Z",
+ "_dobrado_em": "2026-09-02T17:48:10.622Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2219,6 +2219,23 @@
     "vid": "anpof-chamadas--hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho2",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T17-48-10-622Z-s41hky",
+   "quando": "2026-09-02T17:48:10.622Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788371290620",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2375,7 +2392,8 @@
   "2026-09-02T14-39-07-758Z-s41hky",
   "2026-09-02T14-39-11-889Z-s41hky",
   "2026-09-02T14-39-14-979Z-s41hky",
-  "2026-09-02T14-39-17-937Z-s41hky"
+  "2026-09-02T14-39-17-937Z-s41hky",
+  "2026-09-02T17-48-10-622Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2977,6 +2995,15 @@
    "t": "Set · A categoria de \"religião\" e a primeira modernidade",
    "del": false,
    "quando": "2026-09-02T12:14:31.181Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788371290620": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+   "del": false,
+   "quando": "2026-09-02T17:48:10.622Z",
    "aparelho": "s41hky"
   }
  },
