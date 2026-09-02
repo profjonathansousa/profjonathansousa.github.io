@@ -18,9 +18,12 @@
    ENQUANTO ESTIVEREM VAZIAS o botao de avisos nao aparece — avisosConfigurados()
    e quem decide, e a ausencia de configuracao nao pode quebrar tela nenhuma. */
 const AVISOS = {
-  URL:   "",   /* https://<projeto>.supabase.co */
-  ANON:  "",   /* anon key do projeto */
-  VAPID: ""    /* chave publica VAPID (a privada vai para os Secrets) */
+  URL:   "https://mcwgiqwbbgdltzqgopcq.supabase.co",
+  ANON:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jd2dpcXdiYmdkbHR6cWdvcGNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxNDA1NjgsImV4cCI6MjEwMzcxNjU2OH0.tmCzVwD-d-bM4kMziKMmP77a0eBrhdyP1v4rJP1PJxE",
+  VAPID: ""    /* PENDENTE: `npx web-push generate-vapid-keys`. A publica vem
+                  para ca; a PRIVADA vai para o Secret VAPID_PRIVATE_KEY e nao
+                  entra em arquivo nenhum. Ate isto ser preenchido o botao de
+                  avisos nao aparece e o service worker nao e registrado. */
 };
 
 const APP_VERSION = "2026-08-30-abas1";
