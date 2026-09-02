@@ -634,7 +634,7 @@ const DIAS = {
      anchors:[{t:"9h00", n:"Escola Bíblica Dominical — IBFC"}],
      tasks:[
        {id:"dom-igreja", t:"Igreja", n:"Culto, ministério, presença"},
-       {id:"dom-desc", t:"Descanso e planejamento leve", n:"Domingo já traz a revisão da semana; aqui é só descanso."}
+       {id:"dom-desc", t:"Descanso", n:"Domingo já traz a revisão da semana; aqui é só descanso."}
      ], uber:"Descanso. Sem Uber, sem TOEFL"}
 };
 const ORDEM_SEMANA = [1,2,3,4,5,6,0];
@@ -1726,6 +1726,11 @@ function renderRetomadas(){
      meta             -> a meta, com o seu proprio `done`
      processo         -> toeflFase(), o resumo que o processo ja publica
    ======================================================== */
+/* JANELA DE 14 DIAS, e nao os 7 dias literais da semana seguinte. O bloco se
+   chama "Proxima semana" porque e assim que se olha para a frente no domingo,
+   mas catorze dias e o alcance que faz o aviso chegar a tempo: um prazo que cai
+   na terca da semana DEPOIS ja precisa ser visto agora, e nao no domingo
+   seguinte, quando faltariam dois dias. */
 var REVISAO_HORIZONTE = 14;   /* dias de "proxima semana" para datas e prazos */
 
 function _diasDaSemana(seg){

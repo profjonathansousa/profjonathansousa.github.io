@@ -992,6 +992,7 @@ const domDesc = RD.DIAS[0].tasks.find(t => t.id === "dom-desc");
 ok(!/s\u00f3 se houver energia/.test(domDesc.n),
    "e a nota nao trata mais a revisao como tarefa", domDesc.n);
 ok(/revis\u00e3o da semana/i.test(domDesc.n), "dizendo que o domingo ja a traz", domDesc.n);
+ok(domDesc.t === "Descanso", "e o titulo da rotina e so 'Descanso'", domDesc.t);
 /* as outras telas seguem */
 RD.renderHoje();
 ok(/Rotinas de/.test(RD.document.getElementById("view-hoje").innerHTML),

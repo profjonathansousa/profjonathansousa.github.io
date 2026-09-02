@@ -47,8 +47,8 @@ outros dias fica no rodapé ("Revisão da semana").
 
 A **Semana** continua existindo inteira, com toda a sua lógica — ela apenas
 perdeu o lugar na barra para Processos, porque cinco abas não cabem num
-telefone. O acesso é pelo rodapé ("A semana em números"). A Fase 5 decide se ela
-vira o digest de domingo ou sai de cena.
+telefone. A revisão dominical é o digest de revisão; o acesso à antiga Semana
+permanece no rodapé como "A semana em números".
 
 ---
 
@@ -167,7 +167,7 @@ Quatro blocos, uma tela de celular:
 | **Concluído** | etapas de trilho fechadas, metas, prioridades cumpridas, rotinas marcadas |
 | **Ficou para trás** | prioridades sem avanço, rotinas não marcadas, sugestões não adotadas |
 | **Atenção** | projetos parados (`retomadas()`) e o resumo dos processos |
-| **Próxima semana** | datas, prazos de vagas e a contagem — **lista o que vem, não o que fazer** |
+| **Próxima semana** | datas, prazos e oportunidades nos próximos 14 dias — **lista o que vem, não o que fazer** |
 
 ### Cada coisa na sua fonte de verdade
 
