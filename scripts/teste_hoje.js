@@ -1262,6 +1262,22 @@ ok(!/ficou'\+\(/.test(CODIGO), "e a flexao nao e mais montada por concatenacao")
 ok(typeof RB.atrasadas === "function" && typeof RB.marcarAtrasada === "function" &&
    typeof RB.dispensarAtrasada === "function" && typeof RB.podarDispensados === "function",
    "atrasadas/marcar/dispensar/podar continuam existindo");
+/* O PAINEL SAIU DA TELA, MAS A IMPLEMENTACAO FICOU. Sem esta assercao nada
+   impediria a chamada de voltar em silencio no proximo render. */
+summaryDeAtrasadas(RB, 3);          /* ha 3 rotinas por marcar neste aparelho */
+RB.renderHoje();
+const hojeRB = RB.document.getElementById("view-hoje").innerHTML;
+/* Marcadores EXCLUSIVOS do painel. A classe .carry-b nao serve: as retomadas
+   reusam a mesma, e testar por ela acusaria o bloco errado. */
+ok(!/rotinas n[aã]o marcada/.test(hojeRB) &&
+   !/marcarAtrasada\(|dispensarAtrasada\(/.test(hojeRB),
+   "o painel de rotinas nao marcadas NAO e desenhado no Hoje");
+ok(RB.atrasadas().length === 3,
+   "mas atrasadas() continua enxergando as 3 — a implementacao ficou",
+   RB.atrasadas().length);
+ok(RB.revisaoDaSemana().atras.rotinas.length === 3,
+   "e a revisao dominical continua usando atrasadas() para o 'Ficou para tras'",
+   RB.revisaoDaSemana().atras.rotinas.length);
 const domDesc2 = RB.DIAS[0].tasks.filter(t => t.id === "dom-desc")[0];
 ok(domDesc2 && domDesc2.t === "Descanso", "e dom-desc continua sendo 'Descanso'",
    domDesc2 && domDesc2.t);

@@ -82,19 +82,21 @@ Duas regras duras:
   *em qual projeto*. Um painel com mais de um projeto ativo nunca tem estágio
   escolhido automaticamente (`trilhoSemEscolha`).
 
-#### Rotinas não marcadas
+#### Rotinas não marcadas — fora da tela
 
-Abaixo das rotinas, um `<details>` recolhido com as rotinas dos últimos
-`ATRASO_DIAS = 7` dias que ficaram sem marca. Marcar grava **na data de origem**,
-não em hoje; passados sete dias o item sai sozinho, e dispensar (`cron:hoje-dispensados`)
-existe para a exceção.
+Havia aqui um `<details>` recolhido com as rotinas dos últimos sete dias que
+ficaram sem marca, com botões de marcar e dispensar. **Ele não é mais desenhado
+no Hoje**: a chamada `renderAtrasadas()` está comentada em `js/30-render.js`.
 
-**O rótulo diz o objeto: "3 rotinas não marcadas".** A revisão dominical tem um
-bloco chamado *Ficou para trás* que cobre prioridades, rotinas **e** sugestões
-não adotadas; este cobre só rotinas, e aos domingos os dois apareciam na mesma
-tela com o mesmo nome. A contagem também passou para o substantivo porque a
-flexão do verbo não se monta por concatenação — o plural de *ficou* é *ficaram*,
-com troca de radical.
+**A implementação continua inteira** — `renderAtrasadas`, `atrasadas`,
+`marcarAtrasada`, `dispensarAtrasada`, `podarDispensados`, `ATRASO_DIAS` e a
+chave `cron:hoje-dispensados` —, e voltar é descomentar uma linha.
+
+Ela fica por uma razão que não é sentimental: **`atrasadas()` não pertence só a
+esse painel.** A revisão dominical a chama para montar o bloco *Ficou para trás*
+(`revisaoDaSemana`, em `js/20-regras.js`), e apagá-la levaria junto um pedaço do
+domingo. Retirar o painel da tela não muda nada disso: nenhuma rotina, nenhuma
+marcação, nenhum dado.
 
 ### 2b. Motor de prioridades
 
