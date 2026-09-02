@@ -1,0 +1,26 @@
+{
+ "v": 1,
+ "lote": "2026-09-02T17-48-10-622Z-s41hky",
+ "quando": "2026-09-02T17:48:14.244Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-30-abas1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-02T17-48-10-622Z-s41hky",
+   "quando": "2026-09-02T17:48:10.622Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788371290620",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+    "del": false
+   }
+  }
+ ]
+}
