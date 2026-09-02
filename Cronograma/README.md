@@ -544,10 +544,38 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 
 ### Previsto e ainda não implementado
 
-- **Notificações push para novas vagas e oportunidades acadêmicas, prazos
-  importantes e retomadas relevantes.** Requisito registrado desde a Fase 2 e
-  reafirmado na Fase 5: a implementação pertence à **Fase 8** e nenhuma fase
-  anterior a antecipa. **Não** criar notificação para cada tarefa.
+- **Notificações push** — **Fase 8**, desenhada e com as decisões fechadas,
+  ainda **não implementada**. Nenhuma fase anterior a antecipa. As regras abaixo
+  já estão decididas e valem para a implementação:
+
+  - **Fontes:** vagas novas com `veredicto: "relevante"` e eventos/prazos.
+    **Retomadas ficam fora**: `estado.itens` carrega uma fração dos subitens
+    (o progresso é local por aparelho), e o servidor não consegue calculá-las de
+    forma confiável. Não se inventa sincronização para viabilizá-las.
+  - **Evento privado (`priv:true`) é excluído por completo.** Não gera
+    notificação, não envia título, não envia data, e não existe forma reduzida
+    ou parcial.
+  - **Agregação:** no máximo **uma** notificação de vagas e **uma** de eventos
+    por execução. Nunca uma por item.
+  - **Deduplicação por identidade:** `vagas:<data-do-lote>` e
+    `evento:<id>:<data>`. Um `scripts/estado_notificador.json` guarda **apenas as
+    identidades já notificadas** — nunca endpoints, nunca credenciais. **Se o
+    envio falhar, a identidade não é gravada**, e a execução seguinte tenta.
+  - **Cadência: um único workflow diário.** Ele verifica prazos todo dia e, na
+    segunda, processa também o lote novo de vagas junto da coleta que já existe.
+    Não se cria um segundo workflow nem se duplica a infraestrutura.
+  - **Inscrições:** cada aparelho tem a sua. **Não entram no repositório**, nem
+    em `estado.json`, nem em qualquer arquivo versionado — o endpoint é uma
+    URL-capacidade e o histórico nunca é podado. Vivem em GitHub Secrets, **um
+    por aparelho** (`PUSH_SUB_1`, `PUSH_SUB_2`), com `VAPID_PRIVATE_KEY` também
+    como secret. A chave **pública** VAPID pode ficar em `js/00-config.js`.
+  - **Service worker sem `fetch` listener e sem cache**: só `push` e
+    `notificationclick`. `estado.json`, `entrada.json` e `api.github.com`
+    continuam passando diretamente, e a sincronização não é tocada. Sem offline.
+  - **Fora do escopo:** criar tipo de toque, criar seção em `estado.json`,
+    alterar `dobrar_toques.py` ou `coletor.py`, sincronizar `cron:checks:`,
+    `cron:hoje-dispensados` ou `cron:contexto`, e alterar TOEFL, Vagas,
+    Processos, prioridades, retomadas ou a revisão dominical.
 - **Aprender com os descartes das vagas** (Vagas 3): registrar motivo
   estruturado para calibrar os filtros com o comportamento real.
 - **Remoção automática dos itens de veredicto `rejeitado`** de `dados/vagas.json`
