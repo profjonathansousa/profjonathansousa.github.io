@@ -1,0 +1,26 @@
+{
+ "v": 1,
+ "lote": "2026-09-02T18-09-34-509Z-s41hky",
+ "quando": "2026-09-02T18:09:38.522Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-30-abas1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-02T18-09-34-509Z-s41hky",
+   "quando": "2026-09-02T18:09:34.509Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788372574507",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Cadastro reserva FIRJAN",
+    "del": false
+   }
+  }
+ ]
+}
