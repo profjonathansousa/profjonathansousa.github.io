@@ -716,10 +716,10 @@ ok(F4.guiaItens("f1").filter(x => !x.nucleo).every(x => x.feito),
 F4.guiaItens("f1").filter(x => x.nucleo).forEach(x => F4.toggleGuia("f1", x.i));
 ok(F4.currentFaseId() === "f2", "fechar o nucleo de f1 avanca para f2", F4.currentFaseId());
 ok(F4.nucleoQueFalta("f1").length === 0, "e f1 nao tem mais nucleo pendente");
-/* a chave e a posicao, e ela nao mudou */
-const marcadas = F4.LS("cron:toefl-guia:f1", {});
-ok(Object.keys(marcadas).length === F4.guiaItens("f1").length,
-   "cron:toefl-guia:f1 guarda uma marca por POSICAO", Object.keys(marcadas));
+/* A CHAVE MUDOU NA FASE 6A: era a posicao, agora e o id. */
+const marcadas = F4.LS("cron:toefl-guia", {});
+ok(F4.TOEFL_GUIA.f1.itens.every(it => marcadas[it.id] && marcadas[it.id].feito),
+   "cron:toefl-guia guarda uma marca por ID", Object.keys(marcadas));
 ok(F4.guiaItens("f1").every(x => x.feito), "e todas leem como feitas");
 /* o processo acompanha a fase */
 PR.renderProcessos();
@@ -765,17 +765,23 @@ VELHO.renderProcessos();
 ok(/0,7|0\.7/.test(VELHO.document.getElementById("view-processos").innerHTML),
    "e a recalibragem antiga continua sendo mostrada");
 
-console.log("\n=== 26. Fase 4 nao criou toque nem mexeu no que ja andava ===");
+console.log("\n=== 26. O guia emite toque; a recalibragem segue local ===");
 const Z = criarAparelho("zero4");
 const antesZ = Z.getToques().length;
 Z.toggleGuia("f1", 0);
-ok(Z.getToques().length === antesZ,
-   "marcar item do guia NAO emite toque (segue local, como sempre foi)",
-   Z.getToques().length);
+/* MUDOU NA FASE 6A: marcar um item passou a viajar. */
+ok(Z.getToques().length === antesZ + 1,
+   "marcar item do guia emite UM toque", Z.getToques().length - antesZ);
+const tqZ = Z.getToques()[Z.getToques().length - 1];
+ok(tqZ.tipo === "toefl" && tqZ.dados.iid === "f1-conta" && tqZ.dados.feito === true,
+   "e ele e {tipo:'toefl', dados:{iid, feito}}", tqZ);
+const depoisDeMarcar = Z.getToques().length;
 Z.recalibrarToefl();
-ok(Z.getToques().length === antesZ, "recalibrar tambem nao");
-ok(Z.getToques().every(t => t.tipo !== "toefl"),
-   "e nenhum toque de tipo 'toefl' existe");
+/* NAO MUDOU: a recalibragem e leitura derivada, e continua so no aparelho. */
+ok(Z.getToques().length === depoisDeMarcar, "recalibrar NAO emite toque");
+ok(!!Z.LS("cron:toefl-recalibrado", null), "ela grava so em cron:toefl-recalibrado");
+ok(Z.getToques().every(t => t.tipo !== "recalibrado"),
+   "e nao existe tipo de toque 'recalibrado'");
 /* prioridades, motor, vagas e trilhos seguem */
 const Y = criarAparelho("depois4", { prompt: "Notre Dame" });
 Y.addPrioridadeLivre();
@@ -1010,6 +1016,115 @@ RD.marcarDoHoje("pipeline", "a00", etD.subId, true);
 ok(RD.getToques().some(t => t.tipo === "registro"), "Trilhos continuam funcionando");
 ok(RD.getToques().every(t => t.tipo !== "revisao" && t.tipo !== "digest"),
    "e nenhum tipo de toque novo foi criado");
+
+console.log("\n=== 34. TOEFL: identidade por id (Fase 6A) ===");
+const IDS_ESPERADOS = ["f1-conta","f1-sample40","f1-rubricas","f1-diagnostico","f1-anki",
+  "f1-tpl-writing","f1-notas-listening","f1-rot-speaking",
+  "f2-reading","f2-writing","f2-listening","f2-speaking","f2-simulado","f2-anki",
+  "f3-simulado","f3-revisao","f3-tutor","f3-timing","f3-taper"];
+const T0 = criarAparelho("toefl-ids");
+const todosItens = T0.TOEFL_FASES.reduce((a, fid) => a.concat(T0.TOEFL_GUIA[fid].itens), []);
+ok(todosItens.length === 19, "o guia tem 19 itens", todosItens.length);
+ok(todosItens.every(it => typeof it.id === "string" && it.id),
+   "todos os 19 itens tem id", todosItens.filter(it => !it.id).map(it => it.t));
+const idsNoGuia = todosItens.map(it => it.id);
+ok(JSON.stringify(idsNoGuia) === JSON.stringify(IDS_ESPERADOS),
+   "os ids sao os aprovados, na ordem", idsNoGuia);
+ok(new Set(idsNoGuia).size === 19, "e sao unicos", idsNoGuia.length - new Set(idsNoGuia).size);
+
+console.log("\n=== 35. Migracao das marcas por posicao ===");
+/* Um aparelho como os de hoje: f1 com {0:true, 3:true}, um false explicito e
+   uma fase inteira sem chave nenhuma. */
+const MIG = criarAparelho("migra", { storage: {
+  "cron:toefl-guia:f1": JSON.stringify({0:true, 3:true, 5:false}),
+  "cron:toefl-guia:f2": JSON.stringify({1:true})
+}});
+MIG.migrarGuiaToefl();
+const mapaMig = MIG.LS("cron:toefl-guia", {});
+ok(Object.keys(mapaMig).sort().join(",") === "f1-conta,f1-diagnostico,f2-writing",
+   "{0:true,3:true} vira f1-conta e f1-diagnostico; f2[1] vira f2-writing",
+   Object.keys(mapaMig));
+ok(mapaMig["f1-conta"].feito === true && mapaMig["f1-conta"].em === "2026-01-01T00:00:00.000Z",
+   "a marca migrada leva o instante-piso TOEFL_EM", mapaMig["f1-conta"]);
+const tqMig = MIG.getToques().filter(t => t.tipo === "toefl");
+ok(tqMig.length === 3, "exatamente um toque por marca verdadeira", tqMig.length);
+ok(tqMig.every(t => t.dados.feito === true),
+   "e nenhum toque de false: ausencia e false nao viajam", tqMig.map(t => t.dados));
+ok(tqMig.every(t => t.dados.iid && t.dados.fase === undefined &&
+                    t.dados.t === undefined && t.dados.i === undefined),
+   "o payload e so {iid, feito}", tqMig.map(t => Object.keys(t.dados).join("+")));
+ok(MIG.LS("cron:toefl-guia:f1", null) !== null && MIG.LS("cron:toefl-guia:f2", null) !== null,
+   "as chaves antigas NAO foram apagadas");
+/* Idempotencia: rodar de novo nao emite nada. */
+MIG.migrarGuiaToefl();
+ok(MIG.getToques().filter(t => t.tipo === "toefl").length === 3,
+   "migrar duas vezes nao emite o segundo lote",
+   MIG.getToques().filter(t => t.tipo === "toefl").length);
+
+console.log("\n=== 36. O guia atravessa aparelhos ===");
+/* A dobra do tipo toefl, na forma exata do dobrar_toques.py. */
+function dobrarToefl(listaDeToques, base) {
+  const est = { toefl: Object.assign({}, (base || {}).toefl) };
+  listaDeToques.slice().sort((a, b) => (a.quando || "") < (b.quando || "") ? -1 : 1)
+    .forEach(t => {
+      if (t.tipo !== "toefl") return;
+      const k = t.dados.iid;
+      const atual = est.toefl[k];
+      if (atual && (atual.quando || "") > (t.quando || "")) return;
+      est.toefl[k] = { feito: !!t.dados.feito, quando: t.quando, aparelho: t.aparelho };
+    });
+  return est;
+}
+const MACT = criarAparelho("mac-toefl");
+const CELT = criarAparelho("cel-toefl");
+MACT.marcarGuia("f1-conta", true);
+CELT.marcarGuia("f1-anki", true);
+const estUniao = dobrarToefl(MACT.getToques().concat(CELT.getToques()));
+ok(Object.keys(estUniao.toefl).sort().join(",") === "f1-anki,f1-conta",
+   "A marca X e B marca Y: a dobra guarda os dois", Object.keys(estUniao.toefl));
+MACT.aplicarToeflDoEstado(estUniao);
+ok(MACT.guiaFeito("f1-conta") && MACT.guiaFeito("f1-anki"),
+   "e o aparelho A recebe a uniao, sem perder a propria");
+/* Desmarcacao mais nova vence marcacao antiga. */
+const DES = criarAparelho("desmarca");
+DES.marcarGuia("f1-conta", true);
+const estDes = dobrarToefl([{ tipo:"toefl", quando:"2099-01-01T00:00:00.000Z",
+  aparelho:"outro", dados:{ iid:"f1-conta", feito:false } }]);
+DES.aplicarToeflDoEstado(estDes);
+ok(DES.guiaFeito("f1-conta") === false, "desmarcacao mais nova desmarca aqui");
+/* Marcacao mais nova vence desmarcacao antiga. */
+const REM = criarAparelho("remarca");
+REM.marcarGuia("f1-conta", false);
+const estRem = dobrarToefl([{ tipo:"toefl", quando:"2099-01-01T00:00:00.000Z",
+  aparelho:"outro", dados:{ iid:"f1-conta", feito:true } }]);
+REM.aplicarToeflDoEstado(estRem);
+ok(REM.guiaFeito("f1-conta") === true, "marcacao mais nova marca aqui");
+/* Empate nao altera o local. */
+const EMP = criarAparelho("empate");
+EMP.marcarGuia("f1-conta", true);
+const emLocal = EMP.LS("cron:toefl-guia", {})["f1-conta"].em;
+EMP.aplicarToeflDoEstado({ toefl: { "f1-conta": { feito:false, quando:emLocal } } });
+ok(EMP.guiaFeito("f1-conta") === true, "empate no relogio mantem o que ja estava aqui");
+/* Receber nao e tocar. */
+const ECO = criarAparelho("eco");
+const antesEco = ECO.getToques().length;
+ECO.aplicarToeflDoEstado(dobrarToefl([{ tipo:"toefl", quando:"2099-01-01T00:00:00.000Z",
+  aparelho:"outro", dados:{ iid:"f1-anki", feito:true } }]));
+ok(ECO.guiaFeito("f1-anki") === true, "a marca de fora chega");
+ok(ECO.getToques().length === antesEco, "e a descida NAO gera toque (sem eco)",
+   ECO.getToques().length - antesEco);
+
+console.log("\n=== 37. O reforco sincronizado nao avanca a fase ===");
+const REF = criarAparelho("reforco");
+ok(REF.currentFaseId() === "f1", "a fase corrente comeca em f1", REF.currentFaseId());
+const reforcoDeF1 = REF.TOEFL_GUIA.f1.itens.filter(it => !it.n).map(it => it.id);
+REF.aplicarToeflDoEstado({ toefl: reforcoDeF1.reduce((a, iid) => {
+  a[iid] = { feito:true, quando:"2099-01-01T00:00:00.000Z" }; return a; }, {}) });
+ok(reforcoDeF1.every(iid => REF.guiaFeito(iid)), "todo o reforco de f1 chegou marcado");
+ok(REF.currentFaseId() === "f1",
+   "e a fase continua em f1: so o nucleo avanca", REF.currentFaseId());
+ok(REF.guiaChecks("f1")[1] === true,
+   "guiaChecks mantem a assinatura antiga (por indice) lendo o mapa novo");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);

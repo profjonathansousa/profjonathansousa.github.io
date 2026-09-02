@@ -1302,24 +1302,28 @@ function toeflFase(){
    externo (tutor)" no reforco: uma tarefa que pode ser inviavel nao pode
    congelar a trilha inteira.
 
-   A ORDEM DOS ITENS NAO PODE MUDAR. As marcacoes moram em
-   cron:toefl-guia:<fase> indexadas por POSICAO. Reordenar aqui moveria as
-   marcacoes para os itens errados, em silencio. A separacao visual entre
-   nucleo e reforco acontece na hora de desenhar, e cada item leva consigo o
-   indice original. */
+   O `id` E A IDENTIDADE, E ELE NAO PODE MUDAR (Fase 6A). Ate aqui a marcacao
+   morava em cron:toefl-guia:<fase> indexada por POSICAO, e por isso a ordem
+   desta lista era intocavel: reordenar movia as marcacoes para os itens
+   errados, em silencio. Agora a marca mora em cron:toefl-guia endereçada pelo
+   `id`, e o risco mudou de lugar — a ordem e o texto ficaram livres, e quem
+   nao pode mudar (nem ser reaproveitado em outro item) e o `id`. Ele e global
+   e nao leva a fase junto, para que a marca siga o item se ele mudar de fase.
+   A separacao visual entre nucleo e reforco continua acontecendo na hora de
+   desenhar, e cada item continua levando consigo o indice original. */
 const TOEFL_GUIA = {
   f1:{
     titulo:"Fase 1 · Fundamentos",
     meta:"Dominar o formato 2026, ter um template por tarefa (Speaking e Writing), um método de notas de Listening, o Anki rodando e saber quais 2 seções puxam a nota para baixo.",
     itens:[
-      {t:"Criar conta gratuita no TestReady", n:true},
-      {t:"Fazer a experiência oficial de 40 min (formato 2026)", n:false},
-      {t:"Ler as rubricas de Speaking e Writing", n:false},
-      {t:"Simulado-diagnóstico completo e cronometrado (anotar as 4 notas)", n:true},
-      {t:"Instalar o Anki + baralho Academic Word List", n:false},
-      {t:"Montar template de Writing: Write an Email + Academic Discussion", n:true},
-      {t:"Definir o método de notas de Listening", n:true},
-      {t:"Montar roteiro de Speaking: Listen and Repeat + Take an Interview", n:false}
+      {id:"f1-conta", t:"Criar conta gratuita no TestReady", n:true},
+      {id:"f1-sample40", t:"Fazer a experiência oficial de 40 min (formato 2026)", n:false},
+      {id:"f1-rubricas", t:"Ler as rubricas de Speaking e Writing", n:false},
+      {id:"f1-diagnostico", t:"Simulado-diagnóstico completo e cronometrado (anotar as 4 notas)", n:true},
+      {id:"f1-anki", t:"Instalar o Anki + baralho Academic Word List", n:false},
+      {id:"f1-tpl-writing", t:"Montar template de Writing: Write an Email + Academic Discussion", n:true},
+      {id:"f1-notas-listening", t:"Definir o método de notas de Listening", n:true},
+      {id:"f1-rot-speaking", t:"Montar roteiro de Speaking: Listen and Repeat + Take an Interview", n:false}
     ],
     links:[
       {t:"TestReady — portal oficial da ETS", u:"https://testready.ets.org"},
@@ -1332,12 +1336,12 @@ const TOEFL_GUIA = {
     titulo:"Fase 2 · Drilagem dirigida",
     meta:"Volume focado nas 2 seções mais fracas — as que o diagnóstico apontou. Alvo: subir Reading e Writing para 24+ e firmar Listening.",
     itens:[
-      {t:"Reading: drills cronometrados + revisar cada erro por tipo", n:true},
-      {t:"Writing: 2 tarefas por semana, cronometradas, com feedback", n:true},
-      {t:"Listening: 1 set por dia com notas ativas", n:true},
-      {t:"Speaking: gravar e comparar com exemplares (sábado)", n:false},
-      {t:"1 simulado a cada 2–3 semanas", n:true},
-      {t:"Anki diário", n:false}
+      {id:"f2-reading", t:"Reading: drills cronometrados + revisar cada erro por tipo", n:true},
+      {id:"f2-writing", t:"Writing: 2 tarefas por semana, cronometradas, com feedback", n:true},
+      {id:"f2-listening", t:"Listening: 1 set por dia com notas ativas", n:true},
+      {id:"f2-speaking", t:"Speaking: gravar e comparar com exemplares (sábado)", n:false},
+      {id:"f2-simulado", t:"1 simulado a cada 2–3 semanas", n:true},
+      {id:"f2-anki", t:"Anki diário", n:false}
     ],
     links:[
       {t:"TestReady — Section Practice (feedback + exemplos)", u:"https://testready.ets.org"},
@@ -1349,11 +1353,11 @@ const TOEFL_GUIA = {
     titulo:"Fase 3 · Simulados & refino",
     meta:"Provas completas, ritmo e feedback. Reserve a última semana para taper (revisão leve e descanso).",
     itens:[
-      {t:"1 simulado completo por semana no formato 2026", n:true},
-      {t:"Revisar cada simulado por tipo de erro", n:true},
-      {t:"Speaking e Writing: buscar feedback externo (tutor)", n:false},
-      {t:"Fixar o timing de cada seção", n:true},
-      {t:"Semana final: revisão leve + descanso (sem simulado pesado na véspera)", n:false}
+      {id:"f3-simulado", t:"1 simulado completo por semana no formato 2026", n:true},
+      {id:"f3-revisao", t:"Revisar cada simulado por tipo de erro", n:true},
+      {id:"f3-tutor", t:"Speaking e Writing: buscar feedback externo (tutor)", n:false},
+      {id:"f3-timing", t:"Fixar o timing de cada seção", n:true},
+      {id:"f3-taper", t:"Semana final: revisão leve + descanso (sem simulado pesado na véspera)", n:false}
     ],
     links:[
       {t:"TestReady — provas oficiais (TPO)", u:"https://testready.ets.org"},
@@ -1361,14 +1365,49 @@ const TOEFL_GUIA = {
     ]
   }
 };
-function guiaChecks(fid){return LS("cron:toefl-guia:"+fid, {});}
+/* ---- O progresso do guia atravessa aparelhos (Fase 6A) ----
+   MAPA PLANO, endereçado pelo `id` do item: {iid:{feito, em}}. O `em` e o
+   instante da ultima mudanca feita NESTE aparelho, e e contra ele que o
+   estado.json e comparado na descida — a mesma regra de relogio dos outros
+   cinco tipos, item a item.
+
+   A chave antiga (cron:toefl-guia:<fase>) NAO e apagada: a migracao le dela
+   uma vez e a deixa onde esta, como rede de segurança. */
+const TOEFL_GUIA_KEY = "cron:toefl-guia";
+const TOEFL_MIGRADO_KEY = "cron:toefl-migrado";
+/* Piso fixo da migracao, no molde do ACERVO_EM: a marca antiga sobe com um
+   instante bem no passado, para nunca vencer uma marca feita de verdade depois
+   que a sincronizacao passou a existir. */
+const TOEFL_EM = "2026-01-01T00:00:00.000Z";
+function guiaStore(){ return LS(TOEFL_GUIA_KEY, {}) || {}; }
+function guiaFeito(iid){ var r = guiaStore()[iid]; return !!(r && r.feito); }
+/* Grava a marca e enfileira o toque no mesmo ato, com o MESMO instante: o
+   enfileirarToque devolve o iso que usou, e guardar outro valor aqui faria os
+   dois lados discordarem sobre quando aquilo aconteceu.
+
+   Desmarcar viaja (feito:false com instante proprio). Ausencia nao viaja, e
+   nao e false: e "nunca decidido". */
+function marcarGuia(iid, feito){
+  var st = guiaStore();
+  var iso = enfileirarToque("toefl", {iid:iid, feito:!!feito});
+  st[iid] = {feito:!!feito, em:iso};
+  save(TOEFL_GUIA_KEY, st);
+}
+/* MESMA ASSINATURA DE SEMPRE: devolve {indice:true} da fase pedida. Quem chama
+   (guiaItens) continua sem precisar saber que a identidade virou `id`. */
+function guiaChecks(fid){
+  var g = TOEFL_GUIA[fid]; if(!g) return {};
+  var st = guiaStore(), out = {};
+  g.itens.forEach(function(it, i){ if(st[it.id] && st[it.id].feito) out[i] = true; });
+  return out;
+}
 /* Itens de uma fase com o INDICE ORIGINAL preso a cada um. Tudo o que desenha
    ou conta passa por aqui, para que ninguem precise lembrar de que a chave de
    marcacao e a POSICAO no array. */
 function guiaItens(fid){
   const g=TOEFL_GUIA[fid]; if(!g) return [];
   const st=guiaChecks(fid);
-  return g.itens.map((it,i)=>({i:i, t:it.t, nucleo:!!it.n, feito:!!st[i]}));
+  return g.itens.map((it,i)=>({i:i, iid:it.id, t:it.t, nucleo:!!it.n, feito:!!st[i]}));
 }
 function nucleoQueFalta(fid){ return guiaItens(fid).filter(x=>x.nucleo && !x.feito); }
 function guiaQueFalta(fid){ return guiaItens(fid).filter(x=>!x.feito); }
@@ -1388,9 +1427,56 @@ function currentFaseId(){
    dois sao redesenhados — redesenhar so um deixaria o outro mentindo ate o
    proximo carregamento. */
 function toggleGuia(fid,i){
-  const s=guiaChecks(fid); s[i]=!s[i]; save("cron:toefl-guia:"+fid,s);
+  const g=TOEFL_GUIA[fid]; if(!g) return;
+  const it=g.itens[i]; if(!it) return;
+  marcarGuia(it.id, !guiaFeito(it.id));
   try{ renderProcessos(); }catch(e){}
   renderHoje();
+}
+/* ---- Migracao das marcas por posicao, uma vez por aparelho ----
+   {0:true, 3:true} em f1 vira f1-conta e f1-diagnostico.
+
+   SO O QUE E EXATAMENTE `true` SOBE. Ausencia e false no formato antigo querem
+   dizer "nunca marcado", que nao e uma decisao: publica-los como feito:false
+   deixaria um aparelho que migrasse depois apagar marca legitima de outro. Como
+   so sobem as verdadeiras, dois aparelhos migrando em ordens diferentes
+   produzem UNIAO, nunca subtracao.
+
+   As chaves antigas ficam onde estao. */
+/* A DESCIDA DO GUIA. Funcao propria, no molde do aplicarPrioridadesDoEstado:
+   e o que permite ao teste exercitar a chegada sem rede nenhuma.
+   Devolve true se algo mudou aqui. */
+function aplicarToeflDoEstado(est){
+  if(!est || !est.toefl) return false;
+  var st = guiaStore(), mudou = false;
+  Object.keys(est.toefl).forEach(function(iid){
+    var r = est.toefl[iid];
+    if(!r || !r.quando) return;
+    var loc = st[iid];
+    if(loc && (loc.em || "") >= r.quando) return;   /* empate fica como esta */
+    st[iid] = {feito: !!r.feito, em: r.quando};
+    mudou = true;
+  });
+  if(mudou) save(TOEFL_GUIA_KEY, st);
+  return mudou;
+}
+function migrarGuiaToefl(){
+  if(LS(TOEFL_MIGRADO_KEY, false)) return 0;
+  var st = guiaStore(), n = 0;
+  TOEFL_FASES.forEach(function(fid){
+    var g = TOEFL_GUIA[fid]; if(!g) return;
+    var velho = LS("cron:toefl-guia:"+fid, {}) || {};
+    g.itens.forEach(function(it, i){
+      if(velho[i] !== true) return;
+      if(st[it.id] && st[it.id].feito) return;
+      st[it.id] = {feito:true, em:TOEFL_EM};
+      enfileirarToque("toefl", {iid:it.id, feito:true}, TOEFL_EM);
+      n++;
+    });
+  });
+  save(TOEFL_GUIA_KEY, st);
+  save(TOEFL_MIGRADO_KEY, true);
+  return n;
 }
 
 /* ---- RECALIBRAR ----
@@ -4320,6 +4406,9 @@ document.getElementById("ver").textContent = "v"+APP_VERSION;
    qualquer render. Nada é descartado: ver migrarEsquema(). */
 try{ migrarEsquema(); }catch(e){ console.error("migração do esquema falhou:", e); }
 try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", e); }
+/* Antes de qualquer descida: o aparelho precisa falar por `id` para que o
+   estado.json possa responder por `id`. */
+try{ migrarGuiaToefl(); }catch(e){ console.error("migracao do guia TOEFL falhou:", e); }
 /* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
    Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
 const TEC_SEED = "2026-07-28-limpa";
@@ -4549,6 +4638,16 @@ function buscarEstado(){
       /* ---- Prioridades da semana (Fase 2) ----
          O que voce elegeu no computador chega aqui, e vice-versa. */
       if(aplicarPrioridadesDoEstado(est)){ try{ renderHoje(); }catch(e){} }
+      /* ---- Guia do TOEFL (Fase 6A) ----
+         Chave e o `id` do item. Vence o relogio, item a item: mais novo manda,
+         empate fica como esta, mais antigo e ignorado. Nao ha lapide — o item
+         nao pode ser apagado, so marcado ou desmarcado —, entao feito:false que
+         chega mais novo desmarca aqui, e e para isso que ele viaja.
+
+         NAO GERA TOQUE: receber nao e tocar. Chamar marcarGuia() aqui criaria
+         um eco que voltaria a subir a cada carregamento, para sempre — a mesma
+         razao dos subitens e do registro. */
+      if(aplicarToeflDoEstado(est)){ try{ renderProcessos(); }catch(e){} mudou = true; }
       /* ---- Registro datado: a metade que faltava ----
          A subida ja existia inteira. logar() passa a MESMA linha que grava em
          cron:registro para o toque, e a dobra guarda o toque cru no `historico`

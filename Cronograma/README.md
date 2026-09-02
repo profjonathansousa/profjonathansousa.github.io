@@ -238,9 +238,12 @@ Três decisões do modelo, todas anteriores à Fase 4 e todas preservadas:
 - **Recalibrar não reescreve o plano.** `TOEFL_PLANO` é a memória do que se
   previu; a recalibragem acrescenta uma leitura.
 
-> **A ordem dos itens do `TOEFL_GUIA` não pode mudar.** As marcações moram em
-> `cron:toefl-guia:<fase>` indexadas por **posição**. Reordenar moveria as
-> marcações para os itens errados, em silêncio.
+> **O `id` de cada item do `TOEFL_GUIA` não pode mudar** — nem ser reaproveitado
+> em outro item. Até a Fase 6A as marcações moravam em `cron:toefl-guia:<fase>`
+> indexadas por **posição**, e o intocável era a ordem: reordenar moveria as
+> marcações para os itens errados, em silêncio. Agora elas moram em
+> `cron:toefl-guia` endereçadas pelo `id`, e o risco mudou de lugar — a ordem e
+> o texto ficaram livres, o `id` é que é a identidade.
 
 ### A ponte Processo → Hoje
 
@@ -305,7 +308,7 @@ Nunca criar um segundo mecanismo de conclusão.
 
 ## Sincronização
 
-Cinco coisas atravessam aparelhos, cada uma com um tipo de toque:
+Seis coisas atravessam aparelhos, cada uma com um tipo de toque:
 
 | Tipo | Vai para | Chave |
 |---|---|---|
@@ -314,12 +317,35 @@ Cinco coisas atravessam aparelhos, cada uma com um tipo de toque:
 | `meta` | `metas` | `AAAA-MM/id` |
 | `evento` | `eventos` | id do evento |
 | `prioridade` | `prioridades` | `AAAA-Wnn/id` |
+| `toefl` | `toefl` | `id` do item do guia |
 
-**O progresso do TOEFL não atravessa aparelhos.** `cron:toefl-guia:<fase>` é
-local, como `cron:checks:` sempre foi — fechar o núcleo no computador não
-avança a fase no celular. Isso é anterior à Fase 4 e foi deliberadamente
-mantido: **a sincronização do progresso do TOEFL é da Fase 6**, e não existe
-tipo de toque `toefl`.
+**O progresso do TOEFL atravessa aparelhos desde a Fase 6A.** Fechar o núcleo
+no computador avança a fase no celular. O mapa é `cron:toefl-guia`, plano e
+endereçado pelo `id`: `{iid: {feito, em}}`. O toque leva o mínimo —
+`{iid, feito}` —, sem fase, sem texto e sem índice: os dois primeiros moram no
+`TOEFL_GUIA`, que é estrutura da página, e o aparelho que desenha os lê de lá.
+
+**Não há lápide `del` aqui**, e a exceção tem razão: o item do guia não é coisa
+que você cria, é estrutura — não pode ser apagado, só marcado ou desmarcado.
+Desmarcar viaja como `feito:false` com instante próprio. **Ausência não é
+`false`**: é "nunca decidido".
+
+*Migração.* As marcas antigas por posição sobem uma vez por aparelho, guardadas
+por `cron:toefl-migrado`, com o instante-piso `TOEFL_EM` — bem no passado, para
+nunca vencerem uma marca feita depois. **Só o que é exatamente `true` sobe**: se
+a ausência viajasse como `false`, um aparelho que migrasse mais tarde apagaria
+marca legítima de outro. Como só sobem as verdadeiras, dois aparelhos migrando
+em ordens diferentes produzem **união**, nunca subtração. As chaves antigas
+`cron:toefl-guia:<fase>` **não são apagadas**: ficam como rede de segurança.
+
+**A recalibragem continua local.** `cron:toefl-recalibrado` é cache de uma
+derivação — `calcularRecalibragem()` a refaz a partir do plano, da fase corrente
+e do que falta, e as duas últimas agora sincronizam. Sincronizar a leitura seria
+sincronizar valor derivado. Não existe tipo de toque `recalibrado`.
+
+`cron:checks:` (rotinas) e `cron:contexto` (casa/fora) seguem locais, cada um
+pela sua razão: o dia marcado é do aparelho, e o lugar onde você está é um fato
+físico dele.
 
 Regras invioláveis:
 
@@ -399,7 +425,8 @@ vai para o ar, não uma cópia dele.
 | 3 — Motor de prioridades (prazo, importância, inatividade, contexto) | concluída |
 | 4 — Aba Processos (TOEFL primeiro) | concluída |
 | 5 — Revisão dominical (digest curto) | concluída |
-| 6 — Sincronização completa (retomadas, processos, estado do Hoje) | a fazer |
+| 6A — Sincronização do guia do TOEFL (toque `toefl`, identidade por `id`) | concluída |
+| 6B — Sincronização de retomadas e do estado do Hoje | a fazer |
 | 7 — Notificações | a fazer |
 | 8 — Refatoração (dividir o index.html) | a fazer |
 
@@ -416,8 +443,12 @@ vai para o ar, não uma cópia dele.
 - **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as
   inventou. A única dependência real hoje é `prova: "estrela"` — etapa travada
   esperando decisão sua.
-- **Sincronização do progresso do TOEFL entre aparelhos.** Exige um tipo de
-  toque novo; pertence à **Fase 6**. Hoje `cron:toefl-*` é local por aparelho.
+- **Sincronização das retomadas adiadas e do estado do Hoje**
+  (`cron:retomadas-adiadas`, `cron:hoje-dispensados` e, se decidido,
+  `cron:checks:`). Pertence à **Fase 6B**. Dispensar uma retomada num aparelho
+  ainda não silencia no outro. `cron:checks:` é local **por decisão** — a
+  revisão dominical exibe a ressalva "neste aparelho" —, e sincronizá-lo é
+  escolha a tomar, não pendência a saldar.
 - **Sinais de Processo** alimentando o motor de prioridades, pelo seam
   `sinaisDeProcesso()`, que devolve `[]`.
 - **Processo Notre Dame.** A estrutura o recebe sem refatoração; ele não existe.

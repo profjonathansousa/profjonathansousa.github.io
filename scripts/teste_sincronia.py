@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Prova de ponta a ponta da sincronia de PRIORIDADES (Fase 2).
+"""Prova de ponta a ponta da sincronia de PRIORIDADES (Fase 2) e do GUIA DO
+TOEFL (Fase 6A).
 
     python3 scripts/teste_sincronia.py
 
@@ -281,8 +282,82 @@ with contextlib.redirect_stdout(buf):
 ok(cod_estrela != 0, "e ele RECUSA etapa de prova 'estrela' (decisao sua)",
    buf.getvalue()[-160:])
 
+print("\n=== 6. TOEFL: o guia atravessa (Fase 6A) ===")
+TMP3 = montar_repo_falso()
+# O computador marca dois itens do guia; um deles ele desmarca em seguida.
+saida_t = node("""
+const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
+mac.marcarGuia("f1-conta", true);
+mac.marcarGuia("f1-anki", true);
+mac.marcarGuia("f1-anki", false);
+console.log(JSON.stringify({toques: mac.getToques().filter(t=>t.tipo==="toefl")}));
+""", RAIZ)
+gravar_toques(TMP3, saida_t["toques"], "lote-toefl.json")
+est_t = dobrar_em(TMP3)
+ok("toefl" in est_t, "o estado.json ganhou a secao 'toefl'", sorted(est_t.keys()))
+ok(est_t["toefl"].get("f1-conta", {}).get("feito") is True,
+   "a marca chegou como booleano", est_t["toefl"].get("f1-conta"))
+ok(est_t["toefl"].get("f1-anki", {}).get("feito") is False,
+   "e a desmarcacao venceu a marcacao anterior do mesmo item",
+   est_t["toefl"].get("f1-anki"))
+ok(all(v.get("quando") and v.get("aparelho") == "mac" for v in est_t["toefl"].values()),
+   "cada uma com quando e aparelho", est_t["toefl"])
+ok(all("t" not in v and "fase" not in v for v in est_t["toefl"].values()),
+   "e o texto e a fase NAO viajam", est_t["toefl"])
+
+# Redobra: o mesmo lote outra vez nao muda nada e nao duplica o historico.
+antes_hist = len(est_t["historico"])
+gravar_toques(TMP3, saida_t["toques"], "lote-toefl-repetido.json")
+est_t2 = dobrar_em(TMP3)
+ok(est_t2["toefl"] == est_t["toefl"], "redobrar o mesmo lote nao muda o estado")
+ok(len(est_t2["historico"]) == antes_hist,
+   "e nao duplica o historico (idempotente)",
+   (antes_hist, len(est_t2["historico"])))
+
+# Toque atrasado de outro aparelho: entra no historico, nao manda no estado.
+atrasado = [{"v": 1, "id": "2020-01-01T00-00-00-000Z-velho",
+             "quando": "2020-01-01T00:00:00.000Z", "aparelho": "celular",
+             "app": "teste", "tipo": "toefl",
+             "dados": {"iid": "f1-conta", "feito": False}}]
+gravar_toques(TMP3, atrasado, "lote-atrasado.json")
+est_t3 = dobrar_em(TMP3)
+ok(est_t3["toefl"]["f1-conta"]["feito"] is True,
+   "toque atrasado NAO desmarca o que ja estava mais novo",
+   est_t3["toefl"]["f1-conta"])
+ok(any(t.get("id") == "2020-01-01T00-00-00-000Z-velho" for t in est_t3["historico"]),
+   "mas ele fica no historico: nada se perde")
+
+# Uniao: o celular marca outro item, e os dois convivem.
+saida_c = node("""
+const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
+cel.marcarGuia("f2-reading", true);
+console.log(JSON.stringify({toques: cel.getToques().filter(t=>t.tipo==="toefl")}));
+""", RAIZ)
+gravar_toques(TMP3, saida_c["toques"], "lote-cel.json")
+est_t4 = dobrar_em(TMP3)
+ok(est_t4["toefl"].get("f1-conta", {}).get("feito") is True and
+   est_t4["toefl"].get("f2-reading", {}).get("feito") is True,
+   "ids diferentes coexistem: a uniao preserva os dois aparelhos",
+   sorted(est_t4["toefl"].keys()))
+# E a pagina do outro lado recebe os dois, sem gerar toque de volta.
+volta = node("""
+const est = %s;
+const d = aparelho("mac2", {"cron:aparelho":JSON.stringify("mac2")}, null);
+const antes = d.getToques().length;
+d.aplicarToeflDoEstado(est);
+console.log(JSON.stringify({conta: d.guiaFeito("f1-conta"),
+                            reading: d.guiaFeito("f2-reading"),
+                            anki: d.guiaFeito("f1-anki"),
+                            novos: d.getToques().length - antes}));
+""" % json.dumps(est_t4), RAIZ)
+ok(volta["conta"] is True and volta["reading"] is True,
+   "o aparelho que nunca marcou nada recebe as duas", volta)
+ok(volta["anki"] is False, "e o item desmarcado chega desmarcado", volta)
+ok(volta["novos"] == 0, "sem gerar toque de volta (sem eco)", volta["novos"])
+
 shutil.rmtree(TMP, ignore_errors=True)
 shutil.rmtree(TMP2, ignore_errors=True)
+shutil.rmtree(TMP3, ignore_errors=True)
 print("\n" + "=" * 62)
 print("FALHAS: %d" % len(falhas))
 for f in falhas:

@@ -19,12 +19,20 @@ NADA SE PERDE. Um toque dobrado sai da pasta, mas o seu conteúdo fica em
 duas vezes não conte duas vezes. Toque que este script não entende continua onde
 está, e é relatado no fim.
 
-CINCO COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
+SEIS COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
     registro   -> progresso dos subitens dos trilhos, em `itens`
     triagem    -> a marca de cada vaga na aba Vagas, em `triagem`
     meta       -> as metas do mes, uma a uma, em `metas`
     evento     -> as datas importantes, SO A DATA, em `eventos`
     prioridade -> o que voce elegeu para a semana no Hoje, em `prioridades`
+    toefl      -> os itens do guia do TOEFL, um a um, em `toefl`
+
+O toefl entrou na Fase 6A. Ele e o caso mais simples dos seis: a chave e o `id`
+do item no TOEFL_GUIA e o valor e um booleano. Nao tem lapide `del` porque o
+item nao e coisa que o usuario cria — ele mora na estrutura da pagina e so pode
+ser marcado ou desmarcado, nunca apagado. Desmarcar viaja como feito=false com
+instante proprio; AUSENCIA NAO E false, e por isso a migracao das marcas antigas
+so publica as verdadeiras.
 
 A prioridade entrou na Fase 2 (Hoje 2.0), e entrou aqui em vez de ficar so no
 aparelho porque ela e a decisao central do novo Hoje: eleger no computador na
@@ -79,6 +87,7 @@ def estado_vazio():
         "metas": {},
         "eventos": {},
         "prioridades": {},
+        "toefl": {},
         "historico": [],
         "_ids_dobrados": [],
     }
@@ -144,6 +153,13 @@ def alvo(t):
         if not d.get("sem") or not d.get("prid"):
             return (None, None)
         return ("prioridades", "%s/%s" % (d.get("sem"), d.get("prid")))
+    if tipo == "toefl":
+        # O endereco e o `id` do item, e ele e global: nao leva a fase junto.
+        # Assim a marca segue o item mesmo se ele mudar de fase um dia, e o
+        # indice no array — que era a chave antiga — deixa de mandar em nada.
+        if not d.get("iid"):
+            return (None, None)
+        return ("toefl", str(d.get("iid")))
     return (None, None)
 
 
@@ -195,6 +211,11 @@ def valor(t):
              "projId": d.get("projId") or "",
              "t": d.get("t", ""),
              "del": bool(d.get("del"))}
+    elif tipo == "toefl":
+        # So o booleano. Nem o texto do item nem a fase viajam: os dois moram no
+        # TOEFL_GUIA, que e estrutura da pagina, e o aparelho que desenha os le
+        # de la. Mesma regra da prioridade, pelo mesmo motivo.
+        v = {"feito": bool(d.get("feito"))}
     else:
         # A meta apagada vira lapide: fica no estado com del=true, para que o
         # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e
