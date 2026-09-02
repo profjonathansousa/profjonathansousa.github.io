@@ -1664,19 +1664,28 @@ function projetoComecou(pr){
    usa-lo aqui seria inventar tamanho. Subitem "nao se aplica" sai da conta —
    ele nao e etapa que falta, e etapa que nao existe para este projeto. */
 function resumoDoTrilho(pid, pr){
-  var total = 0, feito = 0, ultimo = "";
+  var total = 0, feito = 0, ultimo = "", posAtual = 0;
   (pr.subs || []).forEach(function(sx){
     var x = normSub(sx);
     if(x.em && x.em > ultimo) ultimo = x.em;
     if(x.vida === "inaplicavel") return;
     total++;
-    if(x.st === 2) feito++;
+    if(x.st === 2){ feito++; return; }
+    /* A POSICAO DA ETAPA ATUAL NAO SE DEDUZ DA CONTAGEM. `feito + 1` so acerta
+       quando as conclusoes sao um prefixo da lista, e nao sao: fechar a etapa 3
+       antes da 2 e comum na esteira, e ali `feito + 1` apontaria a 3 enquanto o
+       estagioDoTrilho — que devolve a PRIMEIRA nao concluida — aponta a 2, e a
+       tela se contradiria. Entao a posicao vem da mesma regra do estagio: a
+       primeira ainda aberta. O `feito` continua sendo a contagem real. */
+    if(!posAtual) posAtual = total;
   });
   var et = estagioDoTrilho(pid, pr.id);
   return {
     /* "Etapa 3 de 6" e uma CONTAGEM, nao uma sintese: o texto da etapa nunca e
        reescrito. Ele aparece verbatim no corpo, na linha "Agora". */
-    fase: total ? ("Etapa " + Math.min(feito + 1, total) + " de " + total) : "sem etapas",
+    fase: !total ? "sem etapas"
+        : posAtual ? ("Etapa " + posAtual + " de " + total)
+        : "sem etapa aberta",
     feito: feito, total: total, falta: total - feito,
     dias: ultimo ? diasDesde(ultimo) : null,
     estagio: (et && !et.concluido) ? et : null

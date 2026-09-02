@@ -1137,7 +1137,10 @@ ok(ids0.indexOf("toefl") === 0, "o TOEFL continua aparecendo, e vem primeiro", i
 
 /* (1) nao comecado nao aparece */
 const prA = pegarProj(PV, "pipeline", "a01");
-ok(PV.projetoComecou(prA) === false || true, "a01 lido do trilho");
+ok(!!prA && prA.id === "a01" && (prA.subs || []).length > 0 &&
+   (prA.subs || []).every(x => typeof x.t === "string" && x.t),
+   "a01 vem do trilho real, com etapas e textos",
+   prA && (prA.subs || []).length);
 const projsPV = PV.getProjs("pipeline");
 const alvoPV = projsPV.filter(p => p.id === "a01")[0];
 alvoPV.subs.forEach(x => { x.st = 0; x.em = ""; });
@@ -1183,6 +1186,22 @@ ok(corpoT.indexOf(PV.escapeHtml(etReal.subT)) > -1,
    "e o texto exibido e VERBATIM o sub.t do trilho", etReal.subT);
 ok(!/trabalhar no|dar andamento|avancar o/i.test(corpoT),
    "nunca um rotulo generico");
+
+/* (4b) CONCLUSAO FORA DE ORDEM: etapa 1 feita, 2 aberta, 3 feita.
+   `feito + 1` diria "Etapa 3"; a primeira aberta e a 2. */
+const p6 = PV.getProjs("pipeline"); const a6 = p6.filter(p => p.id === "a01")[0];
+a6.subs.forEach((x, i) => { x.st = (i === 0 || i === 2) ? 2 : 0; x.vida = "ativo"; });
+PV.setProjs("pipeline", p6);
+const rFora = PV.resumoDoTrilho("pipeline", pegarProj(PV, "pipeline", "a01"));
+ok(rFora.feito === 2, "com duas etapas fechadas fora de ordem, o progresso conta 2",
+   rFora.feito);
+ok(rFora.fase === "Etapa 2 de " + rFora.total,
+   "e a etapa atual e a 2 (a primeira aberta), nao a 3", rFora.fase);
+const etFora = PV.estagioDoTrilho("pipeline", "a01");
+ok(rFora.estagio && rFora.estagio.subId === etFora.subId &&
+   etFora.subId === a6.subs[1].id,
+   "o resumo e o estagioDoTrilho apontam a MESMA etapa",
+   [rFora.estagio && rFora.estagio.subId, etFora.subId]);
 
 /* (5) onde e prova existentes aparecem */
 const subComOnde = pegarProj(PV, "pipeline", "a01").subs.filter(x => x.onde)[0];
