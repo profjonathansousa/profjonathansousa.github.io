@@ -17,12 +17,23 @@ const vm = require("vm");
 
 const RAIZ = path.dirname(__dirname);
 const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8");
+/* OS SCRIPTS REAIS, NA ORDEM DO HTML (Fase 7). O <script> inline deixou de
+   existir: o index.html agora aponta para js/00-config.js ... js/40-app.js, e a
+   ordem daquelas tags E parte da arquitetura. O teste le a lista do proprio
+   HTML em vez de repeti-la aqui — assim acrescentar ou reordenar um arquivo na
+   aplicacao nao deixa o teste medindo outra coisa. */
+const SRCS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || [])
+  .map(t => t.match(/src="([^"]+)"/)[1]);
+const FONTES = SRCS.map(src =>
+  fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"));
+/* Tudo o que era o <script> inline, concatenado na mesma ordem. */
+const CODIGO = FONTES.join("\n");
 /* `const` e `let` no topo de um script do vm ficam no escopo lexico dele e NAO
    viram propriedade do contexto — so `function` e `var` viram. DIAS, PAINEIS e
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
-const FONTE = HTML.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1] +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
+const FONTE = CODIGO +
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -1125,6 +1136,293 @@ ok(REF.currentFaseId() === "f1",
    "e a fase continua em f1: so o nucleo avanca", REF.currentFaseId());
 ok(REF.guiaChecks("f1")[1] === true,
    "guiaChecks mantem a assinatura antiga (por indice) lendo o mapa novo");
+
+console.log("\n=== 38. Processos: TOEFL + trilhos iniciados ===");
+const PV = criarAparelho("processos");
+/* o projeto de teste sai do trilho real, para nao inventar estrutura */
+function pegarProj(ctx, pid, projId){
+  return (ctx.getProjs(pid) || []).filter(p => p.id === projId)[0];
+}
+const ids0 = PV.processosVisiveis().map(P => P.id);
+ok(ids0.indexOf("toefl") === 0, "o TOEFL continua aparecendo, e vem primeiro", ids0[0]);
+
+/* (1) nao comecado nao aparece */
+const prA = pegarProj(PV, "pipeline", "a01");
+ok(!!prA && prA.id === "a01" && (prA.subs || []).length > 0 &&
+   (prA.subs || []).every(x => typeof x.t === "string" && x.t),
+   "a01 vem do trilho real, com etapas e textos",
+   prA && (prA.subs || []).length);
+const projsPV = PV.getProjs("pipeline");
+const alvoPV = projsPV.filter(p => p.id === "a01")[0];
+alvoPV.subs.forEach(x => { x.st = 0; x.em = ""; });
+PV.setProjs("pipeline", projsPV);
+ok(PV.projetoComecou(pegarProj(PV, "pipeline", "a01")) === false,
+   "projeto sem em e sem st>0 nao esta comecado");
+ok(PV.processosVisiveis().every(P => P.id !== "trilho:pipeline/a01"),
+   "e nao aparece em Processos");
+
+/* (2) qualquer em OU st>0 comeca */
+const p2 = PV.getProjs("pipeline"); const a2 = p2.filter(p => p.id === "a01")[0];
+a2.subs[0].em = "2026-08-20T10:00:00.000Z";
+PV.setProjs("pipeline", p2);
+ok(PV.projetoComecou(pegarProj(PV, "pipeline", "a01")) === true, "so o `em` ja o inicia");
+const p3 = PV.getProjs("pipeline"); const a3 = p3.filter(p => p.id === "a01")[0];
+a3.subs[0].em = ""; a3.subs[0].st = 1;
+PV.setProjs("pipeline", p3);
+ok(PV.projetoComecou(pegarProj(PV, "pipeline", "a01")) === true, "e so o st>0 tambem");
+ok(PV.processosVisiveis().some(P => P.id === "trilho:pipeline/a01"),
+   "o artigo iniciado aparece em Processos",
+   PV.processosVisiveis().map(P => P.id));
+
+/* (3) concluido sai */
+const p4 = PV.getProjs("pipeline"); const a4 = p4.filter(p => p.id === "a01")[0];
+a4.subs.forEach(x => { x.st = 2; });
+PV.setProjs("pipeline", p4);
+ok(PV.processosVisiveis().every(P => P.id !== "trilho:pipeline/a01"),
+   "projeto concluido nao aparece");
+
+/* (4) progresso X de Y e estagio verbatim */
+const p5 = PV.getProjs("pipeline"); const a5 = p5.filter(p => p.id === "a01")[0];
+a5.subs.forEach((x, i) => { x.st = i < 2 ? 2 : 0; x.em = "2026-08-20T10:00:00.000Z"; });
+PV.setProjs("pipeline", p5);
+const rT = PV.resumoDoTrilho("pipeline", pegarProj(PV, "pipeline", "a01"));
+ok(rT.feito === 2 && rT.total === a5.subs.length,
+   "o progresso conta X de Y etapas", [rT.feito, rT.total]);
+ok(rT.fase === "Etapa 3 de " + rT.total, "e a fase e a contagem, nao uma sintese", rT.fase);
+const etReal = PV.estagioDoTrilho("pipeline", "a01");
+ok(rT.estagio && rT.estagio.subT === etReal.subT,
+   "o estagio e o do estagioDoTrilho", rT.estagio && rT.estagio.subT);
+const corpoT = PV.corpoDoTrilho("pipeline", pegarProj(PV, "pipeline", "a01"));
+ok(corpoT.indexOf(PV.escapeHtml(etReal.subT)) > -1,
+   "e o texto exibido e VERBATIM o sub.t do trilho", etReal.subT);
+ok(!/trabalhar no|dar andamento|avancar o/i.test(corpoT),
+   "nunca um rotulo generico");
+
+/* (4b) CONCLUSAO FORA DE ORDEM: etapa 1 feita, 2 aberta, 3 feita.
+   `feito + 1` diria "Etapa 3"; a primeira aberta e a 2. */
+const p6 = PV.getProjs("pipeline"); const a6 = p6.filter(p => p.id === "a01")[0];
+a6.subs.forEach((x, i) => { x.st = (i === 0 || i === 2) ? 2 : 0; x.vida = "ativo"; });
+PV.setProjs("pipeline", p6);
+const rFora = PV.resumoDoTrilho("pipeline", pegarProj(PV, "pipeline", "a01"));
+ok(rFora.feito === 2, "com duas etapas fechadas fora de ordem, o progresso conta 2",
+   rFora.feito);
+ok(rFora.fase === "Etapa 2 de " + rFora.total,
+   "e a etapa atual e a 2 (a primeira aberta), nao a 3", rFora.fase);
+const etFora = PV.estagioDoTrilho("pipeline", "a01");
+ok(rFora.estagio && rFora.estagio.subId === etFora.subId &&
+   etFora.subId === a6.subs[1].id,
+   "o resumo e o estagioDoTrilho apontam a MESMA etapa",
+   [rFora.estagio && rFora.estagio.subId, etFora.subId]);
+
+/* (5) onde e prova existentes aparecem */
+const subComOnde = pegarProj(PV, "pipeline", "a01").subs.filter(x => x.onde)[0];
+ok(!!subComOnde, "o trilho real tem `onde` preenchido", subComOnde && subComOnde.onde);
+ok(corpoT.indexOf('class="sub-onde"') > -1 &&
+   corpoT.indexOf(PV.escapeHtml(subComOnde.onde)) > -1,
+   "e o `onde` e exibido", subComOnde.onde);
+const subEstrela = pegarProj(PV, "pipeline", "a01").subs.filter(x => x.prova === "estrela")[0];
+ok(!!subEstrela && corpoT.indexOf("depende de voc") > -1,
+   "prova:estrela aparece como decisao sua");
+ok(corpoT.indexOf("pelo pipeline") > -1, "e prova:maquina como conduzida pelo pipeline");
+
+/* (6) o derivado nao pede nada ao Hoje, e desenhar nao toca em nada */
+const derivado = PV.processosVisiveis().filter(P => P.id === "trilho:pipeline/a01")[0];
+ok(derivado.acaoDoDia() === null, "acaoDoDia() do processo derivado devolve null");
+ok(derivado.acoes() === "", "e ele nao oferece acao de execucao");
+const antesPV = PV.getToques().length;
+PV.renderProcessos();
+const htmlPV = PV.document.getElementById("view-processos").innerHTML;
+ok(PV.getToques().length === antesPV, "desenhar Processos nao emite toque nenhum",
+   PV.getToques().length - antesPV);
+ok(/TOEFL/.test(htmlPV) && htmlPV.indexOf(PV.escapeHtml(etReal.subT)) > -1,
+   "e a aba mostra o TOEFL e o artigo iniciado");
+
+console.log("\n=== 39. O bloco de rotinas diz o que e ===");
+const RB = criarAparelho("rotinas");
+function summaryDeAtrasadas(ctx, quantas){
+  /* deixa `quantas` rotinas de ontem sem marcar e marca todas as outras */
+  for (let k = 1; k <= 7; k++) {
+    const dt = new Date(ctx.now.getFullYear(), ctx.now.getMonth(), ctx.now.getDate() - k);
+    const D = ctx.DIAS[dt.getDay()]; if (!D) continue;
+    const dia = ctx.ymd(dt), ck = {};
+    D.tasks.forEach((t, i) => { ck[t.id] = !(k === 1 && i < quantas); });
+    ctx.save("cron:checks:" + dia, ck);
+  }
+  return ctx.renderAtrasadas();
+}
+const um = summaryDeAtrasadas(RB, 1);
+ok(/1 rotina não marcada/.test(um), "1 -> '1 rotina nao marcada'",
+   (um.match(/<summary>[^<]*/) || [""])[0]);
+const tres = summaryDeAtrasadas(RB, 3);
+ok(/3 rotinas não marcadas/.test(tres), "3 -> '3 rotinas nao marcadas'",
+   (tres.match(/<summary>[^<]*/) || [""])[0]);
+ok(!/ficouram/.test(CODIGO), "a string 'ficouram' nao existe no codigo");
+ok(!/ficou'\+\(/.test(CODIGO), "e a flexao nao e mais montada por concatenacao");
+/* o bloco continua inteiro */
+ok(typeof RB.atrasadas === "function" && typeof RB.marcarAtrasada === "function" &&
+   typeof RB.dispensarAtrasada === "function" && typeof RB.podarDispensados === "function",
+   "atrasadas/marcar/dispensar/podar continuam existindo");
+const domDesc2 = RB.DIAS[0].tasks.filter(t => t.id === "dom-desc")[0];
+ok(domDesc2 && domDesc2.t === "Descanso", "e dom-desc continua sendo 'Descanso'",
+   domDesc2 && domDesc2.t);
+
+console.log("\n=== 40. O silencio da retomada atravessa (Fase 6B) ===");
+/* um projeto parado de verdade, para que retomadas() tenha o que devolver */
+function comParado(nome, storage){
+  const ctx = criarAparelho(nome, storage ? { storage } : undefined);
+  const ps = ctx.getProjs("pipeline"), pr = ps.filter(p => p.id === "a01")[0];
+  const velho = new Date(Date.now() - 40 * 86400000).toISOString();
+  pr.subs.forEach((x, i) => { x.st = i === 0 ? 1 : 0; x.em = velho; x.vida = "ativo"; });
+  ctx.setProjs("pipeline", ps);
+  return ctx;
+}
+const R6A = comParado("ret-a");
+ok(R6A.retomadas().some(r => r.projId === "a01"), "a01 aparece como parado",
+   R6A.retomadas().map(r => r.projId));
+const antesRA = R6A.getToques().length;
+R6A.adiarRetomada("pipeline", "a01");
+const guardado = R6A.LS("cron:retomadas-adiadas", {})["pipeline/a01"];
+ok(guardado && typeof guardado === "object" && guardado.ate && guardado.em,
+   "a gravacao virou {ate, em}", guardado);
+const tqR = R6A.getToques().filter(t => t.tipo === "retomada");
+ok(R6A.getToques().length === antesRA + 1 && tqR.length === 1,
+   "e emitiu exatamente um toque `retomada`", R6A.getToques().length - antesRA);
+ok(JSON.stringify(Object.keys(tqR[0].dados).sort()) === '["ate","pid","projId"]',
+   "com o payload minimo {pid, projId, ate}", Object.keys(tqR[0].dados));
+ok(tqR[0].dados.ate === guardado.ate && tqR[0].quando === guardado.em,
+   "e o instante gravado e o mesmo que subiu");
+/* os DOIS leitores calam */
+ok(!R6A.retomadas().some(r => r.projId === "a01"), "o projeto sai de retomadas()");
+ok(!(R6A.motorDePrioridades([]) || []).some(c => c.projId === "a01"),
+   "e sai tambem do motorDePrioridades()");
+
+console.log("\n=== 41. Migracao das silenciadas antigas ===");
+const futura = (() => { const d = new Date(Date.now() + 10 * 86400000);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); })();
+const vencida = "2020-01-01";
+const R6MG = criarAparelho("mig-ret", { storage: {
+  "cron:retomadas-adiadas": JSON.stringify({"pipeline/a01": futura, "pipeline/a02": vencida})
+}});
+const mapaMG = R6MG.LS("cron:retomadas-adiadas", {});
+ok(mapaMG["pipeline/a01"] && mapaMG["pipeline/a01"].ate === futura &&
+   mapaMG["pipeline/a01"].em === "2026-01-01T00:00:00.000Z",
+   "a futura virou {ate, em} com o piso RETOMADA_EM", mapaMG["pipeline/a01"]);
+ok(mapaMG["pipeline/a02"] && mapaMG["pipeline/a02"].ate === vencida,
+   "a vencida foi PRESERVADA no aparelho, convertida", mapaMG["pipeline/a02"]);
+/* Para que a proxima assercao signifique alguma coisa, a02 precisa ser
+   candidato de verdade: sem isso ele nunca apareceria em retomadas() e o teste
+   passaria sem testar nada. Parado ha 40 dias, com uma etapa aberta. */
+const psMG = R6MG.getProjs("pipeline"), a02MG = psMG.filter(p => p.id === "a02")[0];
+const velhoMG = new Date(Date.now() - 40 * 86400000).toISOString();
+a02MG.subs.forEach((x, i) => { x.st = i === 0 ? 1 : 0; x.em = velhoMG; x.vida = "ativo"; });
+R6MG.setProjs("pipeline", psMG);
+ok(R6MG.retomadas().some(r => r.projId === "a02"), "a vencida nao cala ninguem",
+   R6MG.retomadas().map(r => r.projId));
+ok(mapaMG["pipeline/a02"].ate < R6MG.ymd(R6MG.now),
+   "a data da silenciada vencida ficou no passado", mapaMG["pipeline/a02"].ate);
+const tqMG = R6MG.getToques().filter(t => t.tipo === "retomada");
+ok(tqMG.length === 1 && tqMG[0].dados.projId === "a01",
+   "mas so a futura foi publicada: um toque", tqMG.map(t => t.dados));
+R6MG.migrarRetomadas();
+ok(R6MG.getToques().filter(t => t.tipo === "retomada").length === 1,
+   "migrar de novo nao emite o segundo lote");
+ok(R6MG.LS("cron:retomadas-migrado", false) === true, "cron:retomadas-migrado foi posto");
+
+console.log("\n=== 42. Convergencia entre aparelhos ===");
+function dobrarRetomadas(toques, base) {
+  const est = { retomadas: Object.assign({}, (base || {}).retomadas) };
+  toques.slice().sort((a, b) => (a.quando || "") < (b.quando || "") ? -1 : 1)
+    .forEach(t => {
+      if (t.tipo !== "retomada") return;
+      const k = t.dados.pid + "/" + t.dados.projId;
+      const atual = est.retomadas[k];
+      if (atual && (atual.quando || "") > (t.quando || "")) return;
+      est.retomadas[k] = { ate: t.dados.ate, quando: t.quando, aparelho: t.aparelho };
+    });
+  return est;
+}
+const R6B1 = comParado("ret-b1"); R6B1.adiarRetomada("pipeline", "a01");
+const R6B2 = comParado("ret-b2"); R6B2.adiarRetomada("pipeline", "a02");
+const uniao = dobrarRetomadas(R6B1.getToques().concat(R6B2.getToques()));
+ok(Object.keys(uniao.retomadas).sort().join(",") === "pipeline/a01,pipeline/a02",
+   "projetos diferentes coexistem", Object.keys(uniao.retomadas));
+R6B1.aplicarRetomadasDoEstado(uniao);
+const mRB1 = R6B1.LS("cron:retomadas-adiadas", {});
+ok(mRB1["pipeline/a01"] && mRB1["pipeline/a02"],
+   "e o aparelho A recebe a uniao sem perder a propria", Object.keys(mRB1));
+/* mais novo vence */
+const R6NV = comParado("ret-novo"); R6NV.adiarRetomada("pipeline", "a01");
+R6NV.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2099-12-31", quando: "2099-01-01T00:00:00.000Z" } } });
+ok(R6NV.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === "2099-12-31",
+   "remoto mais novo vence");
+/* mais antigo nao vence */
+const R6VL = comParado("ret-velho"); R6VL.adiarRetomada("pipeline", "a01");
+const ateVL = R6VL.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate;
+R6VL.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2020-01-01", quando: "2020-01-01T00:00:00.000Z" } } });
+ok(R6VL.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === ateVL,
+   "remoto mais antigo nao derruba o local");
+/* empate preserva o local */
+const R6EM = comParado("ret-empate"); R6EM.adiarRetomada("pipeline", "a01");
+const locEM = R6EM.LS("cron:retomadas-adiadas", {})["pipeline/a01"];
+R6EM.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2099-12-31", quando: locEM.em } } });
+ok(R6EM.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === locEM.ate,
+   "empate no relogio preserva o local");
+/* receber nao e tocar */
+const R6EC = comParado("ret-eco");
+const antesEC = R6EC.getToques().length;
+R6EC.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
+  { ate: "2099-12-31", quando: "2099-01-01T00:00:00.000Z" } } });
+ok(R6EC.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === "2099-12-31",
+   "o silencio de fora chega");
+ok(R6EC.getToques().length === antesEC, "e a descida NAO emite toque",
+   R6EC.getToques().length - antesEC);
+
+console.log("\n=== 43. O silencio expira sozinho ===");
+const R6EX = comParado("ret-expira");
+R6EX.save("cron:retomadas-adiadas", {"pipeline/a01": {ate:"2020-01-01", em:"2020-01-01T00:00:00.000Z"}});
+ok(R6EX.retomadas().some(r => r.projId === "a01"),
+   "vencido o `ate`, o projeto reaparece — sem toque nenhum",
+   R6EX.retomadas().map(r => r.projId));
+
+console.log("\n=== 44. A estrutura em arquivos (Fase 7) ===");
+const ESPERADOS = ["js/00-config.js", "js/10-nucleo.js", "js/20-regras.js",
+                   "js/30-render.js", "js/40-app.js"];
+ok(JSON.stringify(SRCS) === JSON.stringify(ESPERADOS),
+   "os cinco scripts aparecem no HTML na ordem certa", SRCS);
+ok(ESPERADOS.every(f => fs.existsSync(path.join(RAIZ, "Cronograma", f))),
+   "e os cinco arquivos existem");
+ok(fs.existsSync(path.join(RAIZ, "Cronograma", "css", "cronograma.css")),
+   "cronograma.css existe");
+ok(/<link[^>]+href="css\/cronograma\.css"/.test(HTML),
+   "e o HTML o referencia");
+/* o shell nao pode ter sobrado nada de codigo */
+ok(!/<script(?![^>]*\ssrc=)[^>]*>[\s\S]*?<\/script>/.test(HTML),
+   "nao ha JavaScript inline no HTML");
+ok(!/<style[\s\S]*?<\/style>/.test(HTML), "nem CSS inline");
+ok(HTML.length < 20000, "o index.html virou um shell", HTML.length);
+/* e o que foi para o ar continua sendo o que se testa */
+ok(CODIGO.length > 200000, "o codigo real tem o tamanho esperado", CODIGO.length);
+const APP = criarAparelho("fase7");
+["renderHoje","estagioDoTrilho","aplicarPrioridadesDoEstado","vgMarcar",
+ "enfileirarToque","renderProcessos","renderSemana","renderTrilhos","renderEventos",
+ "renderMetas","vgRender","retomadas","motorDePrioridades","guiaChecks","toggleGuia",
+ "adiarRetomada","aplicarToeflDoEstado","aplicarRetomadasDoEstado","processosVisiveis",
+ "revisaoDaSemana","atrasadas","LS","save","getToques","buscarEstado"].forEach(function(f){
+  ok(typeof APP[f] === "function", "a funcao publica " + f + " continua disponivel");
+});
+/* nenhuma chave nem tipo de toque mudou de lugar junto com o codigo */
+const CHAVES = (CODIGO.match(/cron:[a-z0-9:-]*/g) || []);
+ok(CHAVES.indexOf("cron:checks:") > -1 && CHAVES.indexOf("cron:contexto") > -1 &&
+   CHAVES.indexOf("cron:hoje-dispensados") > -1 && CHAVES.indexOf("cron:retomadas-adiadas") > -1,
+   "as chaves de localStorage continuam as mesmas");
+const TIPOS = Array.from(new Set((CODIGO.match(/enfileirarToque\("([a-z]+)"/g) || [])
+  .map(t => t.match(/"([a-z]+)"/)[1]))).sort();
+ok(JSON.stringify(TIPOS) ===
+   JSON.stringify(["evento","meta","prioridade","registro","retomada","toefl","triagem"]),
+   "e os sete tipos de toque continuam os mesmos, sem nenhum novo", TIPOS);
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);

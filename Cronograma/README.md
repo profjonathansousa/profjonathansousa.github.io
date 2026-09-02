@@ -38,7 +38,7 @@ estado.json  ──► progresso (st, vida, quando)
 | Aba | O que é |
 |---|---|
 | **Hoje** | execução do dia: prioridades, rotinas, retomadas, datas, indicador de vagas |
-| **Processos** | a estrutura completa de um trabalho complexo. Hoje: o TOEFL |
+| **Processos** | a estrutura completa dos trabalhos complexos em curso: o TOEFL e os projetos de Trilho já iniciados |
 | **Trilhos** | estruturas de longo prazo: esteira de artigos, PhD, pós-doc, concursos, técnico |
 | **Vagas** | triagem de oportunidades acadêmicas coletadas semanalmente |
 
@@ -81,6 +81,20 @@ Duas regras duras:
 - **A rotina não escolhe um Trilho.** Ela diz *o que* fazer; a prioridade diz
   *em qual projeto*. Um painel com mais de um projeto ativo nunca tem estágio
   escolhido automaticamente (`trilhoSemEscolha`).
+
+#### Rotinas não marcadas
+
+Abaixo das rotinas, um `<details>` recolhido com as rotinas dos últimos
+`ATRASO_DIAS = 7` dias que ficaram sem marca. Marcar grava **na data de origem**,
+não em hoje; passados sete dias o item sai sozinho, e dispensar (`cron:hoje-dispensados`)
+existe para a exceção.
+
+**O rótulo diz o objeto: "3 rotinas não marcadas".** A revisão dominical tem um
+bloco chamado *Ficou para trás* que cobre prioridades, rotinas **e** sugestões
+não adotadas; este cobre só rotinas, e aos domingos os dois apareciam na mesma
+tela com o mesmo nome. A contagem também passou para o substantivo porque a
+flexão do verbo não se monta por concatenação — o plural de *ficou* é *ficaram*,
+com troca de radical.
 
 ### 2b. Motor de prioridades
 
@@ -257,12 +271,48 @@ As rotinas em `DIAS` carregam `processo:"toefl"` e nenhum texto. O `id` não
 mudou — é dele que `cron:checks:` depende. Sem essa inversão, mover o guia de
 aba teria sido só mudar HTML de lugar.
 
-### Sem abstração genérica
+### Duas fontes, um contrato
 
-`PROCESSOS` é uma lista com quatro funções por entrada (`resumo`, `acaoDoDia`,
-`corpo`, `acoes`), todas já existentes no caso do TOEFL. Notre Dame implementa
-as mesmas quatro e entra na lista. Generalizar antes do segundo caso é como se
-inventa a abstração errada.
+`PROCESSOS` é uma lista com as funções de cada entrada (`resumo`, `acaoDoDia`,
+`linhas`, `corpo`, `acoes`), todas já existentes no caso do TOEFL. Ela deixou de
+ser *a* lista e passou a ser a lista dos processos **escritos à mão**. O que a
+aba desenha é `processosVisiveis()`:
+
+```
+PROCESSOS (à mão: o TOEFL)        ──┐
+                                     ├──► processosVisiveis() ──► aba Processos
+projetos de Trilho iniciados       ──┘     (TOEFL primeiro, depois painel/projeto)
+```
+
+Um projeto de trilho vira processo por `processoDeTrilho(pid, pr)`, que adapta
+**dados que já existiam**: `pr.t`, `pr.n`, os `subs` com `t`, `st`, `vida`, `em`,
+`onde` e `prova`, mais o `estagioDoTrilho()` de sempre. **Nenhum metadado novo,
+nenhum cadastro paralelo, nenhuma chave de `localStorage`, nenhum tipo de toque.**
+
+**Iniciado é uma definição só.** `projetoComecou(pr)` — algum subitem com `em`
+preenchido ou `st > 0` — é a mesma regra que o motor de prioridades e as
+retomadas já aplicavam. Nomeá-la é o que impede a aba de discordar do motor
+sobre o mesmo projeto. Concluído fica de fora.
+
+**O processo derivado é somente leitura.** `acaoDoDia()` devolve `null` e
+`acoes()` devolve vazio, as duas por decisão:
+
+- um artigo não tem semana como o `TOEFL_SEMANA`, e inventar uma seria inventar
+  metadado. Por isso **Processos nunca cria tarefa diária**;
+- concluir etapa continua sendo do Trilho, do Hoje e do pipeline, pelo toque
+  `registro`. Um segundo lugar de marcar seria um segundo mecanismo de conclusão.
+
+**A medida honesta é "X de Y etapas".** O campo `sub.medida` (`{feito, total}`)
+existe no esquema e já é desenhado nos Trilhos, mas está **vazio nos 78 subitens
+reais** — usá-lo aqui seria inventar tamanho. Ele continua opcional e vazio;
+preenchê-lo é trabalho do Cowork, não desta tela. Subitem `inaplicavel` sai da
+conta: não é etapa que falta, é etapa que não existe para aquele projeto.
+
+O texto de cada etapa é **verbatim** o do trilho. `prova: "estrela"` aparece como
+*depende de você* e `prova: "maquina"` como *pelo pipeline*; `onde` aparece com o
+valor que tem (escrivaninha, celular, cowork). A ordem da lista é estável —
+painel e projeto, sem heurística de "estágio mais avançado" que mudaria a tela a
+cada marcação.
 
 ---
 
@@ -308,7 +358,7 @@ Nunca criar um segundo mecanismo de conclusão.
 
 ## Sincronização
 
-Seis coisas atravessam aparelhos, cada uma com um tipo de toque:
+Sete coisas atravessam aparelhos, cada uma com um tipo de toque:
 
 | Tipo | Vai para | Chave |
 |---|---|---|
@@ -318,6 +368,7 @@ Seis coisas atravessam aparelhos, cada uma com um tipo de toque:
 | `evento` | `eventos` | id do evento |
 | `prioridade` | `prioridades` | `AAAA-Wnn/id` |
 | `toefl` | `toefl` | `id` do item do guia |
+| `retomada` | `retomadas` | `painel/projeto` |
 
 **O progresso do TOEFL atravessa aparelhos desde a Fase 6A.** Fechar o núcleo
 no computador avança a fase no celular. O mapa é `cron:toefl-guia`, plano e
@@ -338,14 +389,42 @@ marca legítima de outro. Como só sobem as verdadeiras, dois aparelhos migrando
 em ordens diferentes produzem **união**, nunca subtração. As chaves antigas
 `cron:toefl-guia:<fase>` **não são apagadas**: ficam como rede de segurança.
 
+**O silêncio da retomada atravessa desde a Fase 6B.** Dispensar uma retomada
+no celular cala no Mac. O mapa é `cron:retomadas-adiadas`, agora
+`{painel/projeto: {ate, em}}`, e o toque leva só `{pid, projId, ate}` — sem
+título, sem estágio, sem texto: o projeto é lido do trilho no aparelho que
+desenha.
+
+O `ate` é **data absoluta, não duração**. Um toque que chega três dias depois
+carrega a data que foi decidida; se viajasse "+14 dias", a latência da rede
+mudaria o resultado.
+
+**Não há lápide aqui**, e a razão é própria: não existe operação de
+dessilenciar. A entrada morre pela data que ela mesma carrega, e vencida ela
+some dos dois leitores — `retomadas()` e `motorDePrioridades()` — sem toque
+nenhum. A chave é compartilhada com o "agora não" das sugestões do motor, como
+sempre foi: silenciar num lugar silencia nos dois, agora entre aparelhos também.
+
+*Migração.* Converter e publicar são coisas diferentes: **toda** entrada vira
+`{ate, em}` e continua no aparelho, mas **só as que ainda calam viram toque** —
+publicar uma silenciada vencida seria história pública permanente por nada.
+Guardada por `cron:retomadas-migrado`, com o piso `RETOMADA_EM`.
+
 **A recalibragem continua local.** `cron:toefl-recalibrado` é cache de uma
 derivação — `calcularRecalibragem()` a refaz a partir do plano, da fase corrente
 e do que falta, e as duas últimas agora sincronizam. Sincronizar a leitura seria
 sincronizar valor derivado. Não existe tipo de toque `recalibrado`.
 
-`cron:checks:` (rotinas) e `cron:contexto` (casa/fora) seguem locais, cada um
-pela sua razão: o dia marcado é do aparelho, e o lugar onde você está é um fato
-físico dele.
+`cron:checks:` (rotinas), `cron:hoje-dispensados` e `cron:contexto` (casa/fora)
+seguem locais, cada um pela sua razão. O lugar onde você está é um fato físico
+do aparelho. O dia marcado é do aparelho por decisão — a revisão dominical
+exibe a ressalva "neste aparelho". E `cron:hoje-dispensados` **não é equivalente
+à retomada adiada**: ela endereça um projeto durável e vale até uma data; ele
+endereça a ocorrência de uma rotina numa data passada, vale sete dias, é podado
+na escrita e **depende de `cron:checks:`** — dispensar só faz sentido sobre uma
+rotina não marcada, e "não marcada" é fato local. Sincronizar algo projetado
+para ser esquecido em sete dias custaria histórico permanente, em repositório
+público, por um valor que morre numa semana.
 
 Regras invioláveis:
 
@@ -387,7 +466,13 @@ Extração suspeita também.
 
 | Caminho | O quê |
 |---|---|
-| `Cronograma/index.html` | interface, estilos e lógica |
+| `Cronograma/index.html` | o shell: só o HTML e as tags que carregam o resto |
+| `Cronograma/css/cronograma.css` | os estilos |
+| `Cronograma/js/00-config.js` | constantes, sementes e chaves de `localStorage` |
+| `Cronograma/js/10-nucleo.js` | armazenamento, aparelho, entrada, estado, toques, sincronização |
+| `Cronograma/js/20-regras.js` | domínio: trilhos, prioridades, retomadas, processos, TOEFL, vagas, revisão |
+| `Cronograma/js/30-render.js` | os `render*` e os handlers presos ao DOM |
+| `Cronograma/js/40-app.js` | bootstrap: migrações, sementes, primeiros desenhos, ouvintes |
 | `Cronograma/entrada.json` | estrutura das peças. Escrita pelo Cowork |
 | `Cronograma/estado.json` | estado consolidado. Escrito só pelo dobrar_toques |
 | `Cronograma/toques/` | fila de eventos |
@@ -401,6 +486,31 @@ sobrescreve progresso, conclusão ou ciclo de vida.
 
 ---
 
+## Como o código é carregado
+
+Até a Fase 7 tudo morava num `index.html` de 4.989 linhas. Agora ele é um shell
+e o código está em cinco arquivos, carregados **nesta ordem**:
+
+```
+css/cronograma.css
+js/00-config.js  →  js/10-nucleo.js  →  js/20-regras.js  →  js/30-render.js  →  js/40-app.js
+```
+
+**A ordem é parte da arquitetura**, não uma conveniência: cada arquivo lê do
+anterior. São **scripts clássicos, não ES Modules** — é o escopo global
+compartilhado que mantém a superfície pública intacta, e é dele que dependem os
+`onclick` do HTML gerado.
+
+**O critério da divisão:** se uma função produz a resposta sem tocar no DOM, ela
+mora em `20-regras.js` e não em `30-render.js` — mesmo quando devolve HTML.
+`40-app.js` é o único com código executável de topo.
+
+A refatoração mudou **onde** o código mora e nada do que ele faz: nenhuma função
+renomeada, nenhuma chave de `localStorage` criada ou alterada, nenhum tipo de
+toque novo, nenhuma regra de CSS reescrita.
+
+---
+
 ## Testes
 
 ```bash
@@ -409,9 +519,11 @@ node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 ```
 
-O `teste_hoje.js` avalia o `<script>` do `index.html` de verdade num contexto do
-`vm`, com `localStorage` e `document` de mentira. O que se testa é o código que
-vai para o ar, não uma cópia dele.
+O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
+os cinco arquivos **na ordem em que o HTML os declara** e avalia o resultado num
+contexto do `vm`, com `localStorage` e `document` de mentira. O que se testa é o
+código que vai para o ar, não uma cópia dele — e acrescentar ou reordenar um
+arquivo na aplicação não deixa o teste medindo outra coisa.
 
 ---
 
@@ -426,15 +538,15 @@ vai para o ar, não uma cópia dele.
 | 4 — Aba Processos (TOEFL primeiro) | concluída |
 | 5 — Revisão dominical (digest curto) | concluída |
 | 6A — Sincronização do guia do TOEFL (toque `toefl`, identidade por `id`) | concluída |
-| 6B — Sincronização de retomadas e do estado do Hoje | a fazer |
-| 7 — Notificações | a fazer |
-| 8 — Refatoração (dividir o index.html) | a fazer |
+| 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
+| 7 — Refatoração (dividir o `index.html`) | concluída |
+| 8 — Notificações | a fazer |
 
 ### Previsto e ainda não implementado
 
 - **Notificações push para novas vagas e oportunidades acadêmicas, prazos
   importantes e retomadas relevantes.** Requisito registrado desde a Fase 2 e
-  reafirmado na Fase 5: a implementação pertence à **Fase 7** e nenhuma fase
+  reafirmado na Fase 5: a implementação pertence à **Fase 8** e nenhuma fase
   anterior a antecipa. **Não** criar notificação para cada tarefa.
 - **Aprender com os descartes das vagas** (Vagas 3): registrar motivo
   estruturado para calibrar os filtros com o comportamento real.
@@ -443,12 +555,10 @@ vai para o ar, não uma cópia dele.
 - **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as
   inventou. A única dependência real hoje é `prova: "estrela"` — etapa travada
   esperando decisão sua.
-- **Sincronização das retomadas adiadas e do estado do Hoje**
-  (`cron:retomadas-adiadas`, `cron:hoje-dispensados` e, se decidido,
-  `cron:checks:`). Pertence à **Fase 6B**. Dispensar uma retomada num aparelho
-  ainda não silencia no outro. `cron:checks:` é local **por decisão** — a
-  revisão dominical exibe a ressalva "neste aparelho" —, e sincronizá-lo é
-  escolha a tomar, não pendência a saldar.
+- **Sincronização de `cron:hoje-dispensados` e `cron:checks:`.** Ficaram
+  deliberadamente **fora** da Fase 6B, pelas razões da seção *Sincronização*:
+  não são equivalentes à retomada adiada, e `cron:checks:` é local **por
+  decisão**, não pendência a saldar. Sincronizá-los é escolha de produto.
 - **Sinais de Processo** alimentando o motor de prioridades, pelo seam
   `sinaisDeProcesso()`, que devolve `[]`.
 - **Processo Notre Dame.** A estrutura o recebe sem refatoração; ele não existe.
