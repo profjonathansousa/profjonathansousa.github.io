@@ -1,0 +1,21 @@
+{
+ "v": 1,
+ "lote": "2026-09-02T14-37-58-285Z-s41hky",
+ "quando": "2026-09-02T14:38:02.287Z",
+ "aparelho": "s41hky",
+ "app": "2026-08-30-abas1",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-02T14-37-58-285Z-s41hky",
+   "quando": "2026-09-02T14:37:58.285Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-os-e-chamadas-de-revistas-dossie-logica-e-historia-da-logica",
+    "st": 2
+   }
+  }
+ ]
+}
