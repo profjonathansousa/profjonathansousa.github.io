@@ -1,0 +1,58 @@
+name: Avisos do Cronograma
+
+on:
+  schedule:
+    # 13:00 UTC = 10:00 em Brasília. DEPOIS das 11:00 UTC da coleta semanal, de
+    # propósito: às segundas o lote de vagas já está no repositório quando este
+    # workflow roda. O cron do GitHub entra numa fila e costuma atrasar de dez a
+    # sessenta minutos; não conte com pontualidade.
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      hoje:
+        description: 'Data a simular (aaaa-mm-dd). Vazio = hoje.'
+        required: false
+      seco:
+        description: 'Só mostrar o que enviaria, sem enviar e sem gravar'
+        type: boolean
+        default: false
+
+# Escreve scripts/estado_notificador.json de volta no repositório.
+permissions:
+  contents: write
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias
+        working-directory: avisos
+        run: npm install --no-audit --no-fund
+      - name: Enviar
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+          VAPID_PUBLIC_KEY:  ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT:     ${{ secrets.VAPID_SUBJECT }}
+          HOJE: ${{ inputs.hoje }}
+          SECO: ${{ inputs.seco && '1' || '' }}
+        run: node avisos/enviar.mjs
+      - name: Guardar o que ja foi avisado
+        if: ${{ !inputs.seco }}
+        run: |
+          # So commita se a dedup mudou. A identidade gravada e o que impede o
+          # mesmo lote de virar aviso duas vezes.
+          if [ -n "$(git status --porcelain scripts/estado_notificador.json)" ]; then
+            git config user.name  "avisos-do-cronograma"
+            git config user.email "actions@users.noreply.github.com"
+            git add scripts/estado_notificador.json
+            git commit -m "avisos: identidades notificadas"
+            git push
+          else
+            echo "nada novo a registrar."
+          fi

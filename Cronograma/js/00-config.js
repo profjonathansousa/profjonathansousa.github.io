@@ -5,6 +5,24 @@
 
    A ORDEM DE CARGA E PARTE DA ARQUITETURA: este arquivo vem primeiro porque
    todos os outros leem daqui. Ver index.html. */
+/* ==================== AVISOS — Fase 8 ====================
+   As tres coisas publicas do Web Push. Nenhuma delas e segredo:
+
+   - a URL e a anon key so dizem "sou um visitante deste projeto"; quem decide
+     o que se pode fazer e a RLS, em sql/cron_push.sql, que da ao anon APENAS
+     inserir. Ler, atualizar e apagar inscricao e da service_role, que mora em
+     GitHub Secrets e roda so no Actions;
+   - a chave VAPID publica e publica por desenho: e ela que o navegador usa
+     para amarrar a inscricao a este emissor. A PRIVADA nunca entra aqui.
+
+   ENQUANTO ESTIVEREM VAZIAS o botao de avisos nao aparece — avisosConfigurados()
+   e quem decide, e a ausencia de configuracao nao pode quebrar tela nenhuma. */
+const AVISOS = {
+  URL:   "",   /* https://<projeto>.supabase.co */
+  ANON:  "",   /* anon key do projeto */
+  VAPID: ""    /* chave publica VAPID (a privada vai para os Secrets) */
+};
+
 const APP_VERSION = "2026-08-30-abas1";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 

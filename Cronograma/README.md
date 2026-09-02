@@ -462,6 +462,96 @@ Extração suspeita também.
 
 ---
 
+## Avisos
+
+**Domingo é informação, segunda é decisão — e o telefone só toca quando há o que
+dizer.** No máximo **um** aviso de vagas e **um** de datas por execução, sempre
+agregados. Nunca um por tarefa: quem recebe um aviso por item aprende a ignorar
+todos.
+
+```
+navegador (PWA na Tela de Início)
+  └─ botão "Avisar neste aparelho" → pushManager.subscribe(VAPID pública)
+       └─ INSERT em cron_push_inscricao        (o anon insere; ninguém lê)
+
+GitHub Actions — avisos.yml, diário às 13h UTC
+  └─ lê dados/vagas.json, eventos/vagas_<data>.json e Cronograma/estado.json
+  └─ SELECT nas inscrições com service_role    (só ela enxerga)
+  └─ web-push → 404/410 apaga a linha morta
+  └─ grava as identidades em scripts/estado_notificador.json
+```
+
+**Duas fontes, e só duas.** Vagas com `veredicto: "relevante"` do lote da
+semana, e eventos públicos dentro de 14 dias. **Retomadas ficam de fora**: o
+progresso dos subitens é local por aparelho — `estado.itens` carrega uma fração
+deles —, e o servidor não tem como calculá-las. Não se inventa sincronização
+para viabilizá-las.
+
+**Evento com o cadeado fechado (`priv:true`) sai por inteiro.** Não vira aviso,
+não empresta o título, não empresta a data e não vira "1 compromisso": a
+existência dele também é informação. O filtro é o primeiro de todos, não um
+cuidado na hora de escrever o texto.
+
+**Veredicto ausente não é "notificar tudo".** O campo só passou a existir com a
+Vagas 2; dado coletado antes dela não tem veredicto, e tratar a ausência como
+relevante encheria o telefone de uma vez.
+
+### Deduplicação
+
+Identidades `vagas:<data-do-lote>` e `evento:<id>:<data>`, guardadas em
+`scripts/estado_notificador.json` — **só identidades, nunca endpoints**. E a
+identidade **só é gravada se algo chegou**: envio que falhou em todos os
+aparelhos não conta como enviado, e a execução seguinte tenta de novo. É a
+diferença entre "já avisei" e "tentei avisar".
+
+### O service worker não tem `fetch`
+
+`Cronograma/sw.js` tem `push` e `notificationclick`, e mais nada. **A ausência
+do ouvinte de `fetch` é o ponto**, não um esquecimento: sem ele o worker não
+intercepta requisição nenhuma, e `estado.json`, `entrada.json` e
+`api.github.com` passam direto. Com cache, `estado.json` — que é mesma origem —
+seria servido velho e a dobra pareceria não ter chegado. Por isso não há cache,
+e por isso não há funcionamento offline. Há teste que falha se um `fetch`
+aparecer ali.
+
+### Segredos
+
+| O quê | Onde |
+|---|---|
+| URL do projeto, anon key, VAPID **pública** | `js/00-config.js`, versionadas |
+| `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `SUPABASE_SERVICE_ROLE` | GitHub Secrets |
+| endpoint, `p256dh`, `auth` | **só na tabela** — nunca no repositório |
+
+O endpoint é uma **URL-capacidade**: quem o tem notifica aquele aparelho. Como o
+repositório é público e o histórico nunca é podado, ele não entra em arquivo
+versionado em forma nenhuma — nem em `estado.json`, nem no
+`estado_notificador.json`, nem em Secret. Há teste que varre os arquivos
+versionados atrás de endpoint e de credencial.
+
+**Sem login, sem usuários, e ainda assim com RLS.** O Cronograma é de uma pessoa
+só: a tabela não tem `casa_id`, `perfil_id` nem política presa a `auth.uid()`, e
+as inscrições pertencem à própria aplicação. Mas a RLS fica, porque a anon key é
+pública: o anon **só insere**; ler, atualizar e apagar é da `service_role`, que
+mora nos Secrets e roda só no Actions. O INSERT público foi analisado e aceito —
+o efeito máximo de uma linha falsa é um envio que falha, e o limpador de 404/410
+a remove.
+
+**Desinscrever é só no aparelho.** `sub.unsubscribe()` mata o endpoint; a linha
+sai no envio seguinte, pelo 404/410. Dar `delete` ao anon deixaria qualquer um
+apagar as inscrições.
+
+**No iPhone só funciona com o app na Tela de Início** (iOS 16.4+). Numa aba
+comum do Safari o `PushManager` não existe e o botão nem aparece — a limitação é
+do sistema.
+
+**Nada disto tocou as fases anteriores:** nenhum tipo de toque novo (seguem
+sete), nenhuma seção nova no `estado.json`, nenhuma chave nova de
+`localStorage` — a fonte da verdade da inscrição é o próprio `PushManager` —, e
+`dobrar_toques.py`, `coletor.py` e os dois workflows existentes não foram
+tocados.
+
+---
+
 ## Arquivos
 
 | Caminho | O quê |
@@ -480,6 +570,11 @@ Extração suspeita também.
 | `scripts/coletor.py` | coletor semanal de vagas e chamadas |
 | `criterios_vagas.json`, `criterios_chamadas.json` | critérios (na raiz) |
 | `dados/`, `eventos/` | saída do coletor |
+| `Cronograma/sw.js` | service worker: só push e notificationclick |
+| `Cronograma/manifest.webmanifest`, `Cronograma/icones/` | o que o iOS exige para instalar o app |
+| `avisos/enviar.mjs` | o emissor dos avisos, roda só no Actions |
+| `sql/cron_push.sql` | a tabela das inscrições, com RLS |
+| `scripts/estado_notificador.json` | o que já foi avisado |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
 sobrescreve progresso, conclusão ou ciclo de vida.
@@ -540,42 +635,10 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 6A — Sincronização do guia do TOEFL (toque `toefl`, identidade por `id`) | concluída |
 | 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
 | 7 — Refatoração (dividir o `index.html`) | concluída |
-| 8 — Notificações | a fazer |
+| 8 — Notificações (Web Push) | concluída |
 
 ### Previsto e ainda não implementado
 
-- **Notificações push** — **Fase 8**, desenhada e com as decisões fechadas,
-  ainda **não implementada**. Nenhuma fase anterior a antecipa. As regras abaixo
-  já estão decididas e valem para a implementação:
-
-  - **Fontes:** vagas novas com `veredicto: "relevante"` e eventos/prazos.
-    **Retomadas ficam fora**: `estado.itens` carrega uma fração dos subitens
-    (o progresso é local por aparelho), e o servidor não consegue calculá-las de
-    forma confiável. Não se inventa sincronização para viabilizá-las.
-  - **Evento privado (`priv:true`) é excluído por completo.** Não gera
-    notificação, não envia título, não envia data, e não existe forma reduzida
-    ou parcial.
-  - **Agregação:** no máximo **uma** notificação de vagas e **uma** de eventos
-    por execução. Nunca uma por item.
-  - **Deduplicação por identidade:** `vagas:<data-do-lote>` e
-    `evento:<id>:<data>`. Um `scripts/estado_notificador.json` guarda **apenas as
-    identidades já notificadas** — nunca endpoints, nunca credenciais. **Se o
-    envio falhar, a identidade não é gravada**, e a execução seguinte tenta.
-  - **Cadência: um único workflow diário.** Ele verifica prazos todo dia e, na
-    segunda, processa também o lote novo de vagas junto da coleta que já existe.
-    Não se cria um segundo workflow nem se duplica a infraestrutura.
-  - **Inscrições:** cada aparelho tem a sua. **Não entram no repositório**, nem
-    em `estado.json`, nem em qualquer arquivo versionado — o endpoint é uma
-    URL-capacidade e o histórico nunca é podado. Vivem em GitHub Secrets, **um
-    por aparelho** (`PUSH_SUB_1`, `PUSH_SUB_2`), com `VAPID_PRIVATE_KEY` também
-    como secret. A chave **pública** VAPID pode ficar em `js/00-config.js`.
-  - **Service worker sem `fetch` listener e sem cache**: só `push` e
-    `notificationclick`. `estado.json`, `entrada.json` e `api.github.com`
-    continuam passando diretamente, e a sincronização não é tocada. Sem offline.
-  - **Fora do escopo:** criar tipo de toque, criar seção em `estado.json`,
-    alterar `dobrar_toques.py` ou `coletor.py`, sincronizar `cron:checks:`,
-    `cron:hoje-dispensados` ou `cron:contexto`, e alterar TOEFL, Vagas,
-    Processos, prioridades, retomadas ou a revisão dominical.
 - **Aprender com os descartes das vagas** (Vagas 3): registrar motivo
   estruturado para calibrar os filtros com o comportamento real.
 - **Remoção automática dos itens de veredicto `rejeitado`** de `dados/vagas.json`

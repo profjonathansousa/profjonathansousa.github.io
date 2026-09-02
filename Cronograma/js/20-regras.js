@@ -1054,3 +1054,11 @@ function vgVisivel(i){
   if(VG_FILTRO==="nao")     return st===VG_ST.NAO;
   return true;
 }
+
+/* ==================== AVISOS — Fase 8 ====================
+   Pura de proposito, e por isso mora aqui e nao no 30-render: ela responde sem
+   tocar no DOM, e e ela que decide se o botao existe. Sem as tres chaves nao ha
+   o que inscrever, e um botao que so pode falhar e pior do que botao nenhum. */
+function avisosConfigurados(){
+  return !!(typeof AVISOS !== "undefined" && AVISOS && AVISOS.URL && AVISOS.ANON && AVISOS.VAPID);
+}

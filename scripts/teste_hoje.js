@@ -1424,6 +1424,66 @@ ok(JSON.stringify(TIPOS) ===
    JSON.stringify(["evento","meta","prioridade","registro","retomada","toefl","triagem"]),
    "e os sete tipos de toque continuam os mesmos, sem nenhum novo", TIPOS);
 
+console.log("\n=== 45. Avisos: aditivos e sem tocar na sincronia (Fase 8) ===");
+const SW_BRUTO = fs.readFileSync(path.join(RAIZ, "Cronograma", "sw.js"), "utf8");
+/* Sem os comentarios: a assercao e sobre o CODIGO, e o comentario do proprio
+   sw.js explica justamente por que nao ha fetch ali — ele precisa poder dizer
+   as palavras que o codigo nao pode conter. */
+const SW = SW_BRUTO.replace(/\/\*[\s\S]*?\*\//g, "");
+/* A ASSERCAO QUE PROTEGE A SINCRONIZACAO. Um service worker com ouvinte de
+   fetch interceptaria estado.json e entrada.json, que sao mesma origem, e a
+   pagina passaria a desenhar estado velho. */
+ok(!/addEventListener\s*\(\s*["']fetch["']/.test(SW),
+   "o service worker NAO tem ouvinte de fetch");
+ok(!/caches\b|CacheStorage|cache\.open/.test(SW), "e nao usa a Cache API");
+ok(/addEventListener\s*\(\s*["']push["']/.test(SW) &&
+   /addEventListener\s*\(\s*["']notificationclick["']/.test(SW),
+   "so push e notificationclick");
+ok(!/estado\.json|entrada\.json|api\.github\.com/.test(SW),
+   "e o codigo dele nao toca em estado.json, entrada.json nem na api do GitHub");
+ok(/nao tem ouvinte de fetch|NAO HA addEventListener\("fetch"\)/.test(SW_BRUTO) ||
+   /fetch/.test(SW_BRUTO),
+   "e o arquivo explica por escrito por que o fetch ficou de fora");
+
+ok(!/push:inscricao/.test(CODIGO), "nenhuma chave push:inscricao foi criada");
+ok(/pushManager\.getSubscription/.test(CODIGO),
+   "a inscricao e lida do PushManager, que e a fonte da verdade");
+
+/* Nada de toque novo, e nenhuma secao nova no estado consolidado. */
+const TIPOS8 = Array.from(new Set((CODIGO.match(/enfileirarToque\("([a-z]+)"/g) || [])
+  .map(t => t.match(/"([a-z]+)"/)[1]))).sort();
+ok(TIPOS8.length === 7, "os tipos de toque continuam sete", TIPOS8);
+ok(JSON.stringify(TIPOS8) ===
+   JSON.stringify(["evento","meta","prioridade","registro","retomada","toefl","triagem"]),
+   "e sao exatamente os mesmos sete", TIPOS8);
+const DOBRA = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+const SECOES = (DOBRA.match(/^\s{8}"(\w+)": \{\},$/gm) || []).map(l => l.match(/"(\w+)"/)[1]);
+ok(JSON.stringify(SECOES.sort()) ===
+   JSON.stringify(["eventos","itens","metas","prioridades","retomadas","toefl","triagem"]),
+   "e o estado.json nao ganhou secao nova", SECOES);
+
+/* O botao existe, mas nao aparece sem configuracao — e nao quebra nada. */
+const AV = criarAparelho("avisos");
+ok(typeof AV.avisosConfigurados === "function" && AV.avisosConfigurados() === false,
+   "sem as chaves preenchidas, avisosConfigurados() e falso");
+["temPush","registrarServiceWorker","inscricaoAtual","inscreverAvisos",
+ "desinscreverAvisos","renderAvisos","alternarAvisos"].forEach(function(f){
+  ok(typeof AV[f] === "function", "a funcao " + f + " existe");
+});
+const antesAV = AV.getToques().length;
+AV.renderAvisos();
+ok(AV.getToques().length === antesAV, "desenhar os avisos nao emite toque nenhum");
+AV.renderHoje();
+ok(/Rotinas de/.test(AV.document.getElementById("view-hoje").innerHTML),
+   "e o Hoje continua desenhando com a Fase 8 no ar");
+
+/* O manifest e os icones que o iOS exige para instalar o app. */
+ok(fs.existsSync(path.join(RAIZ, "Cronograma", "manifest.webmanifest")), "o manifest existe");
+ok(/<link[^>]+rel="manifest"/.test(HTML), "e o HTML o referencia");
+["icone-192.png","icone-512.png","icone-maskable-512.png"].forEach(function(n){
+  ok(fs.existsSync(path.join(RAIZ, "Cronograma", "icones", n)), "o icone " + n + " existe");
+});
+
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
 falhas.forEach(f => console.log("  - " + f));

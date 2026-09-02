@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cronograma">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Fase 8: sem o manifest o iPhone nao instala o app na Tela de Inicio, e
+     sem estar instalado nao existe Web Push no iOS. -->
+<link rel="manifest" href="manifest.webmanifest">
 <title>Cronograma</title>
 <link rel="stylesheet" href="css/cronograma.css">
 </head>
@@ -79,6 +82,16 @@
           escrev\u00ea-lo.</p>
         <div class="s-linha"><button onclick="publicarAcervoUmaVez()">Publicar o acervo deste aparelho</button></div>
         <span class="backup-aviso" id="acervo-estado"></span>
+        <div class="s-sec">Avisos neste aparelho</div>
+        <div class="s-linha"><button class="avisos" id="btn-avisos" hidden></button></div>
+        <span class="backup-aviso" id="avisos-estado"></span>
+        <p class="s-nota">Chegam poucos e agregados: no m\u00e1ximo um aviso de vagas e
+          um de datas por dia. Nunca um por tarefa.</p>
+        <p class="s-nota">No iPhone isto s\u00f3 existe com o Cronograma <b>adicionado \u00e0
+          Tela de In\u00edcio</b>. Numa aba comum do Safari o bot\u00e3o nem aparece \u2014 e a
+          limita\u00e7\u00e3o \u00e9 do sistema, n\u00e3o daqui.</p>
+        <p class="s-nota">Datas com o <b>cadeado fechado</b> nunca s\u00e3o avisadas: nem o
+          nome, nem a data, nem a exist\u00eancia.</p>
       </div>
     </details>
     <span id="ver"></span>

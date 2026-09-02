@@ -1546,3 +1546,51 @@ function renderBackupAviso(){
   el.textContent = dias<=0 ? "Backup exportado hoje." : "\u00daltimo backup h\u00e1 "+dias+" dia"+(dias===1?"":"s")+".";
   el.className = "backup-aviso"+(dias>30?" velho":"");
 }
+
+/* ==================== AVISOS — o botao (Fase 8) ====================
+   Um botao so, que liga e desliga, e que diz sempre em que estado esta. Ele
+   nao aparece quando o aparelho nao suporta (numa aba comum do iOS o
+   PushManager nem existe) nem quando as chaves nao foram preenchidas. */
+function renderAvisos(){
+  var b = document.getElementById("btn-avisos");
+  var nota = document.getElementById("avisos-estado");
+  if(!b) return;
+  if(!temPush() || !avisosConfigurados()){
+    b.hidden = true;
+    if(nota) nota.textContent = !avisosConfigurados()
+      ? "Avisos ainda nao configurados neste Cronograma."
+      : "Este aparelho nao aceita avisos. No iPhone, adicione o app \u00e0 Tela de In\u00edcio.";
+    return;
+  }
+  b.hidden = false;
+  b.className = "avisos";
+  if(Notification.permission === "denied"){
+    b.className = "avisos bloqueado";
+    b.textContent = "avisos bloqueados nos Ajustes do aparelho";
+    b.disabled = true;
+    return;
+  }
+  b.disabled = false;
+  inscricaoAtual().then(function(sub){
+    if(sub){ b.className = "avisos ligado"; b.textContent = "\u2713 avisos ligados neste aparelho"; }
+    else   { b.textContent = "Avisar neste aparelho"; }
+  });
+}
+function alternarAvisos(){
+  var b = document.getElementById("btn-avisos");
+  var nota = document.getElementById("avisos-estado");
+  var diz = function(m){ if(nota) nota.textContent = m; };
+  if(Notification.permission === "denied"){
+    diz("Libere as notifica\u00e7\u00f5es nos Ajustes do aparelho, para o Cronograma."); return;
+  }
+  if(b) b.disabled = true;
+  inscricaoAtual().then(function(jaTem){
+    if(jaTem) return desinscreverAvisos().then(function(){ diz("Avisos desligados neste aparelho."); });
+    return inscreverAvisos().then(function(){ diz("Pronto. Os avisos chegam neste aparelho."); });
+  }).catch(function(e){
+    diz("N\u00e3o deu certo: " + ((e && e.message) || e));
+  }).then(function(){
+    if(b) b.disabled = false;
+    renderAvisos();
+  });
+}

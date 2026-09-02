@@ -18,6 +18,15 @@
     startY=null; armed=false;
   });
 })();
+/* Fase 8: o service worker existe so para receber o push. Ele NAO tem ouvinte
+   de fetch, entao nao intercepta estado.json, entrada.json nem a api do GitHub
+   — a sincronizacao continua exatamente como era. */
+try{
+  if(avisosConfigurados()) registrarServiceWorker();
+  var _btnAvisos = document.getElementById("btn-avisos");
+  if(_btnAvisos) _btnAvisos.addEventListener("click", alternarAvisos);
+  renderAvisos();
+}catch(e){ console.error("avisos:", e); }
 renderBackupAviso();
 renderSyncEstado();
 renderToquesAviso();
