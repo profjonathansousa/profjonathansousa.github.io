@@ -1298,9 +1298,17 @@ ok(mapaMG["pipeline/a01"] && mapaMG["pipeline/a01"].ate === futura &&
    "a futura virou {ate, em} com o piso RETOMADA_EM", mapaMG["pipeline/a01"]);
 ok(mapaMG["pipeline/a02"] && mapaMG["pipeline/a02"].ate === vencida,
    "a vencida foi PRESERVADA no aparelho, convertida", mapaMG["pipeline/a02"]);
-ok(!R6MG.retomadas().some(r => r.projId === "a02") === false ||
-   mapaMG["pipeline/a02"].ate < R6MG.ymd(R6MG.now),
-   "e a vencida nao cala ninguem: os leitores exigem ate > hoje");
+/* Para que a proxima assercao signifique alguma coisa, a02 precisa ser
+   candidato de verdade: sem isso ele nunca apareceria em retomadas() e o teste
+   passaria sem testar nada. Parado ha 40 dias, com uma etapa aberta. */
+const psMG = R6MG.getProjs("pipeline"), a02MG = psMG.filter(p => p.id === "a02")[0];
+const velhoMG = new Date(Date.now() - 40 * 86400000).toISOString();
+a02MG.subs.forEach((x, i) => { x.st = i === 0 ? 1 : 0; x.em = velhoMG; x.vida = "ativo"; });
+R6MG.setProjs("pipeline", psMG);
+ok(R6MG.retomadas().some(r => r.projId === "a02"), "a vencida nao cala ninguem",
+   R6MG.retomadas().map(r => r.projId));
+ok(mapaMG["pipeline/a02"].ate < R6MG.ymd(R6MG.now),
+   "a data da silenciada vencida ficou no passado", mapaMG["pipeline/a02"].ate);
 const tqMG = R6MG.getToques().filter(t => t.tipo === "retomada");
 ok(tqMG.length === 1 && tqMG[0].dados.projId === "a01",
    "mas so a futura foi publicada: um toque", tqMG.map(t => t.dados));
