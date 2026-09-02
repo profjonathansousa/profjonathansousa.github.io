@@ -1190,10 +1190,22 @@ function renderAtrasadas(){
   var a = atrasadas();
   if(!a.length) return "";
   var aberto = LS("cron:atrasadas-open", false);
+  /* O ROTULO DIZ O OBJETO, e por duas razoes. A revisao dominical tem um bloco
+     chamado "Ficou para tras" que cobre prioridades, rotinas E sugestoes nao
+     adotadas; este aqui cobre SO rotinas. Dois blocos com o mesmo nome e
+     escopos diferentes apareciam juntos na tela de domingo.
+     E A FLEXAO NAO PODE SER MONTADA POR CONCATENACAO. O plural de "ficou" e
+     "ficaram": troca o radical, nao ganha sufixo. Colar "ram" no singular
+     produzia uma forma que nao existe em portugues, e nenhum sufixo resolveria
+     — o verbo e irregular. Passando a contagem para o substantivo ("1 rotina",
+     "3 rotinas") o problema deixa de existir por construcao, e o teste guarda
+     a forma errada para que ela nao volte. */
+  var um = a.length === 1;
   var h = '<details class="carry recolhido" '+(aberto?"open":"")+
           ' ontoggle="save(\'cron:atrasadas-open\', this.open)">'+
-          '<summary>'+a.length+' ficou'+(a.length===1?'':'ram')+' para tr\u00e1s'+
-          '<span class="c-sub">nos \u00faltimos '+ATRASO_DIAS+' dias \u00b7 some sozinho depois disso</span>'+
+          '<summary>'+a.length+(um?' rotina n\u00e3o marcada':' rotinas n\u00e3o marcadas')+
+          '<span class="c-sub">nos \u00faltimos '+ATRASO_DIAS+' dias \u00b7 '+
+            (um?'some sozinha':'somem sozinhas')+' depois disso</span>'+
           '</summary><div class="c-corpo">';
   a.forEach(function(o){
     h += '<div class="carry-i">'+
@@ -1592,6 +1604,26 @@ const PROCESSOS = [
    resumo:    function(){ return toeflFase(); },        /* fase, dias, foco */
    acaoDoDia: function(dia){ return TOEFL_SEMANA[dia] || null; },
    corpo:     function(){ return renderGuia(); },
+   /* As tres linhas de cabecalho SAIRAM do renderProcessos e vieram para ca,
+      sem uma palavra mudada. Elas sempre foram do TOEFL — objetivo, fase e
+      foco — e ficar no laco obrigaria todo processo novo a ter prova, fase e
+      foco, que um artigo nao tem. */
+   linhas:    function(r){
+     if(!r) return "";
+     return '<div class="proc-linha"><span class="pl-r">Objetivo</span>'+
+           /* O ano aparece SO aqui. O fmtData do resto do app omite o ano de
+              proposito — datas proximas nao precisam dele —, mas o objetivo do
+              processo e a unica data dura do TOEFL, e uma prova sem ano nao e
+              um objetivo. Nao e formato novo: e o mesmo fmtData com o ano
+              colado, na frase em portugues. */
+           '<span class="pl-v">Prova em '+fmtData(TOEFL_PLANO.prova)+
+             ' de '+TOEFL_PLANO.prova.slice(0,4)+'</span></div>'+
+           '<div class="proc-linha"><span class="pl-r">Fase</span>'+
+           '<span class="pl-v">'+escapeHtml(r.fase)+' \u00b7 '+
+             (r.falta ? r.falta+" no n\u00facleo faltando" : "n\u00facleo cumprido")+'</span></div>'+
+           '<div class="proc-linha"><span class="pl-r">Foco</span>'+
+           '<span class="pl-v">'+escapeHtml(r.foco)+'</span></div>';
+   },
    acoes:     function(){
      return '<button class="g-acao" onclick="recalibrarToefl()">Recalibrar o que falta at\u00e9 ' +
             fmtData(TOEFL_PLANO.prova) + '</button>'; }}
@@ -1599,6 +1631,116 @@ const PROCESSOS = [
 function processoDef(pid){
   for(var i=0;i<PROCESSOS.length;i++){ if(PROCESSOS[i].id===pid) return PROCESSOS[i]; }
   return null;
+}
+
+/* ================= PROCESSO DERIVADO DE UM TRILHO =================
+   A aba prometia "a estrutura completa de um trabalho complexo" e entregava um
+   processo so, porque PROCESSOS e uma lista escrita a mao. Um artigo nao cabe
+   nessa lista: sao 13 na esteira, mudam a cada ciclo e vem do entrada.json.
+
+   Entao PROCESSOS deixa de ser A lista e passa a ser a lista dos processos
+   ESCRITOS A MAO. Os outros sao derivados do trilho a cada desenho, pelos
+   dados que ja existem. NENHUM METADADO NOVO, nenhuma chave de localStorage,
+   nenhum tipo de toque, nenhum cadastro paralelo.
+
+   COMECADO E UMA DEFINICAO SO: algum subitem com `em` preenchido ou st > 0.
+   E exatamente a regra que classificarProjeto e retomadas() ja aplicavam em
+   linha, e nomea-la aqui e o que impede a aba de inventar um segundo criterio
+   de "iniciado" e discordar do motor sobre o mesmo projeto. Aqueles dois
+   seguem com o calculo em linha — eles o fazem no mesmo laco em que apuram
+   `ultimo` e `temAtivo`, e troca-los por esta chamada custaria uma segunda
+   varredura sem mudar um resultado. */
+function projetoComecou(pr){
+  var subs = (pr && pr.subs) || [];
+  for(var i=0;i<subs.length;i++){
+    var x = normSub(subs[i]);
+    if(x.em) return true;
+    if(x.st > 0) return true;
+  }
+  return false;
+}
+/* X DE Y ETAPAS, e nada mais fino do que isso. O `medida` ({feito,total}) existe
+   no esquema e ja e desenhado nos Trilhos, mas esta vazio nos 78 subitens reais:
+   usa-lo aqui seria inventar tamanho. Subitem "nao se aplica" sai da conta —
+   ele nao e etapa que falta, e etapa que nao existe para este projeto. */
+function resumoDoTrilho(pid, pr){
+  var total = 0, feito = 0, ultimo = "";
+  (pr.subs || []).forEach(function(sx){
+    var x = normSub(sx);
+    if(x.em && x.em > ultimo) ultimo = x.em;
+    if(x.vida === "inaplicavel") return;
+    total++;
+    if(x.st === 2) feito++;
+  });
+  var et = estagioDoTrilho(pid, pr.id);
+  return {
+    /* "Etapa 3 de 6" e uma CONTAGEM, nao uma sintese: o texto da etapa nunca e
+       reescrito. Ele aparece verbatim no corpo, na linha "Agora". */
+    fase: total ? ("Etapa " + Math.min(feito + 1, total) + " de " + total) : "sem etapas",
+    feito: feito, total: total, falta: total - feito,
+    dias: ultimo ? diasDesde(ultimo) : null,
+    estagio: (et && !et.concluido) ? et : null
+  };
+}
+var TRILHO_PROVA = {estrela:"depende de voc\u00ea", maquina:"pelo pipeline"};
+function corpoDoTrilho(pid, pr){
+  var r = resumoDoTrilho(pid, pr);
+  var atual = r.estagio ? r.estagio.subId : "";
+  var h = '<div class="g-body">';
+  if(pr.n) h += '<p class="g-meta">' + escapeHtml(pr.n) + '</p>';
+  if(r.estagio){
+    h += '<div class="proc-linha agora"><span class="pl-r">Agora</span>' +
+         '<span class="pl-v">' + escapeHtml(r.estagio.subT) + '</span></div>';
+  }
+  h += '<div class="g-grupo primeiro">Etapas <em>\u00b7 ' +
+       r.feito + ' de ' + r.total + ' conclu\u00eddas</em></div>';
+  (pr.subs || []).forEach(function(sx){
+    var x = normSub(sx);
+    /* O SELO DIZ DE QUEM DEPENDE A ETAPA. Os dois campos vem do entrada.json e
+       estao preenchidos nos 78 subitens: `prova` diz quem fecha (estrela e
+       decisao sua, maquina e o pipeline) e `onde` diz o lugar. Nenhum dos dois
+       e inventado aqui, e nenhum e alterado. */
+    var selo = x.prova && TRILHO_PROVA[x.prova]
+      ? '<span class="pr-estrela">' + TRILHO_PROVA[x.prova] + '</span>' : "";
+    var onde = x.onde ? '<span class="sub-onde">' + escapeHtml(x.onde) + '</span>' : "";
+    var marca = x.vida === "inaplicavel" ? "n\u00e3o se aplica"
+              : x.st === 2 ? "feita" : (x.id === atual ? "agora" : "falta");
+    h += '<div class="proc-linha' + (x.id === atual ? ' agora' : '') + '">' +
+         '<span class="pl-r">' + marca + '</span>' +
+         '<span class="pl-v">' + escapeHtml(x.t || "") + ' ' + onde + selo + '</span></div>';
+  });
+  return h + '</div>';
+}
+/* SOMENTE LEITURA. Sem acoes e sem acao do dia — as duas por decisao, nao por
+   falta de dado. Um artigo nao tem semana como o TOEFL_SEMANA, e inventar uma
+   seria inventar metadado; e concluir etapa continua sendo do Trilho, do Hoje e
+   do pipeline, pelo toque `registro`. Um segundo lugar de marcar seria um
+   segundo mecanismo de conclusao. */
+function processoDeTrilho(pid, pr){
+  return {
+    id: "trilho:" + pid + "/" + pr.id,
+    titulo: pr.t || pr.id,
+    resumo:    function(){ return resumoDoTrilho(pid, pr); },
+    acaoDoDia: function(){ return null; },
+    linhas:    function(){ return ""; },
+    corpo:     function(){ return corpoDoTrilho(pid, pr); },
+    acoes:     function(){ return ""; }
+  };
+}
+/* A LISTA VISIVEL: os escritos a mao primeiro, depois os trilhos comecados e
+   nao concluidos. A ordem e a dos PAINEIS e a dos projetos dentro de cada
+   painel — estavel e sem heuristica: nada de "estagio mais avancado", que
+   mudaria a ordem da tela a cada marcacao. */
+function processosVisiveis(){
+  var out = PROCESSOS.slice();
+  PAINEIS.forEach(function(P){
+    (getProjs(P.id) || []).forEach(function(pr){
+      if(projConcluido(pr)) return;
+      if(!projetoComecou(pr)) return;
+      out.push(processoDeTrilho(P.id, pr));
+    });
+  });
+  return out;
 }
 
 /* A PONTE PROCESSO -> HOJE. O Hoje nao sabe mais o que o TOEFL faz na terca:
@@ -1626,31 +1768,24 @@ function renderProcessos(){
   let h='<p class="plate-eyebrow">Processos</p>'+
         '<h1 class="plate-day" style="font-size:30px;margin-bottom:6px;">O que est\u00e1 em curso</h1>'+
         '<p class="plate-eixo">A estrutura inteira. A a\u00e7\u00e3o do dia fica no Hoje.</p>';
-  PROCESSOS.forEach(function(P){
+  processosVisiveis().forEach(function(P){
     const r = P.resumo ? P.resumo() : null;
     const aberto = processoAberto(P.id);
-    const acao = acaoDoDiaDoProcesso(P.id);
+    /* O processo diz se pede algo hoje; a aba nao adivinha. O derivado de
+       trilho devolve null sempre, e por isso Processos nunca cria tarefa. */
+    const acao = P.acaoDoDia ? P.acaoDoDia(todayIdx) : null;
+    /* O contador da direita so faz sentido com numero. O TOEFL conta os dias
+       ate a prova; um trilho conta os dias desde o ultimo avanco, e pode nao
+       ter nenhum ainda. */
+    const dias = (r && typeof r.dias === "number")
+      ? r.dias+" dia"+(r.dias===1?"":"s") : "\u2014";
     h += '<details class="proc" '+(aberto?"open":"")+
          ' ontoggle="alternarProcesso(\''+P.id+'\', this.open)">'+
          '<summary><span class="proc-t">'+escapeHtml(P.titulo)+'</span>'+
            '<span class="proc-sub">'+(r ? escapeHtml(r.fase) : "sem fase")+'</span>'+
-           '<span class="proc-n">'+(r ? r.dias+" dia"+(r.dias===1?"":"s") : "\u2014")+'</span>'+
+           '<span class="proc-n">'+dias+'</span>'+
          '</summary><div class="proc-corpo">';
-    if(r){
-      h += '<div class="proc-linha"><span class="pl-r">Objetivo</span>'+
-           /* O ano aparece SO aqui. O fmtData do resto do app omite o ano de
-              proposito — datas proximas nao precisam dele —, mas o objetivo do
-              processo e a unica data dura do TOEFL, e uma prova sem ano nao e
-              um objetivo. Nao e formato novo: e o mesmo fmtData com o ano
-              colado, na frase em portugues. */
-           '<span class="pl-v">Prova em '+fmtData(TOEFL_PLANO.prova)+
-             ' de '+TOEFL_PLANO.prova.slice(0,4)+'</span></div>'+
-           '<div class="proc-linha"><span class="pl-r">Fase</span>'+
-           '<span class="pl-v">'+escapeHtml(r.fase)+' \u00b7 '+
-             (r.falta ? r.falta+" no n\u00facleo faltando" : "n\u00facleo cumprido")+'</span></div>'+
-           '<div class="proc-linha"><span class="pl-r">Foco</span>'+
-           '<span class="pl-v">'+escapeHtml(r.foco)+'</span></div>';
-    }
+    h += P.linhas ? P.linhas(r) : "";
     if(acao){
       /* A ACAO DE HOJE APARECE AQUI TAMBEM, mas so como leitura: quem executa
          e o Hoje, e a caixa de marcar mora la. Repetir a caixa criaria dois

@@ -38,7 +38,7 @@ estado.json  ──► progresso (st, vida, quando)
 | Aba | O que é |
 |---|---|
 | **Hoje** | execução do dia: prioridades, rotinas, retomadas, datas, indicador de vagas |
-| **Processos** | a estrutura completa de um trabalho complexo. Hoje: o TOEFL |
+| **Processos** | a estrutura completa dos trabalhos complexos em curso: o TOEFL e os projetos de Trilho já iniciados |
 | **Trilhos** | estruturas de longo prazo: esteira de artigos, PhD, pós-doc, concursos, técnico |
 | **Vagas** | triagem de oportunidades acadêmicas coletadas semanalmente |
 
@@ -81,6 +81,20 @@ Duas regras duras:
 - **A rotina não escolhe um Trilho.** Ela diz *o que* fazer; a prioridade diz
   *em qual projeto*. Um painel com mais de um projeto ativo nunca tem estágio
   escolhido automaticamente (`trilhoSemEscolha`).
+
+#### Rotinas não marcadas
+
+Abaixo das rotinas, um `<details>` recolhido com as rotinas dos últimos
+`ATRASO_DIAS = 7` dias que ficaram sem marca. Marcar grava **na data de origem**,
+não em hoje; passados sete dias o item sai sozinho, e dispensar (`cron:hoje-dispensados`)
+existe para a exceção.
+
+**O rótulo diz o objeto: "3 rotinas não marcadas".** A revisão dominical tem um
+bloco chamado *Ficou para trás* que cobre prioridades, rotinas **e** sugestões
+não adotadas; este cobre só rotinas, e aos domingos os dois apareciam na mesma
+tela com o mesmo nome. A contagem também passou para o substantivo porque a
+flexão do verbo não se monta por concatenação — o plural de *ficou* é *ficaram*,
+com troca de radical.
 
 ### 2b. Motor de prioridades
 
@@ -257,12 +271,48 @@ As rotinas em `DIAS` carregam `processo:"toefl"` e nenhum texto. O `id` não
 mudou — é dele que `cron:checks:` depende. Sem essa inversão, mover o guia de
 aba teria sido só mudar HTML de lugar.
 
-### Sem abstração genérica
+### Duas fontes, um contrato
 
-`PROCESSOS` é uma lista com quatro funções por entrada (`resumo`, `acaoDoDia`,
-`corpo`, `acoes`), todas já existentes no caso do TOEFL. Notre Dame implementa
-as mesmas quatro e entra na lista. Generalizar antes do segundo caso é como se
-inventa a abstração errada.
+`PROCESSOS` é uma lista com as funções de cada entrada (`resumo`, `acaoDoDia`,
+`linhas`, `corpo`, `acoes`), todas já existentes no caso do TOEFL. Ela deixou de
+ser *a* lista e passou a ser a lista dos processos **escritos à mão**. O que a
+aba desenha é `processosVisiveis()`:
+
+```
+PROCESSOS (à mão: o TOEFL)        ──┐
+                                     ├──► processosVisiveis() ──► aba Processos
+projetos de Trilho iniciados       ──┘     (TOEFL primeiro, depois painel/projeto)
+```
+
+Um projeto de trilho vira processo por `processoDeTrilho(pid, pr)`, que adapta
+**dados que já existiam**: `pr.t`, `pr.n`, os `subs` com `t`, `st`, `vida`, `em`,
+`onde` e `prova`, mais o `estagioDoTrilho()` de sempre. **Nenhum metadado novo,
+nenhum cadastro paralelo, nenhuma chave de `localStorage`, nenhum tipo de toque.**
+
+**Iniciado é uma definição só.** `projetoComecou(pr)` — algum subitem com `em`
+preenchido ou `st > 0` — é a mesma regra que o motor de prioridades e as
+retomadas já aplicavam. Nomeá-la é o que impede a aba de discordar do motor
+sobre o mesmo projeto. Concluído fica de fora.
+
+**O processo derivado é somente leitura.** `acaoDoDia()` devolve `null` e
+`acoes()` devolve vazio, as duas por decisão:
+
+- um artigo não tem semana como o `TOEFL_SEMANA`, e inventar uma seria inventar
+  metadado. Por isso **Processos nunca cria tarefa diária**;
+- concluir etapa continua sendo do Trilho, do Hoje e do pipeline, pelo toque
+  `registro`. Um segundo lugar de marcar seria um segundo mecanismo de conclusão.
+
+**A medida honesta é "X de Y etapas".** O campo `sub.medida` (`{feito, total}`)
+existe no esquema e já é desenhado nos Trilhos, mas está **vazio nos 78 subitens
+reais** — usá-lo aqui seria inventar tamanho. Ele continua opcional e vazio;
+preenchê-lo é trabalho do Cowork, não desta tela. Subitem `inaplicavel` sai da
+conta: não é etapa que falta, é etapa que não existe para aquele projeto.
+
+O texto de cada etapa é **verbatim** o do trilho. `prova: "estrela"` aparece como
+*depende de você* e `prova: "maquina"` como *pelo pipeline*; `onde` aparece com o
+valor que tem (escrivaninha, celular, cowork). A ordem da lista é estável —
+painel e projeto, sem heurística de "estágio mais avançado" que mudaria a tela a
+cada marcação.
 
 ---
 

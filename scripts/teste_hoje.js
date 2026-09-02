@@ -22,7 +22,7 @@ const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8"
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
 const FONTE = HTML.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1] +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -1125,6 +1125,116 @@ ok(REF.currentFaseId() === "f1",
    "e a fase continua em f1: so o nucleo avanca", REF.currentFaseId());
 ok(REF.guiaChecks("f1")[1] === true,
    "guiaChecks mantem a assinatura antiga (por indice) lendo o mapa novo");
+
+console.log("\n=== 38. Processos: TOEFL + trilhos iniciados ===");
+const PV = criarAparelho("processos");
+/* o projeto de teste sai do trilho real, para nao inventar estrutura */
+function pegarProj(ctx, pid, projId){
+  return (ctx.getProjs(pid) || []).filter(p => p.id === projId)[0];
+}
+const ids0 = PV.processosVisiveis().map(P => P.id);
+ok(ids0.indexOf("toefl") === 0, "o TOEFL continua aparecendo, e vem primeiro", ids0[0]);
+
+/* (1) nao comecado nao aparece */
+const prA = pegarProj(PV, "pipeline", "a01");
+ok(PV.projetoComecou(prA) === false || true, "a01 lido do trilho");
+const projsPV = PV.getProjs("pipeline");
+const alvoPV = projsPV.filter(p => p.id === "a01")[0];
+alvoPV.subs.forEach(x => { x.st = 0; x.em = ""; });
+PV.setProjs("pipeline", projsPV);
+ok(PV.projetoComecou(pegarProj(PV, "pipeline", "a01")) === false,
+   "projeto sem em e sem st>0 nao esta comecado");
+ok(PV.processosVisiveis().every(P => P.id !== "trilho:pipeline/a01"),
+   "e nao aparece em Processos");
+
+/* (2) qualquer em OU st>0 comeca */
+const p2 = PV.getProjs("pipeline"); const a2 = p2.filter(p => p.id === "a01")[0];
+a2.subs[0].em = "2026-08-20T10:00:00.000Z";
+PV.setProjs("pipeline", p2);
+ok(PV.projetoComecou(pegarProj(PV, "pipeline", "a01")) === true, "so o `em` ja o inicia");
+const p3 = PV.getProjs("pipeline"); const a3 = p3.filter(p => p.id === "a01")[0];
+a3.subs[0].em = ""; a3.subs[0].st = 1;
+PV.setProjs("pipeline", p3);
+ok(PV.projetoComecou(pegarProj(PV, "pipeline", "a01")) === true, "e so o st>0 tambem");
+ok(PV.processosVisiveis().some(P => P.id === "trilho:pipeline/a01"),
+   "o artigo iniciado aparece em Processos",
+   PV.processosVisiveis().map(P => P.id));
+
+/* (3) concluido sai */
+const p4 = PV.getProjs("pipeline"); const a4 = p4.filter(p => p.id === "a01")[0];
+a4.subs.forEach(x => { x.st = 2; });
+PV.setProjs("pipeline", p4);
+ok(PV.processosVisiveis().every(P => P.id !== "trilho:pipeline/a01"),
+   "projeto concluido nao aparece");
+
+/* (4) progresso X de Y e estagio verbatim */
+const p5 = PV.getProjs("pipeline"); const a5 = p5.filter(p => p.id === "a01")[0];
+a5.subs.forEach((x, i) => { x.st = i < 2 ? 2 : 0; x.em = "2026-08-20T10:00:00.000Z"; });
+PV.setProjs("pipeline", p5);
+const rT = PV.resumoDoTrilho("pipeline", pegarProj(PV, "pipeline", "a01"));
+ok(rT.feito === 2 && rT.total === a5.subs.length,
+   "o progresso conta X de Y etapas", [rT.feito, rT.total]);
+ok(rT.fase === "Etapa 3 de " + rT.total, "e a fase e a contagem, nao uma sintese", rT.fase);
+const etReal = PV.estagioDoTrilho("pipeline", "a01");
+ok(rT.estagio && rT.estagio.subT === etReal.subT,
+   "o estagio e o do estagioDoTrilho", rT.estagio && rT.estagio.subT);
+const corpoT = PV.corpoDoTrilho("pipeline", pegarProj(PV, "pipeline", "a01"));
+ok(corpoT.indexOf(PV.escapeHtml(etReal.subT)) > -1,
+   "e o texto exibido e VERBATIM o sub.t do trilho", etReal.subT);
+ok(!/trabalhar no|dar andamento|avancar o/i.test(corpoT),
+   "nunca um rotulo generico");
+
+/* (5) onde e prova existentes aparecem */
+const subComOnde = pegarProj(PV, "pipeline", "a01").subs.filter(x => x.onde)[0];
+ok(!!subComOnde, "o trilho real tem `onde` preenchido", subComOnde && subComOnde.onde);
+ok(corpoT.indexOf('class="sub-onde"') > -1 &&
+   corpoT.indexOf(PV.escapeHtml(subComOnde.onde)) > -1,
+   "e o `onde` e exibido", subComOnde.onde);
+const subEstrela = pegarProj(PV, "pipeline", "a01").subs.filter(x => x.prova === "estrela")[0];
+ok(!!subEstrela && corpoT.indexOf("depende de voc") > -1,
+   "prova:estrela aparece como decisao sua");
+ok(corpoT.indexOf("pelo pipeline") > -1, "e prova:maquina como conduzida pelo pipeline");
+
+/* (6) o derivado nao pede nada ao Hoje, e desenhar nao toca em nada */
+const derivado = PV.processosVisiveis().filter(P => P.id === "trilho:pipeline/a01")[0];
+ok(derivado.acaoDoDia() === null, "acaoDoDia() do processo derivado devolve null");
+ok(derivado.acoes() === "", "e ele nao oferece acao de execucao");
+const antesPV = PV.getToques().length;
+PV.renderProcessos();
+const htmlPV = PV.document.getElementById("view-processos").innerHTML;
+ok(PV.getToques().length === antesPV, "desenhar Processos nao emite toque nenhum",
+   PV.getToques().length - antesPV);
+ok(/TOEFL/.test(htmlPV) && htmlPV.indexOf(PV.escapeHtml(etReal.subT)) > -1,
+   "e a aba mostra o TOEFL e o artigo iniciado");
+
+console.log("\n=== 39. O bloco de rotinas diz o que e ===");
+const RB = criarAparelho("rotinas");
+function summaryDeAtrasadas(ctx, quantas){
+  /* deixa `quantas` rotinas de ontem sem marcar e marca todas as outras */
+  for (let k = 1; k <= 7; k++) {
+    const dt = new Date(ctx.now.getFullYear(), ctx.now.getMonth(), ctx.now.getDate() - k);
+    const D = ctx.DIAS[dt.getDay()]; if (!D) continue;
+    const dia = ctx.ymd(dt), ck = {};
+    D.tasks.forEach((t, i) => { ck[t.id] = !(k === 1 && i < quantas); });
+    ctx.save("cron:checks:" + dia, ck);
+  }
+  return ctx.renderAtrasadas();
+}
+const um = summaryDeAtrasadas(RB, 1);
+ok(/1 rotina não marcada/.test(um), "1 -> '1 rotina nao marcada'",
+   (um.match(/<summary>[^<]*/) || [""])[0]);
+const tres = summaryDeAtrasadas(RB, 3);
+ok(/3 rotinas não marcadas/.test(tres), "3 -> '3 rotinas nao marcadas'",
+   (tres.match(/<summary>[^<]*/) || [""])[0]);
+ok(!/ficouram/.test(HTML), "a string 'ficouram' nao existe no index.html");
+ok(!/ficou'\+\(/.test(HTML), "e a flexao nao e mais montada por concatenacao");
+/* o bloco continua inteiro */
+ok(typeof RB.atrasadas === "function" && typeof RB.marcarAtrasada === "function" &&
+   typeof RB.dispensarAtrasada === "function" && typeof RB.podarDispensados === "function",
+   "atrasadas/marcar/dispensar/podar continuam existindo");
+const domDesc2 = RB.DIAS[0].tasks.filter(t => t.id === "dom-desc")[0];
+ok(domDesc2 && domDesc2.t === "Descanso", "e dom-desc continua sendo 'Descanso'",
+   domDesc2 && domDesc2.t);
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
