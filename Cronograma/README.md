@@ -466,7 +466,13 @@ Extração suspeita também.
 
 | Caminho | O quê |
 |---|---|
-| `Cronograma/index.html` | interface, estilos e lógica |
+| `Cronograma/index.html` | o shell: só o HTML e as tags que carregam o resto |
+| `Cronograma/css/cronograma.css` | os estilos |
+| `Cronograma/js/00-config.js` | constantes, sementes e chaves de `localStorage` |
+| `Cronograma/js/10-nucleo.js` | armazenamento, aparelho, entrada, estado, toques, sincronização |
+| `Cronograma/js/20-regras.js` | domínio: trilhos, prioridades, retomadas, processos, TOEFL, vagas, revisão |
+| `Cronograma/js/30-render.js` | os `render*` e os handlers presos ao DOM |
+| `Cronograma/js/40-app.js` | bootstrap: migrações, sementes, primeiros desenhos, ouvintes |
 | `Cronograma/entrada.json` | estrutura das peças. Escrita pelo Cowork |
 | `Cronograma/estado.json` | estado consolidado. Escrito só pelo dobrar_toques |
 | `Cronograma/toques/` | fila de eventos |
@@ -480,6 +486,31 @@ sobrescreve progresso, conclusão ou ciclo de vida.
 
 ---
 
+## Como o código é carregado
+
+Até a Fase 7 tudo morava num `index.html` de 4.989 linhas. Agora ele é um shell
+e o código está em cinco arquivos, carregados **nesta ordem**:
+
+```
+css/cronograma.css
+js/00-config.js  →  js/10-nucleo.js  →  js/20-regras.js  →  js/30-render.js  →  js/40-app.js
+```
+
+**A ordem é parte da arquitetura**, não uma conveniência: cada arquivo lê do
+anterior. São **scripts clássicos, não ES Modules** — é o escopo global
+compartilhado que mantém a superfície pública intacta, e é dele que dependem os
+`onclick` do HTML gerado.
+
+**O critério da divisão:** se uma função produz a resposta sem tocar no DOM, ela
+mora em `20-regras.js` e não em `30-render.js` — mesmo quando devolve HTML.
+`40-app.js` é o único com código executável de topo.
+
+A refatoração mudou **onde** o código mora e nada do que ele faz: nenhuma função
+renomeada, nenhuma chave de `localStorage` criada ou alterada, nenhum tipo de
+toque novo, nenhuma regra de CSS reescrita.
+
+---
+
 ## Testes
 
 ```bash
@@ -488,9 +519,11 @@ node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 ```
 
-O `teste_hoje.js` avalia o `<script>` do `index.html` de verdade num contexto do
-`vm`, com `localStorage` e `document` de mentira. O que se testa é o código que
-vai para o ar, não uma cópia dele.
+O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
+os cinco arquivos **na ordem em que o HTML os declara** e avalia o resultado num
+contexto do `vm`, com `localStorage` e `document` de mentira. O que se testa é o
+código que vai para o ar, não uma cópia dele — e acrescentar ou reordenar um
+arquivo na aplicação não deixa o teste medindo outra coisa.
 
 ---
 
@@ -506,14 +539,14 @@ vai para o ar, não uma cópia dele.
 | 5 — Revisão dominical (digest curto) | concluída |
 | 6A — Sincronização do guia do TOEFL (toque `toefl`, identidade por `id`) | concluída |
 | 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
-| 7 — Notificações | a fazer |
-| 8 — Refatoração (dividir o index.html) | a fazer |
+| 7 — Refatoração (dividir o `index.html`) | concluída |
+| 8 — Notificações | a fazer |
 
 ### Previsto e ainda não implementado
 
 - **Notificações push para novas vagas e oportunidades acadêmicas, prazos
   importantes e retomadas relevantes.** Requisito registrado desde a Fase 2 e
-  reafirmado na Fase 5: a implementação pertence à **Fase 7** e nenhuma fase
+  reafirmado na Fase 5: a implementação pertence à **Fase 8** e nenhuma fase
   anterior a antecipa. **Não** criar notificação para cada tarefa.
 - **Aprender com os descartes das vagas** (Vagas 3): registrar motivo
   estruturado para calibrar os filtros com o comportamento real.

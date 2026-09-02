@@ -43,7 +43,11 @@ NODE = """
 const fs=require("fs"), path=require("path"), vm=require("vm");
 const RAIZ=%s;
 const HTML=fs.readFileSync(path.join(RAIZ,"Cronograma","index.html"),"utf8");
-const FONTE=HTML.match(/<script[^>]*>([\\s\\S]*?)<\\/script>/)[1]+
+/* Os scripts reais, na ordem do HTML (Fase 7): o <script> inline deixou de
+   existir e a lista vem do proprio index.html. */
+const SRCS=(HTML.match(/<script[^>]*\\ssrc="[^"]+"[^>]*><\\/script>/g)||[])
+  .map(t=>t.match(/src="([^"]+)"/)[1]);
+const FONTE=SRCS.map(s=>fs.readFileSync(path.join(RAIZ,"Cronograma",s),"utf8")).join("\\n")+
   "\\n;globalThis.__const={DIAS,PAINEIS,monthKey};";
 function no(id){return {id,innerHTML:"",hidden:false,value:"",open:false,
   classList:{add(){},remove(){},toggle(){},contains(){return false}},
@@ -93,6 +97,9 @@ def montar_repo_falso():
     for nome in ("index.html", "entrada.json"):
         shutil.copy(os.path.join(RAIZ, "Cronograma", nome),
                     os.path.join(tmp, "Cronograma", nome))
+    # Fase 7: o codigo mora em Cronograma/js/, e o repo falso tem de te-lo.
+    shutil.copytree(os.path.join(RAIZ, "Cronograma", "js"),
+                    os.path.join(tmp, "Cronograma", "js"))
     return tmp
 
 

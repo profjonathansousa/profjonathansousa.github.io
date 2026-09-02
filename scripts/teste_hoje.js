@@ -17,11 +17,22 @@ const vm = require("vm");
 
 const RAIZ = path.dirname(__dirname);
 const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8");
+/* OS SCRIPTS REAIS, NA ORDEM DO HTML (Fase 7). O <script> inline deixou de
+   existir: o index.html agora aponta para js/00-config.js ... js/40-app.js, e a
+   ordem daquelas tags E parte da arquitetura. O teste le a lista do proprio
+   HTML em vez de repeti-la aqui — assim acrescentar ou reordenar um arquivo na
+   aplicacao nao deixa o teste medindo outra coisa. */
+const SRCS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || [])
+  .map(t => t.match(/src="([^"]+)"/)[1]);
+const FONTES = SRCS.map(src =>
+  fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"));
+/* Tudo o que era o <script> inline, concatenado na mesma ordem. */
+const CODIGO = FONTES.join("\n");
 /* `const` e `let` no topo de um script do vm ficam no escopo lexico dele e NAO
    viram propriedade do contexto — so `function` e `var` viram. DIAS, PAINEIS e
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
-const FONTE = HTML.match(/<script[^>]*>([\s\S]*?)<\/script>/)[1] +
+const FONTE = CODIGO +
   "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
 
 let falhas = [];
@@ -1245,8 +1256,8 @@ ok(/1 rotina não marcada/.test(um), "1 -> '1 rotina nao marcada'",
 const tres = summaryDeAtrasadas(RB, 3);
 ok(/3 rotinas não marcadas/.test(tres), "3 -> '3 rotinas nao marcadas'",
    (tres.match(/<summary>[^<]*/) || [""])[0]);
-ok(!/ficouram/.test(HTML), "a string 'ficouram' nao existe no index.html");
-ok(!/ficou'\+\(/.test(HTML), "e a flexao nao e mais montada por concatenacao");
+ok(!/ficouram/.test(CODIGO), "a string 'ficouram' nao existe no codigo");
+ok(!/ficou'\+\(/.test(CODIGO), "e a flexao nao e mais montada por concatenacao");
 /* o bloco continua inteiro */
 ok(typeof RB.atrasadas === "function" && typeof RB.marcarAtrasada === "function" &&
    typeof RB.dispensarAtrasada === "function" && typeof RB.podarDispensados === "function",
@@ -1375,6 +1386,43 @@ R6EX.save("cron:retomadas-adiadas", {"pipeline/a01": {ate:"2020-01-01", em:"2020
 ok(R6EX.retomadas().some(r => r.projId === "a01"),
    "vencido o `ate`, o projeto reaparece — sem toque nenhum",
    R6EX.retomadas().map(r => r.projId));
+
+console.log("\n=== 44. A estrutura em arquivos (Fase 7) ===");
+const ESPERADOS = ["js/00-config.js", "js/10-nucleo.js", "js/20-regras.js",
+                   "js/30-render.js", "js/40-app.js"];
+ok(JSON.stringify(SRCS) === JSON.stringify(ESPERADOS),
+   "os cinco scripts aparecem no HTML na ordem certa", SRCS);
+ok(ESPERADOS.every(f => fs.existsSync(path.join(RAIZ, "Cronograma", f))),
+   "e os cinco arquivos existem");
+ok(fs.existsSync(path.join(RAIZ, "Cronograma", "css", "cronograma.css")),
+   "cronograma.css existe");
+ok(/<link[^>]+href="css\/cronograma\.css"/.test(HTML),
+   "e o HTML o referencia");
+/* o shell nao pode ter sobrado nada de codigo */
+ok(!/<script(?![^>]*\ssrc=)[^>]*>[\s\S]*?<\/script>/.test(HTML),
+   "nao ha JavaScript inline no HTML");
+ok(!/<style[\s\S]*?<\/style>/.test(HTML), "nem CSS inline");
+ok(HTML.length < 20000, "o index.html virou um shell", HTML.length);
+/* e o que foi para o ar continua sendo o que se testa */
+ok(CODIGO.length > 200000, "o codigo real tem o tamanho esperado", CODIGO.length);
+const APP = criarAparelho("fase7");
+["renderHoje","estagioDoTrilho","aplicarPrioridadesDoEstado","vgMarcar",
+ "enfileirarToque","renderProcessos","renderSemana","renderTrilhos","renderEventos",
+ "renderMetas","vgRender","retomadas","motorDePrioridades","guiaChecks","toggleGuia",
+ "adiarRetomada","aplicarToeflDoEstado","aplicarRetomadasDoEstado","processosVisiveis",
+ "revisaoDaSemana","atrasadas","LS","save","getToques","buscarEstado"].forEach(function(f){
+  ok(typeof APP[f] === "function", "a funcao publica " + f + " continua disponivel");
+});
+/* nenhuma chave nem tipo de toque mudou de lugar junto com o codigo */
+const CHAVES = (CODIGO.match(/cron:[a-z0-9:-]*/g) || []);
+ok(CHAVES.indexOf("cron:checks:") > -1 && CHAVES.indexOf("cron:contexto") > -1 &&
+   CHAVES.indexOf("cron:hoje-dispensados") > -1 && CHAVES.indexOf("cron:retomadas-adiadas") > -1,
+   "as chaves de localStorage continuam as mesmas");
+const TIPOS = Array.from(new Set((CODIGO.match(/enfileirarToque\("([a-z]+)"/g) || [])
+  .map(t => t.match(/"([a-z]+)"/)[1]))).sort();
+ok(JSON.stringify(TIPOS) ===
+   JSON.stringify(["evento","meta","prioridade","registro","retomada","toefl","triagem"]),
+   "e os sete tipos de toque continuam os mesmos, sem nenhum novo", TIPOS);
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
