@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T14:37:01.816Z",
+ "_dobrado_em": "2026-09-02T14:37:58.285Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2063,6 +2063,30 @@
     "vid": "anpof-chamadas-hamadas-de-revistas-dossie-filosofia-arquitetura-inter-artes",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-37-49-113Z-s41hky",
+   "quando": "2026-09-02T14:37:49.113Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-stas-submissao-para-a-revista-ideacao-injusticas-epistemicas",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-37-58-285Z-s41hky",
+   "quando": "2026-09-02T14:37:58.285Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-os-e-chamadas-de-revistas-dossie-logica-e-historia-da-logica",
+    "st": 2
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2206,7 +2230,9 @@
   "2026-09-02T14-36-38-798Z-s41hky",
   "2026-09-02T14-36-46-241Z-s41hky",
   "2026-09-02T14-36-58-864Z-s41hky",
-  "2026-09-02T14-37-01-816Z-s41hky"
+  "2026-09-02T14-37-01-816Z-s41hky",
+  "2026-09-02T14-37-49-113Z-s41hky",
+  "2026-09-02T14-37-58-285Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2472,6 +2498,16 @@
   "anpof-chamadas-hamadas-de-revistas-dossie-filosofia-arquitetura-inter-artes": {
    "st": 2,
    "quando": "2026-09-02T14:37:01.816Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-stas-submissao-para-a-revista-ideacao-injusticas-epistemicas": {
+   "st": 2,
+   "quando": "2026-09-02T14:37:49.113Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-os-e-chamadas-de-revistas-dossie-logica-e-historia-da-logica": {
+   "st": 2,
+   "quando": "2026-09-02T14:37:58.285Z",
    "aparelho": "s41hky"
   }
  },
