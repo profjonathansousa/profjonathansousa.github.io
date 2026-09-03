@@ -301,6 +301,13 @@
   .pr-t{font-size:14px;color:var(--ink);line-height:1.35;}
   .pr-vazio{font-size:12px;color:var(--muted);margin-top:5px;font-style:italic;}
   .pr-livre{display:flex;align-items:flex-start;gap:9px;cursor:pointer;}
+  /* O QUADRADINHO TAMBEM TEM DE ACENDER. O .box vem com o visto em opacity:0,
+     e quem o acende e sempre uma regra do estado marcado — .task.done,
+     .goal.done, .tguia .g-item.on. A prioridade livre tinha so a regra do texto
+     riscado, entao ela ficava marcada pela metade: texto riscado, caixa vazia.
+     Mesmas duas linhas dos outros tres casos, nenhuma logica envolvida. */
+  .pr-livre.done .box{background:var(--gold);border-color:var(--gold);}
+  .pr-livre.done .box svg{opacity:1;transform:scale(1);}
   .pr-livre.done .pr-t{color:var(--muted);text-decoration:line-through;
     text-decoration-color:var(--line-strong);}
   .pr-estrela{display:inline-block;margin-left:7px;font-size:10px;line-height:1;
