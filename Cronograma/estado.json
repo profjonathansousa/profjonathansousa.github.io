@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T18:09:34.509Z",
+ "_dobrado_em": "2026-09-03T01:51:29.952Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2253,6 +2253,23 @@
     "t": "Cadastro reserva FIRJAN",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-03T01-51-29-952Z-s41hky",
+   "quando": "2026-09-03T01:51:29.952Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788400289952",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Concurso hoje!!!",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2411,7 +2428,8 @@
   "2026-09-02T14-39-14-979Z-s41hky",
   "2026-09-02T14-39-17-937Z-s41hky",
   "2026-09-02T17-48-10-622Z-s41hky",
-  "2026-09-02T18-09-34-509Z-s41hky"
+  "2026-09-02T18-09-34-509Z-s41hky",
+  "2026-09-03T01-51-29-952Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3031,6 +3049,15 @@
    "t": "Cadastro reserva FIRJAN",
    "del": false,
    "quando": "2026-09-02T18:09:34.509Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788400289952": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Concurso hoje!!!",
+   "del": false,
+   "quando": "2026-09-03T01:51:29.952Z",
    "aparelho": "s41hky"
   }
  },
