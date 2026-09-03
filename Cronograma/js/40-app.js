@@ -6,7 +6,20 @@
 (function pullToRefresh(){
   let startY=null, armed=false;
   const ptr=document.getElementById("ptr");
-  window.addEventListener("touchstart",e=>{ startY = (window.scrollY<=0)? e.touches[0].clientY : null; },{passive:true});
+  /* ARRASTAR SOBRE UM CONTROLE NAO E PUXAR A PAGINA. Sem esta guarda, deslizar
+     o dedo sobre "Vou me candidatar" na aba Vagas — com a lista no topo e mais
+     de 70px para baixo — armava o gesto e o touchend fazia location.replace: a
+     pagina recarregava, e como view-hoje e o unico painel sem `hidden`, o app
+     reabria no Hoje. Pior: a vaga nem chegava a ser marcada, porque o arrasto
+     nao vira clique. Era exatamente o "as vezes ele volta para o Hoje".
+
+     O gesto de atualizar continua inteiro na area livre da tela; ele so deixa
+     de nascer em cima de algo que existe para ser tocado. */
+  window.addEventListener("touchstart",e=>{
+    var emControle = e.target && e.target.closest &&
+                     e.target.closest("button, a, select, input, textarea, [contenteditable]");
+    startY = (!emControle && window.scrollY<=0)? e.touches[0].clientY : null;
+  },{passive:true});
   window.addEventListener("touchmove",e=>{
     if(startY===null || window.scrollY>0){return;}
     const dy=e.touches[0].clientY-startY;
