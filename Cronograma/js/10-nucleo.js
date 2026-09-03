@@ -769,9 +769,18 @@ function importarDados(input){
 }
 /* ---- Atualização automática + puxar para atualizar ---- */
 function baseUrl(){return location.pathname;}
+/* ONDE A VERSAO MORA E ONDE ELA E PROCURADA TEM DE SER O MESMO LUGAR. Ate a
+   Fase 7 o APP_VERSION estava dentro do <script> do index.html, e era o HTML
+   que esta funcao lia. A divisao em cinco arquivos levou a constante para o
+   js/00-config.js e ninguem mudou a busca: o match passou a devolver null
+   sempre, e o app parou de se atualizar sozinho — em silencio, que e o pior
+   modo de parar. Agora a busca aponta para o arquivo onde a constante esta.
+
+   O caminho e relativo ao documento, e nao a baseUrl(): serve tanto para
+   /Cronograma/ quanto para /Cronograma/index.html. */
 async function checkUpdate(){
   try{
-    const res = await fetch(baseUrl()+"?ping="+Date.now(), {cache:"no-store"});
+    const res = await fetch("js/00-config.js?ping="+Date.now(), {cache:"no-store"});
     const txt = await res.text();
     const m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/);
     if(m && m[1] !== APP_VERSION){ location.replace(baseUrl()+"?v="+m[1]); }

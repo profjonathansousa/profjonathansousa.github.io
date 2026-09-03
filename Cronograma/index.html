@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Cronograma">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Cronograma</title>
-<link rel="stylesheet" href="css/cronograma.css">
+<link rel="stylesheet" href="css/cronograma.css?v=2026-09-02-entrega1">
 </head>
 <body>
 <div id="ptr">Puxe para atualizar</div>
@@ -84,14 +84,19 @@
     <span id="ver"></span>
   </div>
 </div>
-<!-- A ORDEM DESTAS TAGS E PARTE DA ARQUITETURA (Fase 7): config, depois
+<!-- O ?v= NAO E ENFEITE: sem ele o navegador serve css e js do cache mesmo
+     depois de o index.html ser recarregado, e uma correcao publicada fica
+     invisivel no aparelho. A versao aqui tem de ser a mesma do APP_VERSION em
+     js/00-config.js — ha teste que falha se as duas divergirem.
+
+     A ORDEM DESTAS TAGS E PARTE DA ARQUITETURA (Fase 7): config, depois
      nucleo, depois regras, depois desenho, e o boot por ultimo. Scripts
      classicos, nao modulos: o escopo global compartilhado e o que mantem a
      superficie publica intacta. -->
-<script src="js/00-config.js"></script>
-<script src="js/10-nucleo.js"></script>
-<script src="js/20-regras.js"></script>
-<script src="js/30-render.js"></script>
-<script src="js/40-app.js"></script>
+<script src="js/00-config.js?v=2026-09-02-entrega1"></script>
+<script src="js/10-nucleo.js?v=2026-09-02-entrega1"></script>
+<script src="js/20-regras.js?v=2026-09-02-entrega1"></script>
+<script src="js/30-render.js?v=2026-09-02-entrega1"></script>
+<script src="js/40-app.js?v=2026-09-02-entrega1"></script>
 </body>
 </html>

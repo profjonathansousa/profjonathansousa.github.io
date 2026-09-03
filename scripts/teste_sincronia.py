@@ -47,7 +47,7 @@ const HTML=fs.readFileSync(path.join(RAIZ,"Cronograma","index.html"),"utf8");
    existir e a lista vem do proprio index.html. */
 const SRCS=(HTML.match(/<script[^>]*\\ssrc="[^"]+"[^>]*><\\/script>/g)||[])
   .map(t=>t.match(/src="([^"]+)"/)[1]);
-const FONTE=SRCS.map(s=>fs.readFileSync(path.join(RAIZ,"Cronograma",s),"utf8")).join("\\n")+
+const FONTE=SRCS.map(s=>fs.readFileSync(path.join(RAIZ,"Cronograma",s.split("?")[0]),"utf8")).join("\\n")+
   "\\n;globalThis.__const={DIAS,PAINEIS,monthKey};";
 function no(id){return {id,innerHTML:"",hidden:false,value:"",open:false,
   classList:{add(){},remove(){},toggle(){},contains(){return false}},
