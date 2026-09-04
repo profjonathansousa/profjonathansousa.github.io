@@ -57,6 +57,9 @@ try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", 
    estado.json possa responder por `id`. */
 try{ migrarGuiaToefl(); }catch(e){ console.error("migracao do guia TOEFL falhou:", e); }
 try{ migrarRetomadas(); }catch(e){ console.error("migracao das retomadas falhou:", e); }
+/* Esta nao publica toque — so muda a conclusao da prioridade de gaveta, do
+   cron:checks do dia para a propria prioridade. Ver PRIO_MIGRADO_KEY. */
+try{ migrarPrioridadesFeitas(); }catch(e){ console.error("migracao das prioridades falhou:", e); }
 /* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
    Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
 if(LS("cron:tecnico-seed", null) !== TEC_SEED){

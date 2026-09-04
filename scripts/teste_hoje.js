@@ -290,7 +290,8 @@ function dobrarNaMao(listaDeToques) {
       if (atual && (atual.quando || "") > (t.quando || "")) return;
       est.prioridades[k] = {
         tipo: t.dados.tipo, painel: t.dados.painel, projId: t.dados.projId,
-        t: t.dados.t, del: !!t.dados.del, quando: t.quando, aparelho: t.aparelho
+        t: t.dados.t, feito_em: t.dados.feito_em || "",
+        del: !!t.dados.del, quando: t.quando, aparelho: t.aparelho
       };
     });
   return est;
@@ -885,9 +886,12 @@ const RZ = criarAparelho("rev5", { prompt: "Carta de recomendacao" });
 /* prioridade livre marcada */
 RZ.addPrioridadeLivre();
 const pridLivre = RZ.getPrio()[0].id;
-const ckHoje = RZ.LS("cron:checks:" + RZ.ymd(new Date()), {}) || {};
-ckHoje[pridLivre] = true;
-RZ.save("cron:checks:" + RZ.ymd(new Date()), ckHoje);
+RZ.togglePrioridadeFeita(pridLivre);
+ok(RZ.getPrio()[0].feito_em === RZ.ymd(new Date()),
+   "marcar grava a data na propria prioridade, e nao no cron:checks do dia",
+   RZ.getPrio()[0].feito_em);
+ok(!(RZ.LS("cron:checks:" + RZ.ymd(new Date()), {}) || {})[pridLivre],
+   "e o cron:checks do dia nao e mais tocado por prioridade");
 let revZ = RZ.revisaoDaSemana();
 ok(revZ.concluido.prioridades.some(x => x.tipo === "livre" && /Carta/.test(x.t)),
    "prioridade LIVRE marcada aparece em Concluido",
@@ -1405,6 +1409,181 @@ R6EX.save("cron:retomadas-adiadas", {"pipeline/a01": {ate:"2020-01-01", em:"2020
 ok(R6EX.retomadas().some(r => r.projId === "a01"),
    "vencido o `ate`, o projeto reaparece — sem toque nenhum",
    R6EX.retomadas().map(r => r.projId));
+
+console.log("\n=== 45. A prioridade cumprida nao volta amanha ===");
+/* O DEFEITO QUE ISTO FECHA: a prioridade livre era marcada no cron:checks do
+   DIA — o mecanismo das rotinas. A rotina e por dia de proposito; a prioridade
+   e da SEMANA. Marcada ontem, a marca era procurada na chave de hoje, nao era
+   achada, e a prioridade cumprida reaparecia por cumprir. */
+const HOJE  = (function(){ const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); })();
+const ONTEM = (function(){ const d=new Date(Date.now()-86400000);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); })();
+
+const PF = criarAparelho("prio-feita", { prompt: "Revisar o capitulo 3" });
+PF.addPrioridadeLivre();
+const pfId = PF.getPrio()[0].id;
+ok(PF.prioridadesDoDia().manuais.some(p => p.id === pfId),
+   "por cumprir, a prioridade esta na tela");
+
+/* marcada HOJE: fica na tela, e fica MARCADA — ver a confirmacao do toque */
+PF.togglePrioridadeFeita(pfId);
+const naTela = PF.prioridadesDoDia().manuais.filter(p => p.id === pfId)[0];
+ok(!!naTela, "marcada hoje, ela CONTINUA na tela");
+ok(naTela.feito_em === HOJE, "com a data de hoje", naTela.feito_em);
+ok(/pr-livre done/.test(PF.cartaoDePrioridade(naTela)),
+   "e o cartao a desenha riscada");
+
+/* a mesma prioridade, marcada ONTEM: sai da tela */
+const listaPF = PF.getPrio();
+listaPF.filter(p => p.id === pfId)[0].feito_em = ONTEM;
+PF.setPrio(listaPF);
+ok(!PF.prioridadesDoDia().manuais.some(p => p.id === pfId),
+   "marcada ontem, ela SAI do Hoje");
+/* ...mas nao some do sistema: decisao 3 — so deixa de ocupar a tela */
+ok(PF.getPrio().some(p => p.id === pfId),
+   "sem sumir da semana: ela continua no cron:prioridades");
+const revPF = PF.revisaoDaSemana();
+ok(revPF.concluido.prioridades.some(x => /capitulo 3/.test(x.t)),
+   "e a revisao de domingo continua contando como cumprida",
+   revPF.concluido.prioridades);
+ok(!revPF.atras.prioridades.some(x => /capitulo 3/.test(x.t)),
+   "sem aparecer tambem em Ficou para tras");
+/* e o motor nao a sugere de volta: escolha sua continua sendo escolha sua */
+ok(!PF.prioridadesDoDia().sugeridas.some(x => x.t && /capitulo 3/.test(x.t)),
+   "e o motor nao a devolve como sugestao");
+
+/* desmarcar volta atras, e no mesmo dia */
+const PF2 = criarAparelho("prio-desmarca", { prompt: "Ler Espinosa" });
+PF2.addPrioridadeLivre();
+const pf2Id = PF2.getPrio()[0].id;
+PF2.togglePrioridadeFeita(pf2Id);
+PF2.togglePrioridadeFeita(pf2Id);
+ok(PF2.getPrio()[0].feito_em === "", "desmarcar limpa a data", PF2.getPrio()[0].feito_em);
+ok(PF2.prioridadesDoDia().manuais.some(p => p.id === pf2Id),
+   "e ela volta a contar como por cumprir");
+
+/* DECISAO B: a prioridade DE TRILHO nao sai por etapa fechada. Ela e o projeto
+   da semana; fechar uma etapa a faz AVANCAR, e nao sair. */
+const PT = criarAparelho("prio-trilho");
+PT.addPrioridadeTrilho("pipeline/a01");
+const etPT = PT.estagioDoTrilho("pipeline", "a01");
+PT.marcarDoHoje("pipeline", "a01", etPT.subId, true);
+const trilhoDepois = PT.prioridadesDoDia().manuais.filter(p => p.tipo === "trilho")[0];
+ok(!!trilhoDepois, "etapa fechada: a prioridade de trilho CONTINUA na tela");
+const etPT2 = PT.estagioDoTrilho("pipeline", "a01");
+ok(etPT2 && etPT2.subId !== etPT.subId,
+   "e ela mostra a etapa SEGUINTE, lida do trilho agora", etPT2 && etPT2.subT);
+/* e nem um feito_em plantado a tira: a regra e por tipo, e nao por descuido */
+const listaPT = PT.getPrio();
+listaPT.filter(p => p.tipo === "trilho")[0].feito_em = ONTEM;
+PT.setPrio(listaPT);
+ok(PT.prioridadesDoDia().manuais.some(p => p.tipo === "trilho"),
+   "a de trilho nao sai da tela nem com feito_em antigo");
+
+/* A ROTINA NAO MUDOU EM NADA: continua por dia, e volta quando a semana gira */
+const RR = criarAparelho("rotina-intacta");
+const idxHojeRR = new Date().getDay();
+const tarefaRR = ((RR.DIAS[idxHojeRR] || {}).tasks || [])[0];
+if (tarefaRR) {
+  RR.toggleCheck(tarefaRR.id);
+  ok(!!(RR.LS("cron:checks:" + HOJE, {}) || {})[tarefaRR.id],
+     "a rotina continua sendo marcada no cron:checks do dia");
+  const ckOntemRR = RR.LS("cron:checks:" + ONTEM, {}) || {};
+  ok(!ckOntemRR[tarefaRR.id],
+     "e a marca de hoje nao vaza para outro dia — cada dia e o seu");
+} else {
+  ok(false, "o dia de hoje deveria ter ao menos uma rotina");
+}
+
+console.log("\n=== 46. A prioridade cumprida atravessa aparelhos ===");
+/* Decisao 2: se ja sincroniza, sincroniza. Sem tipo de toque novo — o
+   `prioridade`, que ja existia, passa a carregar `feito_em`. */
+const SM = criarAparelho("sinc-mac", { prompt: "Fichar o Lutero" });
+SM.addPrioridadeLivre();
+const smId = SM.getPrio()[0].id;
+SM.togglePrioridadeFeita(smId);
+const tqPrio = SM.getToques().filter(t => t.tipo === "prioridade");
+ok(tqPrio.length >= 2, "marcar emite um toque de prioridade", tqPrio.length);
+ok(tqPrio[tqPrio.length - 1].dados.feito_em === HOJE,
+   "e o toque leva a DATA, e nao um booleano",
+   tqPrio[tqPrio.length - 1].dados.feito_em);
+
+const SC = criarAparelho("sinc-celular");
+SC.aplicarPrioridadesDoEstado(dobrarNaMao(SM.getToques()));
+const noCelSC = SC.getPrio().filter(p => p.id === smId)[0];
+ok(!!noCelSC && noCelSC.feito_em === HOJE,
+   "o celular recebe a prioridade JA CUMPRIDA", noCelSC && noCelSC.feito_em);
+ok(/pr-livre done/.test(SC.cartaoDePrioridade(noCelSC)),
+   "e a desenha marcada, sem precisar de cron:checks nenhum");
+
+/* desmarcar tambem atravessa: mudar de ideia e um fato */
+SM.togglePrioridadeFeita(smId);
+SC.aplicarPrioridadesDoEstado(dobrarNaMao(SM.getToques()));
+const noCelSC2 = SC.getPrio().filter(p => p.id === smId)[0];
+ok(!!noCelSC2 && !noCelSC2.feito_em,
+   "desmarcar no computador desmarca no celular", noCelSC2 && noCelSC2.feito_em);
+
+/* uma descida QUALQUER nao pode apagar a conclusao deste aparelho: o relogio
+   e que decide, item a item, como em todo o resto do pipeline */
+const SD = criarAparelho("sinc-descida", { prompt: "Preparar a aula" });
+SD.addPrioridadeLivre();
+const sdId = SD.getPrio()[0].id;
+SD.togglePrioridadeFeita(sdId);
+const estVelho = dobrarNaMao(SD.getToques());
+estVelho.prioridades[SD.semanaAtual + "/" + sdId].feito_em = "";
+estVelho.prioridades[SD.semanaAtual + "/" + sdId].quando = "2020-01-01T00:00:00.000Z";
+SD.aplicarPrioridadesDoEstado(estVelho);
+ok(SD.getPrio().filter(p => p.id === sdId)[0].feito_em === HOJE,
+   "um estado ANTIGO nao apaga a conclusao registrada agora",
+   SD.getPrio().filter(p => p.id === sdId)[0].feito_em);
+
+console.log("\n=== 47. Mudanca de gaveta das marcas antigas ===");
+/* A marca que ficou no cron:checks tem de virar feito_em, senao a prioridade
+   marcada ontem — o caso relatado — volta hoje por cumprir mesmo depois da
+   correcao. */
+/* Semeada como o aparelho estava ANTES da correcao: a prioridade na semana, a
+   marca no cron:checks de ontem. A migracao roda no boot, como as outras. */
+const SEM_ATUAL = criarAparelho("so-para-a-semana").semanaAtual;
+const prioAntiga = [{id:"prAntiga", tipo:"livre", painel:"", projId:"",
+                     t:"Terminar o parecer", em:"2026-01-01T00:00:00.000Z"}];
+const ckAntigo = {}; ckAntigo["prAntiga"] = true;
+const MGV = criarAparelho("migra-prio", { storage: {
+  ["cron:prioridades:" + SEM_ATUAL]: JSON.stringify(prioAntiga),
+  ["cron:checks:" + ONTEM]: JSON.stringify(ckAntigo)
+}});
+const pAntiga = MGV.getPrio().filter(p => p.id === "prAntiga")[0];
+ok(!!pAntiga && pAntiga.feito_em === ONTEM,
+   "a marca antiga virou feito_em, com o DIA em que foi marcada",
+   pAntiga && pAntiga.feito_em);
+ok(!MGV.prioridadesDoDia().manuais.some(p => p.id === "prAntiga"),
+   "e por isso ela sai da tela hoje — o defeito relatado");
+ok(MGV.revisaoDaSemana().concluido.prioridades.some(x => /parecer/.test(x.t)),
+   "sem perder a conta do domingo");
+ok(MGV.getToques().filter(t => t.tipo === "prioridade").length === 0,
+   "a migracao NAO publica toque: cron:checks sempre foi local",
+   MGV.getToques().filter(t => t.tipo === "prioridade").length);
+ok(!!(MGV.LS("cron:checks:" + ONTEM, {}) || {})["prAntiga"],
+   "e nao apaga a chave antiga — dado de aparelho nao se destroi para arrumar gaveta");
+ok(MGV.migrarPrioridadesFeitas() === 0, "roda uma vez so");
+
+/* a marca de HOJE tambem muda de gaveta, e a prioridade fica marcada na tela */
+const ckHojeMG = {}; ckHojeMG["prDeHoje"] = true;
+const MGH = criarAparelho("migra-hoje", { storage: {
+  ["cron:prioridades:" + SEM_ATUAL]: JSON.stringify(
+    [{id:"prDeHoje", tipo:"livre", painel:"", projId:"", t:"Corrigir provas",
+      em:"2026-01-01T00:00:00.000Z"}]),
+  ["cron:checks:" + HOJE]: JSON.stringify(ckHojeMG)
+}});
+const pHojeMG = MGH.prioridadesDoDia().manuais.filter(p => p.id === "prDeHoje")[0];
+ok(!!pHojeMG && pHojeMG.feito_em === HOJE,
+   "marcada hoje, continua na tela e marcada", pHojeMG && pHojeMG.feito_em);
+
+/* migracao nao inventa conclusao onde nao havia marca */
+const MGN = criarAparelho("migra-limpa", { prompt: "Escrever o resumo" });
+MGN.addPrioridadeLivre();
+ok(MGN.migrarPrioridadesFeitas() === 0, "sem marca antiga, nao ha o que migrar");
+ok(!MGN.getPrio()[0].feito_em, "e a prioridade continua por cumprir");
 
 console.log("\n=== 44. A estrutura em arquivos (Fase 7) ===");
 const ESPERADOS = ["js/00-config.js", "js/10-nucleo.js", "js/20-regras.js",

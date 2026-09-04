@@ -264,8 +264,14 @@ function aplicarPrioridadesDoEstado(est){
       for(var n=0;n<lista.length;n++){ if(lista[n].id === o.prid){ j = n; break; } }
       if(j > -1 && (lista[j].em || "") >= r.quando) return;
       if(r.del){ if(j > -1){ lista.splice(j,1); mudouSem = true; } return; }
+      /* `feito_em` entra aqui e nao pode faltar: este `novo` SUBSTITUI o item
+         inteiro. Se o campo nao viesse, uma descida qualquer apagaria a
+         conclusao que este aparelho registrou. Ausencia no estado e "nao
+         feita", que e o valor certo para uma prioridade nunca marcada e para
+         uma desmarcada — os dois chegam como "". */
       var novo = {id:o.prid, tipo:r.tipo || "livre", painel:r.painel || "",
-                  projId:r.projId || "", t:r.t || "", em:r.quando};
+                  projId:r.projId || "", t:r.t || "",
+                  feito_em:r.feito_em || "", em:r.quando};
       if(j < 0) lista.push(novo); else lista[j] = novo;
       mudouSem = true;
     });
