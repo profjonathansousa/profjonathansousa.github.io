@@ -573,7 +573,15 @@ function renderHoje(){
   });
   html+=`</ul>`;
   html+=renderRetomadas();
-  html+=renderAtrasadas();
+  /* O PAINEL DE ROTINAS NAO MARCADAS SAIU DA TELA, e so da tela: renderAtrasadas,
+     atrasadas, marcarAtrasada, dispensarAtrasada e podarDispensados continuam
+     inteiros logo acima, e cron:hoje-dispensados nao foi tocada. Basta
+     descomentar esta linha para o painel voltar.
+
+     A implementacao fica porque atrasadas() NAO e so deste painel: a revisao
+     dominical a usa para montar o bloco "Ficou para tras" (ver revisaoDaSemana,
+     em 20-regras.js). Apagar a funcao levaria junto um pedaco do domingo. */
+  /* html+=renderAtrasadas(); */
   /* O renderGuia() saiu daqui na Fase 4: ele e a ESTRUTURA do processo, e
      estrutura mora em Processos. O Hoje ficou com a execucao. */
   html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;

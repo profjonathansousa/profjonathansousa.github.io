@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-02T12:14:31.181Z",
+ "_dobrado_em": "2026-09-03T01:51:29.952Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -1883,6 +1883,393 @@
     "t": "Set · A categoria de \"religião\" e a primeira modernidade",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-34-04-420Z-s41hky",
+   "quando": "2026-09-02T14:34:04.420Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-agenda-concursos-e-selecoes-selecao-mestrado-em-filosofia",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-34-05-603Z-s41hky",
+   "quando": "2026-09-02T14:34:05.603Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-agenda-concursos-e-selecoes-mestrado-em-filosofia-uffs",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-34-21-733Z-s41hky",
+   "quando": "2026-09-02T14:34:21.733Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-rsos-e-selecoes-processo-seletivo-mestrado-em-filosofia-ufms",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-34-56-140Z-s41hky",
+   "quando": "2026-09-02T14:34:56.140Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31885",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-35-20-431Z-s41hky",
+   "quando": "2026-09-02T14:35:20.431Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31761",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-35-28-960Z-s41hky",
+   "quando": "2026-09-02T14:35:28.960Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31897",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-35-46-336Z-s41hky",
+   "quando": "2026-09-02T14:35:46.336Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31933",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-35-56-692Z-s41hky",
+   "quando": "2026-09-02T14:35:56.692Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31661",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-36-12-387Z-s41hky",
+   "quando": "2026-09-02T14:36:12.387Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31701",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-36-18-158Z-s41hky",
+   "quando": "2026-09-02T14:36:18.158Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31653",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-36-27-579Z-s41hky",
+   "quando": "2026-09-02T14:36:27.579Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31765",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-36-38-798Z-s41hky",
+   "quando": "2026-09-02T14:36:38.798Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31829",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-36-46-241Z-s41hky",
+   "quando": "2026-09-02T14:36:46.241Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "philjobs-31581",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-36-58-864Z-s41hky",
+   "quando": "2026-09-02T14:36:58.864Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-isualidades-e-disputas-narrativas-no-cotidiano-do-sul-global",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-37-01-816Z-s41hky",
+   "quando": "2026-09-02T14:37:01.816Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-hamadas-de-revistas-dossie-filosofia-arquitetura-inter-artes",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-37-49-113Z-s41hky",
+   "quando": "2026-09-02T14:37:49.113Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-stas-submissao-para-a-revista-ideacao-injusticas-epistemicas",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-37-58-285Z-s41hky",
+   "quando": "2026-09-02T14:37:58.285Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-os-e-chamadas-de-revistas-dossie-logica-e-historia-da-logica",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-07-108Z-s41hky",
+   "quando": "2026-09-02T14:38:07.108Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas--negras-caribenhas-e-latino-americanas-cis-trans-e-travestis",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-13-110Z-s41hky",
+   "quando": "2026-09-02T14:38:13.110Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-22-681Z-s41hky",
+   "quando": "2026-09-02T14:38:22.681Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-so-usp-561-dossie-nietzsche-e-em-homenagem-a-scarlett-marton",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-46-794Z-s41hky",
+   "quando": "2026-09-02T14:38:46.794Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-e-hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-49-718Z-s41hky",
+   "quando": "2026-09-02T14:38:49.718Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas--revista-benjaminiana-chamada-para-artigos-em-fluxo-continuo",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-38-53-063Z-s41hky",
+   "quando": "2026-09-02T14:38:53.063Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-s-e-chamadas-de-revistas-revista-limar-dossie-razao-tragicva",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-00-653Z-s41hky",
+   "quando": "2026-09-02T14:39:00.653Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-s-tecnocientificos-da-transcendencia-e-da-superacao-da-morte",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-07-758Z-s41hky",
+   "quando": "2026-09-02T14:39:07.758Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-s-dossie-pensando-o-ensino-de-filosofia-a-partir-do-nordeste",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-11-889Z-s41hky",
+   "quando": "2026-09-02T14:39:11.889Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas--colombia-memoria-conflitos-e-reconfiguracoes-contemporaneas",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-14-979Z-s41hky",
+   "quando": "2026-09-02T14:39:14.979Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas-e-revistas-revista-paradigmas-filosofia-realidade-arte-20261",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T14-39-17-937Z-s41hky",
+   "quando": "2026-09-02T14:39:17.937Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof-chamadas--hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho2",
+    "st": 2
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T17-48-10-622Z-s41hky",
+   "quando": "2026-09-02T17:48:10.622Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788371290620",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-02T18-09-34-509Z-s41hky",
+   "quando": "2026-09-02T18:09:34.509Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788372574507",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Cadastro reserva FIRJAN",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-03T01-51-29-952Z-s41hky",
+   "quando": "2026-09-03T01:51:29.952Z",
+   "aparelho": "s41hky",
+   "app": "2026-08-30-abas1",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788400289952",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Concurso hoje!!!",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2011,7 +2398,38 @@
   "2026-01-01T00-00-00-019Z-s41hky",
   "2026-09-02T12-14-21-668Z-s41hky",
   "2026-09-02T12-14-26-701Z-s41hky",
-  "2026-09-02T12-14-31-181Z-s41hky"
+  "2026-09-02T12-14-31-181Z-s41hky",
+  "2026-09-02T14-34-04-420Z-s41hky",
+  "2026-09-02T14-34-05-603Z-s41hky",
+  "2026-09-02T14-34-21-733Z-s41hky",
+  "2026-09-02T14-34-56-140Z-s41hky",
+  "2026-09-02T14-35-20-431Z-s41hky",
+  "2026-09-02T14-35-28-960Z-s41hky",
+  "2026-09-02T14-35-46-336Z-s41hky",
+  "2026-09-02T14-35-56-692Z-s41hky",
+  "2026-09-02T14-36-12-387Z-s41hky",
+  "2026-09-02T14-36-18-158Z-s41hky",
+  "2026-09-02T14-36-27-579Z-s41hky",
+  "2026-09-02T14-36-38-798Z-s41hky",
+  "2026-09-02T14-36-46-241Z-s41hky",
+  "2026-09-02T14-36-58-864Z-s41hky",
+  "2026-09-02T14-37-01-816Z-s41hky",
+  "2026-09-02T14-37-49-113Z-s41hky",
+  "2026-09-02T14-37-58-285Z-s41hky",
+  "2026-09-02T14-38-07-108Z-s41hky",
+  "2026-09-02T14-38-13-110Z-s41hky",
+  "2026-09-02T14-38-22-681Z-s41hky",
+  "2026-09-02T14-38-46-794Z-s41hky",
+  "2026-09-02T14-38-49-718Z-s41hky",
+  "2026-09-02T14-38-53-063Z-s41hky",
+  "2026-09-02T14-39-00-653Z-s41hky",
+  "2026-09-02T14-39-07-758Z-s41hky",
+  "2026-09-02T14-39-11-889Z-s41hky",
+  "2026-09-02T14-39-14-979Z-s41hky",
+  "2026-09-02T14-39-17-937Z-s41hky",
+  "2026-09-02T17-48-10-622Z-s41hky",
+  "2026-09-02T18-09-34-509Z-s41hky",
+  "2026-09-03T01-51-29-952Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -2202,6 +2620,146 @@
   "philjobs-31649": {
    "st": 0,
    "quando": "2026-08-29T23:59:14.877Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-agenda-concursos-e-selecoes-selecao-mestrado-em-filosofia": {
+   "st": 2,
+   "quando": "2026-09-02T14:34:04.420Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-agenda-concursos-e-selecoes-mestrado-em-filosofia-uffs": {
+   "st": 2,
+   "quando": "2026-09-02T14:34:05.603Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-rsos-e-selecoes-processo-seletivo-mestrado-em-filosofia-ufms": {
+   "st": 2,
+   "quando": "2026-09-02T14:34:21.733Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31885": {
+   "st": 1,
+   "quando": "2026-09-02T14:34:56.140Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31761": {
+   "st": 1,
+   "quando": "2026-09-02T14:35:20.431Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31897": {
+   "st": 1,
+   "quando": "2026-09-02T14:35:28.960Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31933": {
+   "st": 1,
+   "quando": "2026-09-02T14:35:46.336Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31661": {
+   "st": 1,
+   "quando": "2026-09-02T14:35:56.692Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31701": {
+   "st": 1,
+   "quando": "2026-09-02T14:36:12.387Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31653": {
+   "st": 1,
+   "quando": "2026-09-02T14:36:18.158Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31765": {
+   "st": 1,
+   "quando": "2026-09-02T14:36:27.579Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31829": {
+   "st": 1,
+   "quando": "2026-09-02T14:36:38.798Z",
+   "aparelho": "s41hky"
+  },
+  "philjobs-31581": {
+   "st": 1,
+   "quando": "2026-09-02T14:36:46.241Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-isualidades-e-disputas-narrativas-no-cotidiano-do-sul-global": {
+   "st": 2,
+   "quando": "2026-09-02T14:36:58.864Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-hamadas-de-revistas-dossie-filosofia-arquitetura-inter-artes": {
+   "st": 2,
+   "quando": "2026-09-02T14:37:01.816Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-stas-submissao-para-a-revista-ideacao-injusticas-epistemicas": {
+   "st": 2,
+   "quando": "2026-09-02T14:37:49.113Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-os-e-chamadas-de-revistas-dossie-logica-e-historia-da-logica": {
+   "st": 2,
+   "quando": "2026-09-02T14:37:58.285Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas--negras-caribenhas-e-latino-americanas-cis-trans-e-travestis": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:07.108Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:13.110Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-so-usp-561-dossie-nietzsche-e-em-homenagem-a-scarlett-marton": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:22.681Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-e-hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:46.794Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas--revista-benjaminiana-chamada-para-artigos-em-fluxo-continuo": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:49.718Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-s-e-chamadas-de-revistas-revista-limar-dossie-razao-tragicva": {
+   "st": 2,
+   "quando": "2026-09-02T14:38:53.063Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-s-tecnocientificos-da-transcendencia-e-da-superacao-da-morte": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:00.653Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-s-dossie-pensando-o-ensino-de-filosofia-a-partir-do-nordeste": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:07.758Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas--colombia-memoria-conflitos-e-reconfiguracoes-contemporaneas": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:11.889Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas-e-revistas-revista-paradigmas-filosofia-realidade-arte-20261": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:14.979Z",
+   "aparelho": "s41hky"
+  },
+  "anpof-chamadas--hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho2": {
+   "st": 2,
+   "quando": "2026-09-02T14:39:17.937Z",
    "aparelho": "s41hky"
   }
  },
@@ -2474,6 +3032,33 @@
    "del": false,
    "quando": "2026-09-02T12:14:31.181Z",
    "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788371290620": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Artigo \"suicídio em Spinoza e Lutero\": revisão final",
+   "del": false,
+   "quando": "2026-09-02T17:48:10.622Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788372574507": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Cadastro reserva FIRJAN",
+   "del": false,
+   "quando": "2026-09-02T18:09:34.509Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788400289952": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Concurso hoje!!!",
+   "del": false,
+   "quando": "2026-09-03T01:51:29.952Z",
+   "aparelho": "s41hky"
   }
  },
  "toefl": {
@@ -2502,5 +3087,6 @@
    "quando": "2026-01-01T00:00:00.019Z",
    "aparelho": "s41hky"
   }
- }
+ },
+ "retomadas": {}
 }

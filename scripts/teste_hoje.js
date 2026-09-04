@@ -24,7 +24,10 @@ const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8"
    aplicacao nao deixa o teste medindo outra coisa. */
 const SRCS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || [])
   .map(t => t.match(/src="([^"]+)"/)[1]);
-const FONTES = SRCS.map(src =>
+/* O src carrega ?v=<versao> para vencer o cache do navegador; no disco o
+   arquivo nao tem query nenhuma. */
+const CAMINHOS = SRCS.map(s => s.split("?")[0]);
+const FONTES = CAMINHOS.map(src =>
   fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"));
 /* Tudo o que era o <script> inline, concatenado na mesma ordem. */
 const CODIGO = FONTES.join("\n");
@@ -1262,6 +1265,22 @@ ok(!/ficou'\+\(/.test(CODIGO), "e a flexao nao e mais montada por concatenacao")
 ok(typeof RB.atrasadas === "function" && typeof RB.marcarAtrasada === "function" &&
    typeof RB.dispensarAtrasada === "function" && typeof RB.podarDispensados === "function",
    "atrasadas/marcar/dispensar/podar continuam existindo");
+/* O PAINEL SAIU DA TELA, MAS A IMPLEMENTACAO FICOU. Sem esta assercao nada
+   impediria a chamada de voltar em silencio no proximo render. */
+summaryDeAtrasadas(RB, 3);          /* ha 3 rotinas por marcar neste aparelho */
+RB.renderHoje();
+const hojeRB = RB.document.getElementById("view-hoje").innerHTML;
+/* Marcadores EXCLUSIVOS do painel. A classe .carry-b nao serve: as retomadas
+   reusam a mesma, e testar por ela acusaria o bloco errado. */
+ok(!/rotinas n[aã]o marcada/.test(hojeRB) &&
+   !/marcarAtrasada\(|dispensarAtrasada\(/.test(hojeRB),
+   "o painel de rotinas nao marcadas NAO e desenhado no Hoje");
+ok(RB.atrasadas().length === 3,
+   "mas atrasadas() continua enxergando as 3 — a implementacao ficou",
+   RB.atrasadas().length);
+ok(RB.revisaoDaSemana().atras.rotinas.length === 3,
+   "e a revisao dominical continua usando atrasadas() para o 'Ficou para tras'",
+   RB.revisaoDaSemana().atras.rotinas.length);
 const domDesc2 = RB.DIAS[0].tasks.filter(t => t.id === "dom-desc")[0];
 ok(domDesc2 && domDesc2.t === "Descanso", "e dom-desc continua sendo 'Descanso'",
    domDesc2 && domDesc2.t);
@@ -1390,13 +1409,29 @@ ok(R6EX.retomadas().some(r => r.projId === "a01"),
 console.log("\n=== 44. A estrutura em arquivos (Fase 7) ===");
 const ESPERADOS = ["js/00-config.js", "js/10-nucleo.js", "js/20-regras.js",
                    "js/30-render.js", "js/40-app.js"];
-ok(JSON.stringify(SRCS) === JSON.stringify(ESPERADOS),
-   "os cinco scripts aparecem no HTML na ordem certa", SRCS);
+ok(JSON.stringify(CAMINHOS) === JSON.stringify(ESPERADOS),
+   "os cinco scripts aparecem no HTML na ordem certa", CAMINHOS);
 ok(ESPERADOS.every(f => fs.existsSync(path.join(RAIZ, "Cronograma", f))),
    "e os cinco arquivos existem");
+/* A ENTREGA TAMBEM E TESTAVEL, e passou a ser depois de uma correcao publicada
+   ficar invisivel no aparelho por duas semanas. */
+const VERSAO_CFG = (FONTES[0].match(/APP_VERSION\s*=\s*"([^"]+)"/) || [])[1];
+const VERSOES_HTML = SRCS.concat(
+  (HTML.match(/href="css\/cronograma\.css[^"]*"/g) || []).map(h => h.slice(6, -1)))
+  .map(s => (s.split("?v=")[1] || null));
+ok(!!VERSAO_CFG, "APP_VERSION existe em js/00-config.js", VERSAO_CFG);
+ok(VERSOES_HTML.length === 6 && VERSOES_HTML.every(v => v === VERSAO_CFG),
+   "e os 6 assets do HTML carregam essa MESMA versao no ?v=", VERSOES_HTML);
+const NUCLEO = FONTES[1];
+ok(/fetch\("js\/00-config\.js\?ping="/.test(NUCLEO),
+   "checkUpdate busca a versao onde ela mora (js/00-config.js), nao no HTML");
+/* O que checkUpdate procurava era a ATRIBUICAO, nao a palavra: mencionar o
+   nome num comentario do HTML e inofensivo, uma segunda atribuicao nao. */
+ok(!/APP_VERSION\s*=\s*"/.test(HTML),
+   "e o HTML nao declara APP_VERSION — era ali que checkUpdate procurava, e por isso parou");
 ok(fs.existsSync(path.join(RAIZ, "Cronograma", "css", "cronograma.css")),
    "cronograma.css existe");
-ok(/<link[^>]+href="css\/cronograma\.css"/.test(HTML),
+ok(/<link[^>]+href="css\/cronograma\.css(\?[^"]*)?"/.test(HTML),
    "e o HTML o referencia");
 /* o shell nao pode ter sobrado nada de codigo */
 ok(!/<script(?![^>]*\ssrc=)[^>]*>[\s\S]*?<\/script>/.test(HTML),

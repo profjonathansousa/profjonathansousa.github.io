@@ -5,8 +5,7 @@
 
    A ORDEM DE CARGA E PARTE DA ARQUITETURA: este arquivo vem primeiro porque
    todos os outros leem daqui. Ver index.html. */
-/* ==================== AVISOS — Fase 8 ====================
-   As tres coisas publicas do Web Push. Nenhuma delas e segredo:
+/* ==================== AVISOS — Fase 8 =============   As tres coisas publicas do Web Push. Nenhuma delas e segredo:
 
    - a URL e a chave PUBLISHABLE so dizem "sou um visitante deste projeto".
      Ela e o modelo atual do Supabase e substitui a antiga anon key, com as
@@ -28,7 +27,7 @@ const AVISOS = {
                   avisos nao aparece e o service worker nao e registrado. */
 };
 
-const APP_VERSION = "2026-08-30-abas1";
+const APP_VERSION = "2026-09-02-entrega1";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
