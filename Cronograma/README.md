@@ -508,6 +508,67 @@ chave: o toque de desfazer não carrega `d`.
 O registro recusado **continua no `estado.json`** — o arquivo descreve, o aparelho
 decide; a próxima descida simplesmente o ignora de novo.
 
+### O lembrete do contato (Fase 9E)
+
+**A Fase 8 transporta; o TOEFL só diz quando.** Nenhuma linha de infraestrutura
+nova: `sw.js`, `manifest`, `sql/cron_push.sql`, a inscrição e o botão continuam
+como estavam. O que mudou foi `avisos/enviar.mjs` — um terceiro assunto em
+`decidir()` — e a cadência em `avisos.yml`.
+
+**Três faixas, em hora de Brasília:**
+
+| Local | UTC | Faixa | Texto |
+|---|---|---|---|
+| 10:00 | `0 13 * * *` | manhã | *"Seu contato de inglês de hoje ainda está pendente. 10 minutos já contam."* |
+| 15:00 | `0 18 * * *` | tarde | *"Ainda dá tempo de manter o contato de hoje. Faça 10–15 min."* |
+| 21:30 | `30 0 * * *` | noite | *"Ainda dá para fazer só 10 minutos hoje — e o dia conta."* |
+
+**A intensidade sobe, a cobrança não.** O que cresce ao longo do dia é a
+lembrança de que o mínimo basta — a notificação nunca diz *"você não estudou"*,
+diz o que ainda dá para fazer.
+
+> **O terceiro disparo cruza a meia-noite em UTC, e é por isso que o fuso deixou
+> de ser detalhe.** 21:30 em Brasília é 00:30 UTC **do dia seguinte**. Enquanto o
+> emissor usava o relógio do runner, a pergunta *"houve contato hoje?"* seria
+> feita sobre **amanhã** — e a resposta é sempre "não". Todo dia, para sempre. A
+> data agora sai de `America/Sao_Paulo`; zona nomeada e não offset fixo, porque
+> apostar na ausência de horário de verão é gratuito quando o ICU já sabe.
+
+**A faixa vem da hora real, não de qual `cron` disparou.** O agendador do GitHub
+entra numa fila e atrasa de dez a sessenta minutos; amarrar o texto ao horário
+previsto faria o lembrete das 21h30 chegar às 22h20 dizendo "bom dia". As bordas
+(13h e 19h) são largas o bastante para absorver o atraso.
+
+**O plano é lido da sua única fonte.** `lerPlano()` avalia `js/00-config.js` num
+contexto isolado e dele tira três coisas: a data de estreia, quais dias da semana
+o plano pede, e o piso do contato. Repetir *"o plano vai de segunda a sexta"* no
+emissor criaria um segundo lugar para essa verdade, e no dia em que um mudasse o
+outro passaria a mentir em silêncio. **Falha fechada:** sem conseguir ler o
+arquivo, nenhum aviso de TOEFL sai — silêncio é melhor que cobrança no escuro.
+
+**O contato cumprido encerra os lembretes do dia, e não há marca para isso.**
+`contatoPendente()` soma os minutos do dia nos registros que a 9C fez atravessar;
+cumprido o piso, as faixas seguintes simplesmente não produzem aviso. Não existe
+`toefl_notificado` — a condição é derivada da mesma fonte de verdade que o
+painel usa.
+
+**A dedup deixou de crescer para sempre.** Identidade `toefl:<data>:<faixa>`, e o
+`enviados` do `scripts/estado_notificador.json` é podado aos 30 dias. Com um
+aviso por dia o mapa era pequeno; com três seriam ~1.100 identidades e ~1.100
+commits por ano. Podar é seguro porque **nada ressuscita**: um lote de vagas
+antigo não volta a ser "novo", um evento a mais de 30 dias não está na janela de
+14, e um dia de TOEFL passado não é mais hoje.
+
+**`concurrency: escrita-no-main` no `avisos.yml`** — o mesmo grupo da dobra e do
+coletor. O job dá `git push` no main e não declarava concorrência: com um disparo
+diário a corrida com a dobra (que roda a cada 15 min) era improvável; com três,
+triplica. Push recusado seria identidade não gravada, e aviso repetido no dia
+seguinte.
+
+**A notificação não nomeia a habilidade**, por decisão: o Cronograma diz qual é a
+atividade quando abre. O plano está carregado no emissor, então nomeá-la seria
+uma mudança de duas linhas caso um dia se queira.
+
 ### Dívida técnica conhecida do TOEFL
 
 **P3 · `permiteSimulado()` depende da redação da nota.** A autorização para
@@ -949,7 +1010,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9B — TOEFL: registro de execução e métricas | concluída |
 | 9C — TOEFL: travessia do registro entre aparelhos (toque `estudo`) | concluída |
 | 9D — TOEFL: sem dívida (sair de `atrasadas()`) | concluída |\n| 9C-bis — TOEFL: concorrência entre abas e validação do registro | concluída |
-| 9E — TOEFL: lembrete pela Fase 8 | a fazer |
+| 9E — TOEFL: lembrete pela Fase 8 (três faixas, fuso local) | concluída |
 
 ### Previsto e ainda não implementado
 

@@ -170,6 +170,100 @@ ok(Object.keys(estadoNot).join(',') === 'enviados',
 ok(!/endpoint|p256dh|"auth"/.test(JSON.stringify(estadoNot)),
    '     e nenhum endpoint entra nele');
 
+console.log('\n=== 5. TOEFL: o lembrete do contato (Fase 9E) ===');
+const RAIZ9 = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const PLANO = N.lerPlano(RAIZ9);
+ok(!!PLANO, 'o plano e lido da sua unica fonte, js/00-config.js', PLANO);
+ok(PLANO.d0 === '2026-09-07' && PLANO.piso === 10,
+   '  e de la saem a estreia e o piso do contato', PLANO);
+ok(JSON.stringify(PLANO.dias) === JSON.stringify([1, 2, 3, 4, 5]),
+   '  e quais dias o plano pede — nao ha lista repetida aqui', PLANO.dias);
+ok(N.lerPlano('/caminho/que/nao/existe') === null,
+   '  e sem o arquivo ele devolve null (falha fechada)');
+
+/* O CASO QUE MOTIVOU TUDO: 21h30 em Brasilia e 00h30 UTC do DIA SEGUINTE. */
+const NOITE = new Date('2026-09-08T00:30:00Z');       /* 07/09 21:30 em BRT */
+ok(N.ymdEm(NOITE, N.TZ) === '2026-09-07',
+   'as 21h30 de Brasilia a data local ainda e a de ontem em UTC',
+   [N.ymd(NOITE), N.ymdEm(NOITE, N.TZ)]);
+ok(N.ymd(NOITE) !== N.ymdEm(NOITE, N.TZ),
+   '  e o relogio do runner discorda: era exatamente este o defeito latente');
+ok(N.horaEm(NOITE, N.TZ) === 21 && N.faixaDoDia(N.horaEm(NOITE, N.TZ)) === 'noite',
+   '  e a faixa sai da hora local: noite', N.horaEm(NOITE, N.TZ));
+const MANHA = new Date('2026-09-07T13:00:00Z'), TARDE = new Date('2026-09-07T18:00:00Z');
+ok(N.faixaDoDia(N.horaEm(MANHA, N.TZ)) === 'manha' &&
+   N.faixaDoDia(N.horaEm(TARDE, N.TZ)) === 'tarde',
+   'as outras duas faixas tambem saem da hora local');
+/* O atraso do agendador nao muda a faixa. */
+ok(N.faixaDoDia(N.horaEm(new Date('2026-09-07T14:00:00Z'), N.TZ)) === 'manha' &&
+   N.faixaDoDia(N.horaEm(new Date('2026-09-08T01:30:00Z'), N.TZ)) === 'noite',
+   'e uma hora de atraso do agendador nao troca a faixa');
+
+/* CONTATO PENDENTE: a condicao, e nada alem dela. */
+const SEG = '2026-09-07', SAB = '2026-09-12', ANTES = '2026-09-04';
+const reg = (d, min) => ({ d, min, dia: N.diaDaSemanaISO(d), hab: 'Reading', grau: 'contato' });
+ok(N.contatoPendente({}, SEG, PLANO) === true,
+   'segunda sem registro nenhum: pendente');
+ok(N.contatoPendente({ 'a/1': reg(SEG, 10) }, SEG, PLANO) === false,
+   'com 10 min o contato esta cumprido: nao ha o que lembrar');
+ok(N.contatoPendente({ 'a/1': reg(SEG, 5), 'a/2': reg(SEG, 5) }, SEG, PLANO) === false,
+   '5 + 5 tambem cumprem: o contato e do DIA, e nao de um registro');
+ok(N.contatoPendente({ 'a/1': reg(SEG, 60) }, SEG, PLANO) === false,
+   'e uma sessao longa satisfaz o contato');
+ok(N.contatoPendente({ 'a/1': Object.assign(reg(SEG, 30), { del: true }) }, SEG, PLANO) === true,
+   'mas uma lapide nao conta: continua pendente');
+ok(N.contatoPendente({ 'a/1': reg('2026-09-08', 30) }, SEG, PLANO) === true,
+   'e o estudo de OUTRO dia nao cumpre o de hoje');
+ok(N.contatoPendente({}, SAB, PLANO) === false,
+   'no sabado nao ha lembrete: o plano manda descansar');
+ok(N.contatoPendente({}, ANTES, PLANO) === false,
+   'e antes do D0 tambem nao: nao havia o que cumprir');
+ok(N.contatoPendente({}, SEG, null) === false,
+   'sem o plano nao se cobra nada — silencio e melhor que cobranca no escuro');
+
+/* A DECISAO: um aviso por assunto, e a dedup por dia e faixa. */
+const VAZIO = { vagas: [], lote: null, eventos: {} };
+const comToefl = (faixa, estudo) => Object.assign({}, VAZIO,
+  { faixa, estudo: estudo || {}, plano: PLANO });
+const d9 = N.decidir(comToefl('manha'), { enviados: {} }, SEG);
+ok(d9.length === 1 && d9[0].tag === 'toefl', 'o TOEFL vira UM aviso', d9);
+ok(d9[0].id === 'toefl:2026-09-07:manha',
+   'com identidade toefl:<data>:<faixa>', d9[0].id);
+ok(!/nao estudou|deven|atras|recuper/i.test(d9[0].corpo) && /10 minutos/.test(d9[0].corpo),
+   'e o texto reduz a barreira em vez de cobrar', d9[0].corpo);
+ok(N.decidir(comToefl('manha'), { enviados: { 'toefl:2026-09-07:manha': SEG } }, SEG).length === 0,
+   'a mesma faixa nao avisa duas vezes no mesmo dia');
+ok(N.decidir(comToefl('tarde'), { enviados: { 'toefl:2026-09-07:manha': SEG } }, SEG).length === 1,
+   'mas a faixa seguinte avisa: e a intensificacao ao longo do dia');
+ok(N.decidir(comToefl('tarde', { 'a/1': reg(SEG, 15) }), { enviados: {} }, SEG).length === 0,
+   'CONTATO CUMPRIDO ENCERRA OS LEMBRETES DO DIA, sem precisar de marca nenhuma');
+ok(N.decidir(Object.assign({}, VAZIO, { estudo: {}, plano: PLANO }),
+             { enviados: {} }, SEG).length === 0,
+   'sem faixa nao ha aviso de TOEFL: chamada antiga continua igual');
+ok(N.decidir(VAZIO, { enviados: {} }, SEG).length === 0,
+   'e os testes anteriores, que nao passam estudo nem plano, seguem valendo');
+
+/* Os tres assuntos convivem, um aviso cada. */
+const tudo = { vagas: [vaga('a', 'relevante', LOTE, 'Chamada A')], lote: LOTE,
+               eventos: { e1: { t: 'Prova', data: '2026-09-10' } },
+               faixa: 'noite', estudo: {}, plano: PLANO };
+const d3a = N.decidir(tudo, { enviados: {} }, SEG);
+ok(d3a.length === 3, 'vagas, datas e TOEFL: tres assuntos, tres avisos', d3a.length);
+ok(new Set(d3a.map((a) => a.tag)).size === 3,
+   'cada um com a sua tag — no aparelho eles nao se apagam', d3a.map((a) => a.tag));
+
+/* A PODA: a dedup deixa de crescer para sempre. */
+const velho = { 'toefl:2026-01-01:manha': '2026-01-01', 'vagas:2026-01-05': '2026-01-05',
+                'toefl:2026-09-06:noite': '2026-09-06', 'toefl:2026-09-07:manha': SEG };
+const podado = N.podar(velho, SEG, 30);
+ok(Object.keys(podado).length === 2,
+   'identidades com mais de 30 dias saem', Object.keys(podado));
+ok(podado['toefl:2026-09-07:manha'] && podado['toefl:2026-09-06:noite'],
+   '  e as recentes ficam: e a recente que impede o aviso repetido');
+ok(!podado['toefl:2026-01-01:manha'] && !podado['vagas:2026-01-05'],
+   '  a poda nao distingue assunto: vale para os tres');
+ok(Object.keys(N.podar({}, SEG, 30)).length === 0, 'podar o vazio nao quebra');
+
 console.log('\n' + '='.repeat(62));
 console.log('FALHAS: ' + falhas.length);
 falhas.forEach((f) => console.log('  - ' + f));

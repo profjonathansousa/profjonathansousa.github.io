@@ -20,14 +20,45 @@
 */
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 
 export const JANELA_DIAS = 14;   /* mesmo horizonte da revisão dominical */
 export const TTL = 12 * 3600;
+/* O FUSO DE QUEM RECEBE, e não o do runner (Fase 9E). O Actions roda em UTC, e
+   até aqui isso não errava porque o único disparo era 13:00 UTC = 10:00 em
+   Brasília — mesma data dos dois lados. O lembrete da noite quebra isso:
+   21:30 em Brasília é 00:30 UTC DO DIA SEGUINTE, e "houve contato hoje?" seria
+   perguntado sobre amanhã, cuja resposta é sempre não. Todo dia, para sempre.
+
+   Zona nomeada, e não offset fixo: o Brasil não tem horário de verão desde
+   2019, mas apostar nisso é gratuito quando o ICU já sabe a resposta. */
+export const TZ = 'America/Sao_Paulo';
+export const PODA_DIAS = 30;
 
 /* ---------- datas ---------- */
 export function ymd(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
          '-' + String(d.getDate()).padStart(2, '0');
+}
+/* "en-CA" dá AAAA-MM-DD, que é a forma que o resto do repositório usa. */
+export function ymdEm(d, tz) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tz || TZ,
+    year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+}
+export function horaEm(d, tz) {
+  return Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz || TZ,
+    hour: '2-digit', hour12: false }).format(d));
+}
+/* Meio-dia UTC: nenhum fuso do mundo empurra o meio-dia para o dia vizinho, e
+   assim o dia da semana sai da DATA, e não do instante. */
+export function diaDaSemanaISO(iso) {
+  const d = new Date(String(iso).slice(0, 10) + 'T12:00:00Z');
+  return isFinite(d.getTime()) ? d.getUTCDay() : NaN;
+}
+export function menosDias(iso, n) {
+  const d = new Date(String(iso).slice(0, 10) + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
 }
 export function diasAte(dataISO, hojeISO) {
   const a = new Date(hojeISO + 'T00:00:00Z').getTime();
@@ -96,6 +127,102 @@ export function montarAvisoEventos(eventos) {
   return { titulo, corpo, tag: 'eventos', url: './index.html', ids: eventos.map((e) => 'evento:' + e.id + ':' + e.data) };
 }
 
+/* ---------- TOEFL: existe contato pendente hoje? (Fase 9E) ----------
+   A FASE 8 TRANSPORTA; O TOEFL SÓ DIZ QUANDO. Nada aqui manda notificação:
+   este bloco responde uma pergunta, e o mecanismo que já existia decide o
+   resto — agregação, dedup, envio, limpeza de endereço morto.
+
+   O PLANO É LIDO DA SUA ÚNICA FONTE, e não copiado para cá. `js/00-config.js`
+   é avaliado num contexto isolado e dele saem três coisas: a data de estreia,
+   quais dias da semana o plano pede, e o piso do contato. Repetir "o plano vai
+   de segunda a sexta" aqui criaria um segundo lugar para essa verdade, e no dia
+   em que um mudasse o outro passaria a mentir em silêncio.
+
+   FALHA FECHADA: se o arquivo não puder ser lido ou avaliado, `lerPlano`
+   devolve null e nenhum aviso de TOEFL sai. Silêncio é melhor do que cobrar
+   sem saber se havia o que cobrar. */
+export function lerPlano(raiz) {
+  try {
+    const src = fs.readFileSync(path.join(raiz, 'Cronograma', 'js', '00-config.js'), 'utf8');
+    const ctx = vm.createContext({});
+    vm.runInContext(src + '\n;globalThis.__p = {TOEFL_D0, TOEFL_SEMANA, TOEFL_CONTATO_MIN};', ctx);
+    const p = ctx.__p;
+    if (!p || !p.TOEFL_D0 || !p.TOEFL_SEMANA) return null;
+    const dias = Object.keys(p.TOEFL_SEMANA)
+      .filter((k) => p.TOEFL_SEMANA[k]).map(Number);
+    if (!dias.length) return null;
+    return { d0: p.TOEFL_D0, dias, piso: p.TOEFL_CONTATO_MIN || 10 };
+  } catch (e) { return null; }
+}
+
+/* A FAIXA VEM DA HORA REAL, e não de qual cron disparou. O agendador do GitHub
+   entra numa fila e atrasa de dez a sessenta minutos; amarrar o texto ao
+   horário previsto faria o lembrete das 21h30 chegar às 22h20 dizendo "bom
+   dia". As bordas são largas o bastante para absorver esse atraso. */
+export function faixaDoDia(hora) {
+  if (hora < 13) return 'manha';
+  if (hora < 19) return 'tarde';
+  return 'noite';
+}
+
+/* O contato é do DIA, e não de um registro: dez minutos de manhã e dez à tarde
+   somam um contato cumprido. Lápide não conta. */
+export function minutosDoDia(estudo, hojeISO) {
+  let soma = 0;
+  Object.keys(estudo || {}).forEach((rid) => {
+    const r = estudo[rid];
+    if (!r || r.del || r.d !== hojeISO) return;
+    soma += Number(r.min) || 0;
+  });
+  return soma;
+}
+export function contatoPendente(estudo, hojeISO, plano) {
+  if (!plano) return false;                        /* falha fechada */
+  if (hojeISO < plano.d0) return false;            /* antes da estreia */
+  if (plano.dias.indexOf(diaDaSemanaISO(hojeISO)) < 0) return false;  /* descanso */
+  return minutosDoDia(estudo, hojeISO) < plano.piso;
+}
+
+/* O TEXTO REDUZ A BARREIRA, E NÃO COBRA. A intensidade sobe com o dia, mas o
+   que sobe é a lembrança de que o mínimo basta — nunca a culpa. A notificação
+   nunca diz "você não estudou"; ela diz o que ainda dá para fazer.
+
+   NÃO NOMEIA A HABILIDADE, por decisão: o Cronograma é que diz qual é a
+   atividade quando abre. (O plano está carregado aqui e nomeá-la seria de duas
+   linhas, caso um dia se queira.) */
+const TOEFL_TEXTO = {
+  manha: { titulo: 'TOEFL · contato de hoje',
+           corpo: 'Seu contato de inglês de hoje ainda está pendente. 10 minutos já contam.' },
+  tarde: { titulo: 'TOEFL · contato de hoje',
+           corpo: 'Ainda dá tempo de manter o contato de hoje. Faça 10–15 min.' },
+  noite: { titulo: 'TOEFL · contato de hoje',
+           corpo: 'Ainda dá para fazer só 10 minutos hoje — e o dia conta.' }
+};
+export function montarAvisoToefl(faixa, hojeISO) {
+  const t = TOEFL_TEXTO[faixa];
+  if (!t) return null;
+  return { titulo: t.titulo, corpo: t.corpo, tag: 'toefl', url: './index.html',
+           id: 'toefl:' + hojeISO + ':' + faixa };
+}
+
+/* ---------- a dedup não cresce para sempre (Fase 9E) ----------
+   O mapa `enviados` nunca era podado, e com um aviso por dia isso era pequeno.
+   Com três já não é: são ~1.100 identidades e ~1.100 commits por ano. Mesma
+   razão do podarDispensados() da página — o que existe para ser esquecido não
+   pode crescer para sempre.
+
+   PODAR É SEGURO PORQUE NADA RESSUSCITA: um lote de vagas antigo não volta a
+   ser "novo" (o novo é sempre o arquivo mais recente), um evento a mais de 30
+   dias não está na janela de 14, e um dia de TOEFL passado não é mais hoje. */
+export function podar(enviados, hojeISO, dias) {
+  const limite = menosDias(hojeISO, dias || PODA_DIAS);
+  const out = {};
+  Object.keys(enviados || {}).forEach((k) => {
+    if (String(enviados[k] || '') >= limite) out[k] = enviados[k];
+  });
+  return out;
+}
+
 /* ---------- o que sobra depois da dedup ---------- */
 export function jaEnviado(estado, id) {
   return !!(estado && estado.enviados && estado.enviados[id]);
@@ -108,6 +235,19 @@ export function decidir(dados, estado, hojeISO) {
     (e) => !jaEnviado(estado, 'evento:' + e.id + ':' + e.data));
   const ae = montarAvisoEventos(nosPrazos);
   if (ae) avisos.push(ae);
+  /* O TERCEIRO ASSUNTO (Fase 9E). Continua UM aviso por assunto, e nunca um por
+     item: a regra de agregação não mudou, só ganhou mais um assunto.
+
+     `dados.faixa` ausente = sem TOEFL. É o que mantém os testes antigos e
+     qualquer chamada que não passe hora nenhuma exatamente como eram.
+
+     A DEDUP É POR DIA E POR FAIXA: cumprido o contato, as faixas seguintes nem
+     chegam aqui, porque contatoPendente() passa a ser falso. É assim que os
+     lembretes cessam sem precisar de um estado "já avisei hoje". */
+  if (dados.faixa && contatoPendente(dados.estudo, hojeISO, dados.plano)) {
+    const at = montarAvisoToefl(dados.faixa, hojeISO);
+    if (at && !jaEnviado(estado, at.id)) avisos.push({ ...at, ids: [at.id] });
+  }
   return avisos;
 }
 
@@ -161,14 +301,16 @@ export async function rodar(dados, estado, inscricoes, hojeISO, dep) {
 }
 
 /* ---------- leitura do repositório e execução ---------- */
-export function lerDados(raiz, hojeISO) {
+export function lerDados(raiz, hojeISO, faixa) {
   const j = (p, d) => { try { return JSON.parse(fs.readFileSync(path.join(raiz, p), 'utf8')); } catch (e) { return d; } };
   const vagasArq = j('dados/vagas.json', {});
   const itens = Array.isArray(vagasArq) ? vagasArq : (vagasArq.itens || []);
   let nomes = [];
   try { nomes = fs.readdirSync(path.join(raiz, 'eventos')); } catch (e) { nomes = []; }
   const estadoArq = j('Cronograma/estado.json', {});
-  return { vagas: itens, lote: loteMaisRecente(nomes), eventos: estadoArq.eventos || {}, hoje: hojeISO };
+  return { vagas: itens, lote: loteMaisRecente(nomes), eventos: estadoArq.eventos || {},
+           estudo: estadoArq.estudo || {}, plano: lerPlano(raiz), faixa: faixa || null,
+           hoje: hojeISO };
 }
 
 async function principal() {
@@ -176,7 +318,11 @@ async function principal() {
   const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
   const URL_BASE = process.env.SUPABASE_URL, CHAVE = process.env.SUPABASE_SECRET_KEY;
   const SECO = process.env.SECO === '1';
-  const hojeISO = process.env.HOJE || ymd(new Date());
+  const agora = new Date();
+  /* A DATA É A DE QUEM RECEBE. Ver o comentário do TZ, lá em cima: às 21h30 em
+     Brasília o runner já está no dia seguinte. */
+  const hojeISO = process.env.HOJE || ymdEm(agora, TZ);
+  const faixa = process.env.FAIXA || faixaDoDia(horaEm(agora, TZ));
   if (!URL_BASE || !CHAVE) { console.error('Faltam SUPABASE_URL / SUPABASE_SECRET_KEY.'); process.exit(1); }
   webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:ninguem@exemplo.com',
                           process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
@@ -189,14 +335,17 @@ async function principal() {
   const ARQ_ESTADO = path.join(RAIZ, 'scripts', 'estado_notificador.json');
   let estado = { enviados: {} };
   try { estado = JSON.parse(fs.readFileSync(ARQ_ESTADO, 'utf8')); } catch (e) {}
-  const dados = lerDados(RAIZ, hojeISO);
+  const dados = lerDados(RAIZ, hojeISO, faixa);
   const inscricoes = await api('/cron_push_inscricao?select=id,endpoint,p256dh,auth,falhas');
-  console.log('hoje: ' + hojeISO + ' | lote de vagas: ' + (dados.lote || 'nenhum') +
+  console.log('hoje: ' + hojeISO + ' (' + TZ + ', faixa ' + faixa + ')' +
+              ' | lote de vagas: ' + (dados.lote || 'nenhum') +
+              ' | plano do TOEFL: ' + (dados.plano ? 'lido' : 'NAO LIDO — sem aviso de TOEFL') +
               ' | aparelhos inscritos: ' + inscricoes.length);
   const r = await rodar(dados, estado, inscricoes, hojeISO,
                         { webpush, api, log: (m) => console.log(m), seco: SECO });
   if (!r.avisos.length) console.log('nada a avisar.');
-  if (!SECO) fs.writeFileSync(ARQ_ESTADO, JSON.stringify(r.estado, null, 2) + '\n');
+  if (!SECO) fs.writeFileSync(ARQ_ESTADO,
+    JSON.stringify({ enviados: podar(r.estado.enviados, hojeISO) }, null, 2) + '\n');
   console.log('avisos: ' + r.avisos.length + ' | entregues: ' + r.entregues +
               ' | mortos removidos: ' + r.mortos + ' | falhas: ' + r.falhos);
   if (r.falhos > 0) process.exitCode = 1;

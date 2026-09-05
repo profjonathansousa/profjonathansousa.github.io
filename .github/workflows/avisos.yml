@@ -2,15 +2,29 @@ name: Avisos do Cronograma
 
 on:
   schedule:
-    # 13:00 UTC = 10:00 em Brasília. DEPOIS das 11:00 UTC da coleta semanal, de
-    # propósito: às segundas o lote de vagas já está no repositório quando este
-    # workflow roda. O cron do GitHub entra numa fila e costuma atrasar de dez a
-    # sessenta minutos; não conte com pontualidade.
+    # TRÊS FAIXAS, EM HORA DE BRASÍLIA (Fase 9E). O cron do GitHub é UTC, e a
+    # conversão é -3h; a última CRUZA A MEIA-NOITE, e é por isso que o emissor
+    # calcula a data em America/Sao_Paulo e não com o relógio do runner.
+    #
+    #   13:00 UTC = 10:00 BRT   manhã   (e a de sempre: DEPOIS das 11:00 UTC da
+    #                                    coleta semanal, para que às segundas o
+    #                                    lote de vagas já esteja no repositório)
+    #   18:00 UTC = 15:00 BRT   tarde
+    #   00:30 UTC = 21:30 BRT do DIA ANTERIOR   noite
+    #
+    # O cron entra numa fila e costuma atrasar de dez a sessenta minutos; não
+    # conte com pontualidade. Por isso a FAIXA do aviso sai da hora local real,
+    # e não de qual destas linhas disparou.
     - cron: '0 13 * * *'
+    - cron: '0 18 * * *'
+    - cron: '30 0 * * *'
   workflow_dispatch:
     inputs:
       hoje:
         description: 'Data a simular (aaaa-mm-dd). Vazio = hoje.'
+        required: false
+      faixa:
+        description: 'Faixa a simular (manha, tarde, noite). Vazio = pela hora.'
         required: false
       seco:
         description: 'Só mostrar o que enviaria, sem enviar e sem gravar'
@@ -20,6 +34,15 @@ on:
 # Escreve scripts/estado_notificador.json de volta no repositório.
 permissions:
   contents: write
+
+# MESMO GRUPO DA DOBRA E DO COLETOR (Fase 9E). Este job dá `git push` no main, e
+# até aqui não declarava concorrência nenhuma: com um disparo por dia a corrida
+# com a dobra (que roda a cada 15 min) era improvável; com três, triplica. Push
+# recusado = job vermelho = identidade não gravada = aviso repetido no dia
+# seguinte. Esperar a dobra terminar custa segundos.
+concurrency:
+  group: escrita-no-main
+  cancel-in-progress: false
 
 jobs:
   avisar:
@@ -40,6 +63,7 @@ jobs:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT:     ${{ secrets.VAPID_SUBJECT }}
           HOJE: ${{ inputs.hoje }}
+          FAIXA: ${{ inputs.faixa }}
           SECO: ${{ inputs.seco && '1' || '' }}
         run: node avisos/enviar.mjs
       - name: Guardar o que ja foi avisado
