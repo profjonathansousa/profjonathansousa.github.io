@@ -1,0 +1,29 @@
+{
+ "v": 1,
+ "lote": "2026-09-05T12-26-15-607Z-s41hky",
+ "quando": "2026-09-05T12:26:19.609Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-04-avisos",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-05T12-26-15-607Z-s41hky",
+   "quando": "2026-09-05T12:26:15.607Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s12",
+    "projT": "Sites",
+    "subT": "Revisar cronograma",
+    "de": 1,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  }
+ ]
+}
