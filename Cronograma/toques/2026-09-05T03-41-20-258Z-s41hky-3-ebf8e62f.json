@@ -1,0 +1,69 @@
+{
+ "v": 1,
+ "lote": "2026-09-05T03-41-20-258Z-s41hky",
+ "quando": "2026-09-05T03:42:40.803Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-04-avisos",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-05T03-41-20-258Z-s41hky",
+   "quando": "2026-09-05T03:41:20.258Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s11",
+    "projT": "Sites",
+    "subT": "Revisar índex principal",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-05T03-41-21-586Z-s41hky",
+   "quando": "2026-09-05T03:41:21.586Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s11",
+    "projT": "Sites",
+    "subT": "Revisar índex principal",
+    "de": 1,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-05T03-41-27-354Z-s41hky",
+   "quando": "2026-09-05T03:41:27.354Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s12",
+    "projT": "Sites",
+    "subT": "Revisar cronograma",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  }
+ ]
+}
