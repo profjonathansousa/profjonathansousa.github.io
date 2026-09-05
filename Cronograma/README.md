@@ -396,6 +396,62 @@ cinco dias úteis com atividade e dois de descanso.
 lançamento errado não é um fato sobre o seu estudo. Na 9C isso vira lápide
 (`del: true`), que é como a casa apaga o que já viajou.
 
+### Sem dívida de estudo (Fase 9D)
+
+`atrasadas()` ignora as rotinas com `processo: "toefl"`. Três dias sem estudar
+não viram *"você está devendo três"* em lugar nenhum — nem no painel de rotinas
+não marcadas, nem no *Ficou para trás* de domingo, que lê da mesma função.
+
+**É fidelidade ao plano, e não afrouxamento.** Ele põe `null` no sábado e no
+domingo, com o comentário *"Descanso. Sem Uber, sem TOEFL"*: um plano que manda
+descansar dois dias por semana não é um plano que cobra retroativamente os cinco.
+
+E o que substitui a cobrança já existe e é melhor: **a quinta-feira simplesmente
+oferece a atividade da quinta**. A segunda perdida não desloca nada, porque o
+plano é indexado por dia da semana — não há fila para andar. O que ficou para
+trás volta como o próximo contato disponível, não como culpa.
+
+**Só o TOEFL sai.** As outras rotinas continuam inteiras, e o mecanismo — janela
+de sete dias, dispensa, poda — não foi tocado.
+
+> **Consequência aceita:** não há como marcar retroativamente um estudo que
+> aconteceu e não foi registrado. Registrar um dia passado é possível no domínio
+> (`registrarEstudo` aceita a data), mas nenhuma tela o oferece. Fica em aberto
+> se vale a pena — *backfill* não é dívida, é honestidade sobre o que houve.
+
+### Dívida técnica conhecida do TOEFL
+
+Três itens levantados na auditoria de 05/09, nenhum bloqueante, todos com o
+comportamento normal do painel intacto:
+
+**P2 · Duas abas do mesmo navegador podem colidir.** `aparelhoId()` mora no
+`localStorage` e é compartilhado entre abas, e `registrarEstudo()` faz
+*read-modify-write* para achar o próximo `n`. Duas abas simultâneas podem gerar o
+mesmo `rid`, e aí o relógio da dobra faz um dos dois registros desaparecer em
+silêncio. **São na verdade dois caminhos distintos**, e a distinção importa: o do
+`rid` é da 9C; o do `id` do toque vem de `instanteDoToque()`, é *read-modify-write*
+sobre a mesma chave e **atinge os oito tipos**, não só o `estudo` — é anterior a
+esta fase e mais amplo que ela. Os testes provam dois **aparelhos**, não duas
+abas.
+
+**P2 · O registro recebido é gravado sem validação.** `aplicarEstudoDoEstado()` e
+o `valor()` da dobra reproduzem `d`, `dia`, `hab`, `min` e `grau` como vieram, sem
+checar se `min` está na lista fechada, se `dia` corresponde a `d`, se `hab` é a
+habilidade daquele dia do plano ou se `grau` é compatível com `min`. Não é falha
+de segurança — quem escreve no repositório já tem acesso maior —, mas um cliente
+com defeito poderia contaminar o estado de todos os aparelhos.
+
+**P3 · `permiteSimulado()` depende da redação da nota.** A autorização para
+registrar `treino` nasce de `/simulado/i` no texto do dia. É fiel ao princípio de
+não criar metadado paralelo, e é frágil na mesma medida: trocar *"troque por um
+simulado completo"* por *"faça um treino completo"* mudaria o comportamento sem
+que ninguém percebesse.
+
+> **Nota de nomenclatura, não de defeito:** existem dois graus — o do registro
+> (`r.grau`, medido pelos minutos daquele lançamento) e o do dia (`grauDoDia()`,
+> recalculado da soma). A tela usa o do dia, que é o correto. **Nenhuma métrica
+> nova deve ser derivada de `r.grau` diretamente.**
+
 ### A ponte Processo → Hoje
 
 O Hoje não sabe o que o TOEFL faz na terça: **ele pergunta**.
@@ -818,7 +874,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9A — TOEFL: ancoragem do plano (`TOEFL_D0`) e catálogo de execução | concluída |
 | 9B — TOEFL: registro de execução e métricas | concluída |
 | 9C — TOEFL: travessia do registro entre aparelhos (toque `estudo`) | concluída |
-| 9D — TOEFL: sem dívida (sair de `atrasadas()`) | a fazer |
+| 9D — TOEFL: sem dívida (sair de `atrasadas()`) | concluída |\n| 9C-bis — TOEFL: concorrência entre abas e validação do registro | a fazer |
 | 9E — TOEFL: lembrete pela Fase 8 | a fazer |
 
 ### Previsto e ainda não implementado

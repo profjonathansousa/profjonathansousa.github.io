@@ -18,6 +18,24 @@ function atrasadas(){
     if(!D) continue;
     var ck = LS("cron:checks:"+dia, {}) || {};
     D.tasks.forEach(function(t){
+      /* O TOEFL NAO ACUMULA DIVIDA (Fase 9D). Tres dias sem estudar nao viram
+         "voce esta devendo tres" em lugar nenhum: nem aqui, nem no "Ficou para
+         tras" do domingo, que le desta mesma funcao.
+
+         E FIEL AO PROPRIO PLANO, e nao um afrouxamento: ele poe `null` no
+         sabado e no domingo, com o comentario "Descanso. Sem Uber, sem TOEFL".
+         Um plano que manda descansar dois dias por semana nao e um plano que
+         cobra retroativamente os cinco.
+
+         E o que substitui a cobranca ja existe e e melhor: a quinta-feira
+         simplesmente oferece a atividade da quinta. A segunda perdida nao
+         desloca nada, porque o plano e indexado por dia da semana — nao ha fila
+         para andar. O que ficou para tras nao volta como culpa; volta como o
+         proximo contato disponivel.
+
+         SO O TOEFL SAI. As outras rotinas continuam inteiras nesta funcao, e o
+         mecanismo (janela de sete dias, dispensa, poda) nao foi tocado. */
+      if(t.processo === "toefl") return;
       if(ck[t.id]) return;
       if(disp[dia+"|"+t.id]) return;
       out.push({dia:dia, id:t.id, t:t.t, nome:D.nome});

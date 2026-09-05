@@ -36,7 +36,7 @@ const CODIGO = FONTES.join("\n");
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
 const FONTE = CODIGO +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES,\n   TOEFL_D0, TOEFL_RECURSO, TOEFL_ESTUDO_KEY, TOEFL_CONTATO_MIN, TOEFL_DURACOES,\n   TOEFL_META_SEMANA};";
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES,\n   TOEFL_D0, TOEFL_RECURSO, TOEFL_ESTUDO_KEY, TOEFL_CONTATO_MIN, TOEFL_DURACOES,\n   TOEFL_META_SEMANA, ATRASO_DIAS};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -1978,6 +1978,60 @@ ok(Object.keys(b9E.LS("cron:checks:" + b9SEG, {})).length === 0,
 ok(JSON.stringify(b9E.TOEFL_SEMANA[1]) === JSON.stringify(
      {comp:"Reading", t:TOEFL_TEXTO_ORIGINAL[1].t, n:TOEFL_TEXTO_ORIGINAL[1].n}),
    "e o plano da segunda continua exatamente o mesmo");
+
+console.log("\n=== 46. TOEFL: nao existe divida de estudo (Fase 9D) ===");
+const b9dA = criarAparelho("toefl9d");
+/* Deixa a JANELA INTEIRA sem marca nenhuma: e o pior caso, e e o que o
+   desenho promete tratar sem cobranca. */
+const b9dAtras = b9dA.atrasadas();
+const b9dIds = b9dAtras.map(x => x.id);
+ok(b9dIds.length > 0, "ha rotinas nao marcadas na janela — o mecanismo continua vivo",
+   b9dIds.length);
+ok(b9dIds.every(id => !/toefl/i.test(id)),
+   "mas NENHUMA rotina de TOEFL aparece como atrasada", b9dIds);
+/* E as outras continuam aparecendo: so o TOEFL saiu. */
+const b9dOutras = [];
+for (let k = 7; k >= 1; k--) {
+  const dt = new Date(b9dA.now.getFullYear(), b9dA.now.getMonth(), b9dA.now.getDate() - k);
+  const D = b9dA.DIAS[dt.getDay()]; if (!D) continue;
+  D.tasks.forEach(t => { if (t.processo !== "toefl") b9dOutras.push(t.id); });
+}
+ok(b9dOutras.length > 0 && b9dOutras.every(id => b9dIds.indexOf(id) > -1),
+   "todas as rotinas NAO-toefl da janela continuam sendo cobradas",
+   b9dOutras.filter(id => b9dIds.indexOf(id) < 0));
+/* O domingo le da mesma funcao: se saiu de la, saiu do "Ficou para tras". */
+const b9dRev = b9dA.revisaoDaSemana();
+ok((b9dRev.atras.rotinas || []).every(r => !/toefl/i.test(r.id)),
+   "e o 'Ficou para tras' de domingo tambem nao cobra TOEFL",
+   (b9dRev.atras.rotinas || []).map(r => r.id));
+/* O painel de rotinas nao marcadas, se um dia voltar a ser desenhado, ja nasce
+   sem TOEFL: ele le do mesmo atrasadas(). */
+ok(!/toefl/i.test(b9dA.renderAtrasadas() || ""),
+   "e o painel recolhido, se voltar, tambem nao o traz");
+
+/* TRES DIAS SEM ESTUDAR: nada acumula, e a quinta oferece a QUINTA. */
+const b9dB = criarAparelho("toefl9d-retomada");
+const b9dQUI = "2026-09-10";
+ok(b9dB.metricasToefl(b9dQUI).contatos === 0 && b9dB.metricasToefl(b9dQUI).min === 0,
+   "segunda, terca e quarta em branco nao viram contador negativo");
+ok(b9dB.sequenciaToefl(b9dQUI) === 0, "nem sequencia negativa");
+const b9dCartao = b9dB.renderToeflHoje(4, b9dQUI);
+ok(/Writing/.test(b9dCartao),
+   "a quinta oferece a atividade da QUINTA, e nao a segunda perdida");
+ok(!/atras|pendent|deven|recuper|compens/i.test(b9dCartao),
+   "e o cartao nao fala em atraso, divida, recuperacao nem compensacao",
+   b9dCartao.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+/* E registrar na quinta vale 1, e nao "1 de 4 que voce devia". */
+b9dB.registrarEstudo(15, b9dQUI);
+ok(b9dB.metricasToefl(b9dQUI).contatos === 1,
+   "e o contato da quinta vale 1, sem desconto pelo que passou");
+
+/* O mecanismo geral das atrasadas nao foi tocado. */
+ok(typeof b9dA.marcarAtrasada === "function" &&
+   typeof b9dA.dispensarAtrasada === "function" &&
+   typeof b9dA.podarDispensados === "function" &&
+   b9dA.ATRASO_DIAS === 7,
+   "a janela de sete dias, a dispensa e a poda continuam inteiras");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);
