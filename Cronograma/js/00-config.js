@@ -5,7 +5,8 @@
 
    A ORDEM DE CARGA E PARTE DA ARQUITETURA: este arquivo vem primeiro porque
    todos os outros leem daqui. Ver index.html. */
-/* ==================== AVISOS — Fase 8 =============   As tres coisas publicas do Web Push. Nenhuma delas e segredo:
+/* ==================== AVISOS — Fase 8 ====================
+   As tres coisas publicas do Web Push. Nenhuma delas e segredo:
 
    - a URL e a chave PUBLISHABLE so dizem "sou um visitante deste projeto".
      Ela e o modelo atual do Supabase e substitui a antiga anon key, com as
@@ -21,13 +22,12 @@
 const AVISOS = {
   URL:   "https://mcwgiqwbbgdltzqgopcq.supabase.co",
   CHAVE: "sb_publishable_-k508GkeJm6-5fFp0KhBTg_7r0P8vTT",
-  VAPID: ""    /* PENDENTE: `npx web-push generate-vapid-keys`. A publica vem
-                  para ca; a PRIVADA vai para o Secret VAPID_PRIVATE_KEY e nao
-                  entra em arquivo nenhum. Ate isto ser preenchido o botao de
-                  avisos nao aparece e o service worker nao e registrado. */
+  /* A publica do par gerado em 04/09. A PRIVADA nao esta aqui e nunca estara:
+     ela mora no Secret VAPID_PRIVATE_KEY e so o Actions a ve. */
+  VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-02-entrega1";
+const APP_VERSION = "2026-09-04-avisos";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -637,6 +637,23 @@ var RETOMADA_MIGRADO_KEY = "cron:retomadas-migrado";
    passado, para nunca vencer uma decisao tomada depois que isto passou a
    existir. */
 var RETOMADA_EM = "2026-01-01T00:00:00.000Z";
+/* A PRIORIDADE FEITA NAO E UMA MARCA DO DIA. Ate 04/09 a prioridade livre era
+   marcada no `cron:checks:AAAA-MM-DD`, o mecanismo das ROTINAS — e a rotina e
+   por dia de proposito: amanha e outra rotina, e quando a semana gira aquela
+   volta, porque ela e uma rotina. A prioridade nao: ela e da SEMANA, mora no
+   `cron:prioridades:AAAA-Wnn`, e cumprida uma vez. Guardada no cron:checks, a
+   marca de ontem era procurada na chave de hoje e nao era achada: a prioridade
+   cumprida reaparecia por cumprir todo dia.
+
+   Agora a conclusao mora NA PROPRIA PRIORIDADE, no campo `feito_em` — a data
+   em que voce a marcou. Nao e uma marca do dia: e um fato dela.
+
+   Esta chave marca a mudanca de lugar, uma vez por aparelho. A migracao NAO
+   publica toque: `cron:checks:` sempre foi local por decisao (ver a ressalva
+   "neste aparelho" da revisao dominical), e uma marca que nunca atravessou
+   aparelho nao pode passar a atravessar retroativamente. Ela so muda de
+   gaveta, aqui dentro. */
+var PRIO_MIGRADO_KEY = "cron:prio-feito-migrado";
 const TOQUES_SCHEMA = 1;
 const TOQUES_TETO = 500;
 const ENVIO_ESPERA = 4000;

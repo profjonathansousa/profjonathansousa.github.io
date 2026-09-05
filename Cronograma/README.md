@@ -61,11 +61,32 @@ O que **você** elegeu para a semana. Sempre no topo. Duas formas:
 
 - **de trilho** — aponta para um projeto; o texto exibido é o **estágio real do
   Trilho**, lido a cada desenho;
-- **livre** — um texto seu, com caixa por dia.
+- **livre** — um texto seu, com caixa.
 
 Chave ISO por semana (`2026-W36`): você elege na segunda e vale até domingo.
 
-**Atravessa aparelhos** pelo toque `prioridade` (ver Sincronização).
+**Cumprir é um fato da prioridade, e não do dia.** A conclusão mora no campo
+`feito_em` da própria prioridade — a data em que você a marcou —, e não no
+`cron:checks:AAAA-MM-DD` das rotinas. A diferença não é de arrumação:
+
+- a **rotina** é por dia de propósito. Amanhã é outra rotina, e quando a semana
+  gira aquela volta a aparecer, porque ela é uma rotina;
+- a **prioridade** é da semana e se cumpre uma vez. Guardada no `cron:checks`,
+  a marca de ontem era procurada na chave de hoje e não era achada: a prioridade
+  cumprida reaparecia por cumprir todo dia.
+
+**Na tela**: sem `feito_em`, aparece normal; `feito_em` **de hoje**, aparece
+marcada — ver algo sumir no instante do toque é perder a confirmação de que o
+toque valeu; `feito_em` **anterior a hoje**, sai do Hoje. *Sair da tela não é
+sumir*: ela continua na semana e continua contada como cumprida na revisão de
+domingo. O que muda é só o que disputa a sua atenção hoje.
+
+**A prioridade de trilho não entra nessa regra.** Ela é o projeto da semana:
+fechar uma etapa a faz avançar para a seguinte, não sair. Ela deixa a tela
+quando a semana acaba.
+
+**Atravessa aparelhos** pelo toque `prioridade` (ver Sincronização), `feito_em`
+incluído: cumprir no computador aparece cumprido no celular.
 
 **Precedência**: `prioridadesDoDia()` devolve `{manuais, sugeridas}` e os dois
 blocos são desenhados separados, manuais primeiro. Ver *Motor de prioridades*.
@@ -192,7 +213,7 @@ Nenhuma heurística nova. O digest pergunta a quem já sabe:
 | Item | Fonte |
 |---|---|
 | etapa de trilho | `cron:registro` (o diário) **+** `st` do subitem (o saldo) |
-| prioridade livre | `cron:checks`, o mecanismo de sempre |
+| prioridade livre | `feito_em`, na própria prioridade |
 | rotina | `cron:checks`, pelo `atrasadas()` que já existia |
 | meta | a própria meta, com o seu `done` |
 | processo | `toeflFase()`, o resumo que o processo já publica |
@@ -412,13 +433,22 @@ sempre foi: silenciar num lugar silencia nos dois, agora entre aparelhos também
 publicar uma silenciada vencida seria história pública permanente por nada.
 Guardada por `cron:retomadas-migrado`, com o piso `RETOMADA_EM`.
 
+*Migração das prioridades cumpridas (04/09).* As marcas que ficaram no
+`cron:checks` da semana corrente viram `feito_em` na própria prioridade, uma vez
+por aparelho, guardada por `cron:prio-feito-migrado`. **Não publica toque**, e
+essa é a diferença em relação às duas migrações acima: `cron:checks:` sempre foi
+local *por decisão* — é a ressalva "neste aparelho" da revisão dominical —, e
+uma marca que nunca atravessou aparelho não pode passar a atravessar
+retroativamente. Ela só muda de gaveta, dentro do aparelho. A chave antiga
+**não é apagada**, pela mesma razão da migração do TOEFL.
+
 **A recalibragem continua local.** `cron:toefl-recalibrado` é cache de uma
 derivação — `calcularRecalibragem()` a refaz a partir do plano, da fase corrente
 e do que falta, e as duas últimas agora sincronizam. Sincronizar a leitura seria
 sincronizar valor derivado. Não existe tipo de toque `recalibrado`.
 
-`cron:checks:` (rotinas), `cron:hoje-dispensados` e `cron:contexto` (casa/fora)
-seguem locais, cada um pela sua razão. O lugar onde você está é um fato físico
+`cron:checks:` (**só rotinas**, desde 04/09), `cron:hoje-dispensados` e
+`cron:contexto` (casa/fora) seguem locais, cada um pela sua razão. O lugar onde você está é um fato físico
 do aparelho. O dia marcado é do aparelho por decisão — a revisão dominical
 exibe a ressalva "neste aparelho". E `cron:hoje-dispensados` **não é equivalente
 à retomada adiada**: ela endereça um projeto durável e vale até uma data; ele
@@ -441,6 +471,12 @@ Regras invioláveis:
 **A prioridade de trilho não carrega o texto da etapa** — carrega o endereço
 (`painel` + `projId`). O estágio é lido no aparelho que desenha. Se o texto
 viajasse, o celular mostraria a etapa de quando a prioridade foi criada.
+
+**`feito_em` viaja como data, e não como booleano.** A regra de tela depende de
+*quando* a prioridade foi cumprida; um booleano obrigaria cada aparelho a
+adivinhar o dia, e o aparelho que recebesse a marca no dia seguinte a exibiria
+como se fosse de hoje. Vazio é "não cumprida" — é o valor de quem nunca foi
+marcada e o de quem foi desmarcada, que para a tela são a mesma coisa.
 
 > O repositório é público. Só suba o que pode ser público. O histórico nunca é
 > podado: um título publicado uma vez fica público para sempre.

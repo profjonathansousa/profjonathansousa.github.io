@@ -235,8 +235,11 @@ function cartaoDePrioridade(p){
               (P?escapeHtml(P.titulo):p.painel) + '<span class="seta">\u203a</span></button>';
     }
   } else {
-    var feito = !!checks[p.id];
-    corpo = '<div class="pr-livre ' + (feito?"done":"") + '" onclick="toggleCheck(\''+p.id+'\')">' +
+    /* A conclusao vem da PRIORIDADE, e nao do `checks` do dia. Marcada hoje,
+       ela aparece marcada; marcada antes de hoje, ela nem chega aqui — o
+       prioridadesDoDia ja a tirou da tela. */
+    var feito = !!p.feito_em && p.feito_em === dateKey;
+    corpo = '<div class="pr-livre ' + (feito?"done":"") + '" onclick="togglePrioridadeFeita(\''+p.id+'\')">' +
               '<span class="box">' + CHK + '</span>' +
               '<div class="pr-t" contenteditable="true" onclick="event.stopPropagation()"' +
               ' onblur="editPrioridade(\''+p.id+'\',this.innerText)">' + escapeHtml(p.t) + '</div>' +
@@ -983,6 +986,23 @@ function delPrioridade(prid){
   var fora = lista[j];
   lista.splice(j, 1); setPrio(lista);
   tocarPrioridade(fora, semanaAtual, true);   /* lapide: ausencia nao e desconhecimento */
+  renderHoje();
+}
+/* MARCAR E DESMARCAR. Molde do editPrioridade, e pelas mesmas duas razoes: o
+   `em` tem de virar o instante do toque, senao a descida seguinte — que compara
+   `em` com o `quando` do estado — ignoraria a marca que acabou de ser feita; e
+   a lista e gravada duas vezes porque o instante so existe depois de enfileirar.
+
+   Desmarcar grava "" e tambem viaja: mudar de ideia e um fato, e um aparelho
+   que so soubesse marcar deixaria a prioridade cumprida para sempre no outro. */
+function togglePrioridadeFeita(prid){
+  var lista = getPrio(), p = null;
+  for(var i=0;i<lista.length;i++){ if(lista[i].id === prid){ p = lista[i]; break; } }
+  if(!p) return;
+  p.feito_em = (p.feito_em === dateKey) ? "" : dateKey;
+  p.em = new Date().toISOString(); setPrio(lista);
+  p.em = tocarPrioridade(p, semanaAtual, false) || p.em;
+  setPrio(lista);
   renderHoje();
 }
 function editPrioridade(prid, texto){
