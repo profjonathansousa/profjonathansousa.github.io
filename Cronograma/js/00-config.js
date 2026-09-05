@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-05-toefl9a";
+const APP_VERSION = "2026-09-05-toefl9b";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -527,6 +527,37 @@ const TOEFL_RECURSO = {
   4:{rec:"TestReady · Writing Practice",   url:"https://testready.ets.org"},
   5:{rec:"TestReady · Speaking Practice",  url:"https://testready.ets.org"}
 };
+
+/* ================== O REGISTRO DE ESTUDO — Fase 9B ==================
+   ACONTECIMENTOS, E NAO CONTADORES. O armazem guarda um registro por vez que
+   voce estudou; "4 contatos nesta semana" e derivado deles a cada desenho.
+   Guardar o numero em vez do fato daria uma tela que ninguem consegue auditar:
+   4 contatos vindos de onde?
+
+   A CHAVE E `<data>/<aparelho>/<n>`, e as tres partes tem funcao. A DATA porque
+   a pergunta que o sistema faz e sempre sobre um dia. O APARELHO porque na 9C
+   isto atravessa, e dois aparelhos que registrassem o primeiro estudo do mesmo
+   dia produziriam a mesma chave — um apagaria o outro na dobra, em silencio.
+   O `n` porque o dia pode ter mais de um registro: comecei, e depois continuei.
+
+   NAO E `cron:checks:`. Aquilo marca a OCORRENCIA de uma rotina numa data, e
+   e local por decisao; isto e a execucao do estudo, com duracao e habilidade,
+   e na 9C vai atravessar aparelhos. Sao fatos diferentes, e o commit que os
+   misturasse tornaria impossivel separa-los depois. */
+const TOEFL_ESTUDO_KEY = "cron:toefl-estudo";
+/* O PISO DO CONTATO. Nao e uma atividade curta inventada: e quanto da atividade
+   PREVISTA basta para o dia contar. O plano manda 20 minutos de Listening; isto
+   diz que comecar ja vale. */
+const TOEFL_CONTATO_MIN = 10;
+/* Sem cronometro nesta versao, por decisao: sessao aberta, app fechado no meio
+   e recuperacao de estado sao a peca mais cara do desenho e a que menos entrega.
+   Duracoes conhecidas resolvem o mesmo com um toque. A lista cobre os numeros
+   que o proprio plano usa — 15, 20 e 30 — mais o piso e as extensoes. */
+const TOEFL_DURACOES = [10, 15, 20, 30, 45, 60];
+/* A META NAO E CONTEUDO NOVO: e o plano reenunciado. Ele tem cinco dias uteis
+   com atividade e dois de descanso, entao cinco contatos por semana e exatamente
+   cumprir o plano — nao um alvo por cima dele. */
+const TOEFL_META_SEMANA = 5;
 
 const TOEFL_FASES = ["f1","f2","f3"];
 const TOEFL_ROTULO = {

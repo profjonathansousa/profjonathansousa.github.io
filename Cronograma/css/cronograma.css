@@ -220,6 +220,22 @@
     letter-spacing:.02em;cursor:pointer;}
   .toefl-hoje .th-ir:active{opacity:.82;}
   .toefl-hoje .th-pe{margin-top:7px;font-size:11.5px;color:var(--muted);}
+  /* Fase 9B: registrar, desfazer e as metricas derivadas. */
+  .toefl-hoje.cumprido{border-color:var(--gold-line);}
+  .toefl-hoje .th-ok{margin-left:8px;font-family:var(--sans);font-size:11.5px;
+    color:var(--gold);letter-spacing:.02em;}
+  .toefl-hoje .th-fiz{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:9px;}
+  .toefl-hoje .th-fiz-r{font-size:10px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.09em;margin-right:2px;}
+  .toefl-hoje .th-fiz-u{font-size:10.5px;color:var(--muted);}
+  .toefl-hoje .th-d{min-width:38px;padding:7px 9px;border:1px solid var(--gold-soft);
+    border-radius:8px;background:transparent;color:var(--ink-soft);font-size:13px;cursor:pointer;}
+  .toefl-hoje .th-d:active{background:var(--gold-soft);}
+  .toefl-hoje .th-undo{border:none;background:none;padding:0;font-size:11.5px;
+    color:var(--muted);text-decoration:underline;cursor:pointer;}
+  .toefl-hoje .th-met{margin-top:9px;padding-top:8px;border-top:1px solid var(--gold-soft);
+    font-size:11.5px;color:var(--ink-soft);}
+  .toefl-hoje .th-met b{font-family:var(--display);color:var(--gold);font-size:13px;}
   .toefl-fase{margin:2px 0 14px;padding:10px 14px;border:1px solid var(--gold-soft);
     background:#F6EFDD;border-radius:11px;font-size:12.5px;color:var(--ink-soft);}
   .toefl-fase b{font-family:var(--display);color:var(--gold);}

@@ -337,6 +337,65 @@ botão — inventar um endereço seria inventar plano. É a mesma regra do
 `avisosConfigurados()` da Fase 8: botão que só pode falhar é pior que botão
 nenhum.
 
+### O registro do estudo (Fase 9B)
+
+**Acontecimentos, não contadores.** `cron:toefl-estudo` guarda um registro por
+vez que você estudou; *"4 contatos nesta semana"* é derivado deles a cada
+desenho. Guardar o número em vez do fato daria uma tela que ninguém consegue
+auditar — 4 contatos vindos de onde?
+
+A chave é `<data>/<aparelho>/<n>`, e as três partes têm função: a **data**
+porque toda pergunta do sistema é sobre um dia; o **aparelho** porque na 9C isto
+atravessa, e dois aparelhos que registrassem o primeiro estudo do mesmo dia
+produziriam a mesma chave — um apagaria o outro na dobra, em silêncio; o **`n`**
+porque o dia pode ter mais de um registro (comecei, depois continuei).
+
+**Não é `cron:checks:`.** Aquilo marca a ocorrência de uma rotina numa data e é
+local por decisão; isto é a execução do estudo, com duração e habilidade, e vai
+atravessar aparelhos.
+
+| Grau | Regra | De onde vem o número |
+|---|---|---|
+| contato | soma do dia ≥ 10 min | piso comportamental |
+| sessão | soma do dia ≥ duração prevista | **do plano**, pelo `~NN min` da nota |
+| treino | simulado registrado à mão | só onde a nota do plano fala em simulado |
+
+**Contato e sessão são graus do DIA, não de um registro.** Dez minutos de manhã
+e dez à tarde são um contato cumprido, não dois pela metade. E por isso **uma
+sessão satisfaz o contato**: não existe a situação absurda de fazer os 20 minutos
+previstos e o dia continuar devendo.
+
+**`treino` não é derivado de duração nenhuma.** Inferi-lo de "passou de X
+minutos" seria inventar um limiar que o plano não deu. Ele só aparece na sexta,
+que é o único dia cuja nota fala em simulado — e é do texto dela que isso é lido.
+
+> **O botão só abre; nunca registra.** Tocar em *Começar* não é prova de que
+> houve estudo: quem abre e se distrai teria minutos gravados que não
+> aconteceram, e a métrica passaria a mentir para o próprio dono. São dois
+> toques — um para ir, outro para dizer quanto foi — e nenhum inventa um fato.
+
+**Um ato, dois efeitos.** Registrar o estudo também marca a rotina de TOEFL do
+dia. Sem isso a tela se contradiria: o cartão diria "contato cumprido" e a caixa
+da rotina, três linhas abaixo, continuaria vazia. **O inverso não vale**, e a
+assimetria é o ponto: marcar a caixa continua sendo só marcar a caixa — ela não
+sabe quantos minutos foram nem qual habilidade, e deduzi-los seria inventar o
+registro. Não há um segundo mecanismo de conclusão; há um que alimenta o outro,
+numa direção só.
+
+**A sequência conta dias úteis**, e é a única leitura fiel ao plano, que põe
+`null` no sábado e no domingo. Contada em dias corridos, ela quebraria todo
+sábado em quem seguiu o plano à risca — o indicador puniria a obediência. E o
+dia de hoje só conta se já houve contato: a ausência dele não zera nada, a
+contagem começa em ontem. Zerar a sequência às 6 da manhã seria cobrar antes de
+o dia existir.
+
+**A meta de 5 contatos não é conteúdo novo:** é o plano reenunciado — ele tem
+cinco dias úteis com atividade e dois de descanso.
+
+**Desfazer apaga o registro**, e não grava um negativo: o fato de ter havido um
+lançamento errado não é um fato sobre o seu estudo. Na 9C isso vira lápide
+(`del: true`), que é como a casa apaga o que já viajou.
+
 ### A ponte Processo → Hoje
 
 O Hoje não sabe o que o TOEFL faz na terça: **ele pergunta**.
@@ -736,7 +795,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 7 — Refatoração (dividir o `index.html`) | concluída |
 | 8 — Notificações (Web Push) | concluída |
 | 9A — TOEFL: ancoragem do plano (`TOEFL_D0`) e catálogo de execução | concluída |
-| 9B — TOEFL: registro de execução e métricas | a fazer |
+| 9B — TOEFL: registro de execução e métricas | concluída |
 | 9C — TOEFL: travessia do registro entre aparelhos | a fazer |
 | 9D — TOEFL: sem dívida (sair de `atrasadas()`) | a fazer |
 | 9E — TOEFL: lembrete pela Fase 8 | a fazer |

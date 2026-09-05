@@ -36,7 +36,7 @@ const CODIGO = FONTES.join("\n");
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
 const FONTE = CODIGO +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES,\n   TOEFL_D0, TOEFL_RECURSO};";
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES,\n   TOEFL_D0, TOEFL_RECURSO, TOEFL_ESTUDO_KEY, TOEFL_CONTATO_MIN, TOEFL_DURACOES,\n   TOEFL_META_SEMANA};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -1824,6 +1824,140 @@ ok(JSON.stringify(T9.TOEFL_FASES) === JSON.stringify(["f1","f2","f3"]),
    "e TOEFL_FASES nao foi tocada nesta fase");
 ok(T9.avisoDoCalendario.length === 0 && typeof T9.currentFaseId === "function",
    "o mecanismo de fase pelo nucleo continua de pe");
+
+console.log("\n=== 45. TOEFL: o registro do estudo e as metricas (Fase 9B) ===");
+const b9E = criarAparelho("toefl9b");
+const b9SEG = "2026-09-07", b9TER = "2026-09-08", b9QUA = "2026-09-09",
+      b9QUI = "2026-09-10", b9SEX = "2026-09-11", b9SAB = "2026-09-12",
+      b9DOM = "2026-09-13", b9SEG2 = "2026-09-14";
+
+/* O registro e um ACONTECIMENTO, com chave propria e determinista. */
+const b9rid1 = b9E.registrarEstudo(15, b9SEG);
+ok(b9rid1 === "2026-09-07/toefl9b/1",
+   "a chave e <data>/<aparelho>/<n>", b9rid1);
+const b9rid2 = b9E.registrarEstudo(10, b9SEG);
+ok(b9rid2 === "2026-09-07/toefl9b/2", "e o segundo registro do dia nao colide", b9rid2);
+const b9r1 = b9E.estudoStore()[b9rid1];
+ok(b9r1.d === b9SEG && b9r1.dia === 1 && b9r1.hab === "Reading" && b9r1.min === 15 && !!b9r1.em,
+   "e guarda data, dia do plano, habilidade, duracao e instante", b9r1);
+ok(!b9E.registrarEstudo(20, b9SAB) && !b9E.registrarEstudo(20, b9DOM),
+   "no fim de semana nao ha o que registrar: o plano nao pede");
+ok(!b9E.registrarEstudo(20, "2026-09-04"),
+   "e antes do D0 tambem nao");
+
+/* CONTATO E SESSAO SAO GRAUS DO DIA, medidos contra o previsto do plano. */
+ok(b9E.minutosDoDia(b9SEG) === 25, "os minutos do dia somam os registros", b9E.minutosDoDia(b9SEG));
+ok(b9E.grauDoDia(b9SEG) === "sessao",
+   "15 + 10 = 25 passa dos 20 previstos na segunda: sessao");
+const b9F = criarAparelho("toefl9b-b");
+b9F.registrarEstudo(10, b9SEG);
+ok(b9F.grauDoDia(b9SEG) === "contato" && b9F.contatoFeito(b9SEG) === true &&
+   b9F.sessaoFeita(b9SEG) === false,
+   "10 dos 20 previstos e contato, e nao sessao");
+b9F.registrarEstudo(10, b9SEG);
+ok(b9F.grauDoDia(b9SEG) === "sessao", "mais 10 completam os 20 e viram sessao");
+/* A REGRA QUE O DESENHO EXIGE: sessao satisfaz o contato. */
+const b9G = criarAparelho("toefl9b-c");
+b9G.registrarEstudo(60, b9TER);
+ok(b9G.contatoFeito(b9TER) === true && b9G.grauDoDia(b9TER) === "sessao",
+   "uma sessao longa NAO deixa o contato do dia pendente");
+
+/* O TREINO SO EXISTE ONDE O PLANO O AUTORIZA. */
+ok(b9E.permiteSimulado(b9E.atividadeDoDia(5, b9SEX)) === true,
+   "a sexta autoriza simulado — e o plano que diz isso na propria nota");
+[1,2,3,4].forEach(d => ok(b9E.permiteSimulado(b9E.atividadeDoDia(d, b9SEG)) === false ||
+                          d !== 1, "o outro dia nao inventa treino"));
+ok(!/Simulado/.test(b9E.renderToeflHoje(2, b9TER)),
+   "e o cartao de terca nao oferece simulado");
+ok(/Simulado/.test(b9E.renderToeflHoje(5, b9SEX)),
+   "o de sexta oferece");
+const b9H = criarAparelho("toefl9b-d");
+b9H.registrarEstudo(120, b9SEX, "treino");
+ok(b9H.grauDoDia(b9SEX) === "treino", "e um simulado registrado vira treino", b9H.grauDoDia(b9SEX));
+ok(b9H.estudoStore()[Object.keys(b9H.estudoStore())[0]].tipo === "treino",
+   "com o tipo gravado no proprio registro");
+
+/* A SEQUENCIA CONTA DIAS UTEIS E ATRAVESSA O FIM DE SEMANA. */
+const b9S = criarAparelho("toefl9b-seq");
+[b9SEG, b9TER, b9QUA, b9QUI, b9SEX].forEach(d => b9S.registrarEstudo(15, d));
+ok(b9S.sequenciaToefl(b9SEX) === 5, "cinco dias uteis seguidos -> 5", b9S.sequenciaToefl(b9SEX));
+ok(b9S.sequenciaToefl(b9SAB) === 5 && b9S.sequenciaToefl(b9DOM) === 5,
+   "o fim de semana NAO quebra a sequencia: o plano manda descansar");
+b9S.registrarEstudo(15, b9SEG2);
+ok(b9S.sequenciaToefl(b9SEG2) === 6,
+   "e a segunda seguinte continua de onde a sexta parou", b9S.sequenciaToefl(b9SEG2));
+const b9V = criarAparelho("toefl9b-vazio");
+ok(b9V.sequenciaToefl(b9QUA) === 0, "sem nenhum estudo a sequencia e zero");
+b9V.registrarEstudo(15, b9TER);
+ok(b9V.sequenciaToefl(b9QUA) === 1,
+   "hoje sem contato NAO zera a sequencia: a contagem comeca em ontem");
+ok(b9V.sequenciaToefl(b9QUI) === 0,
+   "mas um dia util inteiro sem contato quebra");
+
+/* SEMANA SEM ESTUDO E RETOMADA: nao ha divida, e nada e transportado. */
+const b9Z = criarAparelho("toefl9b-retomada");
+ok(b9Z.metricasToefl(b9QUI).contatos === 0 && b9Z.metricasToefl(b9QUI).min === 0,
+   "tres dias sem estudar nao produzem contador negativo nem pendencia");
+b9Z.registrarEstudo(15, b9QUI);
+const b9mZ = b9Z.metricasToefl(b9QUI);
+ok(b9mZ.contatos === 1 && b9mZ.seq === 1,
+   "e a quinta simplesmente comeca do zero, valendo 1", b9mZ);
+ok(b9Z.atividadeDoDia(4, b9QUI).comp === "Writing",
+   "com a atividade da QUINTA, e nao a da segunda perdida");
+
+/* AS METRICAS SAO DERIVADAS DOS REGISTROS, e a semana e a ISO. */
+const b9M = criarAparelho("toefl9b-met");
+b9M.registrarEstudo(15, b9SEG); b9M.registrarEstudo(20, b9TER); b9M.registrarEstudo(10, b9QUA);
+const b9mm = b9M.metricasToefl(b9QUA);
+ok(b9mm.sem === "2026-W37", "a semana e a ISO, a mesma chave das prioridades", b9mm.sem);
+ok(b9mm.contatos === 3 && b9mm.meta === 5, "3/5 contatos", b9mm);
+/* SO A TERCA: segunda fez 15 dos 20 previstos e quarta 10 dos 15 — as duas
+   sao contato, e nenhuma alcancou o previsto do proprio dia. */
+ok(b9mm.sessoes === 1, "uma sessao so: a terca, que alcancou os 20 previstos", b9mm.sessoes);
+ok(b9mm.min === 45, "45 minutos na semana", b9mm.min);
+b9M.registrarEstudo(15, b9SEG2);   /* semana seguinte */
+ok(b9M.metricasToefl(b9QUA).min === 45,
+   "o registro da semana seguinte NAO entra na conta desta");
+ok(b9M.metricasToefl(b9SEG2).contatos === 1,
+   "e a semana nova comeca em 1", b9M.metricasToefl(b9SEG2).contatos);
+
+/* DESFAZER APAGA O FATO, e nao grava um negativo. */
+const b9D = criarAparelho("toefl9b-undo");
+const b9a1 = b9D.registrarEstudo(15, b9SEG), b9a2 = b9D.registrarEstudo(30, b9SEG);
+ok(Object.keys(b9D.estudoStore()).length === 2, "dois registros no dia");
+ok(b9D.desfazerEstudo(b9a2) === true && Object.keys(b9D.estudoStore()).length === 1,
+   "desfazer remove o registro");
+ok(b9D.minutosDoDia(b9SEG) === 15 && !!b9D.estudoStore()[b9a1],
+   "e o outro fica intacto", b9D.minutosDoDia(b9SEG));
+ok(b9D.desfazerEstudo("nao/existe/9") === false, "desfazer o que nao existe e no-op");
+
+/* UM ATO, DOIS EFEITOS — e a assimetria. Determinista: a data vai por
+   argumento, entao isto tambem se prova num sabado. */
+const b9A = criarAparelho("toefl9b-ato");
+const b9idRotina = b9A.DIAS[1].tasks.find(t => t.processo === "toefl").id;
+b9A.registrarToefl(15, null, b9SEG);
+ok(b9A.LS("cron:checks:" + b9SEG, {})[b9idRotina] === true,
+   "registrar o estudo TAMBEM marca a rotina de TOEFL daquele dia", b9idRotina);
+ok(b9A.minutosDoDia(b9SEG) === 15, "e grava os minutos no mesmo ato");
+ok(Object.keys(b9A.LS("cron:checks:" + b9SEG, {})).length === 1,
+   "e marca so a do TOEFL, nao as outras rotinas do dia",
+   b9A.LS("cron:checks:" + b9SEG, {}));
+const b9B = criarAparelho("toefl9b-ato2");
+b9B.marcarRotinaToefl(1, b9SEG);
+ok(Object.keys(b9B.estudoStore()).length === 0,
+   "mas marcar a caixa NAO inventa registro: a direcao e uma so");
+b9A.registrarToefl(10, null, b9SEG);
+ok(b9A.minutosDoDia(b9SEG) === 25 &&
+   Object.keys(b9A.LS("cron:checks:" + b9SEG, {})).length === 1,
+   "e o segundo registro do dia soma minutos sem duplicar a marca");
+
+/* O ARMAZEM NAO E `cron:checks:`, e nada do que ja existia foi tocado. */
+ok(b9E.TOEFL_ESTUDO_KEY === "cron:toefl-estudo", "o estudo tem chave propria");
+ok(Object.keys(b9E.LS("cron:checks:" + b9SEG, {})).length === 0,
+   "e registrar numa data passada nao escreve no cron:checks: dela");
+ok(JSON.stringify(b9E.TOEFL_SEMANA[1]) === JSON.stringify(
+     {comp:"Reading", t:TOEFL_TEXTO_ORIGINAL[1].t, n:TOEFL_TEXTO_ORIGINAL[1].n}),
+   "e o plano da segunda continua exatamente o mesmo");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);

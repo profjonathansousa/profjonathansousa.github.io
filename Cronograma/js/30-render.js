@@ -1220,6 +1220,46 @@ function abrirRecursoToefl(dia){
   if(!a || !a.url) return;
   try{ window.open(a.url, "_blank", "noopener"); }catch(e){}
 }
+/* UM ATO, DOIS EFEITOS (Fase 9B). Registrar o estudo tambem marca a rotina de
+   TOEFL do dia. Sem isto a tela se contradiria: o cartao diria "contato
+   cumprido" e a caixa da rotina, tres linhas abaixo, continuaria vazia — e a
+   rotina reapareceria no "Ficou para tras" de domingo.
+
+   O INVERSO NAO VALE, e a assimetria e o ponto: marcar a caixa continua sendo
+   so marcar a caixa. Ela nao sabe quantos minutos foram nem qual habilidade, e
+   deduzi-los seria inventar o registro. Nao ha, portanto, um segundo mecanismo
+   de conclusao: ha um mecanismo que alimenta o outro, numa direcao so. */
+/* O dia e a data vao por argumento pela mesma razao do D0: `todayIdx`, `checks`
+   e `dateKey` sao fixados no carregamento, e sem isto o ato duplo — que e a
+   afirmacao central desta fase — so poderia ser provado nos dias uteis. */
+function marcarRotinaToefl(dia, dISO){
+  var d = (typeof dia === "number") ? dia : todayIdx;
+  var k = dISO || dateKey, D = DIAS[d];
+  if(!D) return;
+  /* No dia corrente e o `checks` vivo que tem de mudar, e nao so o disco: e
+     dele que o renderHoje logo abaixo le a caixa da rotina. */
+  var ck = (k === dateKey) ? checks : (LS("cron:checks:"+k, {}) || {});
+  (D.tasks || []).forEach(function(t){
+    if(t.processo === "toefl" && !ck[t.id]) ck[t.id] = true;
+  });
+  save("cron:checks:"+k, ck);
+}
+function registrarToefl(min, tipo, hojeISO){
+  var d = hojeISO || dateKey;
+  if(!registrarEstudo(min, d, tipo)) return;
+  marcarRotinaToefl(diaDaSemanaDe(d), d);
+  renderHoje();
+}
+/* Desfaz o ULTIMO registro do dia, e nao um qualquer: o erro que se comete numa
+   fila de botoes e sempre o toque que se acabou de dar. A rotina marcada NAO e
+   desmarcada junto — ela pode ter sido marcada a mao, e desfazer um lancamento
+   de minutos nao autoriza apagar uma decisao que talvez nao seja deste botao. */
+function desfazerUltimoToefl(){
+  var r = estudoDoDia(dateKey);
+  if(!r.length) return;
+  desfazerEstudo(r[r.length - 1].rid);
+  renderHoje();
+}
 /* ---- Navegação: da tarefa do dia para o item certo do trilho ---- */
 function irAoTrilho(pid, projId){
   save("cron:painel-open:"+pid, true);

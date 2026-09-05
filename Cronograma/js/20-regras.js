@@ -62,6 +62,132 @@ function atividadeDoDia(dia, hojeISO){
           min:toeflMinutos(ac.n), rec:r.rec || "", url:r.url || ""};
 }
 
+/* ================== O ESTUDO QUE ACONTECEU — Fase 9B ==================
+   Data ISO -> dia da semana, sem passar por fuso: o construtor de tres
+   argumentos monta a data no relogio local, e `new Date("2026-09-07")` a
+   montaria em UTC — que no Rio e 21h do dia 6, um dia da semana antes. */
+function diaDaSemanaDe(iso){
+  var p = String(iso).split("-").map(Number);
+  return new Date(p[0], p[1]-1, p[2]).getDay();
+}
+
+/* O GRAU DE UM REGISTRO, medido contra o que o plano previu para AQUELE dia.
+   Nao ha numero arbitrario aqui: a fronteira entre contato e sessao e a propria
+   duracao prevista, e ela vem do texto do plano. Quem alcanca o previsto fez a
+   atividade; quem ficou abaixo comecou — e comecar conta.
+
+   `treino` nao e derivado de duracao nenhuma: ele so existe quando o plano
+   autoriza um simulado e voce diz que foi isso. Inferi-lo de "passou de X
+   minutos" seria inventar um limiar que o plano nao deu. */
+function grauDoEstudo(min, prevista){
+  if(prevista && min >= prevista) return "sessao";
+  return "contato";
+}
+/* O UNICO DIA QUE PODE VIRAR TREINO E O QUE O PLANO DIZ QUE PODE. A sexta e a
+   unica cuja nota fala em simulado ("troque por um simulado completo no
+   Magoosh"), e e do texto dela que isto e lido — nao de uma lista paralela que
+   amanha discordaria do plano. */
+function permiteSimulado(a){ return !!(a && /simulado/i.test(a.n || "")); }
+
+/* Grava UM acontecimento. Devolve a chave criada, ou null quando o dia nao
+   pede nada — fim de semana ou antes do D0. Nao decide nada sobre a tela. */
+function registrarEstudo(min, hojeISO, tipoForcado){
+  var d = hojeISO || ymd(now);
+  var a = atividadeDoDia(diaDaSemanaDe(d), d);
+  if(!a || !(min > 0)) return null;
+  var st = estudoStore(), pref = d + "/" + aparelhoId() + "/", n = 1;
+  while(st[pref + n]) n++;
+  var rid = pref + n;
+  st[rid] = {d:d, dia:a.dia, hab:a.comp, min:min,
+             tipo: tipoForcado || grauDoEstudo(min, a.min),
+             em: new Date().toISOString()};
+  save(TOEFL_ESTUDO_KEY, st);
+  return rid;
+}
+/* Desfazer e apagar o registro, e nao gravar um negativo: o fato de ter havido
+   um lancamento errado nao e um fato sobre o seu estudo. Na 9C isto vira lapide
+   (`del:true`), que e como a casa apaga o que ja viajou. */
+function desfazerEstudo(rid){
+  var st = estudoStore();
+  if(!st[rid]) return false;
+  delete st[rid]; save(TOEFL_ESTUDO_KEY, st); return true;
+}
+function estudoDoDia(dISO){
+  var st = estudoStore(), out = [];
+  Object.keys(st).forEach(function(rid){
+    var r = st[rid]; if(r && r.d === dISO) out.push(Object.assign({rid:rid}, r));
+  });
+  return out.sort(function(x,y){ return (x.em||"") < (y.em||"") ? -1 : 1; });
+}
+function minutosDoDia(dISO){
+  return estudoDoDia(dISO).reduce(function(s,r){ return s + (r.min||0); }, 0);
+}
+/* O CONTATO E DO DIA, E NAO DE UM REGISTRO. Dez minutos de manha e dez a tarde
+   sao um contato cumprido, e nao dois pela metade — por isso a conta e sobre a
+   soma do dia. E por isso uma sessao tambem satisfaz o contato: nao existe a
+   situacao absurda de fazer os 20 minutos previstos e o dia continuar devendo. */
+function contatoFeito(dISO){ return minutosDoDia(dISO) >= TOEFL_CONTATO_MIN; }
+function sessaoFeita(dISO){
+  var a = atividadeDoDia(diaDaSemanaDe(dISO), dISO);
+  return !!a && a.min ? minutosDoDia(dISO) >= a.min : false;
+}
+/* O grau alcancado pelo DIA — o que a tela anuncia depois que voce registra. */
+function grauDoDia(dISO){
+  if(estudoDoDia(dISO).some(function(r){ return r.tipo === "treino"; })) return "treino";
+  if(sessaoFeita(dISO)) return "sessao";
+  if(contatoFeito(dISO)) return "contato";
+  return null;
+}
+
+/* A SEQUENCIA CONTA DIAS UTEIS, e essa e a unica leitura fiel ao plano: ele
+   poe `null` no sabado e no domingo ("Descanso. Sem Uber, sem TOEFL"). Contada
+   em dias corridos, ela quebraria todo sabado em quem seguiu o plano a risca —
+   o indicador puniria a obediencia.
+
+   O DIA DE HOJE SO CONTA SE JA HOUVE CONTATO, e a ausencia dele nao zera nada:
+   a contagem comeca em ontem. Zerar a sequencia as 6 da manha porque voce ainda
+   nao estudou seria cobrar antes de o dia existir.
+
+   E ela nunca atravessa o D0: antes da estreia nao havia o que cumprir. */
+function sequenciaToefl(hojeISO){
+  var h = hojeISO || ymd(now), p = String(h).split("-").map(Number);
+  var cur = new Date(p[0], p[1]-1, p[2]), n = 0;
+  if(!contatoFeito(h)) cur.setDate(cur.getDate() - 1);
+  for(var i = 0; i < 400; i++){
+    var iso = ymd(cur);
+    if(iso < TOEFL_D0) break;
+    var dow = cur.getDay();
+    if(dow !== 0 && dow !== 6){
+      if(!contatoFeito(iso)) break;
+      n++;
+    }
+    cur.setDate(cur.getDate() - 1);
+  }
+  return n;
+}
+
+/* AS QUATRO CAIXAS DA TELA, todas derivadas dos registros e de mais nada. A
+   semana e a ISO, a mesma chave das prioridades: ela vira na segunda, que e
+   quando o plano recomeca. */
+function metricasToefl(hojeISO){
+  var h = hojeISO || ymd(now), p = String(h).split("-").map(Number);
+  var sem = semanaISO(new Date(p[0], p[1]-1, p[2]));
+  var st = estudoStore(), dias = {}, min = 0;
+  Object.keys(st).forEach(function(rid){
+    var r = st[rid]; if(!r || !r.d) return;
+    var q = String(r.d).split("-").map(Number);
+    if(semanaISO(new Date(q[0], q[1]-1, q[2])) !== sem) return;
+    dias[r.d] = true; min += (r.min || 0);
+  });
+  var contatos = 0, sessoes = 0;
+  Object.keys(dias).forEach(function(d){
+    if(contatoFeito(d)) contatos++;
+    if(sessaoFeita(d)) sessoes++;
+  });
+  return {sem:sem, contatos:contatos, meta:TOEFL_META_SEMANA, sessoes:sessoes,
+          min:min, seq:sequenciaToefl(h)};
+}
+
 /* O CARTAO DE EXECUCAO DO DIA (Fase 9A). Mora aqui, e nao no 30-render, pela
    regra da casa: produz a resposta sem tocar no DOM.
 
@@ -76,18 +202,55 @@ function atividadeDoDia(dia, hojeISO){
 function renderToeflHoje(dia, hojeISO){
   var a = atividadeDoDia(dia, hojeISO);
   if(!a) return "";
-  var h = '<div class="toefl-hoje">'+
+  var d = hojeISO || ymd(now), feito = minutosDoDia(d), grau = grauDoDia(d);
+  var m = metricasToefl(d);
+  var GRAU_LBL = {contato:"contato cumprido", sessao:"sessão cumprida",
+                  treino:"treino completo"};
+  var h = '<div class="toefl-hoje'+(grau?" cumprido":"")+'">'+
     '<div class="th-top"><span class="th-r">TOEFL · hoje</span>'+
-      (a.min ? '<span class="th-min">'+a.min+' min previstos</span>' : '')+
+      /* "15 de 20 min" enquanto falta; "25 min feitos" depois de alcancado —
+         "25 de 20" e uma fracao que nao quer dizer nada. */
+      '<span class="th-min">'+(feito
+        ? (a.min && feito < a.min ? feito+' de '+a.min+' min' : feito+' min feitos')
+        : (a.min ? a.min+' min previstos' : ''))+'</span>'+
     '</div>'+
-    '<div class="th-hab">'+escapeHtml(a.comp)+'</div>'+
+    '<div class="th-hab">'+escapeHtml(a.comp)+
+      (grau ? '<span class="th-ok">✓ '+GRAU_LBL[grau]+'</span>' : '')+'</div>'+
     (a.rec ? '<div class="th-rec">'+escapeHtml(a.rec)+'</div>' : '');
-  if(a.url) h += '<button class="th-ir" onclick="abrirRecursoToefl('+a.dia+')">Começar</button>';
+  /* O BOTAO SO ABRE, E NUNCA REGISTRA (Fase 9B). Tocar em "Comecar" nao e
+     prova de que houve estudo: quem abre e se distrai teria minutos gravados
+     que nao aconteceram, e a metrica passaria a mentir para o proprio dono.
+     Sao dois toques — um para ir, outro para dizer quanto foi —, e nenhum
+     deles inventa um fato. */
+  if(a.url) h += '<button class="th-ir" onclick="abrirRecursoToefl('+a.dia+')">'+
+                 (grau ? "Continuar" : "Começar")+'</button>';
+  h += '<div class="th-fiz"><span class="th-fiz-r">'+(grau?"Mais":"Já fiz")+'</span>'+
+       TOEFL_DURACOES.map(function(x){
+         return '<button class="th-d" onclick="registrarToefl('+x+')">'+x+'</button>';
+       }).join("")+'<span class="th-fiz-u">min</span></div>';
+  /* O SIMULADO SO APARECE NO DIA EM QUE O PLANO O AUTORIZA. Nao ha botao de
+     treino nos outros dias porque o plano nao pede treino nos outros dias. */
+  if(permiteSimulado(a)){
+    h += '<div class="th-fiz"><span class="th-fiz-r">Simulado</span>'+
+         [60, 90, 120].map(function(x){
+           return '<button class="th-d" onclick="registrarToefl('+x+',\'treino\')">'+x+'</button>';
+         }).join("")+'<span class="th-fiz-u">min</span></div>';
+  }
   /* A REGRA COMPORTAMENTAL, E NAO UMA ATIVIDADE NOVA. O plano manda 20 minutos
      de Listening; o piso de 10-15 diz que comecar ja conta, e nao que exista um
      "Listening de 10 minutos" em lugar nenhum. */
-  h += '<div class="th-pe">10–15 min já contam como contato.</div></div>';
-  return h;
+  h += '<div class="th-pe">'+(grau
+        ? 'Registrado hoje: '+feito+' min. <button class="th-undo" onclick="desfazerUltimoToefl()">desfazer o último</button>'
+        : '10–15 min já contam como contato.')+'</div>';
+  /* AS METRICAS SAO DERIVADAS, e a tela nunca guarda numero nenhum. Quem quiser
+     auditar "4 contatos" acha os quatro dias no armazem. */
+  h += '<div class="th-met">'+
+       '<b>'+m.contatos+'/'+m.meta+'</b> contatos · '+
+       m.sessoes+(m.sessoes===1?" sessão":" sessões")+' · '+
+       m.min+' min · '+
+       (m.seq ? m.seq+(m.seq===1?" dia seguido":" dias seguidos") : "sem sequência")+
+       '</div>';
+  return h + '</div>';
 }
 
 /* A fase que o CALENDARIO previa. Só serve para o aviso. */

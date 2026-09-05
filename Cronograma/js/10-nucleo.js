@@ -164,6 +164,10 @@ function restaurarArquivo(k){
 }
 let checks = LS("cron:checks:"+dateKey, {});
 function guiaStore(){ return LS(TOEFL_GUIA_KEY, {}) || {}; }
+/* O armazem do estudo (Fase 9B), no molde do guiaStore: mapa plano, a leitura
+   aqui e a decisao em 20-regras.js. Na 9C e este mapa que ganha um tipo de
+   toque e uma secao no estado.json — a forma ja e a que a dobra espera. */
+function estudoStore(){ return LS(TOEFL_ESTUDO_KEY, {}) || {}; }
 function aplicarToeflDoEstado(est){
   if(!est || !est.toefl) return false;
   var st = guiaStore(), mudou = false;
