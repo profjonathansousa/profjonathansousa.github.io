@@ -84,9 +84,26 @@ function atividadeDoDia(dia, hojeISO){
    Data ISO -> dia da semana, sem passar por fuso: o construtor de tres
    argumentos monta a data no relogio local, e `new Date("2026-09-07")` a
    montaria em UTC — que no Rio e 21h do dia 6, um dia da semana antes. */
-function diaDaSemanaDe(iso){
+/* UMA DATA QUE EXISTE NO CALENDARIO, e nao apenas com a forma certa (9C-bis).
+   O construtor de tres argumentos NORMALIZA o impossivel em silencio:
+   2026-09-31 vira 01/10, 2026-02-30 vira 02/03 e 2026-13-01 vira 01/01/2027.
+   Sem a volta abaixo, "data bem formada" queria dizer so "bateu no regex" — e
+   um registro fabricado com 2026-09-31 e dia:4 passava, porque 4 e mesmo o dia
+   da semana do 1o de outubro. Comparar os tres campos de volta e o que separa
+   formato de existencia. Devolve null quando a data nao existe. */
+function dataReal(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso || "")) return null;
   var p = String(iso).split("-").map(Number);
-  return new Date(p[0], p[1]-1, p[2]).getDay();
+  var d = new Date(p[0], p[1]-1, p[2]);
+  if(d.getFullYear() !== p[0] || d.getMonth() !== p[1]-1 || d.getDate() !== p[2]) return null;
+  return d;
+}
+/* NaN para data que nao existe. Quem chama ja tratava NaN (o registroValido
+   testa isFinite, e TOEFL_SEMANA[NaN] e undefined), entao o buraco fecha aqui,
+   uma vez, em vez de em cada chamador. */
+function diaDaSemanaDe(iso){
+  var d = dataReal(iso);
+  return d ? d.getDay() : NaN;
 }
 
 /* O GRAU DE UM REGISTRO, medido contra o que o plano previu para AQUELE dia.
@@ -126,6 +143,24 @@ function permiteSimulado(a){ return !!(a && /simulado/i.test(a.n || "")); }
 
    A LAPIDE PASSA SEMPRE, mesmo malformada: apagar e a operacao segura. Recusar
    um `del` deixaria vivo um registro que alguem desfez. */
+/* A CHAVE TAMBEM E DADO (Fase 9C-bis). Ate aqui so o corpo era conferido, e uma
+   entrada com chave arbitraria e corpo bem formado entrava. A chave nao e
+   decoracao: ela e a identidade do registro e carrega a data, e e por ela que a
+   dobra decide quem e quem.
+
+   COERENCIA, E NAO SO FORMA: o segmento de data da chave tem de ser o mesmo `d`
+   do corpo. Discordar ali significa que um dos dois esta errado, e nao ha como
+   saber qual — recusar e a unica resposta honesta.
+
+   O `n` comeca em 1 e nao tem zero a esquerda, porque e assim que ele e gerado;
+   aceitar "007" seria aceitar uma segunda grafia da mesma chave. */
+function ridValido(rid, dISO){
+  var m = /^(\d{4}-\d{2}-\d{2})\/[A-Za-z0-9._-]{1,40}\/[1-9]\d{0,5}$/.exec(String(rid || ""));
+  if(!m) return false;
+  if(!dataReal(m[1])) return false;
+  if(dISO !== undefined && dISO !== null && m[1] !== dISO) return false;
+  return true;
+}
 function registroValido(r){
   if(!r || typeof r !== "object") return false;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(r.d || "")) return false;

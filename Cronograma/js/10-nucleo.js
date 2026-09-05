@@ -201,9 +201,17 @@ function aplicarEstudoDoEstado(est){
     if(!r || !r.quando) return;
     var loc = st[rid];
     if(loc && (loc.em || "") >= r.quando) return;   /* empate fica como esta */
-    /* A LAPIDE PASSA SEMPRE, ate malformada: apagar e a operacao segura, e
-       recusa-la deixaria vivo um registro que alguem desfez. */
-    if(r.del){ st[rid] = {d:r.d, del:true, em:r.quando}; mudou = true; return; }
+    /* A CHAVE E CONFERIDA ANTES DE TUDO, inclusive antes da lapide (9C-bis).
+       Uma lapide com chave arbitraria nao apaga nada — nao ha registro nosso
+       com aquele endereco —, so suja o armazem com uma entrada que ninguem
+       criou. Recusar aqui nao perde apagamento nenhum: todo `del` legitimo
+       nasceu de um rid que este mesmo formato gerou. */
+    if(!ridValido(rid)) return;
+    /* A LAPIDE PASSA MESMO SEM O CORPO: apagar e a operacao segura, e recusa-la
+       deixaria vivo um registro que alguem desfez. A data vem da propria chave,
+       que ja foi validada — o toque de desfazer nao carrega `d`, e sem isto a
+       lapide local ficaria com data nula. */
+    if(r.del){ st[rid] = {d:rid.slice(0,10), del:true, em:r.quando}; mudou = true; return; }
     /* O registro chega inteiro porque o outro aparelho nao pode recalcular o
        que nao viajou: sem `hab` e `min` nao ha metrica nenhuma do lado de la.
        Nenhum destes campos e texto livre — todos saem do plano ou de um numero
@@ -214,7 +222,7 @@ function aplicarEstudoDoEstado(est){
        descreve, este aparelho decide. Ignorar em silencio e o certo aqui —
        nao ha usuario a quem avisar sobre um dado que ele nao criou, e a
        proxima descida simplesmente o ignora de novo. */
-    if(!registroValido(r)) return;
+    if(!ridValido(rid, r.d) || !registroValido(r)) return;
     st[rid] = {d:r.d, dia:r.dia, hab:r.hab, min:r.min, grau:r.grau, em:r.quando};
     mudou = true;
   });
@@ -424,9 +432,28 @@ function aparelhoId(){
    podem te-lo igual. Guarda-lo seria compartilha-lo, que e exatamente o
    problema.
 
-   Tres caracteres bastam: ele so precisa distinguir as abas abertas AGORA no
-   mesmo navegador, e nao ser unico no mundo. */
-var ABA_ID = Math.random().toString(36).slice(2, 5);
+   O TAMANHO IMPORTA, E A PRIMEIRA VERSAO ERRAVA NISSO. Ela usava tres
+   caracteres — cerca de 46 mil possibilidades —, e com isso a garantia era
+   PROBABILISTICA, nao "por construcao": duas abas podiam sortear o mesmo token.
+   Oito caracteres, ou os oito primeiros de um UUID do proprio navegador, levam
+   a chance a um patamar em que ela deixa de ser um risco a considerar. Continua
+   sendo probabilidade, e nao prova — e e assim que esta escrito no README. */
+var ABA_ID = (function(){
+  try{
+    if(typeof crypto !== "undefined" && crypto.randomUUID)
+      return crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+  }catch(e){}
+  return (Math.random().toString(36).slice(2, 10) +
+          Math.random().toString(36).slice(2, 10)).slice(0, 8);
+})();
+/* O ID DO TOQUE, EXTRAIDO PARA PODER SER PROVADO (Fase 9C-bis). Enquanto ele
+   nascia dentro do enfileirarToque, a unica forma de testar a separacao entre
+   abas era passar pelo relogio — e o relogio ja separa sozinho, entao o teste
+   nao isolava nada e a assercao afirmava mais do que media. Isolado aqui, a
+   contribuicao do ABA_ID se prova com dois argumentos iguais e um diferente. */
+function idDoToque(iso, apar, aba){
+  return String(iso).replace(/[:.]/g, "-") + "-" + apar + aba;
+}
 
 /* ================= RELOGIO MONOTONICO DO APARELHO =================
    O id do toque nasce do instante. Dois toques no mesmo milissegundo geravam
@@ -494,8 +521,13 @@ function enfileirarToque(tipo, dados, quandoISO){
               toques com o mesmo id fariam a dobra descartar o segundo como "ja
               visto", e o dado sumiria sem erro nenhum. Este sufixo fecha isso
               sem mudar o formato: o id sempre foi opaco — a dobra so o compara
-              consigo mesmo. */
-           id: iso.replace(/[:.]/g,"-") + "-" + aparelhoId() + ABA_ID,
+              consigo mesmo.
+
+              O QUE ISTO NAO FAZ: nao torna o relogio transacional. Duas abas
+              ainda podem gravar o mesmo `quando`; o que deixa de acontecer e
+              duas gravarem a mesma IDENTIDADE. Para a dobra, que dedupe por id
+              e ordena por relogio, e a identidade que nao podia repetir. */
+           id: idDoToque(iso, aparelhoId(), ABA_ID),
            quando: iso,
            aparelho: aparelhoId(),
            app: APP_VERSION,

@@ -1850,7 +1850,7 @@ const b9SEG = "2026-09-07", b9TER = "2026-09-08", b9QUA = "2026-09-09",
 /* O registro e um ACONTECIMENTO, com chave propria e determinista. */
 const b9rid1 = b9E.registrarEstudo(15, b9SEG);
 /* A chave e <data>/<escritor>/<n>, e o escritor e aparelho+aba (Fase 9C-bis). */
-ok(/^2026-09-07\/toefl9b-[a-z0-9]{1,3}\/1$/.test(b9rid1),
+ok(/^2026-09-07\/toefl9b-[a-z0-9]{8}\/1$/.test(b9rid1),
    "a chave e <data>/<aparelho>-<aba>/<n>", b9rid1);
 const b9rid2 = b9E.registrarEstudo(10, b9SEG);
 ok(b9rid2 === b9rid1.replace(/\/1$/, "/2"),
@@ -2074,17 +2074,27 @@ ok(hbIds.length >= 2, "a fila compartilhada tem os toques das duas abas", hbIds.
 ok(new Set(hbIds).size === hbIds.length, "e nenhum id se repete nela", hbIds);
 ok(hbIds.some(i => i.endsWith(hbAbaA.ABA_ID)) && hbIds.some(i => i.endsWith(hbAbaB.ABA_ID)),
    "cada aba assinou o seu, e da para dizer qual escreveu qual", hbIds);
-/* A prova de que a trava e o ABA_ID, e nao sorte: forcando o MESMO instante nas
-   duas abas, os dois ids continuam distintos. */
-const hbN = hbAbaB.getToques().length;
-hbAbaA.enfileirarToque("toefl", { iid: "f1-conta", feito: true }, "2026-01-02T00:00:00.000Z");
-hbAbaB.enfileirarToque("toefl", { iid: "f1-anki", feito: true }, "2026-01-02T00:00:00.000Z");
-const hbDois = hbAbaB.getToques().slice(hbN);
-ok(hbDois.length === 2 && hbDois[0].id !== hbDois[1].id,
-   "mesmo forcando o mesmo instante, os dois ids diferem",
-   hbDois.map(t => t.id));
-ok(hbDois[0].id.endsWith(hbAbaA.ABA_ID) && hbDois[1].id.endsWith(hbAbaB.ABA_ID),
-   "e o que os separa e o ABA_ID, e nao o relogio", hbDois.map(t => t.id));
+/* ISOLANDO A CONTRIBUICAO DO ABA_ID.
+   A versao anterior deste teste pedia o MESMO instante nas duas abas e concluia
+   que o ABA_ID os separava. Nao separava: instanteDoToque() compartilha o
+   RELOGIO_BASES_KEY, entao a segunda chamada ja recebe T+1 e os ids diferiam
+   pelo relogio. A assercao afirmava mais do que media.
+
+   Agora a construcao do id e uma funcao propria, e a prova e direta: MESMO
+   instante, MESMO aparelho, aba diferente. Se o ABA_ID nao entrasse no id, esta
+   linha ficaria vermelha — e nenhum relogio a salvaria. */
+const hbISO = "2026-01-02T00:00:00.000Z";
+ok(hbAbaA.idDoToque(hbISO, "apar", "aba1") !== hbAbaA.idDoToque(hbISO, "apar", "aba2"),
+   "mesmo instante e mesmo aparelho, abas diferentes -> ids diferentes",
+   [hbAbaA.idDoToque(hbISO, "apar", "aba1"), hbAbaA.idDoToque(hbISO, "apar", "aba2")]);
+ok(hbAbaA.idDoToque(hbISO, "apar", "x") === hbAbaA.idDoToque(hbISO, "apar", "x"),
+   "e a mesma entrada da sempre o mesmo id: a diferenca vem so da aba");
+/* E o ABA_ID de verdade e grande o bastante para que o sorteio nao seja o elo
+   fraco — a primeira versao usava tres caracteres. */
+ok(hbAbaA.ABA_ID.length >= 8 && hbAbaB.ABA_ID.length >= 8,
+   "o ABA_ID tem 8 caracteres ou mais", [hbAbaA.ABA_ID, hbAbaB.ABA_ID]);
+ok(/^[a-z0-9]+$/.test(hbAbaA.ABA_ID),
+   "e cabe numa chave sem escapar nada", hbAbaA.ABA_ID);
 
 /* ---- REGISTRO INVALIDO CHEGANDO PELO ESTADO ---- */
 const hbC = criarAparelho("hardening");
@@ -2095,8 +2105,34 @@ function hbDesce(ctx, rid, r) {
   return ctx.aplicarEstudoDoEstado(est);
 }
 const hbBOM = { d: "2026-09-07", dia: 1, hab: "Reading", min: 15, grau: "contato" };
-ok(hbDesce(hbC, "x/1", hbBOM) === true, "um registro valido e aceito");
+const hbRID = "2026-09-07/outro-ab12cd34/1";
+ok(hbDesce(hbC, hbRID, hbBOM) === true, "um registro valido e aceito");
 ok(hbC.minutosDoDia("2026-09-07") === 15, "e conta");
+
+/* ---- A CHAVE TAMBEM E DADO ---- */
+const hbG = criarAparelho("hardening-rid");
+ok(hbDesce(hbG, "x/1", hbBOM) === false,
+   "uma chave arbitraria e recusada, por mais valido que seja o corpo");
+ok(hbDesce(hbG, "2026-09-08/outro-ab12cd34/1", hbBOM) === false,
+   "e uma chave cuja data DISCORDA do corpo tambem: nao ha como saber qual erra");
+ok(hbDesce(hbG, "2026-09-07/outro-ab12cd34/0", hbBOM) === false,
+   "o contador comeca em 1");
+ok(hbDesce(hbG, "2026-09-07/outro-ab12cd34/007", hbBOM) === false,
+   "e nao aceita zero a esquerda: seria uma segunda grafia da mesma chave");
+ok(hbDesce(hbG, "2026-09-31/outro-ab12cd34/1",
+           { d: "2026-09-31", dia: 4, hab: "Reading", min: 15, grau: "contato" }) === false,
+   "uma data que NAO EXISTE no calendario e recusada, mesmo com o dia da semana certo");
+ok(!isFinite(hbG.diaDaSemanaDe("2026-09-31")),
+   "porque 2026-09-31 nao tem dia da semana: o construtor o normalizava para 01/10",
+   hbG.diaDaSemanaDe("2026-09-31"));
+ok(!isFinite(hbG.diaDaSemanaDe("2026-02-30")) &&
+   !isFinite(hbG.diaDaSemanaDe("2026-13-01")) &&
+   !isFinite(hbG.diaDaSemanaDe("2026-09-00")),
+   "30/02, mes 13 e dia 0 tambem deixaram de passar");
+ok(hbG.dataReal("2026-09-07") && !hbG.dataReal("2026-09-31"),
+   "dataReal separa formato de existencia");
+ok(Object.keys(hbG.estudoStore()).length === 0,
+   "nenhum deles entrou no armazem", hbG.estudoStore());
 
 const hbD = criarAparelho("hardening2");
 ok(hbDesce(hbD, "x/2", Object.assign({}, hbBOM, { dia: 3 })) === false,
@@ -2125,9 +2161,17 @@ ok(hbD.registrarEstudo(97, "2026-09-07") === null,
 
 /* A LAPIDE PASSA SEMPRE, ate malformada: apagar e a operacao segura. */
 const hbE = criarAparelho("hardening3");
-ok(hbDesce(hbE, "x/10", { d: "2026-09-07", del: true }) === true,
-   "a lapide passa mesmo sem os campos do registro");
-ok(hbE.estudoStore()["x/10"].del === true, "e fica gravada como lapide");
+const hbRIDL = "2026-09-07/outro-ab12cd34/9";
+ok(hbDesce(hbE, hbRIDL, { del: true }) === true,
+   "a lapide passa mesmo sem campo nenhum do registro");
+ok(hbE.estudoStore()[hbRIDL].del === true, "e fica gravada como lapide");
+ok(hbE.estudoStore()[hbRIDL].d === "2026-09-07",
+   "com a data tirada da propria chave — o toque de desfazer nao carrega `d`",
+   hbE.estudoStore()[hbRIDL]);
+/* Mas a chave e conferida ANTES da lapide: uma lapide com endereco inventado
+   nao apaga nada, so sujaria o armazem. */
+ok(hbDesce(hbE, "x/11", { del: true }) === false,
+   "uma lapide com chave arbitraria e recusada");
 
 /* ---- LAPIDE LOCAL x VERSAO VALIDA COM TIMESTAMP MAIOR ----
    O relogio decide, como em todos os outros sete tipos: mais novo manda. */

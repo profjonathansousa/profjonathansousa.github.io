@@ -421,17 +421,17 @@ de sete dias, dispensa, poda — não foi tocado.
 
 ### Concorrência e integridade (Fase 9C-bis)
 
-Duas correções vindas da auditoria de 05/09, ambas fechando o problema **por
-construção** em vez de por probabilidade.
+Duas correções vindas da auditoria de 05/09.
 
 **Duas abas do mesmo navegador são dois escritores.** Elas compartilham o
 `localStorage` e, com ele, o `cron:aparelho` e o `cron:relogio` — então tudo que
 se identificava só pelo aparelho podia colidir entre elas. E colidir aqui não dá
 erro: dá silêncio, que é pior.
 
-`ABA_ID` é um token de três caracteres gerado a cada carregamento da página.
-**Ele não mora no `localStorage`, e a ausência é o mecanismo inteiro** — guardá-lo
-seria compartilhá-lo, que é exatamente o problema. Ele entra em dois lugares:
+`ABA_ID` é um token de **oito** caracteres — os oito primeiros de um
+`crypto.randomUUID()` quando o navegador o oferece, senão um sorteio equivalente.
+**Ele não mora no `localStorage`, e a ausência é o mecanismo** — guardá-lo seria
+compartilhá-lo, que é exatamente o problema. Ele entra em dois lugares:
 
 | Onde | O que resolve | Alcance |
 |---|---|---|
@@ -439,27 +439,58 @@ seria compartilhá-lo, que é exatamente o problema. Ele entra em dois lugares:
 | segmento do meio do `rid` | duas abas achariam o mesmo `n` livre e um registro apagaria o outro na dobra | só o `estudo` |
 
 O `rid` passou de `<data>/<aparelho>/<n>` para `<data>/<aparelho>-<aba>/<n>`. O
-propósito do segmento não mudou — ele sempre foi *"quem escreveu isto"* —, só
-ficou preciso. Como nenhuma outra aba escreve naquele prefixo, o contador deixa
-de ter disputa.
+propósito do segmento não mudou — sempre foi *"quem escreveu isto"* —, só ficou
+preciso: nenhuma outra aba escreve naquele prefixo, então o contador deixa de ter
+disputa.
 
-> **O teste prova a propriedade, não reproduz a corrida.** Dois contextos sobre o
-> mesmo armazenamento executam em sequência num `vm`, e sequência não intercala.
-> O que as asserções garantem é o que importa: ids únicos na fila compartilhada,
-> `rid`s distintos, cada aba assinando o seu, e os dois registros somando em vez
-> de um apagar o outro — inclusive quando o mesmo instante é forçado nas duas.
+> **O que isto garante, e o que não garante.** Dadas duas abas com `ABA_ID`
+> distintos, a separação das identidades é **por construção**. Mas os `ABA_ID`
+> distintos vêm de um **sorteio** — com oito caracteres a chance de repetir é
+> desprezível, e ainda assim é probabilidade, não prova. A primeira versão usava
+> três caracteres (~46 mil possibilidades) e a garantia era fraca demais para o
+> que o texto afirmava.
+>
+> **E isto não torna o relógio transacional.** Duas abas ainda podem gravar o
+> mesmo `quando`; o que deixa de acontecer é duas gravarem a mesma *identidade*.
+> Para a dobra — que deduplica por id e ordena por relógio — era a identidade que
+> não podia repetir. Tornar `localStorage` atômico seria outra reforma, e esta
+> fase não a fez.
+>
+> **E o teste prova a propriedade, não reproduz a corrida.** Dois contextos sobre
+> o mesmo armazenamento executam em sequência num `vm`, e sequência não
+> intercala. A contribuição do `ABA_ID` é isolada de outro jeito:
+> `idDoToque(iso, aparelho, aba)` foi extraída para função própria, e a asserção
+> passa o **mesmo** instante e o **mesmo** aparelho com abas diferentes. A versão
+> anterior deste teste pedia o mesmo instante através do relógio e concluía que o
+> `ABA_ID` separava — não separava: `instanteDoToque()` já devolvia `T` e `T+1`.
 
-**O aparelho decide o que aceita.** `registroValido()` guarda as duas portas de
-entrada — a descida do `estado.json` e a gravação local. Validar só a descida
-deixaria o defeito entrar por aqui e sair sincronizado: este aparelho seria a
-fonte da contaminação de que ele se protege.
+**O aparelho decide o que aceita.** `registroValido()` e `ridValido()` guardam as
+duas portas de entrada — a descida do `estado.json` e a gravação local. Validar só
+a descida deixaria o defeito entrar por aqui e sair sincronizado: este aparelho
+seria a fonte da contaminação de que ele se protege.
+
+**A chave também é dado.** Ela não é decoração: é a identidade do registro,
+carrega a data, e é por ela que a dobra decide quem é quem. Verifica-se a forma
+(`<data>/<escritor>/<n>`, com `n` começando em 1 e sem zero à esquerda — "007"
+seria uma segunda grafia da mesma chave) **e a coerência**: o segmento de data
+tem de ser o mesmo `d` do corpo. Discordar ali significa que um dos dois está
+errado, e não há como saber qual — recusar é a única resposta honesta.
+
+**"Data bem formada" quer dizer data que existe.** O construtor de três
+argumentos normaliza o impossível em silêncio: `2026-09-31` vira 01/10,
+`2026-02-30` vira 02/03, `2026-13-01` vira 01/01/2027. Enquanto a checagem era só
+o regex, um registro com `2026-09-31` e `dia: 4` **passava** — porque 4 é mesmo o
+dia da semana do 1º de outubro. `dataReal()` compara os três campos de volta, e
+`diaDaSemanaDe()` devolve `NaN` para o que não existe: o buraco fecha num lugar
+só, em vez de em cada chamador.
 
 **Estrutura com rigor, conteúdo do plano com folga**, e a distinção é o desenho:
 
-- **verificado:** `d` é uma data bem formada · `dia` é o dia da semana de `d`
-  (aritmética) · o dia não é fim de semana (o plano põe `null` lá) · `d >= D0` ·
-  `min` está no conjunto fechado (`TOEFL_DURACOES` ∪ `TOEFL_SIMULADO_MIN`) ·
-  `grau` é um dos três · `hab` é texto curto e não vazio;
+- **verificado:** a chave (forma e coerência com `d`) · `d` é uma data que existe
+  no calendário · `dia` é o dia da semana de `d` (aritmética) · o dia não é fim de
+  semana (o plano põe `null` lá) · `d >= D0` · `min` está no conjunto fechado
+  (`TOEFL_DURACOES` ∪ `TOEFL_SIMULADO_MIN`) · `grau` é um dos três · `hab` é texto
+  curto e não vazio;
 - **não verificado:** se `hab` bate com a habilidade daquele dia, ou se `grau`
   bate com os minutos. Esses saem do **texto** do plano, e o texto pode ser
   reescrito — validar contra ele faria uma edição de redação **apagar histórico
@@ -468,10 +499,14 @@ fonte da contaminação de que ele se protege.
 O `min` é um conjunto, e não um intervalo: *"entre 10 e 120"* aceitaria 97
 minutos, que nenhum botão produz e portanto só pode vir de defeito.
 
-**A lápide passa sempre**, mesmo malformada: apagar é a operação segura, e
-recusá-la deixaria vivo um registro que alguém desfez. E o registro recusado
-**continua no `estado.json`** — o arquivo descreve, o aparelho decide; a próxima
-descida simplesmente o ignora de novo.
+**A lápide passa sem o corpo, mas não sem a chave.** Apagar é a operação segura, e
+recusar um `del` deixaria vivo um registro que alguém desfez — mas uma lápide com
+endereço inventado não apaga nada, só sujaria o armazém. Todo `del` legítimo
+nasceu de um `rid` que este mesmo formato gerou. A data da lápide vem da própria
+chave: o toque de desfazer não carrega `d`.
+
+O registro recusado **continua no `estado.json`** — o arquivo descreve, o aparelho
+decide; a próxima descida simplesmente o ignora de novo.
 
 ### Dívida técnica conhecida do TOEFL
 
