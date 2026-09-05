@@ -98,24 +98,39 @@ function registrarEstudo(min, hojeISO, tipoForcado){
   var st = estudoStore(), pref = d + "/" + aparelhoId() + "/", n = 1;
   while(st[pref + n]) n++;
   var rid = pref + n;
-  st[rid] = {d:d, dia:a.dia, hab:a.comp, min:min,
-             tipo: tipoForcado || grauDoEstudo(min, a.min),
-             em: new Date().toISOString()};
+  var reg = {d:d, dia:a.dia, hab:a.comp, min:min,
+             grau: tipoForcado || grauDoEstudo(min, a.min)};
+  /* O TOQUE E A GRAVACAO SAO O MESMO ATO, COM O MESMO INSTANTE (Fase 9C). O
+     enfileirarToque devolve o iso que usou; guardar outro valor aqui faria os
+     dois lados discordarem sobre quando aquilo aconteceu, e o relogio da dobra
+     decide justamente por esse campo. Mesma regra do marcarGuia. */
+  var iso = enfileirarToque("estudo", Object.assign({rid:rid}, reg));
+  reg.em = iso;
+  st[rid] = reg;
   save(TOEFL_ESTUDO_KEY, st);
   return rid;
 }
-/* Desfazer e apagar o registro, e nao gravar um negativo: o fato de ter havido
-   um lancamento errado nao e um fato sobre o seu estudo. Na 9C isto vira lapide
-   (`del:true`), que e como a casa apaga o que ja viajou. */
+/* DESFAZER DEIXA LAPIDE, e nao apaga a linha (Fase 9C). E a regra inviolavel
+   da casa: ausencia nao e desconhecimento. Sem a lapide, o registro desfeito
+   aqui voltaria vivo na proxima descida — o outro aparelho ainda o tem, e o
+   silencio local nao lhe diria nada.
+
+   O que nao existe e um registro NEGATIVO: nao se grava "-15 min". Um
+   lancamento errado nao e um fato sobre o seu estudo, e a lapide diz
+   exatamente isso — aquilo nunca contou. */
 function desfazerEstudo(rid){
-  var st = estudoStore();
-  if(!st[rid]) return false;
-  delete st[rid]; save(TOEFL_ESTUDO_KEY, st); return true;
+  var st = estudoStore(), r = st[rid];
+  if(!r || r.del) return false;
+  var iso = enfileirarToque("estudo", {rid:rid, del:true});
+  st[rid] = {d:r.d, del:true, em:iso};
+  save(TOEFL_ESTUDO_KEY, st);
+  return true;
 }
 function estudoDoDia(dISO){
   var st = estudoStore(), out = [];
   Object.keys(st).forEach(function(rid){
-    var r = st[rid]; if(r && r.d === dISO) out.push(Object.assign({rid:rid}, r));
+    var r = st[rid];
+    if(r && !r.del && r.d === dISO) out.push(Object.assign({rid:rid}, r));
   });
   return out.sort(function(x,y){ return (x.em||"") < (y.em||"") ? -1 : 1; });
 }
@@ -133,7 +148,7 @@ function sessaoFeita(dISO){
 }
 /* O grau alcancado pelo DIA — o que a tela anuncia depois que voce registra. */
 function grauDoDia(dISO){
-  if(estudoDoDia(dISO).some(function(r){ return r.tipo === "treino"; })) return "treino";
+  if(estudoDoDia(dISO).some(function(r){ return r.grau === "treino"; })) return "treino";
   if(sessaoFeita(dISO)) return "sessao";
   if(contatoFeito(dISO)) return "contato";
   return null;
@@ -174,7 +189,7 @@ function metricasToefl(hojeISO){
   var sem = semanaISO(new Date(p[0], p[1]-1, p[2]));
   var st = estudoStore(), dias = {}, min = 0;
   Object.keys(st).forEach(function(rid){
-    var r = st[rid]; if(!r || !r.d) return;
+    var r = st[rid]; if(!r || r.del || !r.d) return;
     var q = String(r.d).split("-").map(Number);
     if(semanaISO(new Date(q[0], q[1]-1, q[2])) !== sem) return;
     dias[r.d] = true; min += (r.min || 0);

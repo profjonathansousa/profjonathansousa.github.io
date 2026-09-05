@@ -1665,9 +1665,13 @@ ok(CHAVES.indexOf("cron:checks:") > -1 && CHAVES.indexOf("cron:contexto") > -1 &
    "as chaves de localStorage continuam as mesmas");
 const TIPOS = Array.from(new Set((CODIGO.match(/enfileirarToque\("([a-z]+)"/g) || [])
   .map(t => t.match(/"([a-z]+)"/)[1]))).sort();
+/* A LISTA CRESCE SO POR DECISAO EXPLICITA. `estudo` entrou na 9C, e entrou
+   porque o registro do estudo precisa atravessar aparelhos — nao como efeito
+   colateral de outra coisa. A guarda continua fazendo o que fazia: nada novo
+   passa aqui sem alguem editar esta linha e dizer por que. */
 ok(JSON.stringify(TIPOS) ===
-   JSON.stringify(["evento","meta","prioridade","registro","retomada","toefl","triagem"]),
-   "e os sete tipos de toque continuam os mesmos, sem nenhum novo", TIPOS);
+   JSON.stringify(["estudo","evento","meta","prioridade","registro","retomada","toefl","triagem"]),
+   "e os tipos de toque sao os oito esperados, sem nenhum a mais", TIPOS);
 
 console.log("\n=== 45. Avisos: aditivos e sem tocar na sincronia (Fase 8) ===");
 const SW_BRUTO = fs.readFileSync(path.join(RAIZ, "Cronograma", "sw.js"), "utf8");
@@ -1697,15 +1701,20 @@ ok(/pushManager\.getSubscription/.test(CODIGO),
 /* Nada de toque novo, e nenhuma secao nova no estado consolidado. */
 const TIPOS8 = Array.from(new Set((CODIGO.match(/enfileirarToque\("([a-z]+)"/g) || [])
   .map(t => t.match(/"([a-z]+)"/)[1]))).sort();
-ok(TIPOS8.length === 7, "os tipos de toque continuam sete", TIPOS8);
-ok(JSON.stringify(TIPOS8) ===
-   JSON.stringify(["evento","meta","prioridade","registro","retomada","toefl","triagem"]),
-   "e sao exatamente os mesmos sete", TIPOS8);
+/* A FASE 8 NAO ACRESCENTOU NENHUM. O oitavo (`estudo`) e da 9C, e a distincao
+   importa: a infraestrutura de aviso continua sem tocar na sincronia. */
+ok(TIPOS8.length === 8, "os tipos de toque sao oito", TIPOS8);
+ok(TIPOS8.indexOf("estudo") > -1 && JSON.stringify(TIPOS8) ===
+   JSON.stringify(["estudo","evento","meta","prioridade","registro","retomada","toefl","triagem"]),
+   "e o unico acrescentado depois da Fase 8 e o `estudo`, da 9C", TIPOS8);
 const DOBRA = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
 const SECOES = (DOBRA.match(/^\s{8}"(\w+)": \{\},$/gm) || []).map(l => l.match(/"(\w+)"/)[1]);
 ok(JSON.stringify(SECOES.sort()) ===
-   JSON.stringify(["eventos","itens","metas","prioridades","retomadas","toefl","triagem"]),
-   "e o estado.json nao ganhou secao nova", SECOES);
+   JSON.stringify(["estudo","eventos","itens","metas","prioridades","retomadas","toefl","triagem"]),
+   "e a unica secao nova do estado.json e `estudo`, da 9C", SECOES);
+/* A dobra tem de conhecer o tipo dos dois lados: onde ele manda, e o que grava. */
+ok(/if tipo == "estudo":/.test(DOBRA) && /elif tipo == "estudo":/.test(DOBRA),
+   "e o dobrar_toques.py aprendeu o `estudo` no alvo E no valor");
 
 /* AS CHAVES PUBLICAS, PREENCHIDAS EM 04/09. Ate aqui este teste afirmava o
    contrario — que sem configuracao o botao nao aparece —, porque a VAPID ainda
@@ -1874,8 +1883,8 @@ ok(/Simulado/.test(b9E.renderToeflHoje(5, b9SEX)),
 const b9H = criarAparelho("toefl9b-d");
 b9H.registrarEstudo(120, b9SEX, "treino");
 ok(b9H.grauDoDia(b9SEX) === "treino", "e um simulado registrado vira treino", b9H.grauDoDia(b9SEX));
-ok(b9H.estudoStore()[Object.keys(b9H.estudoStore())[0]].tipo === "treino",
-   "com o tipo gravado no proprio registro");
+ok(b9H.estudoStore()[Object.keys(b9H.estudoStore())[0]].grau === "treino",
+   "com o grau gravado no proprio registro");
 
 /* A SEQUENCIA CONTA DIAS UTEIS E ATRAVESSA O FIM DE SEMANA. */
 const b9S = criarAparelho("toefl9b-seq");
@@ -1925,10 +1934,21 @@ ok(b9M.metricasToefl(b9SEG2).contatos === 1,
 const b9D = criarAparelho("toefl9b-undo");
 const b9a1 = b9D.registrarEstudo(15, b9SEG), b9a2 = b9D.registrarEstudo(30, b9SEG);
 ok(Object.keys(b9D.estudoStore()).length === 2, "dois registros no dia");
-ok(b9D.desfazerEstudo(b9a2) === true && Object.keys(b9D.estudoStore()).length === 1,
-   "desfazer remove o registro");
+ok(b9D.desfazerEstudo(b9a2) === true && b9D.estudoDoDia(b9SEG).length === 1,
+   "desfazer tira o registro da conta");
+/* MAS DEIXA LAPIDE (Fase 9C): a linha continua la, marcada. Sem ela o
+   registro desfeito aqui voltaria vivo na proxima descida. */
+ok(b9D.estudoStore()[b9a2] && b9D.estudoStore()[b9a2].del === true,
+   "e deixa lapide no lugar, em vez de apagar a linha", b9D.estudoStore()[b9a2]);
 ok(b9D.minutosDoDia(b9SEG) === 15 && !!b9D.estudoStore()[b9a1],
    "e o outro fica intacto", b9D.minutosDoDia(b9SEG));
+ok(b9D.desfazerEstudo(b9a2) === false, "desfazer o que ja e lapide e no-op");
+/* A CHAVE NAO E REUSADA: a lapide continua ocupando o lugar dela, e um
+   registro novo no mesmo dia recebe o proximo numero. Reusar produziria dois
+   fatos diferentes com a mesma identidade na dobra. */
+const b9novo = b9D.registrarEstudo(20, b9SEG);
+ok(b9novo === b9a2.replace(/\/2$/, "/3"),
+   "e o proximo registro do dia pula o numero da lapide", b9novo);
 ok(b9D.desfazerEstudo("nao/existe/9") === false, "desfazer o que nao existe e no-op");
 
 /* UM ATO, DOIS EFEITOS — e a assimetria. Determinista: a data vai por

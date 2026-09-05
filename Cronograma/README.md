@@ -495,7 +495,7 @@ Nunca criar um segundo mecanismo de conclusão.
 
 ## Sincronização
 
-Sete coisas atravessam aparelhos, cada uma com um tipo de toque:
+Oito coisas atravessam aparelhos, cada uma com um tipo de toque:
 
 | Tipo | Vai para | Chave |
 |---|---|---|
@@ -506,6 +506,7 @@ Sete coisas atravessam aparelhos, cada uma com um tipo de toque:
 | `prioridade` | `prioridades` | `AAAA-Wnn/id` |
 | `toefl` | `toefl` | `id` do item do guia |
 | `retomada` | `retomadas` | `painel/projeto` |
+| `estudo` | `estudo` | `AAAA-MM-DD/aparelho/n` |
 
 **O progresso do TOEFL atravessa aparelhos desde a Fase 6A.** Fechar o núcleo
 no computador avança a fase no celular. O mapa é `cron:toefl-guia`, plano e
@@ -525,6 +526,26 @@ a ausência viajasse como `false`, um aparelho que migrasse mais tarde apagaria
 marca legítima de outro. Como só sobem as verdadeiras, dois aparelhos migrando
 em ordens diferentes produzem **união**, nunca subtração. As chaves antigas
 `cron:toefl-guia:<fase>` **não são apagadas**: ficam como rede de segurança.
+
+**O estudo do TOEFL atravessa desde a Fase 9C.** O contato feito no celular
+conta no Mac. A chave é `<data>/<aparelho>/<n>`, montada no aparelho e nunca
+remontada aqui — um segundo lugar decidindo a identidade de um registro seria um
+segundo lugar para errar.
+
+**Ao contrário do guia, o registro viaja inteiro** (`dia`, `hab`, `min`, `grau`),
+e a razão é o oposto: lá o texto mora no `TOEFL_GUIA` e o aparelho que desenha o
+lê de lá; aqui não há de onde ler. Sem `hab` e `min` o outro aparelho não
+recalcula métrica nenhuma. **Nenhum campo é texto livre** — `hab` e `dia` saem do
+plano, `min` é um número escolhido numa lista fechada, `grau` é derivado dos dois
+—, e por isso nada aqui é imprevisível num repositório público.
+
+**Aqui há lápide `del`, e no `toefl` não há.** A diferença é o que cada coisa é:
+o item do guia é estrutura da página — não se cria nem se apaga, só se marca —,
+enquanto o registro de estudo você cria, e por isso pode desfazer. Sem a lápide,
+o desfeito num aparelho voltaria vivo no outro, para sempre. **A chave nunca é
+reusada**: a lápide continua ocupando o lugar dela, e o registro seguinte do dia
+recebe o próximo número — reusar produziria dois fatos diferentes com a mesma
+identidade na dobra.
 
 **O silêncio da retomada atravessa desde a Fase 6B.** Dispensar uma retomada
 no celular cala no Mac. O mapa é `cron:retomadas-adiadas`, agora
@@ -796,7 +817,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 8 — Notificações (Web Push) | concluída |
 | 9A — TOEFL: ancoragem do plano (`TOEFL_D0`) e catálogo de execução | concluída |
 | 9B — TOEFL: registro de execução e métricas | concluída |
-| 9C — TOEFL: travessia do registro entre aparelhos | a fazer |
+| 9C — TOEFL: travessia do registro entre aparelhos (toque `estudo`) | concluída |
 | 9D — TOEFL: sem dívida (sair de `atrasadas()`) | a fazer |
 | 9E — TOEFL: lembrete pela Fase 8 | a fazer |
 

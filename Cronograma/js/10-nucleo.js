@@ -182,6 +182,36 @@ function aplicarToeflDoEstado(est){
   if(mudou) save(TOEFL_GUIA_KEY, st);
   return mudou;
 }
+/* A DESCIDA DO ESTUDO (Fase 9C). Molde do aplicarToeflDoEstado: vence o
+   relogio, registro a registro; empate fica como esta; mais antigo e ignorado.
+
+   AQUI HA LAPIDE, e no guia nao havia — a diferenca e o que cada coisa e. O
+   item do guia e estrutura da pagina: nao se cria nem se apaga, so se marca. O
+   registro de estudo VOCE cria, e por isso pode desfazer; sem `del` o desfeito
+   num aparelho voltaria vivo no outro, para sempre.
+
+   NAO GERA TOQUE: receber nao e tocar. Chamar registrarEstudo() aqui criaria um
+   eco que subiria de novo a cada carregamento — a mesma razao dos subitens, do
+   registro e do guia. */
+function aplicarEstudoDoEstado(est){
+  if(!est || !est.estudo) return false;
+  var st = estudoStore(), mudou = false;
+  Object.keys(est.estudo).forEach(function(rid){
+    var r = est.estudo[rid];
+    if(!r || !r.quando) return;
+    var loc = st[rid];
+    if(loc && (loc.em || "") >= r.quando) return;   /* empate fica como esta */
+    if(r.del){ st[rid] = {d:r.d, del:true, em:r.quando}; mudou = true; return; }
+    /* O registro chega inteiro porque o outro aparelho nao pode recalcular o
+       que nao viajou: sem `hab` e `min` nao ha metrica nenhuma do lado de la.
+       Nenhum destes campos e texto livre — todos saem do plano ou de um numero
+       que voce tocou. */
+    st[rid] = {d:r.d, dia:r.dia, hab:r.hab, min:r.min, grau:r.grau, em:r.quando};
+    mudou = true;
+  });
+  if(mudou) save(TOEFL_ESTUDO_KEY, st);
+  return mudou;
+}
 function migrarGuiaToefl(){
   if(LS(TOEFL_MIGRADO_KEY, false)) return 0;
   var st = guiaStore(), n = 0;
@@ -969,6 +999,10 @@ function buscarEstado(){
          um eco que voltaria a subir a cada carregamento, para sempre — a mesma
          razao dos subitens e do registro. */
       if(aplicarToeflDoEstado(est)){ try{ renderProcessos(); }catch(e){} mudou = true; }
+      /* ---- Estudo do TOEFL (Fase 9C) ----
+         O contato feito no celular conta no Mac. Redesenha o HOJE, e nao o
+         Processos: o cartao e as metricas moram la. */
+      if(aplicarEstudoDoEstado(est)){ try{ renderHoje(); }catch(e){} mudou = true; }
       /* ---- Retomadas silenciadas (Fase 6B) ----
          Dispensar num aparelho cala nos dois. So a data viaja. */
       if(aplicarRetomadasDoEstado(est)) mudou = true;

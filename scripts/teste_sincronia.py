@@ -454,6 +454,134 @@ ok(sorted(est_r4["retomadas"].keys()) == ["pipeline/a01", "pipeline/a02"],
    "dois aparelhos com projetos diferentes produzem uniao",
    sorted(est_r4["retomadas"].keys()))
 
+print("\n=== 8. TOEFL: o estudo atravessa (Fase 9C) ===")
+TMP5 = montar_repo_falso()
+SEG, TER = "2026-09-07", "2026-09-08"
+# O computador registra dois estudos na segunda e um na terca, e desfaz um.
+saida_e = node("""
+const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
+const r1 = mac.registrarEstudo(15, "%s");
+const r2 = mac.registrarEstudo(30, "%s");
+mac.registrarEstudo(20, "%s");
+mac.desfazerEstudo(r2);
+console.log(JSON.stringify({toques: mac.getToques().filter(t=>t.tipo==="estudo"),
+                            r1: r1, r2: r2}));
+""" % (SEG, SEG, TER), RAIZ)
+gravar_toques(TMP5, saida_e["toques"], "lote-estudo.json")
+est_e = dobrar_em(TMP5)
+ok("estudo" in est_e, "o estado.json ganhou a secao 'estudo'", sorted(est_e.keys()))
+r1 = est_e["estudo"].get(saida_e["r1"], {})
+ok(r1.get("min") == 15 and r1.get("hab") == "Reading" and r1.get("dia") == 1
+   and r1.get("grau") == "contato",
+   "o registro viaja inteiro: dia do plano, habilidade, minutos e grau", r1)
+ok(r1.get("quando") and r1.get("aparelho") == "mac",
+   "com quando e aparelho, como os outros sete tipos", r1)
+ok(est_e["estudo"].get(saida_e["r2"], {}).get("del") is True,
+   "e o desfeito virou lapide, e nao sumiu",
+   est_e["estudo"].get(saida_e["r2"]))
+ok(all("t" not in v and "n" not in v and "rec" not in v
+       for v in est_e["estudo"].values()),
+   "nenhum texto do plano viaja junto: so o que nao da para reler do outro lado",
+   est_e["estudo"])
+ok(saida_e["r1"].startswith(SEG + "/mac/"),
+   "a chave carrega a data e o aparelho", saida_e["r1"])
+
+# Redobra: idempotente, como os outros.
+antes_h = len(est_e["historico"])
+gravar_toques(TMP5, saida_e["toques"], "lote-estudo-repetido.json")
+est_e2 = dobrar_em(TMP5)
+ok(est_e2["estudo"] == est_e["estudo"], "redobrar o mesmo lote nao muda o estado")
+ok(len(est_e2["historico"]) == antes_h, "e nao duplica o historico (idempotente)",
+   (antes_h, len(est_e2["historico"])))
+
+# Toque atrasado nao ressuscita o que a lapide matou.
+atrasado_e = [{"v": 1, "id": "2020-01-01T00-00-00-000Z-estudo-velho",
+               "quando": "2020-01-01T00:00:00.000Z", "aparelho": "celular",
+               "app": "teste", "tipo": "estudo",
+               "dados": {"rid": saida_e["r2"], "d": SEG, "dia": 1,
+                         "hab": "Reading", "min": 30, "grau": "sessao"}}]
+gravar_toques(TMP5, atrasado_e, "lote-estudo-atrasado.json")
+est_e3 = dobrar_em(TMP5)
+ok(est_e3["estudo"][saida_e["r2"]].get("del") is True,
+   "toque atrasado NAO ressuscita um registro desfeito",
+   est_e3["estudo"][saida_e["r2"]])
+ok(any(t.get("id") == "2020-01-01T00-00-00-000Z-estudo-velho"
+       for t in est_e3["historico"]),
+   "mas ele fica no historico: nada se perde")
+
+# Uniao: o celular registra no MESMO dia e as chaves nao colidem.
+saida_e2 = node("""
+const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
+const r = cel.registrarEstudo(10, "%s");
+console.log(JSON.stringify({toques: cel.getToques().filter(t=>t.tipo==="estudo"), r: r}));
+""" % SEG, RAIZ)
+gravar_toques(TMP5, saida_e2["toques"], "lote-estudo-cel.json")
+est_e4 = dobrar_em(TMP5)
+ok(saida_e2["r"] == SEG + "/celular/1" and saida_e2["r"] != saida_e["r1"],
+   "dois aparelhos no mesmo dia produzem chaves diferentes", saida_e2["r"])
+ok(est_e4["estudo"].get(saida_e["r1"], {}).get("min") == 15 and
+   est_e4["estudo"].get(saida_e2["r"], {}).get("min") == 10,
+   "e os dois convivem: a uniao preserva os dois aparelhos",
+   sorted(est_e4["estudo"].keys()))
+
+# E a pagina do outro lado recebe tudo, calcula a metrica e nao gera eco.
+volta_e = node("""
+const est = %s;
+const d = aparelho("mac2", {"cron:aparelho":JSON.stringify("mac2")}, null);
+const antes = d.getToques().length;
+const mudou = d.aplicarEstudoDoEstado(est);
+console.log(JSON.stringify({mudou: mudou,
+                            minSeg: d.minutosDoDia("%s"),
+                            minTer: d.minutosDoDia("%s"),
+                            grauSeg: d.grauDoDia("%s"),
+                            met: d.metricasToefl("%s"),
+                            novos: d.getToques().length - antes}));
+""" % (json.dumps(est_e4), SEG, TER, SEG, TER), RAIZ)
+ok(volta_e["mudou"] is True, "o aparelho novo recebe os registros")
+ok(volta_e["minSeg"] == 25,
+   "e soma 15 (mac) + 10 (celular) na segunda, sem contar o desfeito",
+   volta_e["minSeg"])
+ok(volta_e["grauSeg"] == "sessao",
+   "25 passa dos 20 previstos: a segunda e sessao no aparelho que so recebeu",
+   volta_e["grauSeg"])
+ok(volta_e["minTer"] == 20, "e a terca chega com os seus 20", volta_e["minTer"])
+ok(volta_e["met"]["contatos"] == 2 and volta_e["met"]["min"] == 45,
+   "a metrica e recalculada do outro lado a partir dos registros",
+   volta_e["met"])
+ok(volta_e["novos"] == 0, "sem gerar toque de volta (sem eco)", volta_e["novos"])
+
+# Descer duas vezes nao muda nada e continua sem eco.
+volta_e2 = node("""
+const est = %s;
+const d = aparelho("mac3", {"cron:aparelho":JSON.stringify("mac3")}, null);
+d.aplicarEstudoDoEstado(est);
+const antes = d.getToques().length;
+const outra = d.aplicarEstudoDoEstado(est);
+console.log(JSON.stringify({outra: outra, novos: d.getToques().length - antes,
+                            minSeg: d.minutosDoDia("%s")}));
+""" % (json.dumps(est_e4), SEG), RAIZ)
+ok(volta_e2["outra"] is False, "descer o mesmo estado outra vez nao muda nada")
+ok(volta_e2["novos"] == 0 and volta_e2["minSeg"] == 25,
+   "e nao duplica registro nem minuto", volta_e2)
+
+# COMPATIBILIDADE PARA FRENTE: um aparelho com a pagina mais nova que este
+# script manda um tipo que ele nao conhece. Nada se perde, e a dobra dos outros
+# nao para. E o que protege a 9F (desempenho) antes de o script aprende-la — e o
+# que protegeu o proprio `estudo` enquanto ele nao existia aqui.
+futuro = [{"v": 1, "id": "2026-09-07T10-00-00-000Z-futuro",
+           "quando": "2026-09-07T10:00:00.000Z", "aparelho": "celular",
+           "app": "teste", "tipo": "desempenho",
+           "dados": {"hab": "Listening", "nota": 23}}]
+gravar_toques(TMP5, futuro, "lote-futuro.json")
+est_f = dobrar_em(TMP5)
+ok(any(t.get("id") == "2026-09-07T10-00-00-000Z-futuro" for t in est_f["historico"]),
+   "tipo desconhecido vai inteiro para o historico")
+ok("desempenho" not in est_f,
+   "e nao inventa secao para o que o script ainda nao entende", sorted(est_f.keys()))
+ok(est_f["estudo"] == est_e4["estudo"],
+   "e a dobra dos tipos conhecidos continua igual")
+
+shutil.rmtree(TMP5, ignore_errors=True)
 shutil.rmtree(TMP, ignore_errors=True)
 shutil.rmtree(TMP2, ignore_errors=True)
 shutil.rmtree(TMP3, ignore_errors=True)

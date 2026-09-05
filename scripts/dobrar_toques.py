@@ -19,7 +19,7 @@ NADA SE PERDE. Um toque dobrado sai da pasta, mas o seu conteúdo fica em
 duas vezes não conte duas vezes. Toque que este script não entende continua onde
 está, e é relatado no fim.
 
-SEIS COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
+OITO COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
     registro   -> progresso dos subitens dos trilhos, em `itens`
     triagem    -> a marca de cada vaga na aba Vagas, em `triagem`
     meta       -> as metas do mes, uma a uma, em `metas`
@@ -27,12 +27,21 @@ SEIS COISAS ATRAVESSAM APARELHOS, e cada uma tem o seu tipo de toque:
     prioridade -> o que voce elegeu para a semana no Hoje, em `prioridades`
     toefl      -> os itens do guia do TOEFL, um a um, em `toefl`
     retomada   -> ate quando calar sobre um projeto parado, em `retomadas`
+    estudo     -> cada vez que voce estudou para o TOEFL, em `estudo`
 
 A retomada entrou na Fase 6B. A chave e painel/projeto e o valor e a data ate
 quando o projeto fica silenciado. Tambem nao tem lapide, e por um motivo
 proprio: nao existe operacao de dessilenciar — a entrada morre pela data que
 ela mesma carrega. A data e ABSOLUTA e nao duracao, para que um toque atrasado
 nao estenda o silencio ao chegar.
+
+O estudo entrou na Fase 9C. A chave e <data>/<aparelho>/<n>, montada no
+aparelho: a data porque toda pergunta do sistema e sobre um dia, o aparelho
+porque dois deles registrando o primeiro estudo do mesmo dia produziriam a mesma
+chave e um apagaria o outro em silencio, e o `n` porque o dia pode ter mais de um
+registro. O valor viaja INTEIRO (dia do plano, habilidade, minutos e grau)
+porque, ao contrario do guia, nao ha de onde le-lo do outro lado. TEM lapide
+`del`: o registro e coisa que o usuario cria, e por isso pode desfazer.
 
 O toefl entrou na Fase 6A. Ele e o caso mais simples dos seis: a chave e o `id`
 do item no TOEFL_GUIA e o valor e um booleano. Nao tem lapide `del` porque o
@@ -96,6 +105,7 @@ def estado_vazio():
         "prioridades": {},
         "toefl": {},
         "retomadas": {},
+        "estudo": {},
         "historico": [],
         "_ids_dobrados": [],
     }
@@ -174,6 +184,15 @@ def alvo(t):
         if not d.get("pid") or not d.get("projId"):
             return (None, None)
         return ("retomadas", "%s/%s" % (d.get("pid"), d.get("projId")))
+    if tipo == "estudo":
+        # A chave ja vem pronta do aparelho: <data>/<aparelho>/<n>. Ela e
+        # DETERMINISTA e nunca reusada — a lapide continua ocupando o lugar dela
+        # —, e por isso dois aparelhos que registrem no mesmo dia nunca colidem.
+        # Montar a chave aqui, a partir dos campos, seria um segundo lugar
+        # decidindo a identidade de um registro.
+        if not d.get("rid"):
+            return (None, None)
+        return ("estudo", str(d.get("rid")))
     return (None, None)
 
 
@@ -243,6 +262,26 @@ def valor(t):
         # So a data. O titulo do projeto e o estagio nao viajam: sao lidos do
         # trilho no aparelho que desenha, pela regra da Fase 2.
         v = {"ate": d.get("ate")}
+    elif tipo == "estudo":
+        # O REGISTRO VIAJA INTEIRO, e a razao e o oposto da do guia: la o texto
+        # mora no TOEFL_GUIA e o aparelho que desenha o le de la; aqui nao ha de
+        # onde ler. Sem `hab` e `min` o outro aparelho nao tem como recalcular
+        # metrica nenhuma — quantos contatos, quantos minutos, qual habilidade.
+        #
+        # NENHUM CAMPO E TEXTO LIVRE. `hab` e `dia` saem do plano, `min` e um
+        # numero que o dedo escolheu numa lista fechada, e `grau` e derivado dos
+        # dois. Nada aqui e digitado, e por isso nada aqui e imprevisivel no
+        # repositorio publico.
+        #
+        # `grau`, e nao `tipo`: o toque ja tem um campo `tipo` (que vale
+        # "estudo"), e dois `tipo` com sentidos diferentes no mesmo objeto e um
+        # convite ao erro.
+        #
+        # LAPIDE `del` EXISTE AQUI, e no toefl nao existe. O item do guia e
+        # estrutura da pagina — nao se cria nem se apaga, so se marca. O
+        # registro de estudo o usuario cria, e por isso pode desfazer.
+        v = {"d": d.get("d"), "dia": d.get("dia"), "hab": d.get("hab"),
+             "min": d.get("min"), "grau": d.get("grau"), "del": bool(d.get("del"))}
     else:
         # A meta apagada vira lapide: fica no estado com del=true, para que o
         # aparelho que ainda a tem saiba que ela morreu. Sem isso, ausencia e
