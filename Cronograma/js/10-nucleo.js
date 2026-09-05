@@ -201,11 +201,20 @@ function aplicarEstudoDoEstado(est){
     if(!r || !r.quando) return;
     var loc = st[rid];
     if(loc && (loc.em || "") >= r.quando) return;   /* empate fica como esta */
+    /* A LAPIDE PASSA SEMPRE, ate malformada: apagar e a operacao segura, e
+       recusa-la deixaria vivo um registro que alguem desfez. */
     if(r.del){ st[rid] = {d:r.d, del:true, em:r.quando}; mudou = true; return; }
     /* O registro chega inteiro porque o outro aparelho nao pode recalcular o
        que nao viajou: sem `hab` e `min` nao ha metrica nenhuma do lado de la.
        Nenhum destes campos e texto livre — todos saem do plano ou de um numero
-       que voce tocou. */
+       que voce tocou.
+
+       MAS CHEGAR NAO E SER ACEITO (Fase 9C-bis). O que nao passa no
+       registroValido() e ignorado, e continua no estado.json: o arquivo
+       descreve, este aparelho decide. Ignorar em silencio e o certo aqui —
+       nao ha usuario a quem avisar sobre um dado que ele nao criou, e a
+       proxima descida simplesmente o ignora de novo. */
+    if(!registroValido(r)) return;
     st[rid] = {d:r.d, dia:r.dia, hab:r.hab, min:r.min, grau:r.grau, em:r.quando};
     mudou = true;
   });
@@ -404,6 +413,20 @@ function aparelhoId(){
   if(!a){ a = Math.random().toString(36).slice(2,8); save("cron:aparelho", a); }
   return a;
 }
+/* ================== QUEM ESCREVE E A ABA, E NAO O APARELHO ==================
+   (Fase 9C-bis) DUAS ABAS DO MESMO NAVEGADOR SAO DOIS ESCRITORES. Elas
+   compartilham o localStorage, e portanto compartilham o `cron:aparelho` e o
+   `cron:relogio`. Tudo o que se identifica so pelo aparelho pode colidir entre
+   elas — e colidir aqui nao da erro: da silencio, que e pior.
+
+   ESTE TOKEN NAO MORA NO localStorage, e a ausencia e o mecanismo inteiro. Ele
+   nasce a cada carregamento da pagina, em memoria, e por isso duas abas nunca
+   podem te-lo igual. Guarda-lo seria compartilha-lo, que e exatamente o
+   problema.
+
+   Tres caracteres bastam: ele so precisa distinguir as abas abertas AGORA no
+   mesmo navegador, e nao ser unico no mundo. */
+var ABA_ID = Math.random().toString(36).slice(2, 5);
 
 /* ================= RELOGIO MONOTONICO DO APARELHO =================
    O id do toque nasce do instante. Dois toques no mesmo milissegundo geravam
@@ -464,7 +487,15 @@ function enfileirarToque(tipo, dados, quandoISO){
   var iso = new Date(instanteDoToque(quandoISO)).toISOString();
   var f = getToques();
   f.push({ v:TOQUES_SCHEMA,
-           id: iso.replace(/[:.]/g,"-") + "-" + aparelhoId(),
+           /* O ABA_ID ENTRA AQUI, E VALE PARA OS OITO TIPOS (Fase 9C-bis). O
+              relogio monotonico garante instantes distintos DENTRO de uma aba,
+              porque le e escreve `cron:relogio` em sequencia; entre duas abas
+              nao ha tranca, e o mesmo milissegundo pode sair duas vezes. Dois
+              toques com o mesmo id fariam a dobra descartar o segundo como "ja
+              visto", e o dado sumiria sem erro nenhum. Este sufixo fecha isso
+              sem mudar o formato: o id sempre foi opaco — a dobra so o compara
+              consigo mesmo. */
+           id: iso.replace(/[:.]/g,"-") + "-" + aparelhoId() + ABA_ID,
            quando: iso,
            aparelho: aparelhoId(),
            app: APP_VERSION,

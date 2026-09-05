@@ -65,7 +65,14 @@ function criarAparelho(nome, opcoes) {
      que o Cowork escreve. Testar com a semente crua seria testar um aparelho
      que nunca sincronizou — e o caminho entrada -> mesclarEntrada -> trilho e
      justamente metade da arquitetura que a Fase 2 promete nao quebrar. */
-  const armazem = Object.assign({ "cron:aparelho": JSON.stringify(nome) }, opcoes.storage || {});
+  /* `opcoes.armazem` DA DUAS ABAS DO MESMO NAVEGADOR (Fase 9C-bis): dois
+     contextos do vm sobre O MESMO objeto de armazenamento. E o unico jeito de
+     provar a corrida entre abas — elas compartilham localStorage, e portanto
+     compartilham cron:aparelho e cron:relogio, mas cada carregamento gera o seu
+     ABA_ID em memoria. Sem isto, criarAparelho() so sabe fazer aparelhos
+     diferentes, que e justamente o caso que ja estava provado. */
+  const armazem = opcoes.armazem ||
+    Object.assign({ "cron:aparelho": JSON.stringify(nome) }, opcoes.storage || {});
   if (opcoes.semEntrada !== true) {
     armazem["cron:entrada"] = fs.readFileSync(
       path.join(RAIZ, "Cronograma", "entrada.json"), "utf8");
@@ -1769,7 +1776,7 @@ ok(/<link[^>]+rel="manifest"/.test(HTML), "e o HTML o referencia");
   ok(fs.existsSync(path.join(RAIZ, "Cronograma", "icones", n)), "o icone " + n + " existe");
 });
 
-console.log("\n=== 44. TOEFL: a estreia do plano e o catalogo (Fase 9A) ===");
+console.log("\n=== 48. TOEFL: a estreia do plano e o catalogo (Fase 9A) ===");
 const T9 = criarAparelho("toefl9a");
 const ANTES = "2026-09-06", D0 = "2026-09-07", DEPOIS = "2026-10-19";  /* dom · seg · seg */
 
@@ -1834,7 +1841,7 @@ ok(JSON.stringify(T9.TOEFL_FASES) === JSON.stringify(["f1","f2","f3"]),
 ok(T9.avisoDoCalendario.length === 0 && typeof T9.currentFaseId === "function",
    "o mecanismo de fase pelo nucleo continua de pe");
 
-console.log("\n=== 45. TOEFL: o registro do estudo e as metricas (Fase 9B) ===");
+console.log("\n=== 49. TOEFL: o registro do estudo e as metricas (Fase 9B) ===");
 const b9E = criarAparelho("toefl9b");
 const b9SEG = "2026-09-07", b9TER = "2026-09-08", b9QUA = "2026-09-09",
       b9QUI = "2026-09-10", b9SEX = "2026-09-11", b9SAB = "2026-09-12",
@@ -1842,10 +1849,12 @@ const b9SEG = "2026-09-07", b9TER = "2026-09-08", b9QUA = "2026-09-09",
 
 /* O registro e um ACONTECIMENTO, com chave propria e determinista. */
 const b9rid1 = b9E.registrarEstudo(15, b9SEG);
-ok(b9rid1 === "2026-09-07/toefl9b/1",
-   "a chave e <data>/<aparelho>/<n>", b9rid1);
+/* A chave e <data>/<escritor>/<n>, e o escritor e aparelho+aba (Fase 9C-bis). */
+ok(/^2026-09-07\/toefl9b-[a-z0-9]{1,3}\/1$/.test(b9rid1),
+   "a chave e <data>/<aparelho>-<aba>/<n>", b9rid1);
 const b9rid2 = b9E.registrarEstudo(10, b9SEG);
-ok(b9rid2 === "2026-09-07/toefl9b/2", "e o segundo registro do dia nao colide", b9rid2);
+ok(b9rid2 === b9rid1.replace(/\/1$/, "/2"),
+   "e o segundo registro da mesma aba nao colide", b9rid2);
 const b9r1 = b9E.estudoStore()[b9rid1];
 ok(b9r1.d === b9SEG && b9r1.dia === 1 && b9r1.hab === "Reading" && b9r1.min === 15 && !!b9r1.em,
    "e guarda data, dia do plano, habilidade, duracao e instante", b9r1);
@@ -1979,7 +1988,7 @@ ok(JSON.stringify(b9E.TOEFL_SEMANA[1]) === JSON.stringify(
      {comp:"Reading", t:TOEFL_TEXTO_ORIGINAL[1].t, n:TOEFL_TEXTO_ORIGINAL[1].n}),
    "e o plano da segunda continua exatamente o mesmo");
 
-console.log("\n=== 46. TOEFL: nao existe divida de estudo (Fase 9D) ===");
+console.log("\n=== 50. TOEFL: nao existe divida de estudo (Fase 9D) ===");
 const b9dA = criarAparelho("toefl9d");
 /* Deixa a JANELA INTEIRA sem marca nenhuma: e o pior caso, e e o que o
    desenho promete tratar sem cobranca. */
@@ -2032,6 +2041,112 @@ ok(typeof b9dA.marcarAtrasada === "function" &&
    typeof b9dA.podarDispensados === "function" &&
    b9dA.ATRASO_DIAS === 7,
    "a janela de sete dias, a dispensa e a poda continuam inteiras");
+
+console.log("\n=== 51. TOEFL: concorrencia e integridade (Fase 9C-bis) ===");
+
+/* ---- DUAS ABAS DO MESMO NAVEGADOR ----
+   Mesmo armazenamento, mesmo cron:aparelho, mesmo cron:relogio. So o ABA_ID
+   difere, porque ele nasce em memoria a cada carregamento. */
+const hbStore = { "cron:aparelho": JSON.stringify("mesmoapar") };
+const hbAbaA = criarAparelho("mesmoapar", { armazem: hbStore });
+const hbAbaB = criarAparelho("mesmoapar", { armazem: hbStore });
+ok(hbAbaA.aparelhoId() === hbAbaB.aparelhoId(),
+   "as duas abas sao o MESMO aparelho", hbAbaA.aparelhoId());
+ok(hbAbaA.ABA_ID !== hbAbaB.ABA_ID,
+   "mas escritores diferentes", [hbAbaA.ABA_ID, hbAbaB.ABA_ID]);
+const hbSEG = "2026-09-07";
+const hbRidA = hbAbaA.registrarEstudo(15, hbSEG);
+const hbRidB = hbAbaB.registrarEstudo(10, hbSEG);
+ok(hbRidA !== hbRidB, "dois registros simultaneos nao ocupam o mesmo rid", [hbRidA, hbRidB]);
+ok(hbAbaB.estudoStore()[hbRidA] && hbAbaB.estudoStore()[hbRidB],
+   "e os dois sobrevivem no armazem compartilhado",
+   Object.keys(hbAbaB.estudoStore()));
+ok(hbAbaB.minutosDoDia(hbSEG) === 25,
+   "os minutos somam os dois, sem um apagar o outro", hbAbaB.minutosDoDia(hbSEG));
+/* O id do TOQUE tambem nao pode colidir — e isso vale para os OITO tipos, e nao
+   so para o `estudo`.
+
+   A FILA E COMPARTILHADA, como todo o resto do localStorage: as duas abas veem
+   a MESMA lista. Entao a pergunta certa nao e "as listas diferem" — e sim se ha
+   id repetido dentro dela, e se as duas abas de fato assinaram cada uma a sua. */
+const hbFila = hbAbaB.getToques(), hbIds = hbFila.map(t => t.id);
+ok(hbIds.length >= 2, "a fila compartilhada tem os toques das duas abas", hbIds.length);
+ok(new Set(hbIds).size === hbIds.length, "e nenhum id se repete nela", hbIds);
+ok(hbIds.some(i => i.endsWith(hbAbaA.ABA_ID)) && hbIds.some(i => i.endsWith(hbAbaB.ABA_ID)),
+   "cada aba assinou o seu, e da para dizer qual escreveu qual", hbIds);
+/* A prova de que a trava e o ABA_ID, e nao sorte: forcando o MESMO instante nas
+   duas abas, os dois ids continuam distintos. */
+const hbN = hbAbaB.getToques().length;
+hbAbaA.enfileirarToque("toefl", { iid: "f1-conta", feito: true }, "2026-01-02T00:00:00.000Z");
+hbAbaB.enfileirarToque("toefl", { iid: "f1-anki", feito: true }, "2026-01-02T00:00:00.000Z");
+const hbDois = hbAbaB.getToques().slice(hbN);
+ok(hbDois.length === 2 && hbDois[0].id !== hbDois[1].id,
+   "mesmo forcando o mesmo instante, os dois ids diferem",
+   hbDois.map(t => t.id));
+ok(hbDois[0].id.endsWith(hbAbaA.ABA_ID) && hbDois[1].id.endsWith(hbAbaB.ABA_ID),
+   "e o que os separa e o ABA_ID, e nao o relogio", hbDois.map(t => t.id));
+
+/* ---- REGISTRO INVALIDO CHEGANDO PELO ESTADO ---- */
+const hbC = criarAparelho("hardening");
+const hbQUANDO = "2026-09-07T12:00:00.000Z";
+function hbDesce(ctx, rid, r) {
+  const est = { estudo: {} };
+  est.estudo[rid] = Object.assign({ quando: hbQUANDO, aparelho: "outro" }, r);
+  return ctx.aplicarEstudoDoEstado(est);
+}
+const hbBOM = { d: "2026-09-07", dia: 1, hab: "Reading", min: 15, grau: "contato" };
+ok(hbDesce(hbC, "x/1", hbBOM) === true, "um registro valido e aceito");
+ok(hbC.minutosDoDia("2026-09-07") === 15, "e conta");
+
+const hbD = criarAparelho("hardening2");
+ok(hbDesce(hbD, "x/2", Object.assign({}, hbBOM, { dia: 3 })) === false,
+   "`dia` incompativel com `d` e recusado (07/09 e segunda, nao quarta)");
+ok(hbDesce(hbD, "x/3", Object.assign({}, hbBOM, { min: 97 })) === false,
+   "duracao fora da lista fechada e recusada — 97 min nao vem de dedo nenhum");
+ok(hbDesce(hbD, "x/4", Object.assign({}, hbBOM, { min: 999999 })) === false,
+   "e uma duracao absurda tambem");
+ok(hbDesce(hbD, "x/5", Object.assign({}, hbBOM, { grau: "qualquer" })) === false,
+   "grau fora dos tres e recusado");
+ok(hbDesce(hbD, "x/6", Object.assign({}, hbBOM, { d: "nao-e-data", dia: 1 })) === false,
+   "data malformada e recusada");
+ok(hbDesce(hbD, "x/7", Object.assign({}, hbBOM, { hab: "" })) === false,
+   "habilidade vazia e recusada");
+ok(hbDesce(hbD, "x/8", { d: "2026-09-12", dia: 6, hab: "Reading", min: 15, grau: "contato" }) === false,
+   "um toque fabricado no SABADO e recusado: o plano nao pede nada la");
+ok(hbDesce(hbD, "x/9", { d: "2026-09-04", dia: 5, hab: "Speaking", min: 15, grau: "contato" }) === false,
+   "e um ANTERIOR AO D0 tambem: antes da estreia nao havia o que cumprir");
+ok(Object.keys(hbD.estudoStore()).length === 0,
+   "nenhum dos invalidos entrou no armazem", hbD.estudoStore());
+ok(hbD.metricasToefl("2026-09-07").contatos === 0,
+   "e a metrica nao foi contaminada");
+/* A porta de entrada local usa a MESMA validacao. */
+ok(hbD.registrarEstudo(97, "2026-09-07") === null,
+   "e gravar localmente uma duracao fora da lista tambem e recusado");
+
+/* A LAPIDE PASSA SEMPRE, ate malformada: apagar e a operacao segura. */
+const hbE = criarAparelho("hardening3");
+ok(hbDesce(hbE, "x/10", { d: "2026-09-07", del: true }) === true,
+   "a lapide passa mesmo sem os campos do registro");
+ok(hbE.estudoStore()["x/10"].del === true, "e fica gravada como lapide");
+
+/* ---- LAPIDE LOCAL x VERSAO VALIDA COM TIMESTAMP MAIOR ----
+   O relogio decide, como em todos os outros sete tipos: mais novo manda. */
+const hbF = criarAparelho("hardening4");
+const hbRidF = hbF.registrarEstudo(15, "2026-09-07");
+hbF.desfazerEstudo(hbRidF);
+ok(hbF.estudoStore()[hbRidF].del === true && hbF.minutosDoDia("2026-09-07") === 0,
+   "lapide local: o registro nao conta mais");
+const hbEmLapide = hbF.estudoStore()[hbRidF].em;
+const hbAntes = new Date(new Date(hbEmLapide).getTime() - 1000).toISOString();
+const hbDepois = new Date(new Date(hbEmLapide).getTime() + 1000).toISOString();
+const hbEstAntigo = { estudo: {} };
+hbEstAntigo.estudo[hbRidF] = Object.assign({ quando: hbAntes, aparelho: "outro" }, hbBOM);
+ok(hbF.aplicarEstudoDoEstado(hbEstAntigo) === false && hbF.minutosDoDia("2026-09-07") === 0,
+   "uma versao MAIS ANTIGA nao ressuscita o desfeito");
+const hbEstNovo = { estudo: {} };
+hbEstNovo.estudo[hbRidF] = Object.assign({ quando: hbDepois, aparelho: "outro" }, hbBOM);
+ok(hbF.aplicarEstudoDoEstado(hbEstNovo) === true && hbF.minutosDoDia("2026-09-07") === 15,
+   "mas uma MAIS NOVA e valida vence a lapide: vence o relogio, como nos outros sete");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);

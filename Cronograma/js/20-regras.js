@@ -107,17 +107,65 @@ function grauDoEstudo(min, prevista){
    amanha discordaria do plano. */
 function permiteSimulado(a){ return !!(a && /simulado/i.test(a.n || "")); }
 
+/* ============ O QUE ESTE APARELHO ACEITA COMO REGISTRO (Fase 9C-bis) ========
+   O ARQUIVO DESCREVE, O APARELHO DECIDE — e decidir inclui recusar. Ate aqui a
+   descida gravava o que viesse do estado.json. Nao e falha de seguranca (quem
+   escreve no repositorio ja tem acesso maior), mas um cliente com defeito
+   contaminaria a metrica de todos os aparelhos, e a metrica e a unica coisa que
+   esta tela promete.
+
+   ESTRUTURA COM RIGOR, CONTEUDO DO PLANO COM FOLGA — e a distincao e o desenho,
+   nao preguica. O que e verificado aqui nao muda nunca: uma data e uma data, o
+   dia da semana de uma data e aritmetica, e o fim de semana nao pede estudo
+   porque o plano poe `null` la. Ja `hab` e a duracao prevista saem do TEXTO do
+   plano, e o texto pode ser reescrito — validar contra ele faria uma edicao de
+   redacao APAGAR historico legitimo, que e um estrago maior do que o bug de que
+   nos protegemos. Por isso `hab` so precisa ser um texto curto, e `grau` so
+   precisa ser um dos tres: quem decide o grau do DIA e o grauDoDia(), que
+   recalcula da soma.
+
+   A LAPIDE PASSA SEMPRE, mesmo malformada: apagar e a operacao segura. Recusar
+   um `del` deixaria vivo um registro que alguem desfez. */
+function registroValido(r){
+  if(!r || typeof r !== "object") return false;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(r.d || "")) return false;
+  var dia = diaDaSemanaDe(r.d);
+  if(!isFinite(dia)) return false;
+  if(r.dia !== dia) return false;                 /* aritmetica, nao redacao */
+  if(!TOEFL_SEMANA[dia]) return false;            /* fim de semana: o plano nao pede */
+  if(r.d < TOEFL_D0) return false;                /* antes da estreia nao havia o que cumprir */
+  if(TOEFL_MINUTOS_OK.indexOf(r.min) < 0) return false;
+  if(TOEFL_GRAUS.indexOf(r.grau) < 0) return false;
+  if(typeof r.hab !== "string" || !r.hab || r.hab.length > 40) return false;
+  return true;
+}
+
 /* Grava UM acontecimento. Devolve a chave criada, ou null quando o dia nao
    pede nada — fim de semana ou antes do D0. Nao decide nada sobre a tela. */
 function registrarEstudo(min, hojeISO, tipoForcado){
   var d = hojeISO || ymd(now);
   var a = atividadeDoDia(diaDaSemanaDe(d), d);
   if(!a || !(min > 0)) return null;
-  var st = estudoStore(), pref = d + "/" + aparelhoId() + "/", n = 1;
+  /* O SEGMENTO DO MEIO E O ESCRITOR, e nao o aparelho (Fase 9C-bis). Duas abas
+     do mesmo navegador compartilham o localStorage e, com ele, o aparelhoId; o
+     `while` abaixo e um read-modify-write, e duas abas achariam o mesmo `n`
+     livre. Os dois registros nasceriam com o mesmo rid, e na dobra o relogio
+     faria um deles desaparecer — sem erro, sem aviso.
+
+     Com o ABA_ID no prefixo o problema deixa de existir por construcao: nenhuma
+     outra aba escreve neste prefixo, entao ninguem disputa o contador. O
+     proposito do segmento nao mudou — ele sempre foi "quem escreveu isto" —,
+     so ficou preciso. */
+  var st = estudoStore(), pref = d + "/" + aparelhoId() + "-" + ABA_ID + "/", n = 1;
   while(st[pref + n]) n++;
   var rid = pref + n;
   var reg = {d:d, dia:a.dia, hab:a.comp, min:min,
              grau: tipoForcado || grauDoEstudo(min, a.min)};
+  /* A MESMA PORTA PARA OS DOIS LADOS (Fase 9C-bis). Validar so o que desce
+     deixaria o defeito entrar por aqui e sair sincronizado para os outros
+     aparelhos — este aparelho seria a fonte da contaminacao de que a descida se
+     protege. Um `min` fora da lista nao vem de dedo nenhum: vem de bug. */
+  if(!registroValido(reg)) return null;
   /* O TOQUE E A GRAVACAO SAO O MESMO ATO, COM O MESMO INSTANTE (Fase 9C). O
      enfileirarToque devolve o iso que usou; guardar outro valor aqui faria os
      dois lados discordarem sobre quando aquilo aconteceu, e o relogio da dobra
@@ -265,7 +313,7 @@ function renderToeflHoje(dia, hojeISO){
      treino nos outros dias porque o plano nao pede treino nos outros dias. */
   if(permiteSimulado(a)){
     h += '<div class="th-fiz"><span class="th-fiz-r">Simulado</span>'+
-         [60, 90, 120].map(function(x){
+         TOEFL_SIMULADO_MIN.map(function(x){
            return '<button class="th-d" onclick="registrarToefl('+x+',\'treino\')">'+x+'</button>';
          }).join("")+'<span class="th-fiz-u">min</span></div>';
   }

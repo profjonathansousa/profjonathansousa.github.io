@@ -483,8 +483,8 @@ ok(all("t" not in v and "n" not in v and "rec" not in v
        for v in est_e["estudo"].values()),
    "nenhum texto do plano viaja junto: so o que nao da para reler do outro lado",
    est_e["estudo"])
-ok(saida_e["r1"].startswith(SEG + "/mac/"),
-   "a chave carrega a data e o aparelho", saida_e["r1"])
+ok(saida_e["r1"].startswith(SEG + "/mac-") and saida_e["r1"].endswith("/1"),
+   "a chave carrega a data e o escritor (aparelho + aba)", saida_e["r1"])
 
 # Redobra: idempotente, como os outros.
 antes_h = len(est_e["historico"])
@@ -517,7 +517,7 @@ console.log(JSON.stringify({toques: cel.getToques().filter(t=>t.tipo==="estudo")
 """ % SEG, RAIZ)
 gravar_toques(TMP5, saida_e2["toques"], "lote-estudo-cel.json")
 est_e4 = dobrar_em(TMP5)
-ok(saida_e2["r"] == SEG + "/celular/1" and saida_e2["r"] != saida_e["r1"],
+ok(saida_e2["r"].startswith(SEG + "/celular-") and saida_e2["r"] != saida_e["r1"],
    "dois aparelhos no mesmo dia produzem chaves diferentes", saida_e2["r"])
 ok(est_e4["estudo"].get(saida_e["r1"], {}).get("min") == 15 and
    est_e4["estudo"].get(saida_e2["r"], {}).get("min") == 10,

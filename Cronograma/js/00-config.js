@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-05-toefl9d";
+const APP_VERSION = "2026-09-05-toefl9cbis";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -558,6 +558,16 @@ const TOEFL_DURACOES = [10, 15, 20, 30, 45, 60];
    com atividade e dois de descanso, entao cinco contatos por semana e exatamente
    cumprir o plano — nao um alvo por cima dele. */
 const TOEFL_META_SEMANA = 5;
+/* O simulado tem duracoes proprias: o plano fala em "simulado completo", e uma
+   prova completa nao cabe nos 60 da lista de cima. Sao constantes separadas
+   porque respondem perguntas diferentes — quanto dura um pedaco da atividade do
+   dia, e quanto dura uma prova. */
+const TOEFL_SIMULADO_MIN = [60, 90, 120];
+/* O CONJUNTO ACEITO NA VALIDACAO (Fase 9C-bis). A uniao dos dois, e nao um
+   intervalo: "entre 10 e 120" aceitaria 97 minutos, que nenhum botao produz e
+   portanto so pode vir de defeito. */
+const TOEFL_MINUTOS_OK = TOEFL_DURACOES.concat(TOEFL_SIMULADO_MIN);
+const TOEFL_GRAUS = ["contato", "sessao", "treino"];
 
 const TOEFL_FASES = ["f1","f2","f3"];
 const TOEFL_ROTULO = {

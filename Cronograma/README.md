@@ -419,33 +419,72 @@ de sete dias, dispensa, poda — não foi tocado.
 > (`registrarEstudo` aceita a data), mas nenhuma tela o oferece. Fica em aberto
 > se vale a pena — *backfill* não é dívida, é honestidade sobre o que houve.
 
+### Concorrência e integridade (Fase 9C-bis)
+
+Duas correções vindas da auditoria de 05/09, ambas fechando o problema **por
+construção** em vez de por probabilidade.
+
+**Duas abas do mesmo navegador são dois escritores.** Elas compartilham o
+`localStorage` e, com ele, o `cron:aparelho` e o `cron:relogio` — então tudo que
+se identificava só pelo aparelho podia colidir entre elas. E colidir aqui não dá
+erro: dá silêncio, que é pior.
+
+`ABA_ID` é um token de três caracteres gerado a cada carregamento da página.
+**Ele não mora no `localStorage`, e a ausência é o mecanismo inteiro** — guardá-lo
+seria compartilhá-lo, que é exatamente o problema. Ele entra em dois lugares:
+
+| Onde | O que resolve | Alcance |
+|---|---|---|
+| `id` do toque | dois toques no mesmo milissegundo teriam o mesmo id, e a dobra descartaria o segundo como "já visto" | **os oito tipos** |
+| segmento do meio do `rid` | duas abas achariam o mesmo `n` livre e um registro apagaria o outro na dobra | só o `estudo` |
+
+O `rid` passou de `<data>/<aparelho>/<n>` para `<data>/<aparelho>-<aba>/<n>`. O
+propósito do segmento não mudou — ele sempre foi *"quem escreveu isto"* —, só
+ficou preciso. Como nenhuma outra aba escreve naquele prefixo, o contador deixa
+de ter disputa.
+
+> **O teste prova a propriedade, não reproduz a corrida.** Dois contextos sobre o
+> mesmo armazenamento executam em sequência num `vm`, e sequência não intercala.
+> O que as asserções garantem é o que importa: ids únicos na fila compartilhada,
+> `rid`s distintos, cada aba assinando o seu, e os dois registros somando em vez
+> de um apagar o outro — inclusive quando o mesmo instante é forçado nas duas.
+
+**O aparelho decide o que aceita.** `registroValido()` guarda as duas portas de
+entrada — a descida do `estado.json` e a gravação local. Validar só a descida
+deixaria o defeito entrar por aqui e sair sincronizado: este aparelho seria a
+fonte da contaminação de que ele se protege.
+
+**Estrutura com rigor, conteúdo do plano com folga**, e a distinção é o desenho:
+
+- **verificado:** `d` é uma data bem formada · `dia` é o dia da semana de `d`
+  (aritmética) · o dia não é fim de semana (o plano põe `null` lá) · `d >= D0` ·
+  `min` está no conjunto fechado (`TOEFL_DURACOES` ∪ `TOEFL_SIMULADO_MIN`) ·
+  `grau` é um dos três · `hab` é texto curto e não vazio;
+- **não verificado:** se `hab` bate com a habilidade daquele dia, ou se `grau`
+  bate com os minutos. Esses saem do **texto** do plano, e o texto pode ser
+  reescrito — validar contra ele faria uma edição de redação **apagar histórico
+  legítimo**, estrago maior que o bug de que nos protegemos.
+
+O `min` é um conjunto, e não um intervalo: *"entre 10 e 120"* aceitaria 97
+minutos, que nenhum botão produz e portanto só pode vir de defeito.
+
+**A lápide passa sempre**, mesmo malformada: apagar é a operação segura, e
+recusá-la deixaria vivo um registro que alguém desfez. E o registro recusado
+**continua no `estado.json`** — o arquivo descreve, o aparelho decide; a próxima
+descida simplesmente o ignora de novo.
+
 ### Dívida técnica conhecida do TOEFL
-
-Três itens levantados na auditoria de 05/09, nenhum bloqueante, todos com o
-comportamento normal do painel intacto:
-
-**P2 · Duas abas do mesmo navegador podem colidir.** `aparelhoId()` mora no
-`localStorage` e é compartilhado entre abas, e `registrarEstudo()` faz
-*read-modify-write* para achar o próximo `n`. Duas abas simultâneas podem gerar o
-mesmo `rid`, e aí o relógio da dobra faz um dos dois registros desaparecer em
-silêncio. **São na verdade dois caminhos distintos**, e a distinção importa: o do
-`rid` é da 9C; o do `id` do toque vem de `instanteDoToque()`, é *read-modify-write*
-sobre a mesma chave e **atinge os oito tipos**, não só o `estudo` — é anterior a
-esta fase e mais amplo que ela. Os testes provam dois **aparelhos**, não duas
-abas.
-
-**P2 · O registro recebido é gravado sem validação.** `aplicarEstudoDoEstado()` e
-o `valor()` da dobra reproduzem `d`, `dia`, `hab`, `min` e `grau` como vieram, sem
-checar se `min` está na lista fechada, se `dia` corresponde a `d`, se `hab` é a
-habilidade daquele dia do plano ou se `grau` é compatível com `min`. Não é falha
-de segurança — quem escreve no repositório já tem acesso maior —, mas um cliente
-com defeito poderia contaminar o estado de todos os aparelhos.
 
 **P3 · `permiteSimulado()` depende da redação da nota.** A autorização para
 registrar `treino` nasce de `/simulado/i` no texto do dia. É fiel ao princípio de
 não criar metadado paralelo, e é frágil na mesma medida: trocar *"troque por um
 simulado completo"* por *"faça um treino completo"* mudaria o comportamento sem
 que ninguém percebesse.
+
+**Sem backfill.** Não há como marcar retroativamente um estudo que aconteceu e
+não foi lançado. O domínio aceita a data (`registrarEstudo` recebe `hojeISO`),
+mas nenhuma tela a oferece. Fica em aberto se vale a pena — *backfill* não é
+dívida, é honestidade sobre o que houve.
 
 > **Nota de nomenclatura, não de defeito:** existem dois graus — o do registro
 > (`r.grau`, medido pelos minutos daquele lançamento) e o do dia (`grauDoDia()`,
@@ -562,7 +601,7 @@ Oito coisas atravessam aparelhos, cada uma com um tipo de toque:
 | `prioridade` | `prioridades` | `AAAA-Wnn/id` |
 | `toefl` | `toefl` | `id` do item do guia |
 | `retomada` | `retomadas` | `painel/projeto` |
-| `estudo` | `estudo` | `AAAA-MM-DD/aparelho/n` |
+| `estudo` | `estudo` | `AAAA-MM-DD/aparelho-aba/n` |
 
 **O progresso do TOEFL atravessa aparelhos desde a Fase 6A.** Fechar o núcleo
 no computador avança a fase no celular. O mapa é `cron:toefl-guia`, plano e
@@ -584,7 +623,7 @@ em ordens diferentes produzem **união**, nunca subtração. As chaves antigas
 `cron:toefl-guia:<fase>` **não são apagadas**: ficam como rede de segurança.
 
 **O estudo do TOEFL atravessa desde a Fase 9C.** O contato feito no celular
-conta no Mac. A chave é `<data>/<aparelho>/<n>`, montada no aparelho e nunca
+conta no Mac. A chave é `<data>/<aparelho>-<aba>/<n>`, montada no aparelho e nunca
 remontada aqui — um segundo lugar decidindo a identidade de um registro seria um
 segundo lugar para errar.
 
@@ -874,7 +913,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9A — TOEFL: ancoragem do plano (`TOEFL_D0`) e catálogo de execução | concluída |
 | 9B — TOEFL: registro de execução e métricas | concluída |
 | 9C — TOEFL: travessia do registro entre aparelhos (toque `estudo`) | concluída |
-| 9D — TOEFL: sem dívida (sair de `atrasadas()`) | concluída |\n| 9C-bis — TOEFL: concorrência entre abas e validação do registro | a fazer |
+| 9D — TOEFL: sem dívida (sair de `atrasadas()`) | concluída |\n| 9C-bis — TOEFL: concorrência entre abas e validação do registro | concluída |
 | 9E — TOEFL: lembrete pela Fase 8 | a fazer |
 
 ### Previsto e ainda não implementado
