@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-03T01:51:29.952Z",
+ "_dobrado_em": "2026-09-05T03:41:27.354Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -29,6 +29,24 @@
    "projT": "A · Clássicos fundadores",
    "subT": "Durkheim · As formas elementares da vida religiosa",
    "quando": "2026-08-31T10:47:02.179Z",
+   "aparelho": "s41hky"
+  },
+  "tecnico/p1/s11": {
+   "st": 2,
+   "vida": "ativo",
+   "temMotivo": false,
+   "projT": "Sites",
+   "subT": "Revisar índex principal",
+   "quando": "2026-09-05T03:41:21.586Z",
+   "aparelho": "s41hky"
+  },
+  "tecnico/p1/s12": {
+   "st": 1,
+   "vida": "ativo",
+   "temMotivo": false,
+   "projT": "Sites",
+   "subT": "Revisar cronograma",
+   "quando": "2026-09-05T03:41:27.354Z",
    "aparelho": "s41hky"
   }
  },
@@ -2270,6 +2288,66 @@
     "t": "Concurso hoje!!!",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-05T03-41-20-258Z-s41hky",
+   "quando": "2026-09-05T03:41:20.258Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s11",
+    "projT": "Sites",
+    "subT": "Revisar índex principal",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-05T03-41-21-586Z-s41hky",
+   "quando": "2026-09-05T03:41:21.586Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s11",
+    "projT": "Sites",
+    "subT": "Revisar índex principal",
+    "de": 1,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-05T03-41-27-354Z-s41hky",
+   "quando": "2026-09-05T03:41:27.354Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-05",
+    "pid": "tecnico",
+    "projId": "p1",
+    "subId": "s12",
+    "projT": "Sites",
+    "subT": "Revisar cronograma",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2429,7 +2507,10 @@
   "2026-09-02T14-39-17-937Z-s41hky",
   "2026-09-02T17-48-10-622Z-s41hky",
   "2026-09-02T18-09-34-509Z-s41hky",
-  "2026-09-03T01-51-29-952Z-s41hky"
+  "2026-09-03T01-51-29-952Z-s41hky",
+  "2026-09-05T03-41-20-258Z-s41hky",
+  "2026-09-05T03-41-21-586Z-s41hky",
+  "2026-09-05T03-41-27-354Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
