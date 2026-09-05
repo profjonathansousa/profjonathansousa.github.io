@@ -36,7 +36,7 @@ const CODIGO = FONTES.join("\n");
    CHK sao const, entao um epilogo os publica. Sem isto o teste enxergaria
    metade da pagina e acharia que a outra metade nao existe. */
 const FONTE = CODIGO +
-  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES};";
+  "\n;globalThis.__const = {DIAS, PAINEIS, CHK, now, ymd, EVENTOS_NA_TELA, SCHEMA_VERSAO, monthKey, todayIdx, PROCESSOS, TOEFL_SEMANA, TOEFL_PLANO, TOEFL_GUIA, TOEFL_FASES,\n   TOEFL_D0, TOEFL_RECURSO};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -450,9 +450,15 @@ Object.keys(A.DIAS).forEach(k => (A.DIAS[k].tasks || []).forEach(t => {
      "a rotina " + t.id + " so aponta para o processo, sem texto proprio", t);
 }));
 ok(rotinasToefl === 5, "as cinco rotinas de TOEFL continuam existindo", rotinasToefl);
-/* E o texto resolvido e EXATAMENTE o que existia antes. */
+/* E o texto resolvido e EXATAMENTE o que existia antes.
+
+   A DATA VAI EXPLICITA (Fase 9A). O processo passou a calar antes do D0, e sem
+   o terceiro argumento estas assercoes mediriam o relogio de parede: passariam
+   a partir de 07/09/2026 e falhariam antes. Fixar a data aqui mantem a trava
+   fazendo o que ela sempre fez — comparar o texto do plano letra por letra. */
+const DEPOIS_DO_D0 = "2026-09-07";
 Object.keys(TOEFL_TEXTO_ORIGINAL).forEach(dia => {
-  const ac = A.acaoDoDiaDoProcesso("toefl", Number(dia));
+  const ac = A.acaoDoDiaDoProcesso("toefl", Number(dia), DEPOIS_DO_D0);
   ok(!!ac, "o processo responde pelo dia " + dia);
   ok(ac && ac.t === TOEFL_TEXTO_ORIGINAL[dia].t,
      "e o titulo e o texto que ja existia: " + TOEFL_TEXTO_ORIGINAL[dia].t.slice(0, 42),
@@ -460,8 +466,8 @@ Object.keys(TOEFL_TEXTO_ORIGINAL).forEach(dia => {
   ok(ac && ac.n === TOEFL_TEXTO_ORIGINAL[dia].n,
      "e a nota tambem, letra por letra (dia " + dia + ")", ac && ac.n);
 });
-ok(A.acaoDoDiaDoProcesso("toefl", 6) === null &&
-   A.acaoDoDiaDoProcesso("toefl", 0) === null,
+ok(A.acaoDoDiaDoProcesso("toefl", 6, DEPOIS_DO_D0) === null &&
+   A.acaoDoDiaDoProcesso("toefl", 0, DEPOIS_DO_D0) === null,
    "sabado e domingo o processo nao pede nada");
 ok(typeof A.toeflFase === "function" && typeof A.renderGuia === "function",
    "e o mecanismo de fases/guia continua intacto");
@@ -691,7 +697,19 @@ const hHoje = PR.document.getElementById("view-hoje").innerHTML;
 ok(!/class="tguia"/.test(hHoje), "a gaveta completa do guia saiu do Hoje");
 ok(!/Recalibrar o que falta/.test(hHoje), "e o botao de recalibrar tambem");
 ok(!/g-links/.test(hHoje), "e os links externos tambem");
-ok(/toefl-fase/.test(hHoje), "mas o banner de execucao FICOU: dias, fase e nucleo");
+/* O BANNER FICOU, MAS AGORA DEPENDE DO D0 E DO DIA (Fase 9A). Ele so aparece
+   quando o TOEFL de fato pede algo: depois da estreia e num dia util. Antes
+   disso a ausencia e o comportamento correto, e nao uma regressao — por isso a
+   assercao segue a condicao em vez de exigir o banner sempre. */
+if (PR.toeflComecou() && PR.DIAS[PR.todayIdx].tasks.some(t => t.processo === "toefl")) {
+  ok(/toefl-fase/.test(hHoje), "o banner de execucao FICOU: dias, fase e nucleo");
+  ok(/toefl-hoje/.test(hHoje), "e o cartao de execucao veio antes dele (Fase 9A)");
+  ok(hHoje.indexOf('class="toefl-hoje"') < hHoje.indexOf('class="toefl-fase"'),
+     "a acao vem primeiro, o contexto depois");
+} else {
+  ok(!/toefl-fase|toefl-hoje/.test(hHoje),
+     "antes do D0 (ou no fim de semana) o TOEFL nao ocupa o Hoje");
+}
 const acHoje = PR.acaoDoDiaDoProcesso("toefl", PR.todayIdx);
 if (acHoje) {
   ok(hHoje.indexOf(PR.escapeHtml(acHoje.t)) > -1,
@@ -1247,12 +1265,25 @@ ok(/TOEFL/.test(htmlPV) && htmlPV.indexOf(PV.escapeHtml(etReal.subT)) > -1,
 console.log("\n=== 39. O bloco de rotinas diz o que e ===");
 const RB = criarAparelho("rotinas");
 function summaryDeAtrasadas(ctx, quantas){
-  /* deixa `quantas` rotinas de ontem sem marcar e marca todas as outras */
+  /* Deixa `quantas` rotinas sem marcar num dia da janela e marca todas as
+     outras.
+
+     O DIA NAO PODE SER SEMPRE ONTEM. Os dias tem de 2 a 4 rotinas, e pedir 3
+     numa vespera de 2 devolvia 2 — o teste falhava nos sabados, domingos e
+     segundas, por causa do relogio de parede e nao do codigo. Escolher o
+     primeiro dia da janela que comporta `quantas` torna a montagem
+     determinista em qualquer dia da semana. */
+  let escolhido = null;
+  for (let k = 1; k <= 7; k++) {
+    const dt = new Date(ctx.now.getFullYear(), ctx.now.getMonth(), ctx.now.getDate() - k);
+    const D = ctx.DIAS[dt.getDay()];
+    if (D && D.tasks.length >= quantas) { escolhido = k; break; }
+  }
   for (let k = 1; k <= 7; k++) {
     const dt = new Date(ctx.now.getFullYear(), ctx.now.getMonth(), ctx.now.getDate() - k);
     const D = ctx.DIAS[dt.getDay()]; if (!D) continue;
     const dia = ctx.ymd(dt), ck = {};
-    D.tasks.forEach((t, i) => { ck[t.id] = !(k === 1 && i < quantas); });
+    D.tasks.forEach((t, i) => { ck[t.id] = !(k === escolhido && i < quantas); });
     ctx.save("cron:checks:" + dia, ck);
   }
   return ctx.renderAtrasadas();
@@ -1728,6 +1759,71 @@ ok(/<link[^>]+rel="manifest"/.test(HTML), "e o HTML o referencia");
 ["icone-192.png","icone-512.png","icone-maskable-512.png"].forEach(function(n){
   ok(fs.existsSync(path.join(RAIZ, "Cronograma", "icones", n)), "o icone " + n + " existe");
 });
+
+console.log("\n=== 44. TOEFL: a estreia do plano e o catalogo (Fase 9A) ===");
+const T9 = criarAparelho("toefl9a");
+const ANTES = "2026-09-06", D0 = "2026-09-07", DEPOIS = "2026-10-19";  /* dom · seg · seg */
+
+/* O D0 decide SE o plano cobra, e nunca O QUE ele responde. */
+ok(T9.TOEFL_D0 === "2026-09-07", "D0 e a segunda-feira 07/09/2026", T9.TOEFL_D0);
+ok(T9.toeflComecou(D0) === true && T9.toeflComecou(DEPOIS) === true,
+   "a partir do D0 o plano esta em curso");
+ok(T9.toeflComecou(ANTES) === false && T9.toeflComecou("2026-08-31") === false,
+   "antes do D0 nao esta");
+ok(T9.acaoDoDiaDoProcesso("toefl", 1, ANTES) === null,
+   "e o processo nao pede nada na vespera, nem num dia util");
+ok(T9.renderToeflHoje(1, ANTES) === "" && T9.renderToeflHoje(2, ANTES) === "",
+   "o cartao tambem fica vazio antes do D0");
+
+/* O PLANO NAO FOI DESLOCADO. Segunda continua sendo Reading em qualquer
+   semana depois da estreia — TOEFL_SEMANA e indexada por dia da semana. */
+ok(T9.acaoDoDiaDoProcesso("toefl", 1, D0).comp === "Reading" &&
+   T9.acaoDoDiaDoProcesso("toefl", 1, DEPOIS).comp === "Reading",
+   "segunda e Reading no D0 e seis semanas depois: o plano nao foi remapeado");
+[[1,"Reading"],[2,"Listening"],[3,"Vocabulário"],[4,"Writing"],[5,"Speaking"]]
+  .forEach(function(par){
+    ok(T9.atividadeDoDia(par[0], D0).comp === par[1],
+       "dia " + par[0] + " -> " + par[1] + ", como o plano sempre disse");
+  });
+ok(T9.atividadeDoDia(6, D0) === null && T9.atividadeDoDia(0, D0) === null,
+   "e o fim de semana continua sem pedir nada");
+
+/* A DURACAO E LIDA DO PROPRIO PLANO, e nao declarada num segundo lugar. */
+ok(T9.toeflMinutos("TestReady, seção Reading Practice. ~20 min") === 20 &&
+   T9.toeflMinutos("algo sem duracao") === null,
+   "a duracao sai do '~NN min' da nota, e a ausencia devolve null");
+[[1,20],[2,20],[3,15],[4,20],[5,30]].forEach(function(par){
+  const a = T9.atividadeDoDia(par[0], D0);
+  ok(a.min === par[1], "dia " + par[0] + ": " + par[1] + " min, tirados da nota", a.min);
+  ok(a.n === T9.TOEFL_SEMANA[par[0]].n, "  e a nota chega intacta ao cartao");
+});
+
+/* O ROTEAMENTO: para onde o botao leva, e onde ele nao existe. */
+[1,2,4,5].forEach(function(d){
+  const a = T9.atividadeDoDia(d, D0);
+  ok(a.url === "https://testready.ets.org", "dia " + d + " leva ao TestReady", a.url);
+  ok(/th-ir/.test(T9.renderToeflHoje(d, D0)), "  e o cartao desenha o botao");
+});
+const qua = T9.atividadeDoDia(3, D0);
+ok(qua.url === "" && /Anki/.test(qua.rec),
+   "quarta nomeia o Anki e nao tem URL — nenhuma foi inventada", qua);
+ok(!/th-ir/.test(T9.renderToeflHoje(3, D0)),
+   "e sem URL o cartao nao desenha botao nenhum");
+const cartao = T9.renderToeflHoje(2, D0);
+ok(/Listening/.test(cartao) && /20 min previstos/.test(cartao) &&
+   /Listening Practice/.test(cartao),
+   "o cartao responde habilidade, duracao e onde clicar", cartao.slice(0, 120));
+ok(/10–15 min já contam/.test(cartao),
+   "e diz a regra do contato sem inventar atividade curta");
+
+/* O plano em si continua intocado. */
+ok(Object.keys(T9.TOEFL_RECURSO).length === 5, "o roteamento cobre os cinco dias uteis");
+ok(T9.TOEFL_SEMANA[6] === null && T9.TOEFL_SEMANA[0] === null,
+   "TOEFL_SEMANA nao ganhou fim de semana");
+ok(JSON.stringify(T9.TOEFL_FASES) === JSON.stringify(["f1","f2","f3"]),
+   "e TOEFL_FASES nao foi tocada nesta fase");
+ok(T9.avisoDoCalendario.length === 0 && typeof T9.currentFaseId === "function",
+   "o mecanismo de fase pelo nucleo continua de pe");
 
 console.log("\n" + "=".repeat(62));
 console.log("FALHAS: " + falhas.length);

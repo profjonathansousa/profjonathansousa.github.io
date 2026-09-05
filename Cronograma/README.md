@@ -282,6 +282,61 @@ Três decisões do modelo, todas anteriores à Fase 4 e todas preservadas:
 > `cron:toefl-guia` endereçadas pelo `id`, e o risco mudou de lugar — a ordem e
 > o texto ficaram livres, o `id` é que é a identidade.
 
+### A estreia do plano — `TOEFL_D0` (Fase 9A)
+
+**O plano não foi reescrito nem remapeado.** `TOEFL_SEMANA` é indexada por **dia
+da semana**, e não por posição numa sequência: segunda é Reading com o D0 aqui
+ou três semanas adiante. Não havia o que deslocar, e por isso a ancoragem não
+tocou uma linha de conteúdo pedagógico — nenhuma atividade, habilidade, ordem,
+duração, fase ou recurso mudou.
+
+`TOEFL_D0 = "2026-09-07"` (segunda-feira) faz **duas** coisas, e só elas:
+
+- antes dela o processo não pede nada — `acaoDoDia` devolve `null`, as cinco
+  rotinas somem do Hoje pelo caminho que já existia (`if(!ac) return;`), o
+  cartão fica vazio e `avisoDoCalendario()` cala;
+- a partir dela as métricas (Fase 9B) terão de onde começar a contar.
+
+**É uma constante escrita à mão, não uma data derivada da "entrada em
+produção".** Derivar exigiria gravá-la no primeiro carregamento, e isso é local
+por aparelho: o Mac aberto numa quarta e o iPhone no sábado calculariam segundas
+diferentes, e como o registro de estudo vai atravessar aparelhos, as métricas
+passariam a discordar. É o mesmo padrão de `MES_INICIO`, `ACERVO_EM` e
+`METAS_SEED`. **D0 pode estar no passado** — não é prazo de entrega: se a tela
+ficar pronta depois, a semana aparece em curso, e não há dívida a saldar.
+
+> **A data viaja por argumento.** `toeflComecou(hojeISO)`, `acaoDoDia(dia,
+> hojeISO)` e `renderToeflHoje(dia, hojeISO)` aceitam a data e, na falta dela,
+> usam hoje. Não é generalidade gratuita: `now` é fixado no carregamento e o
+> teste não o controla, então sem isso nenhuma asserção poderia provar os dois
+> lados do D0 — e as travas que comparam o texto do plano letra por letra
+> passariam a medir o relógio de parede.
+
+### O cartão de execução e o roteamento (Fase 9A)
+
+Duas perguntas diferentes, duas funções: **o que o plano manda na terça** não
+depende de que dia é hoje; **se o TOEFL já me cobra** só depende disso.
+
+O cartão no Hoje vem **antes** do banner de fase — a ação primeiro, o contexto
+depois — e responde o que a linha da rotina não responde: qual habilidade,
+quanto dura e onde se clica. Ele não repete a instrução, que continua alguns
+pixels abaixo, na rotina.
+
+`TOEFL_RECURSO` é **tabela de roteamento, não um segundo plano**. Ela declara só
+o que o plano não diz por dia: o rótulo do recurso e a URL — os `links` do
+`TOEFL_GUIA` são por **fase**, e o `n` de cada dia nomeia o recurso em prosa,
+sem endereço. Os rótulos repetem o que aquele `n` já nomeia.
+
+**A duração é derivada, não declarada.** `toeflMinutos()` lê o `~NN min` que já
+estava escrito na nota. Repetir o número na tabela criaria dois lugares dizendo
+quanto dura a terça.
+
+**Quarta não tem URL, de propósito.** O Anki é aplicativo, não página, e o plano
+não define endereço para ele; sem URL o cartão mostra o recurso e não desenha
+botão — inventar um endereço seria inventar plano. É a mesma regra do
+`avisosConfigurados()` da Fase 8: botão que só pode falhar é pior que botão
+nenhum.
+
 ### A ponte Processo → Hoje
 
 O Hoje não sabe o que o TOEFL faz na terça: **ele pergunta**.
@@ -680,6 +735,11 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
 | 7 — Refatoração (dividir o `index.html`) | concluída |
 | 8 — Notificações (Web Push) | concluída |
+| 9A — TOEFL: ancoragem do plano (`TOEFL_D0`) e catálogo de execução | concluída |
+| 9B — TOEFL: registro de execução e métricas | a fazer |
+| 9C — TOEFL: travessia do registro entre aparelhos | a fazer |
+| 9D — TOEFL: sem dívida (sair de `atrasadas()`) | a fazer |
+| 9E — TOEFL: lembrete pela Fase 8 | a fazer |
 
 ### Previsto e ainda não implementado
 

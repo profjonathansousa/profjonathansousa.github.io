@@ -204,6 +204,22 @@
   #ptr.show{transform:translateY(0);}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
   :focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px;}
+  /* O CARTAO DE EXECUCAO (Fase 9A). Mesma familia do banner logo abaixo —
+     mesma borda, mesmo fundo — porque sao a mesma coisa em dois graus: o que
+     fazer agora e onde voce esta. O que os separa e o peso da habilidade e o
+     botao, e nao uma segunda linguagem visual. */
+  .toefl-hoje{margin:2px 0 8px;padding:12px 14px;border:1px solid var(--gold-soft);
+    background:#F6EFDD;border-radius:11px;}
+  .toefl-hoje .th-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+  .toefl-hoje .th-r{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;}
+  .toefl-hoje .th-min{font-size:10px;color:var(--muted);white-space:nowrap;}
+  .toefl-hoje .th-hab{font-family:var(--display);font-size:19px;color:var(--gold);margin:3px 0 1px;}
+  .toefl-hoje .th-rec{font-size:12.5px;color:var(--ink-soft);}
+  .toefl-hoje .th-ir{margin-top:9px;padding:9px 18px;border:none;border-radius:9px;
+    background:var(--gold);color:#FFF;font-family:var(--display);font-size:14px;
+    letter-spacing:.02em;cursor:pointer;}
+  .toefl-hoje .th-ir:active{opacity:.82;}
+  .toefl-hoje .th-pe{margin-top:7px;font-size:11.5px;color:var(--muted);}
   .toefl-fase{margin:2px 0 14px;padding:10px 14px;border:1px solid var(--gold-soft);
     background:#F6EFDD;border-radius:11px;font-size:12.5px;color:var(--ink-soft);}
   .toefl-fase b{font-family:var(--display);color:var(--gold);}

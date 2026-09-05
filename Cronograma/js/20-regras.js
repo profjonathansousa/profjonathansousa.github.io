@@ -28,6 +28,68 @@ function atrasadas(){
 function weekOfMonth(d){return Math.min(4, Math.ceil(d.getDate()/7));}
 const wom = weekOfMonth(now);
 const phase = wom<=2 ? "livre" : (wom===3 ? "ebd1" : "ebd2");
+/* ================== A ESTREIA DO PLANO — Fase 9A ==================
+   DUAS PERGUNTAS DIFERENTES, E E POR ISSO QUE SAO DUAS FUNCOES. "O que o plano
+   manda na terca?" e pergunta sobre o PLANO, e a resposta nao depende de que
+   dia e hoje. "O TOEFL ja me cobra?" e pergunta sobre a EXECUCAO, e so ela olha
+   o calendario. Misturar as duas poria a data dentro da consulta ao plano.
+
+   A DATA VEM POR ARGUMENTO para que o teste prove os dois lados sem depender do
+   relogio: `now` e fixado no carregamento e o teste nao o controla. */
+function toeflComecou(hojeISO){ return (hojeISO || ymd(now)) >= TOEFL_D0; }
+
+/* A DURACAO SAI DO PROPRIO PLANO. Cada nota termina em "~NN min" — o numero ja
+   esta escrito la desde antes desta fase, e le-lo dali e o que impede que
+   exista um segundo lugar dizendo quanto dura a terca. Nota sem o padrao
+   devolve null, e o painel simplesmente nao mostra duracao: melhor do que
+   arbitrar um numero que o plano nao deu. */
+function toeflMinutos(nota){
+  var m = /~\s*(\d+)\s*min/.exec(String(nota || ""));
+  return m ? Number(m[1]) : null;
+}
+
+/* A ATIVIDADE DE HOJE, PRONTA PARA A TELA: o que o plano manda, quanto dura e
+   para onde o botao leva. Nao acrescenta conteudo — junta o que ja existe em
+   tres lugares (TOEFL_SEMANA pela ponte do processo, o "~NN min" da propria
+   nota, e TOEFL_RECURSO). Devolve null quando o plano nao pede nada naquele
+   dia: fim de semana, ou antes do D0. */
+function atividadeDoDia(dia, hojeISO){
+  var d = (typeof dia === "number") ? dia : todayIdx;
+  var ac = acaoDoDiaDoProcesso("toefl", d, hojeISO);
+  if(!ac) return null;
+  var r = TOEFL_RECURSO[d] || {};
+  return {dia:d, comp:ac.comp, t:ac.t, n:ac.n,
+          min:toeflMinutos(ac.n), rec:r.rec || "", url:r.url || ""};
+}
+
+/* O CARTAO DE EXECUCAO DO DIA (Fase 9A). Mora aqui, e nao no 30-render, pela
+   regra da casa: produz a resposta sem tocar no DOM.
+
+   ELE NAO REPETE A INSTRUCAO. O texto completo do plano continua na linha da
+   rotina, alguns pixels abaixo, e escreve-lo duas vezes na mesma tela e uma
+   vez a mais. O cartao responde o que a linha da rotina nao responde: qual
+   habilidade, quanto dura e ONDE SE CLICA.
+
+   SEM URL, SEM BOTAO. E o caso da quarta: o recurso e nomeado, e nao ha para
+   onde levar. Um botao que so pode falhar e pior do que botao nenhum — a mesma
+   razao do `avisosConfigurados()` na Fase 8. */
+function renderToeflHoje(dia, hojeISO){
+  var a = atividadeDoDia(dia, hojeISO);
+  if(!a) return "";
+  var h = '<div class="toefl-hoje">'+
+    '<div class="th-top"><span class="th-r">TOEFL · hoje</span>'+
+      (a.min ? '<span class="th-min">'+a.min+' min previstos</span>' : '')+
+    '</div>'+
+    '<div class="th-hab">'+escapeHtml(a.comp)+'</div>'+
+    (a.rec ? '<div class="th-rec">'+escapeHtml(a.rec)+'</div>' : '');
+  if(a.url) h += '<button class="th-ir" onclick="abrirRecursoToefl('+a.dia+')">Começar</button>';
+  /* A REGRA COMPORTAMENTAL, E NAO UMA ATIVIDADE NOVA. O plano manda 20 minutos
+     de Listening; o piso de 10-15 diz que comecar ja conta, e nao que exista um
+     "Listening de 10 minutos" em lugar nenhum. */
+  h += '<div class="th-pe">10–15 min já contam como contato.</div></div>';
+  return h;
+}
+
 /* A fase que o CALENDARIO previa. Só serve para o aviso. */
 function faseDoCalendario(){
   const P=TOEFL_PLANO, h=ymd(now);
@@ -132,6 +194,12 @@ function calcularRecalibragem(){
           porSemana:Math.round((total/semanas)*10)/10, janelas:janelas};
 }
 function avisoDoCalendario(){
+  /* ANTES DO D0 O AVISO CALA (Fase 9A). Ele compara a fase corrente com a que
+     o calendario original previa — e antes da estreia essa comparacao mede um
+     atraso contra marcos anteriores ao proprio comeco: "previa a Fase 2 desde
+     17/08" num dia em que o plano ainda nem passou a pedir nada. O TOEFL_PLANO
+     nao e tocado: ele continua sendo a memoria do que se previu. */
+  if(!toeflComecou()) return "";
   const real=currentFaseId(), cal=faseDoCalendario();
   if(!real || TOEFL_FASES.indexOf(cal) <= TOEFL_FASES.indexOf(real)) return "";
   const marco = cal==="f2" ? TOEFL_PLANO.fase2 : TOEFL_PLANO.fase3;
@@ -266,9 +334,11 @@ function processosVisiveis(){
 
 /* A PONTE PROCESSO -> HOJE. O Hoje nao sabe mais o que o TOEFL faz na terca:
    ele pergunta. Devolve null quando o processo nao pede nada naquele dia. */
-function acaoDoDiaDoProcesso(pid, dia){
+function acaoDoDiaDoProcesso(pid, dia, hojeISO){
   const P = processoDef(pid); if(!P || !P.acaoDoDia) return null;
-  const a = P.acaoDoDia(typeof dia === "number" ? dia : todayIdx);
+  /* O `hojeISO` so atravessa: quem decide o que fazer com ele e o processo.
+     O derivado de trilho ignora os dois argumentos e devolve null sempre. */
+  const a = P.acaoDoDia(typeof dia === "number" ? dia : todayIdx, hojeISO);
   return a ? {processo:pid, titulo:P.titulo, comp:a.comp, t:a.t, n:a.n} : null;
 }
 

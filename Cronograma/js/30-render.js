@@ -510,7 +510,12 @@ function renderHoje(){
      nucleo sao contexto de EXECUCAO — o que voce precisa saber para fazer a
      tarefa de hoje. A estrutura (nucleo, reforco, calendario, recalibragem,
      links) saiu para a aba Processos. */
-  const temToefl = d.tasks.some(t=>t.processo==="toefl");
+  /* A ACAO PRIMEIRO, O CONTEXTO DEPOIS (Fase 9A). O cartao diz o que fazer e
+     para onde ir; o banner continua dizendo onde voce esta na preparacao. Os
+     dois so aparecem depois do D0 — antes da estreia o TOEFL nao pede nada, e
+     e o proprio atividadeDoDia() que devolve vazio. */
+  html+=renderToeflHoje();
+  const temToefl = d.tasks.some(t=>t.processo==="toefl") && toeflComecou();
   if(temToefl){ const f=toeflFase(); if(f){
     html+=`<div class="toefl-fase">TOEFL · faltam ${f.dias} dia${f.dias===1?"":"s"} (~${f.sem} sem) · <b>${f.fase}</b><span>${
       f.falta ? "faltam "+f.falta+" do núcleo para a fase avançar. "+f.foco : "núcleo cumprido. "+f.foco}</span></div>`;
@@ -1203,6 +1208,17 @@ function renderArquivo(){
        '<button class="add-row" style="margin:0;padding:4px 10px" onclick="restaurarArquivo('+k+')">restaurar</button></div>';
   });
   box.innerHTML=h;
+}
+/* ABRE O RECURSO DO DIA (Fase 9A). Uma aba nova, e nada mais: nesta fase o
+   botao so LEVA. O registro do estudo entra na 9B, e e la que este mesmo toque
+   passa a valer tambem como "fiz" — um ato, dois efeitos. Ate la, marcar
+   continua sendo na caixa da rotina, no unico lugar onde sempre foi.
+
+   `noopener` porque a pagina de destino nao tem por que alcancar esta. */
+function abrirRecursoToefl(dia){
+  var a = atividadeDoDia(dia);
+  if(!a || !a.url) return;
+  try{ window.open(a.url, "_blank", "noopener"); }catch(e){}
 }
 /* ---- Navegação: da tarefa do dia para o item certo do trilho ---- */
 function irAoTrilho(pid, projId){

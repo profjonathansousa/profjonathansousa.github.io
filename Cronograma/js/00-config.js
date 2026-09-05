@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-04-avisos";
+const APP_VERSION = "2026-09-05-toefl9a";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -480,6 +480,54 @@ const TOEFL_SEMANA = {
   0:null    /* "Descanso. Sem Uber, sem TOEFL". */
 };
 
+/* ================== D0: A ESTREIA DO PLANO — Fase 9A ==================
+   A DATA EM QUE O TOEFL PASSA A PEDIR ALGO. Antes dela o processo nao pede
+   nada, as cinco rotinas nao aparecem no Hoje e o aviso do calendario cala.
+
+   O QUE ELA NAO E. Ela NAO remapeia o plano. TOEFL_SEMANA e indexada por DIA
+   DA SEMANA, nao por posicao numa sequencia — segunda e Reading com D0 aqui ou
+   tres semanas adiante. Nao ha o que deslocar, e por isso esta constante nao
+   toca em uma linha do plano. Ela serve a duas coisas so: dizer a partir de
+   quando o painel cobra, e dar as metricas um marco de onde comecar a contar.
+
+   POR QUE E UMA CONSTANTE ESCRITA A MAO, e nao derivada da "entrada em
+   producao". Derivar exigiria gravar a data no primeiro carregamento, e isso e
+   local por aparelho: o Mac aberto numa quarta e o iPhone aberto no sabado
+   calculariam segundas diferentes, e como o registro de estudo atravessa
+   aparelhos as metricas passariam a discordar. Uma constante e uma verdade so.
+   E a casa ja faz assim — MES_INICIO, ACERVO_EM, TEC_SEED, METAS_SEED.
+
+   PODE ESTAR NO PASSADO. D0 nao e prazo de entrega: se o painel ficar pronto
+   depois, a semana simplesmente aparece em curso. Nao ha divida a saldar. */
+const TOEFL_D0 = "2026-09-07";   /* segunda-feira */
+
+/* ================== PARA ONDE O BOTAO LEVA — Fase 9A ==================
+   A TABELA DE ROTEAMENTO, e so isso. Ela responde "onde eu clico", que e a
+   unica coisa que o plano nao diz por dia: os `links` do TOEFL_GUIA sao por
+   FASE, e o `n` de cada dia nomeia o recurso em prosa ("TestReady, secao
+   Listening Practice") sem endereco.
+
+   O QUE E DECLARADO AQUI E O QUE E DERIVADO DO PLANO. Declarado: o rotulo do
+   recurso e a URL. Derivado: a duracao, que sai do proprio texto do plano pelo
+   "~NN min" que ja esta la (ver toeflMinutos, em 20-regras.js). Repetir o
+   numero aqui criaria dois lugares dizendo quanto dura a terca.
+
+   OS ROTULOS SAO RESTATEMENT, NAO CONTEUDO NOVO: cada um repete o que o `n`
+   daquele dia ja nomeia. Nenhuma atividade, habilidade, ordem ou duracao foi
+   inventada nesta fase.
+
+   QUARTA NAO TEM URL, DE PROPOSITO. O Anki e aplicativo, nao pagina, e o plano
+   nao define endereco para ele. Sem URL o painel mostra a instrucao e nao
+   desenha botao de abrir — inventar um endereco seria inventar plano. Se um
+   dia um esquema `anki://` for adotado, e uma linha aqui e nada mais. */
+const TOEFL_RECURSO = {
+  1:{rec:"TestReady · Reading Practice",   url:"https://testready.ets.org"},
+  2:{rec:"TestReady · Listening Practice", url:"https://testready.ets.org"},
+  3:{rec:"Anki · baralho Academic Word List", url:""},
+  4:{rec:"TestReady · Writing Practice",   url:"https://testready.ets.org"},
+  5:{rec:"TestReady · Speaking Practice",  url:"https://testready.ets.org"}
+};
+
 const TOEFL_FASES = ["f1","f2","f3"];
 const TOEFL_ROTULO = {
   f1:{fase:"Fase 1 · Fundamentos", foco:"Formato 2026, diagnóstico, vocabulário, notas e templates."},
@@ -558,7 +606,16 @@ const RECALIBRE_KEY = "cron:toefl-recalibrado";
 const PROCESSOS = [
   {id:"toefl", titulo:"TOEFL",
    resumo:    function(){ return toeflFase(); },        /* fase, dias, foco */
-   acaoDoDia: function(dia){ return TOEFL_SEMANA[dia] || null; },
+   /* O SEGUNDO ARGUMENTO E A DATA, E ELE EXISTE PARA O TESTE (Fase 9A). Sem
+      ele a resposta dependeria do relogio de parede e nenhum teste poderia
+      provar os dois lados do D0. Ausente, vale hoje.
+
+      O PLANO NAO MUDOU: quem responde continua sendo TOEFL_SEMANA[dia], letra
+      por letra. O D0 so decide SE a pergunta e feita, nunca o que ela responde. */
+   acaoDoDia: function(dia, hojeISO){
+     if(!toeflComecou(hojeISO)) return null;
+     return TOEFL_SEMANA[dia] || null;
+   },
    corpo:     function(){ return renderGuia(); },
    /* As tres linhas de cabecalho SAIRAM do renderProcessos e vieram para ca,
       sem uma palavra mudada. Elas sempre foram do TOEFL — objetivo, fase e
