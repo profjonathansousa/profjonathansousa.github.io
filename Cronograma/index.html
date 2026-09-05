@@ -8,8 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cronograma">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Fase 8: sem o manifest o iPhone nao instala o app na Tela de Inicio, e
+     sem estar instalado nao existe Web Push no iOS. -->
+<link rel="manifest" href="manifest.webmanifest">
 <title>Cronograma</title>
-<link rel="stylesheet" href="css/cronograma.css?v=2026-09-02-entrega1">
+<link rel="stylesheet" href="css/cronograma.css?v=2026-09-04-avisos">
 </head>
 <body>
 <div id="ptr">Puxe para atualizar</div>
@@ -79,6 +82,16 @@
           escrev\u00ea-lo.</p>
         <div class="s-linha"><button onclick="publicarAcervoUmaVez()">Publicar o acervo deste aparelho</button></div>
         <span class="backup-aviso" id="acervo-estado"></span>
+        <div class="s-sec">Avisos neste aparelho</div>
+        <div class="s-linha"><button class="avisos" id="btn-avisos" hidden></button></div>
+        <span class="backup-aviso" id="avisos-estado"></span>
+        <p class="s-nota">Chegam poucos e agregados: no m\u00e1ximo um aviso de vagas e
+          um de datas por dia. Nunca um por tarefa.</p>
+        <p class="s-nota">No iPhone isto s\u00f3 existe com o Cronograma <b>adicionado \u00e0
+          Tela de In\u00edcio</b>. Numa aba comum do Safari o bot\u00e3o nem aparece \u2014 e a
+          limita\u00e7\u00e3o \u00e9 do sistema, n\u00e3o daqui.</p>
+        <p class="s-nota">Datas com o <b>cadeado fechado</b> nunca s\u00e3o avisadas: nem o
+          nome, nem a data, nem a exist\u00eancia.</p>
       </div>
     </details>
     <span id="ver"></span>
@@ -93,10 +106,10 @@
      nucleo, depois regras, depois desenho, e o boot por ultimo. Scripts
      classicos, nao modulos: o escopo global compartilhado e o que mantem a
      superficie publica intacta. -->
-<script src="js/00-config.js?v=2026-09-02-entrega1"></script>
-<script src="js/10-nucleo.js?v=2026-09-02-entrega1"></script>
-<script src="js/20-regras.js?v=2026-09-02-entrega1"></script>
-<script src="js/30-render.js?v=2026-09-02-entrega1"></script>
-<script src="js/40-app.js?v=2026-09-02-entrega1"></script>
+<script src="js/00-config.js?v=2026-09-04-avisos"></script>
+<script src="js/10-nucleo.js?v=2026-09-04-avisos"></script>
+<script src="js/20-regras.js?v=2026-09-04-avisos"></script>
+<script src="js/30-render.js?v=2026-09-04-avisos"></script>
+<script src="js/40-app.js?v=2026-09-04-avisos"></script>
 </body>
 </html>

@@ -367,10 +367,12 @@ function revisaoDaSemana(){
                  concluido: !!(et && et.concluido)};
       (andou || rot.concluido ? feitas : abertas).push(rot);
     } else {
-      /* Prioridade livre: o mesmo cron:checks das rotinas, varrido pela
-         semana — ela pode ter sido marcada em qualquer dia. */
-      var marcada = dias.some(function(D){
-        return !!(LS("cron:checks:"+D.dia, {}) || {})[pp.id]; });
+      /* Prioridade livre: a propria prioridade diz quando foi cumprida. Antes
+         isto varria os sete dias do cron:checks, porque a marca morava la e
+         podia estar em qualquer dia; agora mora aqui, e nao ha o que varrer.
+         `feito_em` fora da semana nao conta — a prioridade e da semana. */
+      var d = pp.feito_em || "";
+      var marcada = !!d && d >= seg && d <= dom;
       (marcada ? feitas : abertas).push({tipo:"livre", t:pp.t || "", etapa:""});
     }
   });
@@ -662,9 +664,13 @@ function semanaISO(d){
 }
 var semanaAtual = semanaISO(now);
 function dadosDaPrioridade(p, sem, apagada){
+  /* `feito_em` viaja: cumprir uma prioridade no computador tem de aparecer no
+     celular. E uma DATA, e nao um booleano, porque a regra de tela depende de
+     QUANDO foi cumprida — hoje ela fica marcada, amanha ela sai. Um booleano
+     obrigaria cada aparelho a adivinhar o dia. */
   return {sem: sem || semanaAtual, prid: p.id, tipo: p.tipo || "livre",
           painel: p.painel || "", projId: p.projId || "",
-          t: p.t || "", del: !!apagada};
+          t: p.t || "", feito_em: p.feito_em || "", del: !!apagada};
 }
 function prazoDoProjeto(pr){
   if(!pr || !pr.mes || !/^\d{4}-\d{2}$/.test(pr.mes)) return null;
@@ -832,8 +838,58 @@ function motorDePrioridades(manuais){
    disse "agora nao" para um projeto disse para o projeto, e nao para o bloco
    onde ele apareceu. Dispensar num lugar silencia nos dois. */
 function prioridadesDoDia(){
-  var manuais = getPrio();
-  return {manuais: manuais, sugeridas: motorDePrioridades(manuais)};
+  /* SAIR DA TELA NAO E SUMIR. A prioridade cumprida ontem para de ocupar o
+     Hoje, mas continua na semana: o `getPrio()` do motor e o da revisao
+     dominical enxergam a lista inteira, e ela e contada como cumprida no
+     domingo. O que muda e so o que disputa a sua atencao hoje.
+
+     No dia em que voce marcou, ela FICA — marcada, riscada, visivel. Ver uma
+     coisa sumir no instante do toque e perder a confirmacao de que o toque
+     valeu. So no dia seguinte ela sai.
+
+     A prioridade DE TRILHO nao entra nesta regra: ela e o projeto da semana, e
+     fechar uma etapa nao e cumprir a semana. Ela avanca para a etapa seguinte
+     e so sai quando a semana acaba. */
+  var todas = getPrio(), hojeStr = ymd(now);
+  var manuais = todas.filter(function(p){
+    if(!p) return false;
+    if((p.tipo || "livre") === "trilho") return true;
+    return !(p.feito_em && p.feito_em < hojeStr);
+  });
+  /* O motor recebe a lista INTEIRA. Ele usa `manuais` para nao sugerir o que
+     ja e escolha sua; uma prioridade que saiu da tela continua sendo escolha
+     sua, e sugeri-la de volta seria o sistema propondo o que voce ja fez. */
+  return {manuais: manuais, sugeridas: motorDePrioridades(todas)};
+}
+
+/* MUDANCA DE GAVETA, UMA VEZ POR APARELHO. Le as marcas de prioridade livre
+   que ficaram no cron:checks desta semana e as grava como `feito_em` na
+   propria prioridade. Sem isto, a prioridade que voce marcou ontem volta hoje
+   por marcar — que e exatamente o defeito que esta correcao existe para
+   resolver — e a revisao de domingo perderia a conta.
+
+   NAO PUBLICA TOQUE, de proposito: ver PRIO_MIGRADO_KEY em 00-config.js.
+
+   O `cron:checks` NAO e limpo. A marca antiga fica onde esta: ela nao atrapalha
+   (nada mais a le para prioridade) e apaga-la seria destruir dado de um
+   aparelho para arrumar a gaveta de outro. Mesma decisao da chave antiga do
+   guia TOEFL na Fase 6A. */
+function migrarPrioridadesFeitas(){
+  if(LS(PRIO_MIGRADO_KEY, false)) return 0;
+  var dias = _diasDaSemana(segundaDaSemana()), lista = getPrio(), n = 0;
+  lista.forEach(function(p){
+    if(!p || (p.tipo || "livre") === "trilho" || p.feito_em) return;
+    var ultima = "";
+    dias.forEach(function(D){
+      if((LS("cron:checks:"+D.dia, {}) || {})[p.id]) ultima = D.dia;
+    });
+    if(!ultima) return;
+    p.feito_em = ultima;          /* a ULTIMA vez em que foi marcada na semana */
+    n++;
+  });
+  if(n) setPrio(lista);
+  save(PRIO_MIGRADO_KEY, true);
+  return n;
 }
 
 /* ==================== RETOMADAS — Fase 2 ====================
@@ -1053,4 +1109,12 @@ function vgVisivel(i){
   if(VG_FILTRO==="sim")     return st===VG_ST.SIM;
   if(VG_FILTRO==="nao")     return st===VG_ST.NAO;
   return true;
+}
+
+/* ==================== AVISOS — Fase 8 ====================
+   Pura de proposito, e por isso mora aqui e nao no 30-render: ela responde sem
+   tocar no DOM, e e ela que decide se o botao existe. Sem as tres chaves nao ha
+   o que inscrever, e um botao que so pode falhar e pior do que botao nenhum. */
+function avisosConfigurados(){
+  return !!(typeof AVISOS !== "undefined" && AVISOS && AVISOS.URL && AVISOS.CHAVE && AVISOS.VAPID);
 }

@@ -223,6 +223,47 @@ ok(not any(p["t"] == "Pos-doc Notre Dame" for p in mac3),
    "e o computador tira da tela", mac3)
 ok(len(mac3) == 2, "sem levar as outras junto", mac3)
 
+print("\n=== 3b. cumprir no computador aparece cumprida no celular ===")
+# A conclusao da prioridade viaja pelo toque `prioridade`, que ja existia: nao
+# ha tipo novo. O que viaja e uma DATA, porque a regra de tela depende de QUANDO
+# foi cumprida — hoje ela fica marcada, amanha ela sai do Hoje.
+TMP3 = montar_repo_falso()
+feito = node("""
+const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, "Fichar o Lutero");
+mac.addPrioridadeLivre();
+const id = mac.getPrio()[0].id;
+mac.togglePrioridadeFeita(id);
+console.log(JSON.stringify({toques: mac.getToques(), id: id, hoje: mac.ymd(new Date())}));
+""", RAIZ)
+gravar_toques(TMP3, feito["toques"], "lote-feito.json")
+estadoF = dobrar_em(TMP3)
+vf = list(estadoF["prioridades"].values())[0]
+ok(vf.get("feito_em") == feito["hoje"],
+   "o dobrador real gravou feito_em com a data", vf)
+celF = node("""
+const est = %s;
+const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
+cel.aplicarPrioridadesDoEstado(est);
+const p = cel.getPrio()[0];
+console.log(JSON.stringify({feito_em: p.feito_em, cartao: cel.cartaoDePrioridade(p),
+                            naTela: cel.prioridadesDoDia().manuais.length}));
+""" % json.dumps(estadoF), RAIZ)
+ok(celF["feito_em"] == feito["hoje"], "e o celular recebeu a conclusao", celF["feito_em"])
+ok("pr-livre done" in celF["cartao"], "desenhando-a marcada")
+ok(celF["naTela"] == 1, "e no dia em que foi cumprida ela CONTINUA na tela")
+# desmarcar tambem atravessa: o campo vazio nao pode ser confundido com ausencia
+desf = node("""
+const est = %s;
+const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
+mac.aplicarPrioridadesDoEstado(est);
+mac.togglePrioridadeFeita("%s");
+console.log(JSON.stringify({toques: mac.getToques()}));
+""" % (json.dumps(estadoF), feito["id"]), RAIZ)
+gravar_toques(TMP3, desf["toques"], "lote-desfeito.json")
+estadoD = dobrar_em(TMP3)
+ok(list(estadoD["prioridades"].values())[0].get("feito_em") == "",
+   "desmarcar viaja como feito_em vazio", list(estadoD["prioridades"].values())[0])
+
 print("\n=== 4. os quatro tipos antigos continuam dobrando ===")
 TMP2 = montar_repo_falso()
 antigos = node("""

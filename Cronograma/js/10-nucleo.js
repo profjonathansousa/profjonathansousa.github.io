@@ -264,8 +264,14 @@ function aplicarPrioridadesDoEstado(est){
       for(var n=0;n<lista.length;n++){ if(lista[n].id === o.prid){ j = n; break; } }
       if(j > -1 && (lista[j].em || "") >= r.quando) return;
       if(r.del){ if(j > -1){ lista.splice(j,1); mudouSem = true; } return; }
+      /* `feito_em` entra aqui e nao pode faltar: este `novo` SUBSTITUI o item
+         inteiro. Se o campo nao viesse, uma descida qualquer apagaria a
+         conclusao que este aparelho registrou. Ausencia no estado e "nao
+         feita", que e o valor certo para uma prioridade nunca marcada e para
+         uma desmarcada — os dois chegam como "". */
       var novo = {id:o.prid, tipo:r.tipo || "livre", painel:r.painel || "",
-                  projId:r.projId || "", t:r.t || "", em:r.quando};
+                  projId:r.projId || "", t:r.t || "",
+                  feito_em:r.feito_em || "", em:r.quando};
       if(j < 0) lista.push(novo); else lista[j] = novo;
       mudouSem = true;
     });
@@ -1050,3 +1056,70 @@ function buscarEstado(){
 /* Estrutura primeiro, progresso depois: um item precisa existir para receber
    estado. E de novo quando a rede volta, porque quem abriu offline abriu velho. */
 var ULTIMA_BUSCA = 0;
+
+/* ==================== AVISOS — a mecanica (Fase 8) ====================
+   NAO HA CHAVE NOVA NO localStorage AQUI, e a ausencia e deliberada: quem sabe
+   se este aparelho esta inscrito e o proprio PushManager. Guardar uma copia
+   local criaria uma segunda verdade, que diverge no dia em que o navegador
+   descartar a inscricao sozinho — e ele descarta.
+
+   O ENDPOINT NUNCA VOLTA PARA O REPOSITORIO. Ele vai para a tabela do Supabase
+   e para de existir aqui. E uma URL-capacidade: quem a tem notifica este
+   aparelho, e o historico do repositorio nunca e podado. */
+function temPush(){
+  return typeof navigator !== "undefined" && "serviceWorker" in navigator &&
+         typeof PushManager !== "undefined" && typeof Notification !== "undefined";
+}
+/* A chave VAPID viaja em base64url e o subscribe() quer bytes. */
+function chaveVapid(){
+  var b64 = (AVISOS.VAPID + "=".repeat((4 - AVISOS.VAPID.length % 4) % 4))
+              .replace(/-/g, "+").replace(/_/g, "/");
+  var cru = atob(b64), arr = new Uint8Array(cru.length);
+  for(var i=0;i<cru.length;i++) arr[i] = cru.charCodeAt(i);
+  return arr;
+}
+function registrarServiceWorker(){
+  if(!temPush()) return Promise.resolve(null);
+  return navigator.serviceWorker.register("sw.js").catch(function(){ return null; });
+}
+function inscricaoAtual(){
+  if(!temPush()) return Promise.resolve(null);
+  return navigator.serviceWorker.getRegistration().then(function(reg){
+    return reg ? reg.pushManager.getSubscription() : null;
+  }).catch(function(){ return null; });
+}
+/* INSERT e a unica coisa que o anon pode fazer. Endpoint repetido devolve
+   conflito, que aqui e sucesso: quer dizer que este aparelho ja esta inscrito. */
+function publicarInscricao(sub){
+  var j = sub.toJSON();
+  return fetch(AVISOS.URL + "/rest/v1/cron_push_inscricao", {
+    method: "POST",
+    headers: { apikey: AVISOS.CHAVE, Authorization: "Bearer " + AVISOS.CHAVE,
+               "Content-Type": "application/json", Prefer: "return=minimal" },
+    body: JSON.stringify({ endpoint: sub.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth,
+                           aparelho: (navigator.userAgent.indexOf("iPhone") >= 0 ? "iPhone" : "outro") })
+  }).then(function(r){
+    if(r.ok || r.status === 409) return true;
+    return r.text().then(function(t){ throw new Error(r.status + " " + t.slice(0,120)); });
+  });
+}
+function inscreverAvisos(){
+  return Notification.requestPermission().then(function(permissao){
+    if(permissao !== "granted") throw new Error("sem permissao");
+    return navigator.serviceWorker.ready;
+  }).then(function(reg){
+    return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveVapid() });
+  }).then(function(sub){
+    return publicarInscricao(sub).catch(function(e){
+      /* Nao deixa inscricao orfa: se o registro falhou, desfaz no navegador. */
+      return sub.unsubscribe().then(function(){ throw e; });
+    });
+  });
+}
+/* DESINSCREVER E SO NO APARELHO. O anon nao pode apagar a linha — dar-lhe
+   delete deixaria qualquer um apagar as inscricoes. Cancelada aqui, a
+   inscricao morre, e o proximo envio recebe 404/410: e o emissor que remove a
+   linha, no Actions, com a service_role. */
+function desinscreverAvisos(){
+  return inscricaoAtual().then(function(sub){ return sub ? sub.unsubscribe() : false; });
+}

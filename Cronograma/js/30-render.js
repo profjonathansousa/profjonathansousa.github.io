@@ -235,8 +235,11 @@ function cartaoDePrioridade(p){
               (P?escapeHtml(P.titulo):p.painel) + '<span class="seta">\u203a</span></button>';
     }
   } else {
-    var feito = !!checks[p.id];
-    corpo = '<div class="pr-livre ' + (feito?"done":"") + '" onclick="toggleCheck(\''+p.id+'\')">' +
+    /* A conclusao vem da PRIORIDADE, e nao do `checks` do dia. Marcada hoje,
+       ela aparece marcada; marcada antes de hoje, ela nem chega aqui — o
+       prioridadesDoDia ja a tirou da tela. */
+    var feito = !!p.feito_em && p.feito_em === dateKey;
+    corpo = '<div class="pr-livre ' + (feito?"done":"") + '" onclick="togglePrioridadeFeita(\''+p.id+'\')">' +
               '<span class="box">' + CHK + '</span>' +
               '<div class="pr-t" contenteditable="true" onclick="event.stopPropagation()"' +
               ' onblur="editPrioridade(\''+p.id+'\',this.innerText)">' + escapeHtml(p.t) + '</div>' +
@@ -985,6 +988,23 @@ function delPrioridade(prid){
   tocarPrioridade(fora, semanaAtual, true);   /* lapide: ausencia nao e desconhecimento */
   renderHoje();
 }
+/* MARCAR E DESMARCAR. Molde do editPrioridade, e pelas mesmas duas razoes: o
+   `em` tem de virar o instante do toque, senao a descida seguinte — que compara
+   `em` com o `quando` do estado — ignoraria a marca que acabou de ser feita; e
+   a lista e gravada duas vezes porque o instante so existe depois de enfileirar.
+
+   Desmarcar grava "" e tambem viaja: mudar de ideia e um fato, e um aparelho
+   que so soubesse marcar deixaria a prioridade cumprida para sempre no outro. */
+function togglePrioridadeFeita(prid){
+  var lista = getPrio(), p = null;
+  for(var i=0;i<lista.length;i++){ if(lista[i].id === prid){ p = lista[i]; break; } }
+  if(!p) return;
+  p.feito_em = (p.feito_em === dateKey) ? "" : dateKey;
+  p.em = new Date().toISOString(); setPrio(lista);
+  p.em = tocarPrioridade(p, semanaAtual, false) || p.em;
+  setPrio(lista);
+  renderHoje();
+}
 function editPrioridade(prid, texto){
   var lista = getPrio(), p = null;
   for(var i=0;i<lista.length;i++){ if(lista[i].id === prid){ p = lista[i]; break; } }
@@ -1553,4 +1573,52 @@ function renderBackupAviso(){
   var dias=-diasAte(u);
   el.textContent = dias<=0 ? "Backup exportado hoje." : "\u00daltimo backup h\u00e1 "+dias+" dia"+(dias===1?"":"s")+".";
   el.className = "backup-aviso"+(dias>30?" velho":"");
+}
+
+/* ==================== AVISOS — o botao (Fase 8) ====================
+   Um botao so, que liga e desliga, e que diz sempre em que estado esta. Ele
+   nao aparece quando o aparelho nao suporta (numa aba comum do iOS o
+   PushManager nem existe) nem quando as chaves nao foram preenchidas. */
+function renderAvisos(){
+  var b = document.getElementById("btn-avisos");
+  var nota = document.getElementById("avisos-estado");
+  if(!b) return;
+  if(!temPush() || !avisosConfigurados()){
+    b.hidden = true;
+    if(nota) nota.textContent = !avisosConfigurados()
+      ? "Avisos ainda nao configurados neste Cronograma."
+      : "Este aparelho nao aceita avisos. No iPhone, adicione o app \u00e0 Tela de In\u00edcio.";
+    return;
+  }
+  b.hidden = false;
+  b.className = "avisos";
+  if(Notification.permission === "denied"){
+    b.className = "avisos bloqueado";
+    b.textContent = "avisos bloqueados nos Ajustes do aparelho";
+    b.disabled = true;
+    return;
+  }
+  b.disabled = false;
+  inscricaoAtual().then(function(sub){
+    if(sub){ b.className = "avisos ligado"; b.textContent = "\u2713 avisos ligados neste aparelho"; }
+    else   { b.textContent = "Avisar neste aparelho"; }
+  });
+}
+function alternarAvisos(){
+  var b = document.getElementById("btn-avisos");
+  var nota = document.getElementById("avisos-estado");
+  var diz = function(m){ if(nota) nota.textContent = m; };
+  if(Notification.permission === "denied"){
+    diz("Libere as notifica\u00e7\u00f5es nos Ajustes do aparelho, para o Cronograma."); return;
+  }
+  if(b) b.disabled = true;
+  inscricaoAtual().then(function(jaTem){
+    if(jaTem) return desinscreverAvisos().then(function(){ diz("Avisos desligados neste aparelho."); });
+    return inscreverAvisos().then(function(){ diz("Pronto. Os avisos chegam neste aparelho."); });
+  }).catch(function(e){
+    diz("N\u00e3o deu certo: " + ((e && e.message) || e));
+  }).then(function(){
+    if(b) b.disabled = false;
+    renderAvisos();
+  });
 }

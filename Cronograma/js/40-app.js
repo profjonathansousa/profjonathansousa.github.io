@@ -31,6 +31,15 @@
     startY=null; armed=false;
   });
 })();
+/* Fase 8: o service worker existe so para receber o push. Ele NAO tem ouvinte
+   de fetch, entao nao intercepta estado.json, entrada.json nem a api do GitHub
+   — a sincronizacao continua exatamente como era. */
+try{
+  if(avisosConfigurados()) registrarServiceWorker();
+  var _btnAvisos = document.getElementById("btn-avisos");
+  if(_btnAvisos) _btnAvisos.addEventListener("click", alternarAvisos);
+  renderAvisos();
+}catch(e){ console.error("avisos:", e); }
 renderBackupAviso();
 renderSyncEstado();
 renderToquesAviso();
@@ -57,6 +66,9 @@ try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", 
    estado.json possa responder por `id`. */
 try{ migrarGuiaToefl(); }catch(e){ console.error("migracao do guia TOEFL falhou:", e); }
 try{ migrarRetomadas(); }catch(e){ console.error("migracao das retomadas falhou:", e); }
+/* Esta nao publica toque — so muda a conclusao da prioridade de gaveta, do
+   cron:checks do dia para a propria prioridade. Ver PRIO_MIGRADO_KEY. */
+try{ migrarPrioridadesFeitas(); }catch(e){ console.error("migracao das prioridades falhou:", e); }
 /* Seed do bloco de projetos por MESCLAGEM (não destrutiva).
    Acrescenta projetos e subtarefas novos sem apagar o estado já marcado. */
 if(LS("cron:tecnico-seed", null) !== TEC_SEED){

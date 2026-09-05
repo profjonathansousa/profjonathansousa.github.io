@@ -220,10 +220,19 @@ def valor(t):
         #
         # O `t` que viaja e o rotulo da prioridade LIVRE, e o titulo do projeto
         # so como legenda. Nenhum dos dois substitui o estagio.
+        #
+        # `feito_em` E UMA DATA, e nao um booleano. A regra de tela depende de
+        # QUANDO a prioridade foi cumprida: no dia em que foi marcada ela fica
+        # visivel e marcada; no dia seguinte ela sai do Hoje. Um booleano
+        # obrigaria cada aparelho a adivinhar o dia, e o aparelho que recebesse
+        # a marca no dia seguinte a exibiria como se fosse de hoje.
+        # Vazio e "nao cumprida" — e o valor de quem nunca foi marcada e o de
+        # quem foi desmarcada, que para a tela sao a mesma coisa.
         v = {"tipo": d.get("tipo") or "livre",
              "painel": d.get("painel") or "",
              "projId": d.get("projId") or "",
              "t": d.get("t", ""),
+             "feito_em": d.get("feito_em", ""),
              "del": bool(d.get("del"))}
     elif tipo == "toefl":
         # So o booleano. Nem o texto do item nem a fase viajam: os dois moram no

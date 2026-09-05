@@ -490,3 +490,11 @@
   .carry-dia{flex:none;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
     color:var(--muted);padding-top:2px;min-width:58px;}
   .carry-acoes{flex:none;align-self:center;display:flex;gap:10px;}
+
+/* Avisos (Fase 8): reusa a forma dos botoes dos ajustes. */
+.avisos{width:100%;padding:9px;background:var(--card);border:1px solid var(--gold-soft);
+  border-radius:9px;font-family:var(--sans);font-size:12.5px;color:var(--ink-soft);
+  cursor:pointer;text-align:center;}
+.avisos:active{background:#EFEDE2;}
+.avisos.ligado{border-color:var(--gold-line);color:var(--gold);}
+.avisos.bloqueado{opacity:.6;cursor:default;}

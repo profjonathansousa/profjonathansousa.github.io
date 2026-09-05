@@ -1,0 +1,7 @@
+{
+  "name": "cronograma-avisos",
+  "private": true,
+  "type": "module",
+  "description": "Envia os avisos do Cronograma por Web Push. Roda so no GitHub Actions.",
+  "dependencies": { "web-push": "^3.6.7" }
+}
