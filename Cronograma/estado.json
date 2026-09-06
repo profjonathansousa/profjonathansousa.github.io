@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-06T01:19:37.205Z",
+ "_dobrado_em": "2026-09-06T10:52:32.125Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2392,6 +2392,78 @@
     "vid": "anpof-urso-para-professor-doutor-de-historia-da-filosofia-medieval",
     "st": 2
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T10-52-28-423Z-ipkt72",
+   "quando": "2026-09-06T10:52:28.423Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788372574507",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Cadastro reserva FIRJAN",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T10-52-29-622Z-ipkt72",
+   "quando": "2026-09-06T10:52:29.622Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788400289952",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Concurso hoje!!!",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T10-52-30-934Z-ipkt72",
+   "quando": "2026-09-06T10:52:30.934Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788400289952",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Concurso hoje!!!",
+    "feito_em": "",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T10-52-32-125Z-ipkt72",
+   "quando": "2026-09-06T10:52:32.125Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788372574507",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Cadastro reserva FIRJAN",
+    "feito_em": "",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2557,7 +2629,11 @@
   "2026-09-05T03-41-27-354Z-s41hky",
   "2026-09-05T12-26-15-607Z-s41hky",
   "2026-09-06T01-19-29-804Z-s41hky",
-  "2026-09-06T01-19-37-205Z-s41hky"
+  "2026-09-06T01-19-37-205Z-s41hky",
+  "2026-09-06T10-52-28-423Z-ipkt72",
+  "2026-09-06T10-52-29-622Z-ipkt72",
+  "2026-09-06T10-52-30-934Z-ipkt72",
+  "2026-09-06T10-52-32-125Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3185,18 +3261,20 @@
    "painel": "",
    "projId": "",
    "t": "Cadastro reserva FIRJAN",
+   "feito_em": "",
    "del": false,
-   "quando": "2026-09-02T18:09:34.509Z",
-   "aparelho": "s41hky"
+   "quando": "2026-09-06T10:52:32.125Z",
+   "aparelho": "ipkt72"
   },
   "2026-W36/pr1788400289952": {
    "tipo": "livre",
    "painel": "",
    "projId": "",
    "t": "Concurso hoje!!!",
+   "feito_em": "",
    "del": false,
-   "quando": "2026-09-03T01:51:29.952Z",
-   "aparelho": "s41hky"
+   "quando": "2026-09-06T10:52:30.934Z",
+   "aparelho": "ipkt72"
   }
  },
  "toefl": {
