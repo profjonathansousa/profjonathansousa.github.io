@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-06T11:33:39.322Z",
+ "_dobrado_em": "2026-09-06T11:33:58.871Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2536,6 +2536,42 @@
     "feito_em": "",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T11-33-58-041Z-ipkt72",
+   "quando": "2026-09-06T11:33:58.041Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788372574507",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Cadastro reserva FIRJAN",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T11-33-58-871Z-ipkt72",
+   "quando": "2026-09-06T11:33:58.871Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788400289952",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Concurso hoje!!!",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2709,7 +2745,9 @@
   "2026-09-06T11-31-27-135Z-s41hky",
   "2026-09-06T11-31-27-865Z-s41hky",
   "2026-09-06T11-33-38-906Z-ipkt72",
-  "2026-09-06T11-33-39-322Z-ipkt72"
+  "2026-09-06T11-33-39-322Z-ipkt72",
+  "2026-09-06T11-33-58-041Z-ipkt72",
+  "2026-09-06T11-33-58-871Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3337,9 +3375,9 @@
    "painel": "",
    "projId": "",
    "t": "Cadastro reserva FIRJAN",
-   "feito_em": "",
+   "feito_em": "2026-09-06",
    "del": false,
-   "quando": "2026-09-06T11:33:38.906Z",
+   "quando": "2026-09-06T11:33:58.041Z",
    "aparelho": "ipkt72"
   },
   "2026-W36/pr1788400289952": {
@@ -3347,9 +3385,9 @@
    "painel": "",
    "projId": "",
    "t": "Concurso hoje!!!",
-   "feito_em": "",
+   "feito_em": "2026-09-06",
    "del": false,
-   "quando": "2026-09-06T11:33:39.322Z",
+   "quando": "2026-09-06T11:33:58.871Z",
    "aparelho": "ipkt72"
   }
  },
