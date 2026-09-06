@@ -245,6 +245,12 @@ esse número sem a ressalva seria dar dado local como estado de todos. As etapas
 de trilho, metas, prioridades e eventos são sincronizados e aparecem sem
 ressalva.
 
+> **Isto tem prazo.** A ressalva descreve um limite técnico, não uma decisão de
+> produto: `cron:checks:` era local porque sincronizá-lo custaria histórico
+> permanente em repositório público. A Fase 9 remove esse custo, as rotinas
+> passam a viajar, e **a ressalva sai da tela**. Ver *Fase 9 — Estado
+> compartilhado online*.
+
 ### Nada é gravado
 
 A revisão é **inteiramente derivada**: nenhuma chave nova de `localStorage`,
@@ -381,6 +387,11 @@ Nunca criar um segundo mecanismo de conclusão.
 
 ## Sincronização
 
+> Esta seção descreve o mecanismo **em produção** — toques, `dobrar_toques.py` e
+> `estado.json`. Ele continua inteiro e continua sendo a verdade operacional. O
+> mecanismo que o sucede está em *Fase 9 — Estado compartilhado online*, e não
+> desliga este antes da etapa 9G.
+
 Sete coisas atravessam aparelhos, cada uma com um tipo de toque:
 
 | Tipo | Vai para | Chave |
@@ -480,6 +491,332 @@ marcada e o de quem foi desmarcada, que para a tela são a mesma coisa.
 
 > O repositório é público. Só suba o que pode ser público. O histórico nunca é
 > podado: um título publicado uma vez fica público para sempre.
+
+---
+
+## Fase 9 — Estado compartilhado online
+
+A Fase 8 fechou o ciclo de notificação. A Fase 9 muda a coisa de baixo: **o
+estado do Cronograma deixa de pertencer ao aparelho e passa a pertencer à
+conta.** Qualquer alteração feita em qualquer aba, em qualquer aparelho, chega
+aos outros quase imediatamente — não porque cada painel ganhou sincronização
+própria, mas porque passa a existir *uma* infraestrutura de estado que todos os
+painéis usam.
+
+O desenho até aqui era:
+
+```
+GitHub  →  toques/  →  dobrar_toques.py  →  estado.json  →  aparelhos
+```
+
+O desenho da Fase 9 é:
+
+```
+                      Supabase / PostgreSQL
+                    estado · registro · base
+                              │
+                 ┌────────Realtime─────────┐
+                 │            │            │
+              iPhone         Mac         Cowork
+               cache        cache       (pipeline)
+```
+
+### Por que não bastava consertar Prioridades
+
+O sintoma que abriu a fase foi uma prioridade marcada no Mac e não vista no
+iPhone. O diagnóstico foi outro: **o problema não é de nenhum painel, é da
+forma como todos sincronizam.** A auditoria contou
+
+- **13 pontos de escrita** chamando `enfileirarToque()` em três arquivos;
+- **8 blocos aplicadores** escritos à mão dentro de `buscarEstado()`.
+
+São **dois caminhos cabeados à mão por domínio**, e cada domínio novo custa mais
+dois. Consertar Prioridades teria sido um nono bloco.
+
+Mas a auditoria achou também a boa notícia: **os sete domínios que já viajavam
+obedeciam à mesma regra, letra por letra** — chave por id, valor com `em`, vence
+o relógio item a item, empate fica como está, lápide onde há remoção, "receber
+não é tocar". A abstração já existia de fato; só não existia em código. A Fase 9
+não inventa um contrato de sincronização: **extrai** um que sete domínios já
+cumprem. E o `estado.json` atual é o oráculo contra o qual verificá-la.
+
+### A auditoria do estado mutável
+
+Todo dado do Cronograma, com o seu escritor, o seu destino e a decisão da fase.
+
+**Atravessa aparelhos hoje** — vira domínio de `cron_estado`:
+
+| Dado | Chave local | Escritor | Domínio na Fase 9 |
+|---|---|---|---|
+| progresso do subitem (`st`, `vida`, `motivo`) | `cron:<painel>` | `logar()` | `item` |
+| triagem de vagas | `cron:triagem` | `vgMarcar` | `triagem` |
+| metas do mês | `cron:metas:AAAA-MM` | `editMeta` | `meta` |
+| datas importantes | `cron:eventos` | `editEv` | `evento` |
+| prioridades da semana | `cron:prioridades:AAAA-Wnn` | `editPrioridade` | `prioridade` |
+| guia do TOEFL | `cron:toefl-guia` | `marcarGuia` | `toefl` |
+| retomadas silenciadas | `cron:retomadas-adiadas` | `adiarRetomada` | `retomada` |
+| registro datado | `cron:registro` | `logar()` | tabela `cron_registro` |
+
+**Não atravessa hoje, e deveria** — a lacuna que a fase fecha:
+
+| Dado | Chave local | Escritor | Por que não viajava |
+|---|---|---|---|
+| criar / renomear projeto e subitem | `cron:<painel>` | `addProj`, `addSub`, `editProj`, `editSub` | nunca emitiu toque: a estrutura era do `entrada.json` |
+| arquivar / restaurar | `cron:arquivo` | `delProj`, `delSub`, `restaurarArquivo` | mecanismo próprio, fora do toque |
+| rotinas marcadas | `cron:checks:AAAA-MM-DD` | `toggleCheck` | histórico público permanente por um valor semanal |
+| avisos dispensados | `cron:hoje-dispensados`, `cron:metas-aviso:AAAA-MM` | `dispensarAtrasada`, `dispensarAviso` | idem |
+
+**Continua local, e a razão sobrevive:**
+
+| Dado | Razão |
+|---|---|
+| `cron:contexto` (casa/fora) | é um fato **físico** do aparelho. Sincronizá-lo faria o Mac em casa achar que saiu |
+| `cron:aparelho` | é a identidade do aparelho; compartilhá-la a destruiria |
+| `sync:token` | é segredo, e nunca sai daqui |
+
+**Não sincroniza porque é derivado ou cache** — sincronizar valor derivado é
+sincronizar consequência em vez de causa: `cron:toefl-recalibrado`,
+`cron:feed-cache`, `cron:la-fora`, `cron:entrada`, `cron:entrada-aplicada`.
+
+**Não sincroniza porque é estado de tela:** `cron:paineis-open`,
+`cron:painel-open:*`, `cron:processo-open:*`, `cron:toefl-guia-open`,
+`cron:grade-open`, `cron:atrasadas-open`, `cron:retomadas-open`,
+`cron:eventos-tudo`.
+
+**Não sincroniza porque é maquinaria local:** `cron:schema-versao`, os
+`cron:*-migrado`, `cron:*-seed`, `cron:relogio`, `cron:relogio-bases`,
+`cron:toques`, `cron:ultimo-backup` e os arquivos de registro excedente.
+
+### As quatro decisões
+
+**1. Conta única, autenticada — e-mail e senha, cadastro público desligado.**
+
+A Fase 8 pôde usar a chave *publishable* — pública por desenho, versionada em
+`js/00-config.js`, num repositório público — porque a RLS de
+`cron_push_inscricao` permite **apenas INSERT** e não devolve linha nenhuma.
+Não há o que ler.
+
+A Fase 9 é o oposto: existe para ser lida e reescrita. Com uma política aberta
+ao `anon`, essa mesma chave versionada daria o Cronograma inteiro a qualquer
+pessoa. Por isso **nada em `cron_estado.sql` é acessível ao `anon`**: toda
+política exige `authenticated` **e** `dono = auth.uid()`.
+
+Senha, e não magic link: o link exige SMTP e o e-mail embutido do plano
+gratuito é limitado a poucos envios por hora — você descobriria isso sem sessão
+no iPhone, no pior momento. Senha é uma chamada, a sessão persiste e se renova,
+e a conta é criada à mão uma vez.
+
+**2. O relógio continua sendo o do aparelho.**
+
+Com um Postgres na frente, a tentação é usar `now()` como relógio do LWW. Seria
+um erro: uma marcação feita **offline** às 9h e enviada às 18h venceria a
+marcação legítima das 17h no outro aparelho — a fila offline passaria a
+corromper o estado em vez de preservá-lo. É a mesma razão pela qual as migrações
+da Fase 6 publicaram com instante **antigo**.
+
+`em` é o instante monotônico do aparelho, gerado por `instanteDoToque()`, e é ele
+que decide. `servidor_em` existe e é **auditoria**: nunca decide nada.
+
+A diferença em relação ao que havia é que "vence o relógio" deixa de ser uma
+promessa cumprida por oito trechos de JavaScript e passa a ser **recusada pelo
+servidor**: um `UPDATE` cujo `em` não seja estritamente mais novo é descartado
+em silêncio por um gatilho — que é literalmente a regra escrita.
+
+**3. A base privada muda o que pode viajar.**
+
+Três remendos existiam só porque o repositório é público e o histórico nunca é
+podado, e nenhuma dessas razões sobrevive a uma base privada:
+
+- o **`motivo` volta a viajar**. O `semMotivo()` e o rótulo *"motivo registrado
+  no outro aparelho"* saem;
+- o **título de evento privado volta a viajar**. O campo `priv` deixa de ser
+  uma amputação e vira preferência de exibição;
+- **`cron:checks:` e os avisos dispensados passam a viajar.** A ressalva
+  *"neste aparelho"* da revisão dominical **sai da tela**: ela nunca foi um
+  objetivo de produto, era a racionalização de um limite técnico. Marcar uma
+  rotina no Mac e o iPhone mostrar o dia incompleto é exatamente a discordância
+  que faz alguém deixar de confiar no app.
+
+Consequência que vale registrar: com as rotinas viajando, o motor de prioridades
+passa a divergir entre aparelhos **apenas** por contexto e por relógio — que é a
+divergência correta e desejada. **Sincronizam-se as fontes de verdade; os
+derivados continuam sendo recalculados em cada aparelho**, como já eram.
+
+**4. Uma linha por item, nunca um JSON gigante.**
+
+Marcar uma etapa não pode reescrever todos os trilhos — nem no tráfego, nem no
+Realtime, nem no conflito. `cron_estado` é genérica na **forma**
+(`dominio` + `chave` + `valor`), mas a granularidade é a do **item**: cada
+subitem, cada meta, cada vaga é uma linha própria, com relógio próprio e evento
+Realtime próprio.
+
+A forma genérica é o que permite **um** aplicador em vez de oito, e é uma
+tradução mecânica do `estado.json` — o que torna a etapa de escrita dupla
+verificável linha a linha. Onde a estrutura justificar tabela própria, ela ganha
+tabela própria: é o caso do registro e da base da estrutura.
+
+### Os dois escritores dos Trilhos
+
+O pipeline e você escrevendo nos mesmos Trilhos era o risco arquitetural da
+fase. A auditoria o dividiu em dois, e só um deles é problema.
+
+**Marcar já é de dois escritores hoje, e funciona.** O
+`dobrar_toques.py --registrar` publica com `aparelho: "cowork"` e entra pela
+mesma porta que o iPhone — o pipeline **é um aparelho como os outros**, sem
+caminho privilegiado, e o LWW resolve. E a fronteira do que a máquina pode
+afirmar já está no dado: `--registrar` **recusa** subitem de `prova: "estrela"`,
+que é como o `mapa_portal.json` marca as etapas cuja conclusão é decisão do
+autor e não artefato. Nada disso muda na Fase 9.
+
+**Estruturar é onde o conflito mora**, e havia ali um defeito latente:
+
+```
+10-nucleo.js:104   if(novo.t && novo.t!==alvo.t){ alvo.t=novo.t; mudou=true; }
+```
+
+O `mesclarEntrada()` conclui que discordância significa desatualização. Mas
+discordância também pode significar **que você editou**: hoje, renomear um
+projeto à mão é desfeito pela próxima publicação do pipeline, em silêncio. Isso
+não é consequência da Fase 9 — é verdade desde a Fase 4; a Fase 9 apenas o torna
+visível, ao dar ao rename um caminho de sincronização.
+
+A causa é o merge ser de **duas vias**. A correção é uma terceira, e ela já
+existe pela metade: o `entrada.json` publicado *é* a base do pipeline, e o app já
+guarda a marca da última versão aplicada (`cron:entrada-aplicada`). Falta
+guardar os **valores**, e é o que a tabela `cron_estrutura_base` faz:
+
+```
+o campo mudou no entrada.json desde a última publicação?
+   não  → não escreve. O que você editou à mão sobrevive.
+   sim  → você também mudou esse campo depois?
+          não → escreve. É atualização legítima do pipeline.
+          sim → conflito real: vence o relógio, e fica registrado.
+```
+
+**Não há hierarquia entre escritores. Cada um manda no que efetivamente mexeu.**
+E quem escreve a base é só o pipeline: a RLS dá ao app apenas `SELECT`. Se o app
+pudesse reescrevê-la, poderia forjar *"o pipeline nunca mudou isso"* e o merge de
+três vias viraria de duas outra vez.
+
+`item` e `estrutura_sub` são **linhas separadas do mesmo subitem** por isso: o
+pipeline escreve estrutura, você escreve progresso, e no caso comum eles nem
+tocam na mesma linha.
+
+### O que deixou de ser caso especial
+
+Apagar um projeto ou subitem tinha mecanismo próprio: `splice` do array mais uma
+gaveta paralela (`cron:arquivo`) indexada por **posição** — que se desloca. Era,
+a rigor, um segundo mecanismo de remoção, e não viajava.
+
+O esquema v2 já declarava `arquivado` como valor de `vida` desde a reforma, e
+nunca o usava: em produção só apareciam `ativo`, `adiado`, `abandonado` e
+`inaplicavel`. Unificar os dois — **arquivar é `vida = "arquivado"`, restaurar é
+`vida = "ativo"`** — converte apagamento e restauração em atualizações de campo
+comuns, que o LWW já sabe resolver e que já viajam pelo toque `registro`. A aba
+Arquivo passa a ser um **filtro**, não uma gaveta.
+
+Somem o `cron:arquivo`, a fragilidade dos índices e um caso especial da
+sincronização. É migração de dado existente, com a disciplina de sempre:
+versionada, nada descartado, chave antiga preservada como rede de segurança.
+
+### O esquema
+
+`sql/cron_estado.sql`. Três tabelas; `cron_push_inscricao` fica intocada.
+
+| Tabela | O quê | Escrita por |
+|---|---|---|
+| `cron_estado` | estado corrente, uma linha por item, onze domínios | app e pipeline |
+| `cron_registro` | histórico datado, append-only, chaveado pelo id do toque | app e pipeline |
+| `cron_estrutura_base` | o que o pipeline publicou por último (merge de três vias) | **só** o pipeline |
+
+Os onze domínios de `cron_estado`, com a chave de cada um:
+
+| Domínio | Chave | Valor |
+|---|---|---|
+| `item` | `painel/projeto/subitem` | `{st, vida, motivo, voltar_em, vidaDesde}` |
+| `estrutura_proj` | `painel/projeto` | `{t, n, mes}` |
+| `estrutura_sub` | `painel/projeto/subitem` | `{t, n, onde, prova, medida, ordem}` |
+| `triagem` | id da vaga | `{st}` |
+| `meta` | `AAAA-MM/id` | `{t, done, de}` |
+| `evento` | id do evento | `{t, data, priv}` |
+| `prioridade` | `AAAA-Wnn/id` | `{tipo, painel, projId, t, feito_em}` |
+| `toefl` | id do item do guia | `{feito}` |
+| `retomada` | `painel/projeto` | `{ate}` |
+| `rotina` | `AAAA-MM-DD/idDaRotina` | `{feito}` |
+| `dispensa` | `rotina/AAAA-MM-DD/id` ou `meta-aviso/AAAA-MM` | `{}` |
+
+A lista é fechada por um `CHECK`, e a rigidez é de propósito: acrescentar
+domínio é uma migração de uma linha, e o arquivo passa a ser a documentação
+executável do que atravessa aparelhos.
+
+**A lápide fica.** `del` é uma coluna, não um `DELETE`: um aparelho que só volta
+a abrir daqui a um mês precisa saber que a meta foi **apagada**, e não que nunca
+a viu — senão ele a recria na próxima subida. Ausência não é desconhecimento,
+como sempre.
+
+**A poda existe agora, e é limitada.** `rotina` e `dispensa` têm `expira_em`;
+`cron_podar()` as remove, chamada pelo Actions com a chave *secret*.
+`atrasadas()` lê no máximo `ATRASO_DIAS` para trás e a revisão dominical lê a
+semana corrente — marcação de rotina com 90 dias não é lida por ninguém. **O
+registro e as lápides continuam sem poda**: "nada se perde" vale para decisão,
+não para o rastro de uma rotina que morreu de velha.
+
+### Duas exigências que só aparecem com Realtime
+
+**O catch-up não é robustez opcional — é o caminho principal.** O Safari do
+iPhone mata o WebSocket em segundo plano. O caso real ali não é "recebe o
+evento", é "reconecta e busca o delta ao voltar". É para isso que existe o
+índice `cron_estado_delta` sobre `servidor_em`, e é a única coisa para que
+`servidor_em` serve.
+
+**O render precisa esperar o campo em foco.** Metade da edição do app é
+`contenteditable` com `onblur`. Hoje isso é seguro porque `buscarEstado()` só
+roda no boot, no `online` e no `visibilitychange`. Com Realtime, uma mudança
+remota dispararia `renderTrilhos()` no meio de você digitar, e o `innerText` que
+o `onblur` leria já teria sido substituído. A camada de sincronização adia o
+render enquanto houver foco em campo editável.
+
+### Ordem de implementação
+
+| Etapa | O quê |
+|---|---|
+| **9A** | infraestrutura: autenticação, RLS, esquema, leitura, escrita, Realtime, reconexão, catch-up por delta, fila offline, guarda de foco no render |
+| **9B** | **TOEFL** ponta a ponta — o caso mais simples dos sete (chave = id, valor booleano, sem lápide, um escritor) e já exercita a ponte Processo → Hoje |
+| **9C** | prioridades, metas e eventos: lápide, períodos, `feito_em` e a repercussão entre painéis |
+| **9D** | vagas, retomadas, registro, rotinas e dispensas |
+| **9E** | trilhos: progresso e estrutura, com o merge de três vias e a unificação do arquivamento |
+| **9F** | **escrita dupla e prova de equivalência**: os dois caminhos ativos, com comparação diária entre `estado.json` e as tabelas |
+| **9G** | desativação do caminho GitHub, só depois de 9F limpa em dois ou mais aparelhos |
+
+**9B é o TOEFL, e não Prioridades.** Prioridades tem lápide, semanas, `feito_em`
+e a interação com a migração do `cron:checks` — é um bom 9C, e um péssimo
+primeiro domínio. O que 9B precisa provar é a **infraestrutura**, com o mínimo de
+domínio em volta.
+
+**9F é a etapa que mais reduz risco**, e é a que faltava no desenho original.
+"Comprovadamente correto" não é uma impressão: é a comparação diária entre o
+`estado.json` produzido pelo caminho antigo e as tabelas produzidas pelo novo.
+O arnês já existe — `scripts/teste_sincronia.py` já atravessa a fronteira dos
+dois aparelhos com o código de verdade dos dois lados.
+
+**O caminho do GitHub não é desligado antes da 9G.** Ele funciona, contém muita
+lógica de reconciliação testada, e é o registro de auditoria. Ele sai quando o
+novo estiver provado, não quando estiver pronto.
+
+### O que a Fase 9 aposenta
+
+Quando 9G fechar, saem: o PAT do GitHub guardado no `localStorage` de cada
+aparelho (`sync:token`), a fila `cron:toques` e o teto de reconstruções do Pages
+que ditava o lote, o `semMotivo()`, a regra "toque meu não desce nunca" (toda
+linha do registro passa a ter chave primária, por construção), a gaveta
+`cron:arquivo` e a ressalva *"neste aparelho"*.
+
+### Estado atual
+
+**9A: o esquema está escrito e documentado; a camada de sincronização em
+JavaScript ainda não foi implementada.** O `sql/cron_estado.sql` é idempotente e
+pode ser aplicado; nada no app o consome ainda, e nenhum comportamento existente
+mudou. Todo o caminho da Fase 8 continua funcionando exatamente como antes.
 
 ---
 
@@ -618,6 +955,7 @@ tocados.
 | `Cronograma/manifest.webmanifest`, `Cronograma/icones/` | o que o iOS exige para instalar o app |
 | `avisos/enviar.mjs` | o emissor dos avisos, roda só no Actions |
 | `sql/cron_push.sql` | a tabela das inscrições, com RLS |
+| `sql/cron_estado.sql` | Fase 9A: estado, registro e base da estrutura, com RLS |
 | `scripts/estado_notificador.json` | o que já foi avisado |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
@@ -680,6 +1018,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
 | 7 — Refatoração (dividir o `index.html`) | concluída |
 | 8 — Notificações (Web Push) | concluída |
+| 9A — Estado online: esquema e decisões | esquema escrito; camada JS pendente |
+| 9B a 9G — migração dos domínios, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado
 
@@ -690,10 +1030,10 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 - **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as
   inventou. A única dependência real hoje é `prova: "estrela"` — etapa travada
   esperando decisão sua.
-- **Sincronização de `cron:hoje-dispensados` e `cron:checks:`.** Ficaram
-  deliberadamente **fora** da Fase 6B, pelas razões da seção *Sincronização*:
-  não são equivalentes à retomada adiada, e `cron:checks:` é local **por
-  decisão**, não pendência a saldar. Sincronizá-los é escolha de produto.
+- **Sincronização de `cron:hoje-dispensados` e `cron:checks:`.** Ficaram fora
+  da Fase 6B porque sincronizá-los custaria histórico permanente em repositório
+  público por um valor que morre numa semana. **Decidido na Fase 9: os dois
+  passam a viajar**, com poda por `expira_em`, assim que a base privada existir.
 - **Sinais de Processo** alimentando o motor de prioridades, pelo seam
   `sinaisDeProcesso()`, que devolve `[]`.
 - **Processo Notre Dame.** A estrutura o recebe sem refatoração; ele não existe.
