@@ -1,0 +1,27 @@
+{
+ "v": 1,
+ "lote": "2026-09-06T16-32-03-896Z-s41hky",
+ "quando": "2026-09-06T16:32:07.579Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-04-avisos",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-06T16-32-03-896Z-s41hky",
+   "quando": "2026-09-06T16:32:03.896Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788712323895",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Recorrer multa Movida",
+    "feito_em": "",
+    "del": false
+   }
+  }
+ ]
+}
