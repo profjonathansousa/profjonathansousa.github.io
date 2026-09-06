@@ -1,0 +1,45 @@
+{
+ "v": 1,
+ "lote": "2026-09-06T11-33-38-906Z-ipkt72",
+ "quando": "2026-09-06T11:33:40.480Z",
+ "aparelho": "ipkt72",
+ "app": "2026-09-04-avisos",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-06T11-33-38-906Z-ipkt72",
+   "quando": "2026-09-06T11:33:38.906Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788372574507",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Cadastro reserva FIRJAN",
+    "feito_em": "",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T11-33-39-322Z-ipkt72",
+   "quando": "2026-09-06T11:33:39.322Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788400289952",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Concurso hoje!!!",
+    "feito_em": "",
+    "del": false
+   }
+  }
+ ]
+}
