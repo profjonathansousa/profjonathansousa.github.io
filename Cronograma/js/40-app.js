@@ -140,3 +140,13 @@ try{
     buscarEstado();
   });
 }catch(e){ console.error("busca da entrada/estado falhou:", e); }
+
+/* ---- Fase 9A: a sincronia online, se este aparelho a tiver ligado ----
+   ULTIMA LINHA DO BOOT, e de proposito: tudo acima ja rodou, entao um erro aqui
+   nao pode deixar a pagina pela metade. E ela devolve na primeira linha quando
+   cron:sync-ligado e falso, que e o padrao — um aparelho que so atualizou de
+   versao continua exatamente no caminho de toques, sem saber que isto existe.
+
+   NAO SUBSTITUI NADA acima. Os ouvintes do GitHub continuam onde estavam e
+   continuam fazendo o que faziam: os dois caminhos convivem ate a Fase 9G. */
+try{ SYNC.iniciar(); }catch(e){ console.error("sincronia online:", e); }

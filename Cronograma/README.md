@@ -811,12 +811,170 @@ que ditava o lote, o `semMotivo()`, a regra "toque meu não desce nunca" (toda
 linha do registro passa a ter chave primária, por construção), a gaveta
 `cron:arquivo` e a ressalva *"neste aparelho"*.
 
+### 9A — a infraestrutura, implementada
+
+`js/15-sync.js`, entre o núcleo e as regras. **Nenhum domínio está conectado** —
+esse é o critério de parada de 9A — e **nada aqui desliga o GitHub**.
+
+**Está desligada por padrão.** Sem `cron:sync-ligado`, `SYNC.iniciar()` devolve
+na primeira linha e o aparelho segue exatamente como sempre foi. É o que torna
+esta fase acrescentável a um aplicativo em uso: ligar é uma decisão, não efeito
+colateral de atualizar.
+
+**O SDK entra por injeção**, e só quando a sincronia está ligada — nunca por uma
+tag no `index.html`. Três razões: o app é um PWA que precisa abrir sem rede e um
+script de terceiro no `<head>` é ponto de falha na abertura; o `teste_hoje.js` lê
+a lista de `<script src>` do próprio HTML e carrega do disco, e uma URL absoluta
+ali quebraria o teste; e CDN fora do ar tem de significar "sem sincronia
+online", nunca "aplicativo quebrado".
+
+A superfície:
+
+| Função | O quê |
+|---|---|
+| `SYNC.iniciar()` | o ciclo: sessão → carga → assinatura → drenagem |
+| `SYNC.entrar(email, senha)` / `SYNC.sair()` | sessão, com `persistSession` |
+| `SYNC.salvarAlteracao(dominio, chave, valor, opts)` | a subida: fila primeiro, rede depois |
+| `SYNC.aplicarRemoto(linha)` | a descida: o único caminho de entrada |
+| `SYNC.assinarDominio(dominio, fn)` | **é por aqui que a Fase 9B entra** |
+| `SYNC.assinarMudancas()` | o canal Realtime |
+| `SYNC.reconectar()` / `SYNC.buscarDelta()` | recuperação |
+| `SYNC.drenarFila()` / `SYNC.agendarDrenagem()` | a fila offline |
+| `SYNC.pedirRender(nomes)` | o render centralizado, com guarda de foco |
+| `SYNC.venceRemoto(emLocal, emRemoto)` | **o relógio, numa função só** |
+
+Três chaves locais novas, e cada uma tem um papel que as outras não têm:
+
+| Chave | Papel |
+|---|---|
+| `cron:sync-fila` | o que este aparelho decidiu e ainda não foi persistido |
+| `cron:sync-cache` | a última verdade conhecida, item a item, com o `em` de cada uma |
+| `cron:sync-marca` | até onde as entregas chegaram — o ponto de partida do catch-up |
+
+**Nenhuma delas é estado de domínio.** O cache guarda o que veio do servidor; o
+que a tela desenha continua em `cron:pipeline`, `cron:metas:…` e companhia. A
+ponte entre os dois é o aplicador de cada domínio, e ele só existe a partir de 9B.
+
+#### O fluxo
+
+```
+aparelho A                    Supabase                   aparelho B
+   │                             │                            │
+ decide                          │                            │
+   │                             │                            │
+ cache otimista                  │                            │
+ cron:sync-fila  ──── upsert ───▶│                            │
+   │                       gatilho do relógio                 │
+   │                    (em <= old.em ? descarta)             │
+   │                             │                            │
+ confirmado                      ├──── Realtime ─────────────▶│
+   │                             │                     aplicarRemoto
+ sai da fila                     │                       1. é minha?
+                                 │                       2. marca avança
+                                 │                       3. eco próprio?
+                                 │                       4. relógio
+                                 │                       5. cache
+                                 │                       6. aplicador (9B+)
+                                 │                            │
+                                 │                      pedirRender()
+                                 │                            │
+                                 │                    guarda de foco
+                                 │                            │
+                                 │                        renderX()
+```
+
+**A ordem dos seis passos da descida é a correção**, e o passo 2 em especial: a
+marca de entrega avança **antes** das recusas de eco e de relógio. Uma linha
+recusada por ser minha, ou por ser velha, foi entregue do mesmo jeito — se a
+marca só avançasse no caminho feliz, ela ficaria para trás e o catch-up
+rebuscaria o mesmo trecho para sempre.
+
+#### Offline e reconexão
+
+Grava-se primeiro, tenta-se depois. A decisão está guardada no instante em que
+foi tomada, e a rede é problema do aplicativo. A fila **só é cortada depois da
+persistência confirmada**, e é cortada **por id, nunca por posição** — a mesma
+lição que a fila de toques já aprendeu, porque cortar os N primeiros supõe que a
+fila não mudou durante o envio, e ela muda.
+
+**Recusa do relógio não é falha.** Se o servidor já tem valor mais novo, o
+gatilho descarta o nosso e devolve sucesso. Está certo: a nossa alteração perdeu
+por ser mais velha, que é a regra — e ela sai da fila.
+
+A reconexão tem ordem, e a ordem é o ponto:
+
+1. o canal de pé outra vez;
+2. o que se perdeu, pelo **delta**;
+3. o que este aparelho decidiu e ainda não subiu.
+
+Drenar antes de buscar faria uma decisão local vencer, **por acidente de ordem**,
+uma decisão remota mais nova.
+
+**Nunca se confia só no Realtime.** No iPhone o Safari mata o WebSocket quando o
+app vai para segundo plano: ali o caso normal não é "recebe o evento", é
+"reconecta e descobre o que perdeu". O delta é o caminho principal, não o
+remendo. E ele relê com **sobreposição** de 30s, porque ordem de *commit* não é
+ordem de `servidor_em`: uma transação que começou antes e terminou depois pode
+ter `servidor_em` menor do que uma já lida, e cairia no buraco entre duas
+leituras. Reler não custa nada — `aplicarRemoto` é idempotente.
+
+#### O render não destrói o que se está digitando
+
+Metade da edição deste app é `contenteditable` com `onblur`. Um `renderTrilhos()`
+disparado no meio de uma digitação troca o nó sob o cursor, e o `onblur` lê um
+texto que já não existe. Hoje isso não acontece porque `buscarEstado()` só roda
+no boot, no `online` e no `visibilitychange`; com Realtime, passa a poder
+acontecer a qualquer segundo.
+
+`SYNC.pedirRender()` acumula os pedidos e descarrega quando é seguro. **Adia
+enquanto houver foco em campo editável e enquanto uma drenagem estiver em
+curso. Não adia por fila cheia** — uma fila parada por falta de rede congelaria
+a tela para sempre, o que troca um problema raro por um permanente.
+
+#### O isolamento em relação ao CONTAS_CASA
+
+O projeto Supabase é **o mesmo**, e deve continuar sendo. O isolamento não vem de
+separar projetos; vem de três coisas:
+
+1. **Espaço de nomes.** Todo objeto do Cronograma nasce com o prefixo `cron_`.
+   O CONTAS_CASA tem `push_inscricao`; o Cronograma tem `cron_push_inscricao`.
+   Nenhuma colisão, e nenhum objeto da casa é lido, alterado ou referenciado.
+2. **RLS presa ao dono.** Toda política do Cronograma exige
+   `dono = auth.uid() and cron_e_dono()`, e nenhuma é do papel `anon`.
+3. **A allowlist `cron_dono`.** A autenticação é compartilhada no nível do
+   projeto — **mas estar autenticado não faz de ninguém dono de um Cronograma**.
+   Sem ela, `dono = auth.uid()` daria isolamento de leitura correto e ainda assim
+   deixaria qualquer conta do projeto *criar* linhas de Cronograma. Isolamento
+   por acidente não é isolamento.
+
+O Realtime é **acrescentado**, nunca recriado: o CONTAS_CASA já publica
+`lancamento` e `modelo`, e um `drop publication` os derrubaria.
+
+O bloco 14 do `teste_sync.js` verifica isso mecanicamente contra a lista real de
+objetos da casa, em vez de confiar em ter lido o arquivo com atenção.
+
+#### O que ainda é do GitHub
+
+**Tudo.** `enviarToques`, `gravarNoGitHub`, `buscarEstado`, `buscarEntrada`,
+`checkUpdate` e o workflow `dobrar-toques.yml` continuam intactos e continuam
+sendo a verdade operacional. Os ouvintes de `online`, `visibilitychange` e
+`pagehide` do `40-app.js` não foram tocados: a camada nova acrescentou os seus
+próprios, incluindo um `offline`, que o aplicativo não tinha.
+
 ### Estado atual
 
-**9A: o esquema está escrito e documentado; a camada de sincronização em
-JavaScript ainda não foi implementada.** O `sql/cron_estado.sql` é idempotente e
-pode ser aplicado; nada no app o consome ainda, e nenhum comportamento existente
-mudou. Todo o caminho da Fase 8 continua funcionando exatamente como antes.
+**9A concluída: infraestrutura no ar, desligada por padrão, nenhum domínio
+conectado.** Falta aplicar o `sql/cron_estado.sql` ao projeto e popular a
+`cron_dono` — as duas coisas são operações de banco, feitas uma vez:
+
+```sql
+insert into public.cron_dono (uid, rotulo)
+select id, 'jonathan' from auth.users where email = '<o seu e-mail>';
+```
+
+Depois disso, ligar num aparelho é `SYNC.entrar(email, senha)`. **9B ainda não
+começou:** nenhum domínio tem aplicador, e o caminho da Fase 8 continua sendo o
+que move o Cronograma.
 
 ---
 
@@ -941,6 +1099,7 @@ tocados.
 | `Cronograma/css/cronograma.css` | os estilos |
 | `Cronograma/js/00-config.js` | constantes, sementes e chaves de `localStorage` |
 | `Cronograma/js/10-nucleo.js` | armazenamento, aparelho, entrada, estado, toques, sincronização |
+| `Cronograma/js/15-sync.js` | Fase 9A: estado online, fila offline, Realtime, render seguro |
 | `Cronograma/js/20-regras.js` | domínio: trilhos, prioridades, retomadas, processos, TOEFL, vagas, revisão |
 | `Cronograma/js/30-render.js` | os `render*` e os handlers presos ao DOM |
 | `Cronograma/js/40-app.js` | bootstrap: migrações, sementes, primeiros desenhos, ouvintes |
@@ -970,7 +1129,7 @@ e o código está em cinco arquivos, carregados **nesta ordem**:
 
 ```
 css/cronograma.css
-js/00-config.js  →  js/10-nucleo.js  →  js/20-regras.js  →  js/30-render.js  →  js/40-app.js
+js/00-config.js  →  js/10-nucleo.js  →  js/15-sync.js  →  js/20-regras.js  →  js/30-render.js  →  js/40-app.js
 ```
 
 **A ordem é parte da arquitetura**, não uma conveniência: cada arquivo lê do
@@ -994,6 +1153,7 @@ toque novo, nenhuma regra de CSS reescrita.
 python3 scripts/teste_coletor.py     # pipeline de vagas
 node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
+node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
 ```
 
 O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
@@ -1018,7 +1178,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 6B — Sincronização das retomadas silenciadas (toque `retomada`) | concluída |
 | 7 — Refatoração (dividir o `index.html`) | concluída |
 | 8 — Notificações (Web Push) | concluída |
-| 9A — Estado online: esquema e decisões | esquema escrito; camada JS pendente |
+| 9A — Estado online: esquema e infraestrutura | concluída (desligada por padrão) |
 | 9B a 9G — migração dos domínios, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado

@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-04-avisos";
+const APP_VERSION = "2026-09-06-sync9a";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -719,3 +719,64 @@ const ROTEIRO = {
   "2027-06":["Entrega de junho: As faculdades da alma de Aristóteles em Lutero, pronto para submeter (Cad. de Filosofia Alemã/Analytica)"],
   "2027-07":["Entrega de julho: Spinoza, um filósofo do processo (E1p34), pronto para submeter (Cadernos Espinosanos/JEMS)"]
 };
+
+/* ================== SINCRONIA ONLINE — Fase 9A ==================
+   A infraestrutura do estado compartilhado. NADA aqui liga coisa nenhuma: até
+   a Fase 9B nenhum domínio está conectado, e o caminho toques -> GitHub ->
+   estado.json continua sendo a verdade operacional. Ver README, "Fase 9".
+
+   O PROJETO SUPABASE É COMPARTILHADO com o CONTAS_CASA. A URL e a chave são as
+   mesmas dos avisos — é o mesmo projeto —, e o isolamento NÃO vem de separar
+   projetos: vem da RLS e do prefixo cron_ nas tabelas. Ver sql/cron_estado.sql.
+
+   A CHAVE PUBLISHABLE CONTINUA PÚBLICA e continua sem poder nada: as tabelas da
+   Fase 9 não têm política nenhuma para o papel `anon`. Quem abre a porta é o
+   login, e só depois dele o papel vira `authenticated`. */
+const SINCRONIA = {
+  URL:   AVISOS.URL,
+  CHAVE: AVISOS.CHAVE,
+  /* O SDK entra por injeção, e SÓ quando a sincronia está ligada — nunca por
+     uma tag no index.html. Três razões, todas de compatibilidade:
+       · o app é um PWA que precisa abrir sem rede, e um script de terceiro no
+         <head> é um ponto de falha no caminho de abertura;
+       · o teste_hoje.js lê a lista de <script src> do próprio HTML e a carrega
+         do disco: uma URL absoluta ali quebraria o teste;
+       · CDN fora do ar tem de significar "sem sincronia online", nunca
+         "aplicativo quebrado".
+     A faixa é o major, e não uma versão exata, de propósito: versão fixa que
+     saia do ar vira 404 silencioso, e 404 silencioso aqui é sincronia
+     desligada sem ninguém saber. */
+  SDK: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
+
+  TABELA:          "cron_estado",
+  TABELA_REGISTRO: "cron_registro",
+  TABELA_BASE:     "cron_estrutura_base",
+  TABELA_DONO:     "cron_dono",
+
+  /* Os onze domínios do esquema. A lista existe para RECUSAR domínio
+     desconhecido antes da rede — o CHECK do Postgres já recusaria, mas um erro
+     que só aparece depois do round-trip é um erro que aparece tarde. */
+  DOMINIOS: ["item", "estrutura_proj", "estrutura_sub", "triagem", "meta",
+             "evento", "prioridade", "toefl", "retomada", "rotina", "dispensa"],
+
+  /* SOBREPOSIÇÃO DO CATCH-UP, em ms. O delta pergunta "o que mudou desde a
+     minha marca", e a marca é um servidor_em. Mas ordem de COMMIT não é ordem
+     de servidor_em: uma transação que começou antes e terminou depois pode ter
+     servidor_em MENOR do que uma já lida — e cairia no buraco entre as duas
+     leituras. Reler 30s a mais fecha o buraco, e reler não custa nada porque a
+     aplicação é idempotente: o relógio recusa o que já foi aplicado. */
+  SOBREPOSICAO: 30000,
+
+  RENDER_ESPERA: 250,    /* agrupa rajadas de eventos num render só */
+  /* Mesmo desenho do ENVIO_ESPERA dos toques, e pela mesma razão: marcar dez
+     itens seguidos é UMA subida, não dez. Curto porque aqui não há commit no
+     GitHub por trás — o custo de uma subida é um upsert, não uma reconstrução
+     do Pages. */
+  DRENAGEM_ESPERA: 800,
+  FILA_TETO:     2000,   /* o excedente vai para cron:sync-fila-excedente */
+  LOTE:          500     /* linhas por página na leitura inicial */
+};
+const SYNC_FILA_KEY   = "cron:sync-fila";
+const SYNC_CACHE_KEY  = "cron:sync-cache";
+const SYNC_MARCA_KEY  = "cron:sync-marca";
+const SYNC_LIGADO_KEY = "cron:sync-ligado";

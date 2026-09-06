@@ -1586,12 +1586,16 @@ ok(MGN.migrarPrioridadesFeitas() === 0, "sem marca antiga, nao ha o que migrar")
 ok(!MGN.getPrio()[0].feito_em, "e a prioridade continua por cumprir");
 
 console.log("\n=== 44. A estrutura em arquivos (Fase 7) ===");
-const ESPERADOS = ["js/00-config.js", "js/10-nucleo.js", "js/20-regras.js",
-                   "js/30-render.js", "js/40-app.js"];
+/* A Fase 9A acrescentou o js/15-sync.js entre o nucleo e as regras: ele e
+   infraestrutura, le do nucleo (LS, save, aparelhoId, instanteDoToque) e
+   precisa existir antes que qualquer coisa o chame. A ordem continua sendo
+   parte da arquitetura — o que este teste guarda e a ORDEM, nao a contagem. */
+const ESPERADOS = ["js/00-config.js", "js/10-nucleo.js", "js/15-sync.js",
+                   "js/20-regras.js", "js/30-render.js", "js/40-app.js"];
 ok(JSON.stringify(CAMINHOS) === JSON.stringify(ESPERADOS),
-   "os cinco scripts aparecem no HTML na ordem certa", CAMINHOS);
+   "os scripts aparecem no HTML na ordem certa", CAMINHOS);
 ok(ESPERADOS.every(f => fs.existsSync(path.join(RAIZ, "Cronograma", f))),
-   "e os cinco arquivos existem");
+   "e todos os arquivos existem");
 /* A ENTREGA TAMBEM E TESTAVEL, e passou a ser depois de uma correcao publicada
    ficar invisivel no aparelho por duas semanas. */
 const VERSAO_CFG = (FONTES[0].match(/APP_VERSION\s*=\s*"([^"]+)"/) || [])[1];
@@ -1599,8 +1603,12 @@ const VERSOES_HTML = SRCS.concat(
   (HTML.match(/href="css\/cronograma\.css[^"]*"/g) || []).map(h => h.slice(6, -1)))
   .map(s => (s.split("?v=")[1] || null));
 ok(!!VERSAO_CFG, "APP_VERSION existe em js/00-config.js", VERSAO_CFG);
-ok(VERSOES_HTML.length === 6 && VERSOES_HTML.every(v => v === VERSAO_CFG),
-   "e os 6 assets do HTML carregam essa MESMA versao no ?v=", VERSOES_HTML);
+/* A CONTAGEM SAI DA LISTA, e nao de um numero escrito aqui: o que importa e
+   que TODO asset do HTML carregue a versao corrente, e um numero fixo faria
+   este teste falhar por acrescimo legitimo em vez de por versao errada. */
+ok(VERSOES_HTML.length === ESPERADOS.length + 1 &&
+   VERSOES_HTML.every(v => v === VERSAO_CFG),
+   "e todos os assets do HTML carregam essa MESMA versao no ?v=", VERSOES_HTML);
 const NUCLEO = FONTES[1];
 ok(/fetch\("js\/00-config\.js\?ping="/.test(NUCLEO),
    "checkUpdate busca a versao onde ela mora (js/00-config.js), nao no HTML");

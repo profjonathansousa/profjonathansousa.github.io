@@ -68,6 +68,61 @@
 
 
 -- ============================================================
+-- TABELA 0 — cron_dono: quem é dono de um Cronograma.
+-- ============================================================
+--
+-- ESTE PROJETO SUPABASE É COMPARTILHADO com o CONTAS_CASA, que já tem os seus
+-- próprios usuários em auth.users. A autenticação, portanto, é compartilhada no
+-- nível do projeto — mas ESTAR AUTENTICADO NÃO FAZ DE NINGUÉM DONO DE UM
+-- CRONOGRAMA.
+--
+-- Sem esta tabela, `dono = auth.uid()` daria isolamento de LEITURA correto (cada
+-- um veria só o que é seu) mas deixaria qualquer conta do projeto CRIAR linhas
+-- de Cronograma. Isolamento por acidente não é isolamento: ele depende de
+-- ninguém apontar outro aplicativo para estas tabelas.
+--
+-- A allowlist é populada SÓ pela service_role, à mão, uma vez:
+--
+--     insert into public.cron_dono (uid, rotulo)
+--     select id, 'jonathan' from auth.users where email = '...';
+--
+-- O app pode LER a própria linha — é assim que a tela distingue "você entrou
+-- com uma conta que não é dona deste Cronograma" de "você não entrou". Não pode
+-- escrever: a ausência de política de INSERT é o ponto.
+create table if not exists public.cron_dono (
+  uid        uuid primary key references auth.users(id) on delete cascade,
+  rotulo     text,
+  criado_em  timestamptz not null default now()
+);
+
+-- No molde de minha_casa(), que o CONTAS_CASA já usa: STABLE (avaliada uma vez
+-- por consulta, não por linha) e SECURITY DEFINER, porque a política precisa
+-- consultar cron_dono independentemente da RLS da própria cron_dono — senão a
+-- verificação dependeria da permissão que ela mesma concede.
+create or replace function public.cron_e_dono()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (select 1 from public.cron_dono where uid = auth.uid());
+$$;
+
+alter table public.cron_dono enable row level security;
+alter table public.cron_dono force  row level security;
+
+drop policy if exists cron_dono_ler on public.cron_dono;
+create policy cron_dono_ler on public.cron_dono
+  for select to authenticated using (uid = auth.uid());
+
+revoke all    on public.cron_dono        from anon;
+grant  select on public.cron_dono        to   authenticated;
+revoke all    on function public.cron_e_dono() from anon;
+grant  execute on function public.cron_e_dono() to authenticated;
+
+
+-- ============================================================
 -- TABELA 1 — cron_estado: tudo que é estado corrente e mutável.
 -- ============================================================
 --
@@ -333,12 +388,31 @@ alter table public.cron_registro       force  row level security;
 alter table public.cron_estrutura_base enable row level security;
 alter table public.cron_estrutura_base force  row level security;
 
--- Estado: a conta faz tudo com o que é dela, e nada com o que não é.
-drop policy if exists cron_estado_dono on public.cron_estado;
-create policy cron_estado_dono on public.cron_estado
-  for all to authenticated
-  using      (dono = auth.uid())
-  with check (dono = auth.uid());
+-- Estado: uma política POR COMANDO, e não `for all`. A diferença importa: com
+-- `for all`, um DELETE passaria a ser permitido no instante em que alguém
+-- concedesse o grant — e a lápide, que é o que impede um aparelho parado há um
+-- mês de recriar o que foi apagado, ficaria destruível por descuido. Aqui a
+-- ausência de política de DELETE é explícita e visível em pg_policies.
+--
+-- `cron_e_dono()` em toda cláusula: estar autenticado neste projeto não faz de
+-- ninguém dono de um Cronograma. Ver TABELA 0.
+drop policy if exists cron_estado_dono    on public.cron_estado;
+drop policy if exists cron_estado_ler     on public.cron_estado;
+drop policy if exists cron_estado_criar   on public.cron_estado;
+drop policy if exists cron_estado_editar  on public.cron_estado;
+
+create policy cron_estado_ler on public.cron_estado
+  for select to authenticated
+  using (dono = auth.uid() and cron_e_dono());
+
+create policy cron_estado_criar on public.cron_estado
+  for insert to authenticated
+  with check (dono = auth.uid() and cron_e_dono());
+
+create policy cron_estado_editar on public.cron_estado
+  for update to authenticated
+  using      (dono = auth.uid() and cron_e_dono())
+  with check (dono = auth.uid() and cron_e_dono());
 
 -- Registro: escreve e lê; NÃO atualiza e NÃO apaga. É append-only, e a
 -- ausência das duas políticas é o que garante isso — sem policy, a RLS nega.
@@ -346,14 +420,17 @@ create policy cron_estado_dono on public.cron_estado
 drop policy if exists cron_registro_ler    on public.cron_registro;
 drop policy if exists cron_registro_gravar on public.cron_registro;
 create policy cron_registro_ler on public.cron_registro
-  for select to authenticated using (dono = auth.uid());
+  for select to authenticated
+  using (dono = auth.uid() and cron_e_dono());
 create policy cron_registro_gravar on public.cron_registro
-  for insert to authenticated with check (dono = auth.uid());
+  for insert to authenticated
+  with check (dono = auth.uid() and cron_e_dono());
 
 -- Base da estrutura: o app LÊ e não escreve. Ver a TABELA 3.
 drop policy if exists cron_estrutura_base_ler on public.cron_estrutura_base;
 create policy cron_estrutura_base_ler on public.cron_estrutura_base
-  for select to authenticated using (dono = auth.uid());
+  for select to authenticated
+  using (dono = auth.uid() and cron_e_dono());
 
 revoke all on public.cron_estado         from anon;
 revoke all on public.cron_registro       from anon;
@@ -407,6 +484,6 @@ alter table public.cron_registro replica identity full;
 select relname as tabela, relrowsecurity as rls, relforcerowsecurity as forcada
   from pg_class
  where relnamespace = 'public'::regnamespace
-   and relname in ('cron_estado', 'cron_registro', 'cron_estrutura_base',
-                   'cron_push_inscricao')
+   and relname in ('cron_dono', 'cron_estado', 'cron_registro',
+                   'cron_estrutura_base', 'cron_push_inscricao')
  order by relname;
