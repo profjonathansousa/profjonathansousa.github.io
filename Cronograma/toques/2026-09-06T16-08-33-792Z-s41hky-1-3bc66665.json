@@ -1,0 +1,27 @@
+{
+ "v": 1,
+ "lote": "2026-09-06T16-08-33-792Z-s41hky",
+ "quando": "2026-09-06T16:08:37.796Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-04-avisos",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-06T16-08-33-792Z-s41hky",
+   "quando": "2026-09-06T16:08:33.792Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788710913791",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Pagar Nossa Vila",
+    "feito_em": "",
+    "del": false
+   }
+  }
+ ]
+}
