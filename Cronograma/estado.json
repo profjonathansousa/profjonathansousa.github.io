@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-06T16:08:33.792Z",
+ "_dobrado_em": "2026-09-06T16:32:03.896Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2608,6 +2608,24 @@
     "feito_em": "",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-06T16-32-03-896Z-s41hky",
+   "quando": "2026-09-06T16:32:03.896Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-04-avisos",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788712323895",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Recorrer multa Movida",
+    "feito_em": "",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2785,7 +2803,8 @@
   "2026-09-06T11-33-58-041Z-ipkt72",
   "2026-09-06T11-33-58-871Z-ipkt72",
   "2026-09-06T11-49-12-412Z-s41hky",
-  "2026-09-06T16-08-33-792Z-s41hky"
+  "2026-09-06T16-08-33-792Z-s41hky",
+  "2026-09-06T16-32-03-896Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3446,6 +3465,16 @@
    "feito_em": "",
    "del": false,
    "quando": "2026-09-06T16:08:33.792Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W36/pr1788712323895": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Recorrer multa Movida",
+   "feito_em": "",
+   "del": false,
+   "quando": "2026-09-06T16:32:03.896Z",
    "aparelho": "s41hky"
   }
  },
