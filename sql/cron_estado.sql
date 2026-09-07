@@ -118,7 +118,19 @@ create policy cron_dono_ler on public.cron_dono
 
 revoke all    on public.cron_dono        from anon;
 grant  select on public.cron_dono        to   authenticated;
-revoke all    on function public.cron_e_dono() from anon;
+
+-- REVOGAR DE `anon` NAO BASTA, e este arquivo ja errou isso uma vez. O Postgres
+-- concede EXECUTE a PUBLIC por padrao ao criar a funcao, e `anon` herda de
+-- PUBLIC: sem revogar de PUBLIC, a funcao continuava exposta em
+-- /rest/v1/rpc/cron_e_dono para quem tem a chave publishable — que e publica por
+-- desenho e esta versionada num repositorio publico.
+--
+-- Nao havia vazamento (sem sessao, auth.uid() e nulo e ela devolve sempre
+-- false), mas a intencao declarada era negar, e negar de verdade custa uma
+-- linha. O linter do Supabase pegou; o cron_podar() abaixo ja revogava de
+-- `public` e por isso passou limpo.
+revoke all     on function public.cron_e_dono() from public;
+revoke all     on function public.cron_e_dono() from anon;
 grant  execute on function public.cron_e_dono() to authenticated;
 
 

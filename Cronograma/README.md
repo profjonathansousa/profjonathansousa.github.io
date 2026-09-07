@@ -1063,6 +1063,40 @@ escritor: verifica que existe **um** `SYNC.salvarAlteracao("prioridade", …)` n
 código, que ele está dentro do `tocarPrioridade`, que há **uma** implementação de
 `mesclarPrioridade` e que as duas descidas a usam.
 
+### O esquema em produção
+
+Aplicado em **07/09**, no mesmo projeto Supabase do CONTAS_CASA. O que existe
+agora: `cron_dono`, `cron_estado`, `cron_registro`, `cron_estrutura_base`,
+`cron_e_dono()`, `cron_estado_relogio()`, `cron_podar()` e 7 políticas. A
+allowlist tem **uma** linha.
+
+**A casa ficou intacta**, verificado antes e depois: 34 lançamentos, 20 modelos,
+2 perfis, 16 políticas e 9 funções, iguais. O Realtime passou de
+`lancamento, modelo` para `cron_estado, cron_registro, lancamento, modelo` —
+acréscimo, não substituição.
+
+*Provado contra o banco, não só contra o teste:*
+
+| Caso | Resultado |
+|---|---|
+| Jonathan (na allowlist) lê o próprio estado | vê a linha, `cron_e_dono()` = true |
+| Diva (autenticada, fora da allowlist) lê o Cronograma | **0 linhas**, `cron_e_dono()` = false |
+| Diva insere em `cron_estado` | **bloqueado** |
+| Diva se declara dona em `cron_dono` | **bloqueado** |
+| Diva lê os próprios lançamentos da casa | **34 — o isolamento está no lugar certo** |
+| `anon` lê `cron_estado` | **bloqueado** |
+| `anon` executa `cron_e_dono()` | **bloqueado** |
+| `anon` insere em `cron_push_inscricao` (Fase 8) | **funciona, como deve** |
+| Gravar `em` antigo por cima de `em` novo | **o gatilho descartou o atrasado** |
+
+*Uma correção que o linter do Supabase pegou.* O arquivo dizia
+`revoke all on function public.cron_e_dono() from anon`, e isso **não basta**: o
+Postgres concede `EXECUTE` a `PUBLIC` ao criar a função, e `anon` herda de
+`PUBLIC`. A função ficava exposta em `/rest/v1/rpc/cron_e_dono` para quem tem a
+chave publishable. Não havia vazamento — sem sessão ela devolve sempre `false` —,
+mas a intenção declarada era negar. Corrigido com `revoke ... from public`. O
+`cron_podar()` já revogava de `public` e por isso passou limpo.
+
 ### Estado atual
 
 **9A concluída: infraestrutura no ar, desligada por padrão.**
