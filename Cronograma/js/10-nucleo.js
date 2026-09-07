@@ -243,6 +243,44 @@ function setProjAberto(pid,id,v){var a=abertos();a[pid+"/"+id]=v;save("cron:pain
 function getPrio(sem){ var v = LS("cron:prioridades:" + (sem||semanaAtual), []); return (v&&v.forEach)?v:[]; }
 function setPrio(lista, sem){ save("cron:prioridades:" + (sem||semanaAtual), lista); }
 
+/* ============ O MERGE DE UMA PRIORIDADE — UMA IMPLEMENTACAO SO ============
+   A Fase 9B deu um SEGUNDO caminho de descida as prioridades (o Realtime do
+   Supabase), ao lado do que ja existia (o estado.json). Duas descidas para o
+   mesmo dado sao exatamente o defeito que este repositorio ja pagou uma vez —
+   o `dadosDoEvento` de 29/08, em que o botao do acervo montava o proprio
+   payload e ficou para tras no dia em que o titulo passou a viajar.
+
+   Entao o merge mora aqui, e so aqui. O aplicarPrioridadesDoEstado (legado)
+   chama num laco; o aplicarPrioridadeOnline (Fase 9B) chama uma vez. Se a
+   regra mudar, ela muda para os dois no mesmo ato.
+
+   O `r` e a forma do estado.json — {quando, tipo, painel, projId, t, feito_em,
+   del} — e nao a da linha do Supabase. Converter na entrada custa tres linhas
+   e evita que a forma do banco vaze para dentro da regra.
+
+   MUTA A LISTA E DEVOLVE SE MUDOU. Quem chama grava, porque quem chama sabe se
+   esta gravando uma semana ou varias. */
+function mesclarPrioridade(lista, prid, r){
+  if(!r || !r.quando) return false;
+  var j = -1;
+  for(var n=0;n<lista.length;n++){ if(lista[n].id === prid){ j = n; break; } }
+  /* O RELOGIO, item a item. Vale para as duas descidas, e e o que impede que
+     uma linha atrasada de um caminho desfaca o que o outro acabou de aplicar
+     — o caso real enquanto os dois convivem, ate a Fase 9G. */
+  if(j > -1 && (lista[j].em || "") >= r.quando) return false;
+  if(r.del){ if(j > -1){ lista.splice(j,1); return true; } return false; }
+  /* `feito_em` entra aqui e nao pode faltar: este `novo` SUBSTITUI o item
+     inteiro. Se o campo nao viesse, uma descida qualquer apagaria a
+     conclusao que este aparelho registrou. Ausencia no estado e "nao
+     feita", que e o valor certo para uma prioridade nunca marcada e para
+     uma desmarcada — os dois chegam como "". */
+  var novo = {id:prid, tipo:r.tipo || "livre", painel:r.painel || "",
+              projId:r.projId || "", t:r.t || "",
+              feito_em:r.feito_em || "", em:r.quando};
+  if(j < 0) lista.push(novo); else lista[j] = novo;
+  return true;
+}
+
 /* Os dados que viajam. O texto da ETAPA nunca entra aqui — ver o bloco acima.
    `t` e o rotulo da prioridade livre, ou o titulo do projeto como legenda. */
 function aplicarPrioridadesDoEstado(est){
@@ -258,26 +296,50 @@ function aplicarPrioridadesDoEstado(est){
   Object.keys(porSemana).forEach(function(sem){
     var lista = getPrio(sem), mudouSem = false;
     porSemana[sem].forEach(function(o){
-      var r = o.r;
-      if(!r || !r.quando) return;
-      var j = -1;
-      for(var n=0;n<lista.length;n++){ if(lista[n].id === o.prid){ j = n; break; } }
-      if(j > -1 && (lista[j].em || "") >= r.quando) return;
-      if(r.del){ if(j > -1){ lista.splice(j,1); mudouSem = true; } return; }
-      /* `feito_em` entra aqui e nao pode faltar: este `novo` SUBSTITUI o item
-         inteiro. Se o campo nao viesse, uma descida qualquer apagaria a
-         conclusao que este aparelho registrou. Ausencia no estado e "nao
-         feita", que e o valor certo para uma prioridade nunca marcada e para
-         uma desmarcada — os dois chegam como "". */
-      var novo = {id:o.prid, tipo:r.tipo || "livre", painel:r.painel || "",
-                  projId:r.projId || "", t:r.t || "",
-                  feito_em:r.feito_em || "", em:r.quando};
-      if(j < 0) lista.push(novo); else lista[j] = novo;
-      mudouSem = true;
+      if(mesclarPrioridade(lista, o.prid, o.r)) mudouSem = true;
     });
     if(mudouSem){ setPrio(lista, sem); mudou = true; }
   });
   return mudou;
+}
+
+/* ============ A DESCIDA ONLINE DAS PRIORIDADES — Fase 9B ============
+   O aplicador que o SYNC.assinarDominio("prioridade", ...) registra. Recebe UMA
+   linha do cron_estado e devolve a lista de renders que ela exige.
+
+   O QUE ELE NAO FAZ, e cada omissao e uma regra:
+     · nao decide sozinho quem vence. O relogio do SYNC ja recusou a linha
+       velha antes de chegar aqui, e o mesclarPrioridade recusa de novo contra
+       o `em` do item local — que e o que protege o caso em que o caminho
+       legado aplicou algo mais novo por fora do cache do SYNC;
+     · nao enfileira toque. Receber nao e tocar: um toque aqui subiria de volta
+       o que acabou de descer, e com Realtime o eco nao levaria minutos para
+       fechar o laco, levaria milissegundos;
+     · nao reescreve online. Pelo mesmo motivo;
+     · nao substitui a semana. A chave e "AAAA-Wnn/prid" e so aquele item e
+       tocado — duas prioridades da mesma semana, alteradas em dois aparelhos,
+       nao se atropelam.
+
+   A CHAVE CARREGA A SEMANA porque a identidade logica da prioridade e
+   `sem + prid`: o mesmo prid pode existir em semanas diferentes, e a lista
+   local e por semana (cron:prioridades:AAAA-Wnn). */
+function aplicarPrioridadeOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var corte = String(linha.chave).indexOf("/");
+  if(corte < 0) return [];
+  var sem = String(linha.chave).slice(0, corte);
+  var prid = String(linha.chave).slice(corte + 1);
+  if(!sem || !prid) return [];
+  var v = linha.valor || {};
+  var lista = getPrio(sem);
+  var mudou = mesclarPrioridade(lista, prid, {
+    quando: linha.em, del: !!linha.del,
+    tipo: v.tipo, painel: v.painel, projId: v.projId,
+    t: v.t, feito_em: v.feito_em
+  });
+  if(!mudou) return [];
+  setPrio(lista, sem);
+  return ["renderHoje"];
 }
 
 /* ============== MOTOR DE PRIORIDADES — Fase 3 ==============

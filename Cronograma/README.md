@@ -57,6 +57,14 @@ permanece no rodapé como "A semana em números".
 Cinco blocos, nesta ordem:
 
 ### 1. Prioridades
+
+> **Fonte de verdade (Fase 9B).** A prioridade continua morando em
+> `cron:prioridades:AAAA-Wnn` no aparelho, mas o estado **compartilhado** passou
+> a ser o `cron_estado` do Supabase, domínio `prioridade`, chave
+> `AAAA-Wnn/prid`. Quando a sincronia está ligada, uma alteração aparece no
+> outro aparelho em segundos, sem recarregar. O caminho de toques continua
+> emitindo em paralelo até a Fase 9G. Ver *Fase 9 — Estado compartilhado
+> online*.
 O que **você** elegeu para a semana. Sempre no topo. Duas formas:
 
 - **de trilho** — aponta para um projeto; o texto exibido é o **estágio real do
@@ -781,17 +789,19 @@ render enquanto houver foco em campo editável.
 | Etapa | O quê |
 |---|---|
 | **9A** | infraestrutura: autenticação, RLS, esquema, leitura, escrita, Realtime, reconexão, catch-up por delta, fila offline, guarda de foco no render |
-| **9B** | **TOEFL** ponta a ponta — o caso mais simples dos sete (chave = id, valor booleano, sem lápide, um escritor) e já exercita a ponte Processo → Hoje |
+| **9B** | **Prioridades** ponta a ponta — ver *9B, implementada*, abaixo |
 | **9C** | prioridades, metas e eventos: lápide, períodos, `feito_em` e a repercussão entre painéis |
 | **9D** | vagas, retomadas, registro, rotinas e dispensas |
 | **9E** | trilhos: progresso e estrutura, com o merge de três vias e a unificação do arquivamento |
 | **9F** | **escrita dupla e prova de equivalência**: os dois caminhos ativos, com comparação diária entre `estado.json` e as tabelas |
 | **9G** | desativação do caminho GitHub, só depois de 9F limpa em dois ou mais aparelhos |
 
-**9B é o TOEFL, e não Prioridades.** Prioridades tem lápide, semanas, `feito_em`
-e a interação com a migração do `cron:checks` — é um bom 9C, e um péssimo
-primeiro domínio. O que 9B precisa provar é a **infraestrutura**, com o mínimo de
-domínio em volta.
+**O plano previa TOEFL como 9B, e foi trocado por Prioridades**, por decisão de
+09/09. O argumento a favor do TOEFL era o mínimo de domínio em volta; o que
+decidiu contra ele foi que Prioridades é o domínio cuja falta de sincronia
+imediata abriu a Fase 9 — e é o único que exercita **os cinco verbos** (criar,
+editar, marcar, desmarcar, apagar), a lápide e a chave composta de uma vez. A
+infraestrutura ficou provada por um domínio difícil em vez de um fácil.
 
 **9F é a etapa que mais reduz risco**, e é a que faltava no desenho original.
 "Comprovadamente correto" não é uma impressão: é a comparação diária entre o
@@ -961,10 +971,102 @@ sendo a verdade operacional. Os ouvintes de `online`, `visibilitychange` e
 `pagehide` do `40-app.js` não foram tocados: a camada nova acrescentou os seus
 próprios, incluindo um `offline`, que o aplicativo não tinha.
 
+### 9B — Prioridades online, implementada
+
+O primeiro domínio a usar a camada. **Uma prioridade criada, editada, marcada,
+desmarcada ou apagada num aparelho aparece no outro sem recarregar**, e sem
+passar pelo GitHub.
+
+#### Um escritor, e ele já existia
+
+As cinco operações — `addPrioridadeTrilho`, `addPrioridadeLivre`,
+`editPrioridade`, `togglePrioridadeFeita`, `delPrioridade` — **já passavam todas
+por `tocarPrioridade()`**. Foi ali, e só ali, que o caminho online entrou. A 9B
+não criou um segundo escritor porque não precisou de um.
+
+**O mesmo instante vai nos dois caminhos.** O `iso` nasce do
+`instanteDoToque()`, o relógio monotônico do aparelho, e é o que o toque já
+levava; passá-lo ao `SYNC` em vez de deixá-lo gerar outro garante que os dois
+digam a mesma coisa sobre *quando* a decisão foi tomada. Sem isso a comparação
+da Fase 9F não teria sentido — e, pior, o mesmo ato poderia vencer por um
+caminho e perder pelo outro.
+
+**O payload sai do `dadosDaPrioridade()`**, e não de um objeto montado à mão.
+Montar de novo repetiria o defeito do `dadosDoEvento` de 29/08: no dia em que um
+campo novo começasse a viajar, um dos dois montadores ficaria para trás.
+
+#### Um merge, usado pelas duas descidas
+
+A 9B deu às prioridades uma **segunda** descida (o Realtime) ao lado da que já
+existia (o `estado.json`). Duas descidas para o mesmo dado são exatamente o
+defeito que este repositório já pagou uma vez — então o merge foi extraído para
+`mesclarPrioridade(lista, prid, r)`, em `10-nucleo.js`, e **as duas o chamam**:
+`aplicarPrioridadesDoEstado` num laço, `aplicarPrioridadeOnline` uma vez. Se a
+regra mudar, muda para os dois no mesmo ato.
+
+Isso importa por um caso concreto do período de convivência: o caminho legado
+pode aplicar algo mais novo **por fora** do cache do `SYNC`. O relógio do `SYNC`
+não veria; o `em` do item local vê. **Duas guardas, e a segunda não é lógica
+paralela — é a mesma função.**
+
+#### Por registro, nunca por semana
+
+A chave é `AAAA-Wnn/prid`, e a identidade lógica da prioridade é `sem + prid`: o
+mesmo `prid` pode existir em semanas diferentes, e a lista local é por semana.
+**Só o item alterado é tocado** — duas prioridades da mesma semana, alteradas em
+dois aparelhos, não se atropelam. O servidor guarda duas linhas, não um retrato
+da semana.
+
+| Verbo | O que viaja |
+|---|---|
+| criar | a linha inteira, com `tipo`, `painel`, `projId`, `t` |
+| editar | a linha, com o `t` novo |
+| marcar | `feito_em` com a **data**, nunca um booleano |
+| desmarcar | `feito_em: ""` — **ausência do campo nunca é desmarcação** |
+| apagar | `del: true` — lápide, nunca ausência de linha |
+
+`feito_em` é data e não booleano pela razão de sempre: a regra de tela depende
+de *quando* foi cumprida — hoje fica marcada, amanhã sai —, e um booleano
+obrigaria cada aparelho a adivinhar o dia.
+
+#### Offline, reconexão e a tela
+
+Tudo pela 9A, sem nada novo: a decisão entra na fila antes da rede, a fila
+sobrevive a recarregar a página, e a reconexão traz canal → delta → fila, nessa
+ordem. Um aparelho que chega depois recupera pelo delta.
+
+A alteração local é **otimista** (a tela mostra antes de o servidor confirmar) e
+a remota chama `renderHoje()` pelo `SYNC.pedirRender()` — portanto **com a
+guarda de foco**: nada é redesenhado enquanto houver um `contenteditable` em
+edição.
+
+#### O que a 9B não mudou
+
+O motor de prioridades, as regras do Hoje, Trilhos, TOEFL, Vagas, Metas,
+Eventos, Retomadas, `cron:checks`, o Web Push e **todo o caminho de
+toques/GitHub**. `tocarPrioridade` continua emitindo o toque legado em toda
+operação, e `aplicarPrioridadesDoEstado` continua existindo e funcionando. Os
+dois caminhos convivem até a Fase 9G.
+
+**Nenhuma alteração no esquema foi necessária:** o domínio `prioridade`, a chave
+`AAAA-Wnn/id` e a coluna `del` já estavam em `sql/cron_estado.sql` desde a 9A.
+
+#### Testes
+
+`scripts/teste_sync.js`, seções 15 a 23 — dois aparelhos de verdade contra o
+mesmo servidor de mentira, exercitando o caminho inteiro: ação da tela →
+`tocarPrioridade` → `SYNC` → gatilho do relógio → Realtime →
+`aplicarPrioridadeOnline` → `cron:prioridades` do outro aparelho.
+
+A seção 23 é de arquitetura, e é a que quebra se alguém acrescentar um segundo
+escritor: verifica que existe **um** `SYNC.salvarAlteracao("prioridade", …)` no
+código, que ele está dentro do `tocarPrioridade`, que há **uma** implementação de
+`mesclarPrioridade` e que as duas descidas a usam.
+
 ### Estado atual
 
-**9A concluída: infraestrutura no ar, desligada por padrão, nenhum domínio
-conectado.** Falta aplicar o `sql/cron_estado.sql` ao projeto e popular a
+**9A concluída: infraestrutura no ar, desligada por padrão.**
+**9B concluída: Prioridades é o primeiro domínio conectado.** Falta aplicar o `sql/cron_estado.sql` ao projeto e popular a
 `cron_dono` — as duas coisas são operações de banco, feitas uma vez:
 
 ```sql
@@ -972,9 +1074,13 @@ insert into public.cron_dono (uid, rotulo)
 select id, 'jonathan' from auth.users where email = '<o seu e-mail>';
 ```
 
-Depois disso, ligar num aparelho é `SYNC.entrar(email, senha)`. **9B ainda não
-começou:** nenhum domínio tem aplicador, e o caminho da Fase 8 continua sendo o
-que move o Cronograma.
+Depois disso, ligar num aparelho é `SYNC.entrar(email, senha)`. **Enquanto o SQL
+não for aplicado e a sincronia não for ligada, nada muda**: `tocarPrioridade`
+verifica `SYNC.ligado()` antes de escrever online, e sem isso um aparelho que
+nunca entrou acumularia fila para sempre, sem nada que a drenasse.
+
+**9C ainda não começou.** Metas, Eventos, TOEFL, Vagas, Retomadas, Trilhos e
+Rotinas continuam viajando só pelo caminho de toques.
 
 ---
 
@@ -1179,7 +1285,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 7 — Refatoração (dividir o `index.html`) | concluída |
 | 8 — Notificações (Web Push) | concluída |
 | 9A — Estado online: esquema e infraestrutura | concluída (desligada por padrão) |
-| 9B a 9G — migração dos domínios, escrita dupla, desativação do GitHub | não iniciadas |
+| 9B — Prioridades online (primeiro domínio na camada) | concluída |
+| 9C a 9G — demais domínios, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado
 

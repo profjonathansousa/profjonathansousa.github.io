@@ -951,8 +951,36 @@ function marcarDoHoje(pid, projId, subId, concluir){
    Pula "nao se aplica" pela mesma razao que o pecaDoMes ja pulava: e uma etapa
    que o proprio trilho declarou que nao acontece, e mandar o dia para ela seria
    apontar para o nada. Hoje isso e o caso real do a00-3. */
+/* ============ O UNICO ESCRITOR DA PRIORIDADE — Fase 9B ============
+   As cinco operacoes (criar trilho, criar livre, apagar, marcar/desmarcar,
+   editar) ja passavam todas por aqui. Por isso a 9B nao precisou de um segundo
+   escritor: o caminho online entrou NESTA funcao, e nao em cinco lugares.
+
+   O MESMO INSTANTE VAI NOS DOIS CAMINHOS, e isso nao e detalhe. O `iso` nasce
+   do instanteDoToque(), o relogio monotonico do aparelho, e e ele que o toque
+   leva. Passa-lo ao SYNC em vez de deixar o SYNC gerar outro garante que os
+   dois caminhos digam a MESMA COISA sobre quando a decisao foi tomada — sem
+   isso, a comparacao da Fase 9F (escrita dupla) nao teria sentido, e pior: o
+   mesmo ato poderia vencer por um caminho e perder pelo outro.
+
+   O PAYLOAD SAI DO dadosDaPrioridade, e nao de um objeto montado a mao aqui.
+   Montar de novo seria repetir o defeito do `dadosDoEvento` de 29/08: o dia em
+   que um campo novo comecar a viajar, um dos dois montadores ficaria para tras.
+
+   SO ESCREVE ONLINE SE A SINCRONIA ESTIVER LIGADA. Sem a guarda, um aparelho
+   que nunca entrou acumularia fila em cron:sync-fila para sempre, sem nada que
+   a drenasse. E a 9A esta desligada por padrao de proposito. */
 function tocarPrioridade(p, sem, apagada){
-  var iso = enfileirarToque("prioridade", dadosDaPrioridade(p, sem, apagada));
+  var d = dadosDaPrioridade(p, sem, apagada);
+  var iso = enfileirarToque("prioridade", d);          /* legado: intacto */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("prioridade", d.sem + "/" + d.prid,
+        {tipo:d.tipo, painel:d.painel, projId:d.projId,
+         t:d.t, feito_em:d.feito_em},
+        {em: iso, del: d.del});
+    }
+  }catch(e){ try{ console.error("sync: prioridade nao subiu:", e); }catch(e2){} }
   return iso;
 }
 function addPrioridadeTrilho(valor){

@@ -1,4 +1,4 @@
-/* Testes da Fase 9A — a infraestrutura de estado compartilhado online.
+/* Testes da Fase 9A (infraestrutura) e 9B (prioridades online).
  *
  *     node scripts/teste_sync.js
  *
@@ -27,7 +27,7 @@ const CAMINHOS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || []
   .map(t => t.match(/src="([^"]+)"/)[1]).map(s => s.split("?")[0]);
 const FONTE = CAMINHOS
   .map(src => fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"))
-  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_LIGADO_KEY};";
+  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_LIGADO_KEY, dateKey, monthKey, now};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -160,7 +160,7 @@ function criarAparelho(nome, srv, opcoes) {
     location: {href: "", replace(){}, reload(){}, pathname: "/Cronograma/"},
     setTimeout: (f) => 0, clearTimeout(){}, setInterval: () => 0, clearInterval(){},
     fetch: () => Promise.reject(new Error("sem rede no teste")),
-    alert(){}, confirm: () => true, prompt: () => null,
+    alert(){}, confirm: () => true, prompt: () => ctx.__prompt || null,
     Promise, Date, Math, JSON, String, Number, Object, Array, Boolean, RegExp,
     Error, isFinite, isNaN, TextEncoder, btoa: (s) => Buffer.from(s, "binary").toString("base64"),
     atob: (s) => Buffer.from(s, "base64").toString("binary")
@@ -172,6 +172,7 @@ function criarAparelho(nome, srv, opcoes) {
   Object.assign(ctx, ctx.__const || {});
   ctx.__armazem = armazem;
   ctx.__uid = uid;
+  ctx.__prompt = null;
   /* Injeta a sessao ja pronta: o SDK nao e carregado (nao ha CDN no teste), e o
      que se quer testar e a logica, nao o <script> do jsdelivr. */
   ctx.__conectar = function () {
@@ -485,6 +486,298 @@ console.log("\n=== 13. Nenhum dominio foi conectado (criterio de parada de 9A) =
   ok(Object.keys(JSON.parse(A.__armazem["cron:sync-cache"])).length === 11,
      "as onze linhas ficaram no cache, esperando 9B");
   ok(A.getToques().length === 0, "e nenhum toque foi gerado por nada disso");
+}
+
+/* ================= FASE 9B — AS PRIORIDADES ONLINE =================
+   Dois aparelhos de verdade contra o mesmo servidor de mentira. O que se prova
+   aqui e o caminho inteiro: a acao da tela (addPrioridadeLivre, editPrioridade,
+   togglePrioridadeFeita, delPrioridade) -> tocarPrioridade -> SYNC -> gatilho
+   -> Realtime -> aplicarPrioridadeOnline -> cron:prioridades do outro. */
+function parOnline(srv) {
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  return [A, B];
+}
+/* O estado que a TELA le, e nao o cache do SYNC: e ele que prova que o dominio
+   foi mesmo conectado, e nao so que a linha chegou. */
+const prioridades = (ap, sem) => ap.getPrio(sem || ap.semanaAtual);
+const acharPrio = (ap, id, sem) => prioridades(ap, sem).filter(x => x.id === id)[0] || null;
+
+console.log("\n=== 15. Criar no A aparece no B (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  await B.SYNC.assinarMudancas();
+  ok(prioridades(B).length === 0, "o celular comeca sem prioridade nenhuma");
+
+  A.__prompt = "Reler o De servo arbitrio";
+  A.addPrioridadeLivre();
+  const criada = prioridades(A)[0];
+  ok(!!criada && criada.t === "Reler o De servo arbitrio",
+     "1. o Mac criou, e ela ja esta na tela dele (otimista)", criada && criada.t);
+  await A.SYNC.drenarFila();
+
+  const noCel = acharPrio(B, criada.id);
+  ok(!!noCel, "   e chegou ao celular pelo Realtime", prioridades(B));
+  ok(noCel && noCel.t === "Reler o De servo arbitrio" && noCel.tipo === "livre",
+     "   com texto e tipo certos", noCel);
+  ok(noCel && noCel.em === criada.em, "   e com o MESMO instante da decisao", noCel && noCel.em);
+}
+
+console.log("\n=== 16. Marcar, desmarcar, editar e excluir (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  await B.SYNC.assinarMudancas();
+  A.__prompt = "Fichar o Tratado Teologico-Politico";
+  A.addPrioridadeLivre();
+  const id = prioridades(A)[0].id;
+  await A.SYNC.drenarFila();
+  ok(!!acharPrio(B, id), "a prioridade existe nos dois");
+
+  A.togglePrioridadeFeita(id);
+  await A.SYNC.drenarFila();
+  ok(acharPrio(A, id).feito_em === A.dateKey, "2. o Mac marcou", acharPrio(A, id).feito_em);
+  ok(acharPrio(B, id).feito_em === A.dateKey,
+     "   e o celular recebeu o feito_em com a DATA", acharPrio(B, id).feito_em);
+
+  A.togglePrioridadeFeita(id);
+  await A.SYNC.drenarFila();
+  ok(acharPrio(A, id).feito_em === "", "3. o Mac desmarcou");
+  ok(acharPrio(B, id).feito_em === "",
+     "   e o celular recebeu feito_em vazio — nao a ausencia do campo",
+     acharPrio(B, id));
+  ok("feito_em" in acharPrio(B, id), "   o campo EXISTE e esta vazio");
+
+  A.editPrioridade(id, "Fichar o TTP, capitulos 1 a 7");
+  await A.SYNC.drenarFila();
+  ok(acharPrio(B, id).t === "Fichar o TTP, capitulos 1 a 7",
+     "4. edicao no Mac chega ao celular", acharPrio(B, id).t);
+
+  A.delPrioridade(id);
+  await A.SYNC.drenarFila();
+  ok(acharPrio(A, id) === null, "5. o Mac apagou");
+  ok(acharPrio(B, id) === null, "   e ela sumiu do celular tambem");
+  const linha = srv.linhas.filter(l => l.dominio === "prioridade" && l.chave.indexOf(id) > 0)[0];
+  ok(!!linha && linha.del === true,
+     "   e a exclusao e LAPIDE no servidor, nao ausencia de linha", linha && linha.del);
+}
+
+console.log("\n=== 17. O caminho de volta: alteracao no B chega ao A (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  await A.SYNC.assinarMudancas();
+  B.__prompt = "Preparar a aula de Galatas";
+  B.addPrioridadeLivre();
+  const id = prioridades(B)[0].id;
+  await B.SYNC.drenarFila();
+  ok(!!acharPrio(A, id), "6. o celular criou e o Mac recebeu", prioridades(A));
+  B.togglePrioridadeFeita(id);
+  await B.SYNC.drenarFila();
+  ok(acharPrio(A, id).feito_em === B.dateKey, "   e a marca tambem volta");
+}
+
+console.log("\n=== 18. Duas prioridades da mesma semana nao se atropelam (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  A.__prompt = "Escrever a secao 2 do artigo";
+  A.addPrioridadeLivre();
+  const idA = prioridades(A)[0].id;
+  await A.SYNC.drenarFila();
+
+  B.__prompt = "Responder o parecer da revista";
+  B.addPrioridadeLivre();
+  const idB = prioridades(B).filter(x => x.id !== idA)[0].id;
+  await B.SYNC.drenarFila();
+
+  ok(idA !== idB, "sao duas prioridades distintas");
+  ok(prioridades(A).length === 2 && prioridades(B).length === 2,
+     "7. os dois aparelhos veem AS DUAS",
+     {mac: prioridades(A).map(x => x.t), cel: prioridades(B).map(x => x.t)});
+  ok(!!acharPrio(A, idB) && !!acharPrio(B, idA),
+     "   e cada um recebeu a do outro sem perder a sua");
+
+  /* A prova de que nao e snapshot de semana: cada uma e uma LINHA. */
+  const chaves = srv.linhas.filter(l => l.dominio === "prioridade").map(l => l.chave);
+  ok(chaves.length === 2 && chaves.every(k => k.indexOf(A.semanaAtual + "/") === 0),
+     "   e o servidor tem DUAS linhas da semana, nao um retrato dela", chaves);
+
+  /* Cada um edita a SUA: nenhuma edicao apaga a do outro. */
+  A.editPrioridade(idA, "Escrever a secao 2 e a 3");
+  await A.SYNC.drenarFila();
+  B.editPrioridade(idB, "Responder o parecer ate sexta");
+  await B.SYNC.drenarFila();
+  ok(acharPrio(A, idA).t === "Escrever a secao 2 e a 3" &&
+     acharPrio(A, idB).t === "Responder o parecer ate sexta",
+     "   edicoes cruzadas convivem no Mac", prioridades(A).map(x => x.t));
+  ok(acharPrio(B, idA).t === "Escrever a secao 2 e a 3" &&
+     acharPrio(B, idB).t === "Responder o parecer ate sexta",
+     "   e no celular", prioridades(B).map(x => x.t));
+}
+
+console.log("\n=== 19. Offline, reconexao e precedencia (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  await B.SYNC.assinarMudancas();
+
+  srv.falhar = true;
+  A.__prompt = "Revisar o writing sample";
+  A.addPrioridadeLivre();
+  const id = prioridades(A)[0].id;
+  await A.SYNC.drenarFila();
+  ok(prioridades(A).length === 1, "8. sem rede, a prioridade existe na tela do Mac");
+  ok(A.SYNC.situacao().fila === 1, "   e fica pendente na fila", A.SYNC.situacao().fila);
+  ok(prioridades(B).length === 0, "   o celular ainda nao sabe de nada");
+
+  srv.falhar = false;
+  await A.SYNC.reconectar(true);
+  ok(A.SYNC.situacao().fila === 0, "   a rede volta e a fila sobe");
+  ok(!!acharPrio(B, id), "   e o celular recebe", prioridades(B));
+
+  /* Enquanto o CELULAR esta fora, o Mac decide mais uma coisa. */
+  const C = criarAparelho("ipad", srv, {storage: {}}).__conectar();
+  await C.SYNC.reconectar(true);
+  ok(!!acharPrio(C, id), "9. um aparelho que chega depois recupera pelo delta", prioridades(C));
+  A.editPrioridade(id, "Revisar o writing sample e as cartas");
+  await A.SYNC.drenarFila();
+  await C.SYNC.reconectar(true);
+  ok(acharPrio(C, id).t === "Revisar o writing sample e as cartas",
+     "   e a reconexao traz o que mudou no intervalo", acharPrio(C, id).t);
+}
+
+console.log("\n=== 20. Receber nao gera envio, nem eco, nem toque (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  await B.SYNC.assinarMudancas();
+  const toquesB = B.getToques().length;
+
+  A.__prompt = "Fechar o capitulo 3";
+  A.addPrioridadeLivre();
+  const id = prioridades(A)[0].id;
+  await A.SYNC.drenarFila();
+
+  ok(!!acharPrio(B, id), "a prioridade chegou ao celular");
+  ok(B.getToques().length === toquesB,
+     "10. e NAO gerou toque no celular — receber nao e tocar", B.getToques().length);
+  ok(B.SYNC.situacao().fila === 0, "    nem enfileirou envio de volta");
+  ok(srv.escritas === 1, "    o servidor recebeu UMA escrita, nao um laco", srv.escritas);
+
+  /* O proprio evento voltando: nao pode ser reaplicado. */
+  const antes = JSON.stringify(prioridades(A));
+  const r = A.SYNC.aplicarRemoto(srv.linhas[0]);
+  ok(r.aplicou === false && /eco/.test(r.motivo), "    e o eco proprio e recusado no Mac", r);
+  ok(JSON.stringify(prioridades(A)) === antes, "    sem mexer na lista dele");
+}
+
+console.log("\n=== 21. Prioridade antiga nao vence a mais nova (9B) ===");
+{
+  const srv = criarServidor();
+  const [A, B] = parOnline(srv);
+  A.__prompt = "Ler Ebeling";
+  A.addPrioridadeLivre();
+  const id = prioridades(A)[0].id;
+  await A.SYNC.drenarFila();
+  await B.SYNC.reconectar(true);
+  B.editPrioridade(id, "Ler Ebeling — texto DEFINITIVO");
+  await B.SYNC.drenarFila();
+
+  /* Uma linha ANTIGA chega ao celular: nao pode desfazer o que ele acabou de
+     escrever. Duas guardas a recusam — o cache do SYNC e o `em` do item. */
+  const velha = {dono: "dono-1", dominio: "prioridade",
+                 chave: A.semanaAtual + "/" + id,
+                 valor: {tipo: "livre", painel: "", projId: "", t: "Ler Ebeling", feito_em: ""},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-06-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "11. a linha antiga e recusada", r);
+  ok(acharPrio(B, id).t === "Ler Ebeling — texto DEFINITIVO",
+     "    e o texto mais novo permanece", acharPrio(B, id).t);
+
+  /* E a mesma guarda, aplicada direto ao merge, sem passar pelo cache: e o que
+     protege o caso em que o caminho LEGADO aplicou algo mais novo por fora. */
+  const lista = B.getPrio(A.semanaAtual);
+  const mudou = B.mesclarPrioridade(lista, id,
+    {quando: "2020-01-01T00:00:00.000Z", t: "velho", tipo: "livre"});
+  ok(mudou === false, "    e o mesclarPrioridade tambem a recusa sozinho");
+  ok(B.mesclarPrioridade(lista, id,
+    {quando: "2099-01-01T00:00:00.000Z", t: "futuro", tipo: "livre"}) === true,
+    "    mas aceita a mais nova");
+}
+
+console.log("\n=== 22. O que a 9B NAO mudou ===");
+{
+  const srv = criarServidor();
+  const [A] = parOnline(srv);
+
+  /* 13. trilho e livre continuam com a semantica de sempre. */
+  A.addPrioridadeTrilho("pipeline/a01");
+  const t = prioridades(A).filter(x => x.tipo === "trilho")[0];
+  ok(!!t && t.painel === "pipeline" && t.projId === "a01",
+     "13. a prioridade de trilho guarda o ENDERECO, nao o texto da etapa", t);
+  ok(!t.t || t.t.indexOf("etapa") < 0, "    o texto e o titulo do projeto, como sempre", t.t);
+  A.addPrioridadeTrilho("pipeline/a01");
+  ok(prioridades(A).filter(x => x.projId === "a01").length === 1,
+     "    e a mesma peca nao entra duas vezes");
+  A.__prompt = "uma livre";
+  A.addPrioridadeLivre();
+  const l = prioridades(A).filter(x => x.tipo === "livre")[0];
+  ok(!!l && l.painel === "" && l.projId === "", "    a livre continua sem endereco", l);
+
+  /* 12. o motor continua funcionando com as prioridades existentes. */
+  const pr = A.prioridadesDoDia();
+  ok(!!pr && Array.isArray(pr.manuais) && Array.isArray(pr.sugeridas),
+     "12. prioridadesDoDia continua devolvendo manuais e sugeridas", Object.keys(pr));
+  ok(pr.manuais.length === 2, "    e enxerga as duas que acabamos de criar", pr.manuais.length);
+  ok(typeof A.renderHoje === "function" && (A.renderHoje(), true),
+     "    e o Hoje desenha sem erro");
+
+  /* 14. cron:checks continua local. */
+  A.toggleCheck("seg-min");
+  await A.SYNC.drenarFila();
+  const dominios = srv.linhas.map(l => l.dominio);
+  ok(dominios.indexOf("rotina") < 0,
+     "14. marcar rotina NAO virou dominio online nesta fase", dominios);
+  ok(!!A.__armazem["cron:checks:" + A.dateKey], "    cron:checks continua no aparelho");
+  ok(dominios.every(d => d === "prioridade"),
+     "    e SO prioridade subiu: nenhum outro dominio foi conectado", dominios);
+
+  /* O caminho legado continua inteiro e continua recebendo o mesmo ato. */
+  const tiposDeToque = A.getToques().map(x => x.tipo);
+  /* DOIS, e nao tres: o segundo addPrioridadeTrilho e recusado por duplicata
+     antes de tocar em nada — que e a semantica de sempre, verificada acima. */
+  ok(tiposDeToque.filter(x => x === "prioridade").length === 2,
+     "    e o toque legado continua sendo emitido por toda operacao", tiposDeToque);
+  ok(typeof A.aplicarPrioridadesDoEstado === "function",
+     "    a descida pelo estado.json continua existindo");
+}
+
+console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ===");
+{
+  const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  /* SO o tocarPrioridade escreve prioridade online. Se um dia alguem
+     acrescentar um segundo escritor, este teste cai. */
+  const escritores = (fonte.match(/SYNC\.salvarAlteracao\(\s*"prioridade"/g) || []).length;
+  ok(escritores === 1, "ha UM unico ponto que escreve prioridade online", escritores);
+  ok(/function tocarPrioridade[\s\S]{0,1400}SYNC\.salvarAlteracao\(\s*"prioridade"/.test(fonte),
+     "e ele e o tocarPrioridade, por onde as cinco operacoes ja passavam");
+  /* E UMA implementacao de merge, usada pelos dois caminhos de descida. */
+  ok((nucleo.match(/function mesclarPrioridade/g) || []).length === 1,
+     "ha UMA implementacao de merge");
+  ok(/aplicarPrioridadesDoEstado[\s\S]*?mesclarPrioridade/.test(nucleo),
+     "o caminho legado (estado.json) a usa");
+  ok(/aplicarPrioridadeOnline[\s\S]*?mesclarPrioridade/.test(nucleo),
+     "e o caminho online tambem — nao ha logica de relogio paralela");
+  /* O mesmo instante nos dois caminhos. */
+  ok(/var iso = enfileirarToque\("prioridade", d\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
+     "e os dois caminhos carregam o MESMO instante da decisao");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

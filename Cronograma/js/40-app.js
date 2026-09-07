@@ -149,4 +149,9 @@ try{
 
    NAO SUBSTITUI NADA acima. Os ouvintes do GitHub continuam onde estavam e
    continuam fazendo o que faziam: os dois caminhos convivem ate a Fase 9G. */
+/* Fase 9B: as prioridades sao o primeiro dominio a usar a camada. O registro
+   mora aqui, e nao dentro do 15-sync.js, porque a camada e infraestrutura e nao
+   pode conhecer dominio nenhum — quem conhece os dois lados e o bootstrap. */
+try{ SYNC.assinarDominio("prioridade", aplicarPrioridadeOnline); }
+catch(e){ console.error("sincronia: dominio prioridade:", e); }
 try{ SYNC.iniciar(); }catch(e){ console.error("sincronia online:", e); }
