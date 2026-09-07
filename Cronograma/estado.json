@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-07T13:46:59.959Z",
+ "_dobrado_em": "2026-09-07T13:47:09.608Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2824,6 +2824,42 @@
     "feito_em": "",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T13-47-07-676Z-s41hky",
+   "quando": "2026-09-07T13:47:07.676Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1788788827676",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a00",
+    "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "feito_em": "",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T13-47-09-608Z-s41hky",
+   "quando": "2026-09-07T13:47:09.608Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1788788829608",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a02",
+    "t": "Set · A categoria de \"religião\" e a primeira modernidade",
+    "feito_em": "",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3014,7 +3050,9 @@
   "2026-09-07T03-00-37-831Z-s41hky",
   "2026-09-07T03-01-17-953Z-ipkt72",
   "2026-09-07T03-01-29-443Z-s41hky",
-  "2026-09-07T13-46-59-959Z-s41hky"
+  "2026-09-07T13-46-59-959Z-s41hky",
+  "2026-09-07T13-47-07-676Z-s41hky",
+  "2026-09-07T13-47-09-608Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3708,6 +3746,26 @@
    "feito_em": "",
    "del": false,
    "quando": "2026-09-07T13:46:59.959Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W37/pr1788788827676": {
+   "tipo": "trilho",
+   "painel": "pipeline",
+   "projId": "a00",
+   "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+   "feito_em": "",
+   "del": false,
+   "quando": "2026-09-07T13:47:07.676Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W37/pr1788788829608": {
+   "tipo": "trilho",
+   "painel": "pipeline",
+   "projId": "a02",
+   "t": "Set · A categoria de \"religião\" e a primeira modernidade",
+   "feito_em": "",
+   "del": false,
+   "quando": "2026-09-07T13:47:09.608Z",
    "aparelho": "s41hky"
   }
  },
