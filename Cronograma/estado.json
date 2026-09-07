@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-07T02:59:56.250Z",
+ "_dobrado_em": "2026-09-07T03:00:37.831Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2746,6 +2746,30 @@
     "feito_em": "2026-09-06",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T03-00-31-784Z-s41hky",
+   "quando": "2026-09-07T03:00:31.784Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T03-00-37-831Z-s41hky",
+   "quando": "2026-09-07T03:00:37.831Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
+    "st": 0
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2931,7 +2955,9 @@
   "2026-09-07T02-59-02-420Z-s41hky",
   "2026-09-07T02-59-06-678Z-s41hky",
   "2026-09-07T02-59-52-633Z-s41hky",
-  "2026-09-07T02-59-56-250Z-s41hky"
+  "2026-09-07T02-59-56-250Z-s41hky",
+  "2026-09-07T03-00-31-784Z-s41hky",
+  "2026-09-07T03-00-37-831Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3272,6 +3298,11 @@
   "anpof-urso-para-professor-doutor-de-historia-da-filosofia-medieval": {
    "st": 2,
    "quando": "2026-09-06T01:19:37.205Z",
+   "aparelho": "s41hky"
+  },
+  "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba": {
+   "st": 0,
+   "quando": "2026-09-07T03:00:37.831Z",
    "aparelho": "s41hky"
   }
  },
