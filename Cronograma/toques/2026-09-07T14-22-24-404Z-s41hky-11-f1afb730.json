@@ -1,0 +1,141 @@
+{
+ "v": 1,
+ "lote": "2026-09-07T14-22-24-404Z-s41hky",
+ "quando": "2026-09-07T14:22:37.625Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-24-404Z-s41hky",
+   "quando": "2026-09-07T14:22:24.404Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-25-346Z-s41hky",
+   "quando": "2026-09-07T14:22:25.346Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-27-280Z-s41hky",
+   "quando": "2026-09-07T14:22:27.280Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-27-746Z-s41hky",
+   "quando": "2026-09-07T14:22:27.746Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-28-295Z-s41hky",
+   "quando": "2026-09-07T14:22:28.295Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-30-277Z-s41hky",
+   "quando": "2026-09-07T14:22:30.277Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-diagnostico",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-30-960Z-s41hky",
+   "quando": "2026-09-07T14:22:30.960Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-tpl-writing",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-31-443Z-s41hky",
+   "quando": "2026-09-07T14:22:31.443Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-notas-listening",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-32-611Z-s41hky",
+   "quando": "2026-09-07T14:22:32.611Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-sample40",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-33-178Z-s41hky",
+   "quando": "2026-09-07T14:22:33.178Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-rubricas",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-33-620Z-s41hky",
+   "quando": "2026-09-07T14:22:33.620Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": false
+   }
+  }
+ ]
+}
