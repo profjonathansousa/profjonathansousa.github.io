@@ -1246,6 +1246,65 @@ servidor de mentira. A seção 36 é arquitetural: quebra se um segundo escritor
 meta aparecer, se surgir uma segunda `mesclarMeta`, ou se `renderSemana` for
 acrescentado sem dependência.
 
+### 9C-3 — Eventos online
+
+O **terceiro domínio** na camada. A chave é o **próprio id do evento**, sem
+composição: diferente da meta, o evento não pertence a um período.
+
+**Mudar a data é uma edição, não um "mover".** O `id` é estável e `data` é um
+campo do valor — não há criação no destino nem lápide na origem, porque não há
+origem: é o mesmo evento, noutro dia. Uma linha só no servidor.
+
+| Verbo | O que viaja |
+|---|---|
+| criar / editar | `{data, priv}` **e `t` só quando o evento é público** |
+| mudar a data | o campo `data`, na mesma linha |
+| marcar privado | `priv` — a marca sempre viaja |
+| excluir | `del: true` — lápide, nunca ausência de linha |
+
+**Não há concluir/desconcluir**: o modelo do evento é `{id, t, data, em, priv}` —
+não existe `done`, e a 9C-3 não inventou um.
+
+#### A privacidade não foi ampliada, e a garantia é estrutural
+
+O payload online sai do **mesmo `d`** que o toque legado leva, e `dadosDoEvento`
+**não monta** o campo `t` quando o evento é privado. O título privado não chega
+ao Supabase pelo simples fato de não existir no payload — não há um segundo
+lugar onde alguém possa esquecer de filtrar.
+
+Replicar título privado com segurança continua sendo assunto da **9C-4**. A
+9C-3 apenas preserva a fronteira que já existia.
+
+Duas cláusulas do merge protegem isso e **não podem ser "simplificadas"**:
+
+- `if(!r.data) return false` — evento sem data é ignorado; a data é o que faz o
+  evento existir.
+- `if(!r.priv && typeof r.t === "string")` — o título só é escrito quando
+  **viajou**. Num evento privado o nome local é a única cópia que existe. O
+  `typeof` importa: string vazia é um título legítimo (apagado de propósito),
+  **ausência** do campo é "não viajou". Trocar por `if(r.t)` transformaria
+  apagar um título em não-fazer-nada.
+
+#### Os renders, mínimos
+
+Os mesmos três da meta, pela mesma medição: `renderEventos` sempre (repinta o
+próprio `#eventos`, e o aviso de dias restantes se recalcula sozinho),
+`renderVistaRevisao` sempre (a `revisaoDaSemana` **lê `getEventos`** para a
+seção "próxima semana"), e `renderHoje` **só no domingo**. `renderSemana`
+nunca — verificado que não lê `getEventos`.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: o domínio `evento`, a chave textual e
+a coluna `del` já existiam desde a 9A. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 37 a 42. A seção 40 é inteira sobre a fronteira de
+privacidade: verifica que a marca sobe, que o título **não** sobe, que o título
+que o outro aparelho já tinha não é apagado pela descida, e que renomear um
+privado já publicado não gera escrita online.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1505,7 +1564,9 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9B — Prioridades online (primeiro domínio na camada) | concluída |
 | 9C-0/9C-1 — relógio, escritor único e repercussão da Revisão | concluídas |
 | 9C-2 — Metas online (segundo domínio na camada) | concluída |
-| 9C-3 em diante — Eventos online, demais domínios | não iniciadas |
+| 9C-3 — Eventos online (terceiro domínio) | concluída |
+| 9C-4 — título de evento privado no caminho online | não iniciada |
+| 9D a 9G — vagas, retomadas, registro, rotinas, trilhos, escrita dupla | não iniciadas |
 
 ### Previsto e ainda não implementado
 

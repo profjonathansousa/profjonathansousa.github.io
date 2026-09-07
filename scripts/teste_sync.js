@@ -957,17 +957,23 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
   ok(/^mes, m, apagada, quandoISO\)/.test(tocarM), "    o funil da meta aceita quandoISO");
   ok(/enfileirarToque\("meta", d, quandoISO\)/.test(tocarM), "    e o repassa ao toque");
   ok(/return iso;/.test(tocarM), "    e DEVOLVE o instante que subiu");
-  ok(/function tocarEvento\(ev, apagado, quandoISO\)[\s\S]{0,200}return enfileirarToque/.test(fonte),
-     "    o funil do evento tambem");
+  /* Mesmo motivo do tocarMeta acima: o corpo cresceu na 9C-3 (ganhou a escrita
+     online), entao verifica-se o CONTRATO e nao a proximidade das linhas. */
+  const tocarE = fonte.split("function tocarEvento(")[1].split("\n}")[0];
+  ok(/^ev, apagado, quandoISO\)/.test(tocarE), "    o funil do evento aceita quandoISO");
+  ok(/enfileirarToque\("evento", d, quandoISO\)/.test(tocarE), "    e o repassa ao toque");
+  ok(/return iso;/.test(tocarE), "    e DEVOLVE o instante que subiu");
   /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
-  /* Esta assercao MUDOU na 9C-2, de proposito: metas passaram a escrever
-     online. Eventos, nao — e e essa a metade que continua valendo, e que
-     quebra se alguem conectar Eventos antes da hora. */
+  /* Esta lista cresce a cada dominio conectado — prioridade (9B), meta (9C-2),
+     evento (9C-3) — e e atualizada de proposito a cada fase. O que ela guarda e
+     que NENHUM dominio entre online sem uma fase que o autorize: os proximos
+     (triagem, toefl, retomada, rotina, dispensa, item, estrutura_*) sao 9D. */
   const online = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["meta", "prioridade"]),
-     "12. prioridade e meta escrevem online (9B, 9C-2)", online);
-  ok(online.indexOf("evento") < 0, "    e EVENTOS seguem legados nesta fase");
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade"]),
+     "12. prioridade, meta e evento escrevem online (9B, 9C-2, 9C-3)", online);
+  ok(["triagem","toefl","retomada","rotina","dispensa","item"].every(d => online.indexOf(d) < 0),
+     "    e nenhum dominio da 9D foi antecipado", online);
 }
 
 console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
@@ -1298,12 +1304,12 @@ console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
   const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const dominiosOnline = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["meta", "prioridade"]),
-     "13. SO meta e prioridade escrevem online — Eventos seguem LEGADOS", dominiosOnline);
+  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["evento", "meta", "prioridade"]),
+     "13. os tres dominios da Fase 9C escrevem online", dominiosOnline);
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["meta", "prioridade"]),
-     "    e so esses dois tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade"]),
+     "    e os tres tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
@@ -1328,6 +1334,247 @@ console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
   ok(!/renderSemana/.test(corpo), "e NAO renderSemana — ele nao le getMetas");
   ok(/todayIdx === 0/.test(corpo),
      "renderHoje so no domingo, o unico dia em que a revisao mora dentro dele");
+}
+
+/* ================= FASE 9C-3 — OS EVENTOS ONLINE ================= */
+const eventos  = (ap) => ap.getEventos();
+const achaEv   = (ap, id) => eventos(ap).filter(x => x.id === id)[0] || null;
+/* addEv nasce sem nome e NAO emite toque; o primeiro editEv ou dateEv publica.
+   Este atalho reproduz o gesto real da tela: criar e nomear. */
+function criarEvento(ap, texto, data) {
+  ap.addEv();
+  const id = eventos(ap)[eventos(ap).length - 1].id;
+  if (data) ap.dateEv(id, data);
+  ap.editEv(id, texto);
+  return id;
+}
+
+console.log("\n=== 37. Criar, editar, mover e excluir (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const id = criarEvento(A, "Defesa do pos-doc", "2027-03-10");
+  await A.SYNC.drenarFila();
+  const noCel = achaEv(B, id);
+  ok(!!noCel, "A. criar no Mac chega ao celular", eventos(B).map(e => e.t));
+  ok(noCel && noCel.t === "Defesa do pos-doc", "   com o titulo", noCel && noCel.t);
+  ok(noCel && noCel.data === "2027-03-10", "   e com a data", noCel && noCel.data);
+  ok(noCel && noCel.em === achaEv(A, id).em, "L. e com o MESMO instante da decisao");
+  const linha = srv.linhas.filter(l => l.dominio === "evento")[0];
+  ok(!!linha && linha.chave === id, "   a chave e o proprio id do evento", linha && linha.chave);
+
+  A.editEv(id, "Defesa do pos-doc na UFRJ");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).t === "Defesa do pos-doc na UFRJ", "B. editar chega", achaEv(B, id).t);
+
+  /* J. MOVER = editar a data. O id e estavel; nao ha criacao no destino nem
+     lapide na origem, porque nao ha origem — e o mesmo evento, noutro dia. */
+  A.dateEv(id, "2027-04-22");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).data === "2027-04-22", "J. mover a data chega", achaEv(B, id).data);
+  ok(achaEv(B, id).id === id, "   e o evento continua sendo O MESMO (id estavel)");
+  ok(srv.linhas.filter(l => l.dominio === "evento").length === 1,
+     "   uma linha so: mover e edicao, nao criar+lapide",
+     srv.linhas.filter(l => l.dominio === "evento").length);
+  ok(achaEv(B, id).t === "Defesa do pos-doc na UFRJ", "   e o titulo sobreviveu a mudanca de data");
+
+  A.delEv(id);
+  await A.SYNC.drenarFila();
+  ok(achaEv(A, id) === null, "E. o Mac apagou");
+  ok(achaEv(B, id) === null, "   e sumiu do celular");
+  const lap = srv.linhas.filter(l => l.dominio === "evento" && l.chave === id)[0];
+  ok(!!lap && lap.del === true, "K. a exclusao e LAPIDE, nao ausencia de linha", lap && lap.del);
+}
+
+console.log("\n=== 38. Varios eventos, conflito e eco (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  const idA = criarEvento(A, "Banca de qualificacao", "2027-05-01");
+  await A.SYNC.drenarFila();
+  const idB = criarEvento(B, "Congresso da ANPOF", "2027-06-15");
+  await B.SYNC.drenarFila();
+
+  ok(idA !== idB, "F. sao dois eventos distintos");
+  ok(!!achaEv(A, idB) && !!achaEv(B, idA),
+     "   cada aparelho recebeu o do outro sem perder o seu",
+     {mac: eventos(A).filter(e => e.t).map(e => e.t), cel: eventos(B).filter(e => e.t).map(e => e.t)});
+  ok(srv.linhas.filter(l => l.dominio === "evento").length === 2,
+     "   duas linhas no servidor, uma por evento");
+
+  /* G. conflito: linha antiga nao vence a mais nova. */
+  B.editEv(idA, "Banca de qualificacao — remarcada");
+  await B.SYNC.drenarFila();
+  const velha = {dono: "dono-1", dominio: "evento", chave: idA,
+                 valor: {t: "Banca de qualificacao", data: "2027-05-01", priv: false},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-06-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "G. a linha antiga e recusada", r);
+  ok(achaEv(B, idA).t === "Banca de qualificacao — remarcada", "   e o texto mais novo permanece");
+  const lista = B.getEventos();
+  ok(B.mesclarEvento(lista, idA, {quando: "2020-01-01T00:00:00.000Z", data: "2020-01-01"}) === false,
+     "   e o mesclarEvento a recusa sozinho — a guarda do caminho legado");
+  ok(B.mesclarEvento(lista, idA, {quando: "2099-01-01T00:00:00.000Z", data: "2099-01-01"}) === true,
+     "   mas aceita a mais nova");
+
+  /* H. RECEBER NAO E TOCAR. A medicao cerca SO a recepcao, e sobre um evento
+     NOVO que so o Mac tocou.
+
+     POR QUE NAO SOBRE O `idA`, que os dois ja editaram: os relogios monotonicos
+     sao POR APARELHO, e num teste as escritas caem todas no mesmo
+     milissegundo. Medido: o `em` do celular e o da escrita seguinte do Mac
+     saem IDENTICOS — e a regra e "empate fica como esta", entao a escrita do
+     Mac perde. Isso e o LWW funcionando como desenhado, nao um defeito; mas
+     amarrar a medicao do no-echo a essa corrida seria medir o relogio em vez de
+     medir o eco. */
+  const toquesB = B.getToques().length;
+  const filaB = B.SYNC.situacao().fila;
+  const idNovo = criarEvento(A, "Aula inaugural", "2027-08-01");
+  await A.SYNC.drenarFila();
+  ok(!!achaEv(B, idNovo), "   um evento novo do Mac chega ao celular", eventos(B).map(e => e.t));
+  ok(B.getToques().length === toquesB,
+     "H. e receber NAO gerou toque nenhum no celular", B.getToques().length - toquesB);
+  ok(B.SYNC.situacao().fila === filaB, "   nem enfileirou envio de volta");
+  const eco = A.SYNC.aplicarRemoto(srv.linhas.filter(l => l.chave === idNovo)[0]);
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "   e o eco proprio e recusado no Mac", eco);
+}
+
+console.log("\n=== 39. Offline e reconexao (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O Mac nao assina: e o que "desconectado" quer dizer aqui. */
+
+  srv.falhar = true;
+  const idA = criarEvento(A, "Prova do TOEFL remarcada", "2027-02-08");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila > 0, "I. sem rede, a alteracao fica na fila", A.SYNC.situacao().fila);
+  ok(!!achaEv(A, idA), "   e existe na tela do Mac (otimista)");
+
+  srv.falhar = false;
+  const idB = criarEvento(B, "Entrevista em Northwestern", "2027-02-20");
+  await B.SYNC.drenarFila();
+  ok(!achaEv(A, idB), "   o Mac ainda nao sabe do evento do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(!!achaEv(A, idB), "I. o delta trouxe o que se perdeu", eventos(A).filter(e => e.t).map(e => e.t));
+  ok(A.SYNC.situacao().fila === 0, "   e so entao a fila subiu");
+  ok(!!achaEv(B, idA), "   e o celular recebeu o do Mac");
+}
+
+console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const id = criarEvento(A, "Consulta medica", "2027-01-20");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).t === "Consulta medica", "publico: o titulo viaja, como sempre");
+
+  A.privEv(id);                       /* o confirm() do harness devolve true */
+  await A.SYNC.drenarFila();
+  ok(achaEv(A, id).priv === true, "O. o Mac marcou como privado");
+  const linha = srv.linhas.filter(l => l.chave === id)[0];
+  ok(linha.valor.priv === true, "   a MARCA sobe", linha.valor);
+  ok(!Object.prototype.hasOwnProperty.call(linha.valor, "t"),
+     "O. e o TITULO nao sobe — o campo nem existe no registro online", Object.keys(linha.valor));
+  ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
+
+  /* O titulo que o celular JA tinha nao pode ser apagado pela descida. */
+  ok(achaEv(B, id).t === "Consulta medica",
+     "O. e o titulo que o celular ja tinha NAO foi apagado", achaEv(B, id).t);
+
+  /* Renomear um privado que ja subiu nao publica nada de novo. */
+  const antes = srv.linhas.filter(l => l.chave === id)[0].em;
+  A.__armazem["cron:la-fora"] = JSON.stringify({metas:{}, eventos:{[id]:{q:antes,t:false,p:true}}, piso:0});
+  A.editEv(id, "Consulta com o cardiologista");
+  await A.SYNC.drenarFila();
+  const depois = srv.linhas.filter(l => l.chave === id)[0];
+  ok(depois.em === antes, "   renomear um privado ja publicado nao gera escrita online", depois.em);
+  ok(!Object.prototype.hasOwnProperty.call(depois.valor, "t"), "   e o titulo continua fora do servidor");
+  ok(achaEv(A, id).t === "Consulta com o cardiologista", "   mas o nome novo fica no aparelho");
+
+  /* A garantia estrutural: o payload nem monta o campo. */
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  ok(/if\(!ev\.priv\) d\.t = ev\.t \|\| "";/.test(regras),
+     "   dadosDoEvento nao MONTA o `t` quando priv — nao ha segundo filtro a esquecer");
+}
+
+console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const antesToques = A.getToques().filter(t => t.tipo === "evento").length;
+  const id = criarEvento(A, "Prazo da FAPERJ", "2026-12-15");
+  await A.SYNC.drenarFila();
+
+  const toques = A.getToques().filter(t => t.tipo === "evento");
+  ok(toques.length > antesToques, "M. o toque legado continua sendo emitido", toques.length);
+  const online = srv.linhas.filter(l => l.chave === id)[0];
+  const ultimo = toques[toques.length - 1];
+  ok(ultimo.quando === online.em, "M. com o MESMO ISO nos dois caminhos",
+     {legado: ultimo.quando, online: online.em});
+  ok(ultimo.dados.data === online.valor.data && ultimo.dados.t === online.valor.t,
+     "   e o mesmo payload", {legado: ultimo.dados, online: online.valor});
+  ok(typeof A.aplicarEventosDoEstado === "function", "   a descida pelo estado.json continua existindo");
+
+  /* O evento NAO tem `done`: nao existe concluir/desconcluir neste dominio. */
+  ok(!("done" in (A.getEventos()[0] || {})),
+     "C/D. o modelo de evento nao tem `done` — nao ha o que concluir",
+     Object.keys(A.getEventos()[0] || {}));
+  ok(typeof A.toggleEv === "undefined" && typeof A.concluirEv === "undefined",
+     "     e nao existe handler de conclusao");
+
+  /* Os tres dominios online, e so eles. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const dominios = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(dominios) === JSON.stringify(["evento", "meta", "prioridade"]),
+     "prioridade, meta e evento escrevem online — e mais nenhum", dominios);
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade"]),
+     "   e os tres tem aplicador registrado", assinados);
+}
+
+console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"evento"/g) || []).length === 1,
+     "ha UM unico ponto que escreve evento online");
+  ok((render.match(/enfileirarToque\("evento"/g) || []).length === 1,
+     "e UM unico enfileirarToque de evento (a 9C-0 nao regrediu)");
+  ok(/function tocarEvento[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"evento"/.test(render),
+     "e ele e o tocarEvento, o mesmo funil do caminho legado");
+  ok((nucleo.match(/function mesclarEvento/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(/aplicarEventosDoEstado[\s\S]*?mesclarEvento/.test(nucleo), "o caminho legado a usa");
+  ok(/aplicarEventoOnline[\s\S]*?mesclarEvento/.test(nucleo), "e o online tambem");
+  ok(/var iso = tocarEvento\(ev, false, x\.novo \? ACERVO_EM : null\)/.test(render),
+     "e o acervo continua publicando pelo funil (9C-0 intacta)");
+
+  const corpo = nucleo.split("function aplicarEventoOnline(")[1].split("\n}")[0];
+  ok(/renderEventos/.test(corpo) && /renderVistaRevisao/.test(corpo),
+     "N. os renders sao renderEventos e renderVistaRevisao");
+  ok(!/renderSemana/.test(corpo), "   e NAO renderSemana — ele nao le getEventos");
+  ok(/todayIdx === 0/.test(corpo), "   renderHoje so no domingo");
+  /* A clausula que protege o titulo local nao pode ser simplificada. */
+  const merge = nucleo.split("function mesclarEvento(")[1].split("\n}")[0];
+  ok(/typeof r\.t === "string"/.test(merge),
+     "   e o merge distingue `t` vazio de `t` ausente — apagar um titulo e um ato");
+  ok(/if\(!r\.data\) return false;/.test(merge), "   evento sem data continua sendo ignorado");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

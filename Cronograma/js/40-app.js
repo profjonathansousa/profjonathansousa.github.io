@@ -154,9 +154,12 @@ try{
    pode conhecer dominio nenhum — quem conhece os dois lados e o bootstrap. */
 try{ SYNC.assinarDominio("prioridade", aplicarPrioridadeOnline); }
 catch(e){ console.error("sincronia: dominio prioridade:", e); }
-/* Fase 9C-2: as metas sao o segundo dominio. Eventos continuam LEGADOS. */
+/* Fase 9C-2: as metas sao o segundo dominio. */
 try{ SYNC.assinarDominio("meta", aplicarMetaOnline); }
 catch(e){ console.error("sincronia: dominio meta:", e); }
+/* Fase 9C-3: as datas importantes sao o terceiro. */
+try{ SYNC.assinarDominio("evento", aplicarEventoOnline); }
+catch(e){ console.error("sincronia: dominio evento:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

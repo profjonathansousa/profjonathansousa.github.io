@@ -440,6 +440,95 @@ function aplicarMetaOnline(linha){
   return renders;
 }
 
+/* ============ O MERGE DE UM EVENTO — UMA IMPLEMENTACAO SO (Fase 9C-3) ============
+   Terceiro dominio a passar por este movimento, depois de prioridade (9B) e
+   meta (9C-2), e pela mesma razao: o evento passou a ter DUAS descidas.
+
+   A REGRA E COPIADA LETRA POR LETRA do que estava dentro do buscarEstado, e
+   duas clausulas em especial NAO PODEM SER "SIMPLIFICADAS":
+
+     · `if(!r.data) return;` — evento sem data e ignorado. A data e o que faz o
+       evento existir; um registro sem ela nao tem o que desenhar.
+
+     · O TITULO SO E ESCRITO QUANDO VIAJOU. Num evento privado o nome local e a
+       UNICA copia que existe — sobrescreve-lo com vazio apagaria o que voce
+       escreveu neste aparelho. Por isso a marca `priv` desce sempre, e o `t`
+       so quando vem junto: `if(!r.priv && typeof r.t === "string")`.
+       O `typeof` importa: string vazia e um titulo legitimo (apagado de
+       proposito); AUSENCIA do campo e "nao viajou". Trocar por `if(r.t)`
+       transformaria apagar um titulo em nao-fazer-nada.
+
+   A Fase 9C-3 NAO amplia privacidade nenhuma: o que sobe continua saindo do
+   dadosDoEvento, que omite o `t` inteiro quando priv. Resolver a replicacao de
+   titulo privado e a 9C-4.
+
+   MUTA A LISTA E DEVOLVE SE MUDOU. */
+function mesclarEvento(evs, eid, r){
+  if(!r || !r.quando) return false;
+  var j = -1;
+  for(var n=0;n<evs.length;n++){ if(evs[n].id === eid){ j = n; break; } }
+  if(j > -1 && (evs[j].em || "") >= r.quando) return false;
+  if(r.del){ if(j > -1){ evs.splice(j,1); return true; } return false; }
+  if(!r.data) return false;
+  if(j < 0){
+    evs.push({id:eid, t:(!r.priv && typeof r.t === "string") ? r.t : "",
+              data:r.data, em:r.quando, priv:!!r.priv});
+  } else {
+    evs[j].data = r.data;
+    evs[j].priv = !!r.priv;
+    if(!r.priv && typeof r.t === "string") evs[j].t = r.t;
+    evs[j].em = r.quando;
+  }
+  return true;
+}
+
+/* A descida pelo estado.json — o caminho legado, agora com nome proprio. */
+function aplicarEventosDoEstado(est){
+  if(!est || !est.eventos) return false;
+  var evs = getEventos(), mudou = false;
+  Object.keys(est.eventos).forEach(function(eid){
+    if(mesclarEvento(evs, eid, est.eventos[eid])) mudou = true;
+  });
+  if(mudou) setEventos(evs);
+  return mudou;
+}
+
+/* ============ A DESCIDA ONLINE DOS EVENTOS — Fase 9C-3 ============
+   Molde do aplicarMetaOnline, com as mesmas omissoes deliberadas.
+
+   A CHAVE E O PROPRIO ID, sem composicao: diferente da meta, o evento nao
+   pertence a um periodo. E MUDAR A DATA E UMA EDICAO, e nao um `mover`: o `id`
+   e estavel e a `data` e um campo do valor. Nao ha criacao no destino nem
+   lapide na origem, porque nao ha origem — e o mesmo evento, noutro dia.
+
+   OS RENDERS SAO OS MESMOS TRES DA META, pela mesma medicao:
+     · renderEventos sempre — repinta o proprio #eventos no lugar, e o aviso de
+       dias restantes se recalcula sozinho (diasAte a cada chamada);
+     · renderVistaRevisao sempre — a revisaoDaSemana LE getEventos para a secao
+       "proxima semana", e a funcao devolve na primeira linha quando a aba nao
+       esta visivel;
+     · renderHoje SO NO DOMINGO, o unico dia em que a revisao e desenhada
+       dentro dele.
+   NAO chama renderSemana: verificado que ele nao le getEventos. */
+function aplicarEventoOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var eid = String(linha.chave);
+  if(!eid) return [];
+  var v = linha.valor || {};
+  var evs = getEventos();
+  /* O `t` so entra no `r` quando o valor REALMENTE o traz. Repassar
+     `v.t` sempre transformaria "nao viajou" (undefined) em... undefined, que o
+     mesclarEvento ja trata; mas ser explicito aqui deixa a fronteira visivel no
+     lugar onde ela e decidida. */
+  var r = {quando: linha.em, del: !!linha.del, data: v.data, priv: !!v.priv};
+  if(Object.prototype.hasOwnProperty.call(v, "t")) r.t = v.t;
+  if(!mesclarEvento(evs, eid, r)) return [];
+  setEventos(evs);
+  var renders = ["renderEventos", "renderVistaRevisao"];
+  if(todayIdx === 0) renders.push("renderHoje");
+  return renders;
+}
+
 /* ============== MOTOR DE PRIORIDADES — Fase 3 ==============
    CLASSIFICA, NAO PONTUA. Nenhuma soma, nenhum peso somado, nenhum corte
    numerico — a mesma decisao que o coletor de vagas tomou na v2, e pela mesma
@@ -1056,33 +1145,7 @@ function buscarEstado(){
          apagado no lugar do titulo.
          O aviso de dias restantes nao precisa de nada: renderEventos recalcula
          diasAte() e o proximo evento a cada chamada, entao basta chamar. */
-      if(est.eventos){
-        var evs = getEventos(), mudouEv = false;
-        Object.keys(est.eventos).forEach(function(eid){
-          var r = est.eventos[eid];
-          if(!r || !r.quando) return;
-          var j = -1;
-          for(var n=0;n<evs.length;n++){ if(evs[n].id === eid){ j = n; break; } }
-          if(j > -1 && (evs[j].em || "") >= r.quando) return;
-          if(r.del){ if(j > -1){ evs.splice(j,1); mudouEv = true; } return; }
-          if(!r.data) return;
-          /* O titulo so e escrito quando ele viajou. Num evento privado o nome
-             local e a UNICA copia que existe: sobrescreve-lo com vazio apagaria
-             o que voce escreveu aqui. Por isso a marca desce sempre, e o titulo
-             so quando vem junto. */
-          if(j < 0){
-            evs.push({id:eid, t:(!r.priv && typeof r.t === "string") ? r.t : "",
-                      data:r.data, em:r.quando, priv:!!r.priv});
-          } else {
-            evs[j].data = r.data;
-            evs[j].priv = !!r.priv;
-            if(!r.priv && typeof r.t === "string") evs[j].t = r.t;
-            evs[j].em = r.quando;
-          }
-          mudouEv = true;
-        });
-        if(mudouEv){ setEventos(evs); try{ renderEventos(); }catch(e){} }
-      }
+      if(aplicarEventosDoEstado(est)){ try{ renderEventos(); }catch(e){} }
       /* ---- Prioridades da semana (Fase 2) ----
          O que voce elegeu no computador chega aqui, e vice-versa. */
       if(aplicarPrioridadesDoEstado(est)){ try{ renderHoje(); }catch(e){} }

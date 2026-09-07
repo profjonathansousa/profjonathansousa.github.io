@@ -932,7 +932,30 @@ function linhaDeEvento(e){
    `quandoISO` existe para o botao do acervo, que precisa do piso ACERVO_EM. */
 function tocarEvento(ev, apagado, quandoISO){
   if(!ev || !ev.id) return null;
-  return enfileirarToque("evento", dadosDoEvento(ev, apagado), quandoISO);
+  var d = dadosDoEvento(ev, apagado);
+  var iso = enfileirarToque("evento", d, quandoISO);      /* legado: intacto */
+  /* ============ Fase 9C-3: o mesmo ato, no estado online ============
+     O MESMO INSTANTE nos dois caminhos, e o MESMO `d` nos dois payloads —
+     inclusive a omissao do titulo.
+
+     A PRIVACIDADE NAO E AMPLIADA AQUI, e a garantia e estrutural: o `d` vem do
+     dadosDoEvento, que NAO MONTA o campo `t` quando o evento e privado. Como o
+     online copia o mesmo objeto, o titulo privado nao chega ao Supabase pelo
+     simples fato de nao existir no payload — nao ha um segundo lugar onde
+     alguem possa esquecer de filtrar. Replicar titulo privado com seguranca e
+     assunto da 9C-4; a 9C-3 so preserva a fronteira que ja existia.
+
+     A CHAVE E O PROPRIO id: o evento nao pertence a periodo nenhum, e mudar a
+     data e uma edicao do campo `data` — o id nao muda, e nao ha lapide de
+     origem, porque nao ha origem. */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      var valor = {data: d.data, priv: d.priv};
+      if(Object.prototype.hasOwnProperty.call(d, "t")) valor.t = d.t;
+      SYNC.salvarAlteracao("evento", d.eid, valor, {em: iso, del: d.del});
+    }
+  }catch(e){ try{ console.error("sync: evento nao subiu:", e); }catch(e2){} }
+  return iso;
 }
 
 /* A marca de privado e do EVENTO e atravessa como tudo o mais: vai no toque,
