@@ -1,0 +1,27 @@
+{
+ "v": 1,
+ "lote": "2026-09-07T02-59-06-678Z-s41hky",
+ "quando": "2026-09-07T02:59:10.680Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-07T02-59-06-678Z-s41hky",
+   "quando": "2026-09-07T02:59:06.678Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788695352393",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Lançar notas",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
+  }
+ ]
+}
