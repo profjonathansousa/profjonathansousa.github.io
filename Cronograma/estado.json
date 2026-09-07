@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-07T03:01:29.443Z",
+ "_dobrado_em": "2026-09-07T13:46:59.959Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2806,6 +2806,24 @@
     "feito_em": "",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T13-46-59-959Z-s41hky",
+   "quando": "2026-09-07T13:46:59.959Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1788788819958",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a01",
+    "t": "Ago · A consciência em Lutero e Spinoza",
+    "feito_em": "",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2995,7 +3013,8 @@
   "2026-09-07T03-00-31-784Z-s41hky",
   "2026-09-07T03-00-37-831Z-s41hky",
   "2026-09-07T03-01-17-953Z-ipkt72",
-  "2026-09-07T03-01-29-443Z-s41hky"
+  "2026-09-07T03-01-29-443Z-s41hky",
+  "2026-09-07T13-46-59-959Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3679,6 +3698,16 @@
    "feito_em": "",
    "del": false,
    "quando": "2026-09-06T16:32:03.896Z",
+   "aparelho": "s41hky"
+  },
+  "2026-W37/pr1788788819958": {
+   "tipo": "trilho",
+   "painel": "pipeline",
+   "projId": "a01",
+   "t": "Ago · A consciência em Lutero e Spinoza",
+   "feito_em": "",
+   "del": false,
+   "quando": "2026-09-07T13:46:59.959Z",
    "aparelho": "s41hky"
   }
  },
