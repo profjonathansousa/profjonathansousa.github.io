@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-07T03:00:37.831Z",
+ "_dobrado_em": "2026-09-07T03:01:17.953Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2770,6 +2770,24 @@
     "vid": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
     "st": 0
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T03-01-17-953Z-ipkt72",
+   "quando": "2026-09-07T03:01:17.953Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788710913791",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Pagar Nossa Vila",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2957,7 +2975,8 @@
   "2026-09-07T02-59-52-633Z-s41hky",
   "2026-09-07T02-59-56-250Z-s41hky",
   "2026-09-07T03-00-31-784Z-s41hky",
-  "2026-09-07T03-00-37-831Z-s41hky"
+  "2026-09-07T03-00-37-831Z-s41hky",
+  "2026-09-07T03-01-17-953Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3628,10 +3647,10 @@
    "painel": "",
    "projId": "",
    "t": "Pagar Nossa Vila",
-   "feito_em": "",
+   "feito_em": "2026-09-06",
    "del": false,
-   "quando": "2026-09-06T16:08:33.792Z",
-   "aparelho": "s41hky"
+   "quando": "2026-09-07T03:01:17.953Z",
+   "aparelho": "ipkt72"
   },
   "2026-W36/pr1788712323895": {
    "tipo": "livre",
