@@ -1,0 +1,93 @@
+{
+ "v": 1,
+ "lote": "2026-09-07T14-22-50-035Z-s41hky",
+ "quando": "2026-09-07T14:22:58.372Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-50-035Z-s41hky",
+   "quando": "2026-09-07T14:22:50.035Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-50-219Z-s41hky",
+   "quando": "2026-09-07T14:22:50.219Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-50-337Z-s41hky",
+   "quando": "2026-09-07T14:22:50.337Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-53-220Z-s41hky",
+   "quando": "2026-09-07T14:22:53.220Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-sample40",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-53-572Z-s41hky",
+   "quando": "2026-09-07T14:22:53.572Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-rubricas",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-53-840Z-s41hky",
+   "quando": "2026-09-07T14:22:53.840Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-54-371Z-s41hky",
+   "quando": "2026-09-07T14:22:54.371Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": false
+   }
+  }
+ ]
+}
