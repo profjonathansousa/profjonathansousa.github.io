@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-07T02:59:06.678Z",
+ "_dobrado_em": "2026-09-07T02:59:56.250Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -2710,6 +2710,42 @@
     "feito_em": "2026-09-06",
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T02-59-52-633Z-s41hky",
+   "quando": "2026-09-07T02:59:52.633Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788695352393",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Lançar notas",
+    "feito_em": "",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T02-59-56-250Z-s41hky",
+   "quando": "2026-09-07T02:59:56.250Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W36",
+    "prid": "pr1788695352393",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Lançar notas",
+    "feito_em": "2026-09-06",
+    "del": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -2893,7 +2929,9 @@
   "2026-09-07T02-56-48-009Z-s41hky",
   "2026-09-07T02-56-52-343Z-s41hky",
   "2026-09-07T02-59-02-420Z-s41hky",
-  "2026-09-07T02-59-06-678Z-s41hky"
+  "2026-09-07T02-59-06-678Z-s41hky",
+  "2026-09-07T02-59-52-633Z-s41hky",
+  "2026-09-07T02-59-56-250Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -3551,7 +3589,7 @@
    "t": "Lançar notas",
    "feito_em": "2026-09-06",
    "del": false,
-   "quando": "2026-09-07T02:59:06.678Z",
+   "quando": "2026-09-07T02:59:56.250Z",
    "aparelho": "s41hky"
   },
   "2026-W36/pr1788710913791": {
