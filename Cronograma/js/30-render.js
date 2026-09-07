@@ -930,28 +930,52 @@ function linhaDeEvento(e){
 
 /* Mesmo contrato do tocarMeta, e pela mesma razao — ver o comentario la. O
    `quandoISO` existe para o botao do acervo, que precisa do piso ACERVO_EM. */
-function tocarEvento(ev, apagado, quandoISO){
+/* ============ O ESCRITOR DO EVENTO — Fase 9C-4 ============
+   O QUE MUDA: o titulo de um evento PRIVADO passa a viajar pelo caminho online.
+   O que NAO muda: ele continua fora do caminho legado, e a garantia continua
+   sendo estrutural — o `d` do dadosDoEvento nao MONTA o campo `t` quando priv.
+
+   POR QUE `cron_estado` E LUGAR SEGURO PARA ELE. Nao e "porque nao e o GitHub".
+   Sao duas propriedades verificadas:
+
+     1. Os dois canos sao DISJUNTOS. O estado.json e escrito pelo
+        dobrar_toques.py a partir dos toques; nada em cron_estado alcanca o
+        repositorio, nem o entrada.json, nem o cron:la-fora. O titulo privado
+        nao entra no toque, logo nao existe caminho por onde chegar la.
+
+     2. A RLS de cron_estado exige `dono = auth.uid() AND cron_e_dono()`, e nao
+        ha politica nenhuma para o papel `anon` — a chave publishable, que e
+        publica e esta versionada, nao le uma linha. Provado contra o banco:
+        uma conta autenticada fora da allowlist enxerga zero linhas.
+
+   Portanto o titulo privado fica visivel para os aparelhos AUTENTICADOS COMO O
+   DONO, e para mais ninguem. E exatamente o modelo de acesso que a 9A definiu.
+
+   A LAPIDE NAO CARREGA CONTEUDO. Ao apagar, o valor sobe sem `t`: um evento
+   removido nao deve deixar o titulo — muito menos um privado — parado na
+   tabela. A lapide precisa dizer "isto foi apagado", e nada mais. */
+function tocarEvento(ev, apagado, quandoISO, opts){
   if(!ev || !ev.id) return null;
+  opts = opts || {};
   var d = dadosDoEvento(ev, apagado);
-  var iso = enfileirarToque("evento", d, quandoISO);      /* legado: intacto */
-  /* ============ Fase 9C-3: o mesmo ato, no estado online ============
-     O MESMO INSTANTE nos dois caminhos, e o MESMO `d` nos dois payloads —
-     inclusive a omissao do titulo.
 
-     A PRIVACIDADE NAO E AMPLIADA AQUI, e a garantia e estrutural: o `d` vem do
-     dadosDoEvento, que NAO MONTA o campo `t` quando o evento e privado. Como o
-     online copia o mesmo objeto, o titulo privado nao chega ao Supabase pelo
-     simples fato de nao existir no payload — nao ha um segundo lugar onde
-     alguem possa esquecer de filtrar. Replicar titulo privado com seguranca e
-     assunto da 9C-4; a 9C-3 so preserva a fronteira que ja existia.
+  /* O INSTANTE VEM DO MESMO RELOGIO nos dois modos. No modo `soOnline` nao ha
+     toque a enfileirar, mas o instanteDoToque() continua sendo a unica fonte —
+     nao e um segundo relogio, e o mesmo. Isso APOSENTA a excecao que a 9C-0
+     precisou documentar: nao ha mais nenhum caminho de escrita destes dominios
+     carimbando o proprio `new Date()`. */
+  var iso = opts.soOnline
+    ? new Date(instanteDoToque(quandoISO)).toISOString()
+    : enfileirarToque("evento", d, quandoISO);        /* legado: intacto */
 
-     A CHAVE E O PROPRIO id: o evento nao pertence a periodo nenhum, e mudar a
-     data e uma edicao do campo `data` — o id nao muda, e nao ha lapide de
-     origem, porque nao ha origem. */
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       var valor = {data: d.data, priv: d.priv};
-      if(Object.prototype.hasOwnProperty.call(d, "t")) valor.t = d.t;
+      /* O TITULO ENTRA AQUI MESMO QUANDO PRIVADO — e so aqui. Repare que ele e
+         lido de `ev.t`, e nao de `d.t`: o `d` e o payload PUBLICO, e nele o
+         campo nao existe quando priv. Sao dois payloads de proposito, e a
+         diferenca entre eles e exatamente um campo, neste unico lugar. */
+      if(!apagado) valor.t = ev.t || "";
       SYNC.salvarAlteracao("evento", d.eid, valor, {em: iso, del: d.del});
     }
   }catch(e){ try{ console.error("sync: evento nao subiu:", e); }catch(e2){} }
@@ -1000,8 +1024,16 @@ function editEv(eid,t){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
      mesmo, porque nao ha instante publicado a copiar. E o unico caminho de
      escrita destes dois dominios que legitimamente carimba o proprio tempo:
      a mudanca existe so aqui dentro. */
-  if(!e[j].priv || !eventoJaSubiu(e[j].id)) e[j].em = tocarEvento(e[j],false) || e[j].em;
-  else e[j].em = new Date().toISOString();
+  /* Num evento PRIVADO que ja subiu, renomear nao gera TOQUE — seria um commit
+     e uma reconstrucao do Pages a troco de nada, ja que o titulo nao viaja por
+     ali. Mas a partir da 9C-4 ele gera ESCRITA ONLINE: o nome novo tem de
+     chegar aos outros aparelhos do dono. Era esta a lacuna da 9C-3.
+
+     Antes da 9C-4 este ramo carimbava o `em` com `new Date()`, por nao haver
+     instante publicado a copiar. Agora ha: o `soOnline` pede o instante ao
+     mesmo relogio monotonico, e a excecao deixa de existir. */
+  var soOnline = !!(e[j].priv && eventoJaSubiu(e[j].id));
+  e[j].em = tocarEvento(e[j], false, null, {soOnline: soOnline}) || e[j].em;
   setEventos(e);
   renderEventos();}
 function dateEv(eid,v){const e=getEventos();const j=e.findIndex(x=>x.id===eid);

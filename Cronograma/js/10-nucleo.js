@@ -471,12 +471,24 @@ function mesclarEvento(evs, eid, r){
   if(r.del){ if(j > -1){ evs.splice(j,1); return true; } return false; }
   if(!r.data) return false;
   if(j < 0){
-    evs.push({id:eid, t:(!r.priv && typeof r.t === "string") ? r.t : "",
+    evs.push({id:eid, t:(typeof r.t === "string") ? r.t : "",
               data:r.data, em:r.quando, priv:!!r.priv});
   } else {
     evs[j].data = r.data;
     evs[j].priv = !!r.priv;
-    if(!r.priv && typeof r.t === "string") evs[j].t = r.t;
+    /* O TITULO ENTRA QUANDO VIAJOU, e nao quando "e publico" — a mudanca da
+       Fase 9C-4. A clausula `!r.priv` que estava aqui era cinto sobre
+       suspensorio: o payload LEGADO nao monta o `t` de um evento privado, entao
+       `typeof r.t === "string"` ja o recusava sozinho. Com o caminho online
+       passando a carregar o titulo privado, aquela clausula deixaria de ser
+       redundante e passaria a ser um BLOQUEIO: o nome chegaria e seria
+       descartado.
+
+       O `typeof` continua sendo o que decide, e continua importando: string
+       vazia e um titulo legitimo (apagado de proposito); AUSENCIA do campo e
+       "nao viajou". Trocar por `if(r.t)` transformaria apagar um titulo em
+       nao-fazer-nada. */
+    if(typeof r.t === "string") evs[j].t = r.t;
     evs[j].em = r.quando;
   }
   return true;

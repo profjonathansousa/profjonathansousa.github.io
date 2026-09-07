@@ -960,7 +960,8 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
   /* Mesmo motivo do tocarMeta acima: o corpo cresceu na 9C-3 (ganhou a escrita
      online), entao verifica-se o CONTRATO e nao a proximidade das linhas. */
   const tocarE = fonte.split("function tocarEvento(")[1].split("\n}")[0];
-  ok(/^ev, apagado, quandoISO\)/.test(tocarE), "    o funil do evento aceita quandoISO");
+  ok(/^ev, apagado, quandoISO, opts\)/.test(tocarE),
+     "    o funil do evento aceita quandoISO e opts (9C-4)");
   ok(/enfileirarToque\("evento", d, quandoISO\)/.test(tocarE), "    e o repassa ao toque");
   ok(/return iso;/.test(tocarE), "    e DEVOLVE o instante que subiu");
   /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
@@ -1488,8 +1489,15 @@ console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
   ok(achaEv(A, id).priv === true, "O. o Mac marcou como privado");
   const linha = srv.linhas.filter(l => l.chave === id)[0];
   ok(linha.valor.priv === true, "   a MARCA sobe", linha.valor);
-  ok(!Object.prototype.hasOwnProperty.call(linha.valor, "t"),
-     "O. e o TITULO nao sobe — o campo nem existe no registro online", Object.keys(linha.valor));
+  /* ESTA ASSERCAO INVERTEU NA 9C-4, de proposito. Ate a 9C-3 o titulo privado
+     nao subia a lugar nenhum; agora ele sobe para o registro ONLINE, que e
+     privado por RLS, e continua fora do caminho legado. O que a secao guarda
+     passou a ser a fronteira nova, e ela e verificada nos dois lados. */
+  ok(Object.prototype.hasOwnProperty.call(linha.valor, "t"),
+     "O. o titulo sobe para o registro ONLINE (9C-4)", Object.keys(linha.valor));
+  const toquePriv = A.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id).pop();
+  ok(!("t" in toquePriv.dados),
+     "O. e NAO sobe no payload legado — a fronteira publica nao mudou", Object.keys(toquePriv.dados));
   ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
 
   /* O titulo que o celular JA tinha nao pode ser apagado pela descida. */
@@ -1498,13 +1506,20 @@ console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
 
   /* Renomear um privado que ja subiu nao publica nada de novo. */
   const antes = srv.linhas.filter(l => l.chave === id)[0].em;
+  const toquesAntes = A.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id).length;
   A.__armazem["cron:la-fora"] = JSON.stringify({metas:{}, eventos:{[id]:{q:antes,t:false,p:true}}, piso:0});
   A.editEv(id, "Consulta com o cardiologista");
   await A.SYNC.drenarFila();
   const depois = srv.linhas.filter(l => l.chave === id)[0];
-  ok(depois.em === antes, "   renomear um privado ja publicado nao gera escrita online", depois.em);
-  ok(!Object.prototype.hasOwnProperty.call(depois.valor, "t"), "   e o titulo continua fora do servidor");
-  ok(achaEv(A, id).t === "Consulta com o cardiologista", "   mas o nome novo fica no aparelho");
+  /* TAMBEM INVERTEU NA 9C-4: renomear um privado ja publicado passou a gerar
+     escrita ONLINE (era a lacuna que a 9C-3 deixou), e continua NAO gerando
+     toque legado — que e o que protege o repositorio publico. */
+  ok(depois.em !== antes, "   renomear um privado ja publicado ATUALIZA o online (9C-4)", depois.em);
+  ok(depois.valor.t === "Consulta com o cardiologista",
+     "   com o nome novo", depois.valor.t);
+  ok(A.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id).length === toquesAntes,
+     "   e NAO gera toque legado — o repositorio publico nao ve nada");
+  ok(achaEv(A, id).t === "Consulta com o cardiologista", "   e o nome novo fica no aparelho");
 
   /* A garantia estrutural: o payload nem monta o campo. */
   const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
@@ -1575,6 +1590,162 @@ console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
   ok(/typeof r\.t === "string"/.test(merge),
      "   e o merge distingue `t` vazio de `t` ausente — apagar um titulo e um ato");
   ok(/if\(!r\.data\) return false;/.test(merge), "   evento sem data continua sendo ignorado");
+}
+
+console.log("\n=== 43. O titulo privado no caminho online (9C-4) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const toqueDe = (ap, id) => ap.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id);
+  const linhaDe = (id) => srv.linhas.filter(l => l.dominio === "evento" && l.chave === id)[0];
+
+  /* A. publico: o titulo viaja pelos DOIS caminhos, como sempre. */
+  const id = criarEvento(A, "Retiro de casais", "2027-07-10");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).t === "Retiro de casais", "A. publico: o titulo chega ao outro aparelho");
+  ok(toqueDe(A, id).some(t => t.dados.t === "Retiro de casais"),
+     "   e viaja tambem no payload legado");
+  ok(linhaDe(id).valor.t === "Retiro de casais", "   e no online");
+
+  /* B + D. marcar privado: a marca viaja pelos dois; o titulo, so pelo online. */
+  const antesToques = toqueDe(A, id).length;
+  A.privEv(id);
+  await A.SYNC.drenarFila();
+  const toquePriv = toqueDe(A, id)[toqueDe(A, id).length - 1];
+  ok(toqueDe(A, id).length === antesToques + 1, "B. marcar privado gera um toque legado");
+  ok(toquePriv.dados.priv === true, "   com a MARCA", toquePriv.dados);
+  ok(!("t" in toquePriv.dados),
+     "C. e SEM o titulo — o campo nem existe no payload legado", Object.keys(toquePriv.dados));
+  ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
+  ok(linhaDe(id).valor.priv === true && linhaDe(id).valor.t === "Retiro de casais",
+     "D. e o titulo esta no registro ONLINE", linhaDe(id).valor);
+
+  /* E. editar o titulo enquanto privado: sincroniza online, nao vaza no legado. */
+  A.__armazem["cron:la-fora"] = JSON.stringify(
+    {metas:{}, eventos:{[id]:{q:linhaDe(id).em, t:false, p:true}}, piso:0});
+  const antes2 = toqueDe(A, id).length;
+  A.editEv(id, "Retiro de casais — Igreja de Nova Iguacu");
+  await A.SYNC.drenarFila();
+  ok(toqueDe(A, id).length === antes2,
+     "E/C. renomear um privado ja publicado NAO gera toque legado", toqueDe(A, id).length - antes2);
+  ok(linhaDe(id).valor.t === "Retiro de casais — Igreja de Nova Iguacu",
+     "E. mas ATUALIZA o registro online", linhaDe(id).valor.t);
+  ok(achaEv(B, id).t === "Retiro de casais — Igreja de Nova Iguacu",
+     "D. e o nome novo chega ao outro aparelho autorizado", achaEv(B, id).t);
+  ok(achaEv(B, id).priv === true, "   ainda marcado como privado la");
+
+  /* K. em NENHUM toque de evento deste aparelho ha titulo de evento privado. */
+  const vazando = A.getToques().filter(t => t.tipo === "evento" && t.dados.priv && "t" in t.dados);
+  ok(vazando.length === 0, "K. nenhum toque legado carrega titulo de evento privado", vazando);
+
+  /* F. reconectar recupera o titulo privado. */
+  const C = criarAparelho("ipad", srv).__conectar();
+  ok(!achaEv(C, id) || !achaEv(C, id).t, "um aparelho novo comeca sem o titulo");
+  await C.SYNC.reconectar(true);
+  ok(achaEv(C, id) && achaEv(C, id).t === "Retiro de casais — Igreja de Nova Iguacu",
+     "F. reconectar recupera o titulo privado pelo delta", achaEv(C, id) && achaEv(C, id).t);
+  ok(achaEv(C, id).priv === true, "   com a marca de privado junto");
+
+  /* G. tornar publico de novo: o titulo volta a poder ser publicado. */
+  const antes3 = toqueDe(A, id).length;
+  A.privEv(id);
+  await A.SYNC.drenarFila();
+  const toquePub = toqueDe(A, id)[toqueDe(A, id).length - 1];
+  ok(toqueDe(A, id).length === antes3 + 1, "G. tornar publico gera toque legado");
+  ok(toquePub.dados.priv === false, "   com priv=false");
+  ok(toquePub.dados.t === "Retiro de casais — Igreja de Nova Iguacu",
+     "G. e agora o titulo VIAJA no payload legado", toquePub.dados.t);
+  ok(achaEv(B, id).priv === false && achaEv(B, id).t === "Retiro de casais — Igreja de Nova Iguacu",
+     "   e os dois aparelhos convergem", achaEv(B, id));
+
+  /* H. exclusao: lapide, e sem deixar o titulo na tabela. */
+  A.delEv(id);
+  await A.SYNC.drenarFila();
+  ok(achaEv(A, id) === null && achaEv(B, id) === null, "H. apagar remove nos dois aparelhos");
+  ok(linhaDe(id).del === true, "   a lapide fica");
+  ok(!("t" in linhaDe(id).valor),
+     "H. e a lapide NAO carrega o titulo — o conteudo privado sai da tabela",
+     linhaDe(id).valor);
+}
+
+console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const id = criarEvento(A, "Consulta", "2027-09-09");
+  A.privEv(id);
+  await A.SYNC.drenarFila();
+  const toquesB = B.getToques().length;
+
+  /* I. o relogio continua decidindo, tambem para o titulo privado. */
+  const velha = {dono: "dono-1", dominio: "evento", chave: id,
+                 valor: {t: "titulo antigo", data: "2027-09-09", priv: true},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-07-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "I. linha antiga com titulo privado e recusada", r);
+  ok(achaEv(B, id).t === "Consulta", "   e o titulo mais novo permanece", achaEv(B, id).t);
+
+  /* J. no-echo. */
+  const idNovo = criarEvento(A, "Outra consulta", "2027-10-10");
+  A.privEv(idNovo);
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, idNovo).t === "Outra consulta", "   um privado novo chega ao celular");
+  ok(B.getToques().length === toquesB, "J. e receber nao gerou toque no celular",
+     B.getToques().length - toquesB);
+  ok(B.SYNC.situacao().fila === 0, "   nem enfileirou envio de volta");
+
+  /* AUSENCIA vs VAZIO continua distinguida: apagar um titulo e um ato. */
+  const lista = B.getEventos();
+  ok(B.mesclarEvento(lista, id, {quando: "2099-01-01T00:00:00.000Z", data: "2027-09-09", priv: true}) === true,
+     "sem `t` no registro, a data desce e o titulo local fica");
+  ok(lista.filter(e => e.id === id)[0].t === "Consulta", "   o titulo local sobreviveu");
+  ok(B.mesclarEvento(lista, id, {quando: "2099-02-01T00:00:00.000Z", data: "2027-09-09", priv: true, t: ""}) === true,
+     "com `t` vazio, apagar o titulo E um ato");
+  ok(lista.filter(e => e.id === id)[0].t === "", "   e ele e apagado", lista.filter(e => e.id === id)[0].t);
+
+  /* L. nenhum dominio da 9D foi antecipado. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade"]),
+     "L. continuam sendo tres dominios online", online);
+}
+
+console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ===");
+{
+  /* As perguntas de privacidade da 9C-4, respondidas contra o codigo e nao
+     contra a intencao. */
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const dobra  = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  const sql    = fs.readFileSync(path.join(RAIZ, "sql", "cron_estado.sql"), "utf8");
+
+  ok(/if\(!ev\.priv\) d\.t = ev\.t \|\| "";/.test(regras),
+     "1/4. dadosDoEvento (payload legado) nao MONTA o titulo quando priv");
+  ok(/if not d\.get\("priv"\) and isinstance\(d\.get\("t"\), str\):/.test(dobra),
+     "1. e a dobra tambem o recusa — dois guardas independentes no cano publico");
+  /* O cron:la-fora guarda so um booleano `t`, nunca o texto. */
+  ok(/t:\(!ev\.priv && !!String\(ev\.t\|\|""\)\.trim\(\)\)/.test(render.replace(/\s/g, "")) ||
+     /marcarLaForaLocal\("eventos", ev\.id, \{q:iso, t:\(!ev\.priv/.test(render),
+     "3. cron:la-fora guarda um booleano, nunca o texto do titulo");
+  /* O titulo privado so entra no payload ONLINE, e a partir de ev.t. */
+  const tocar = render.split("function tocarEvento(")[1].split("\n}")[0];
+  ok(/if\(!apagado\) valor\.t = ev\.t \|\| "";/.test(tocar),
+     "5. o titulo entra no registro online — e so ali");
+  ok(!/valor\.t = d\.t/.test(tocar),
+     "   lido de ev.t e nao de d.t: `d` e o payload publico e nele o campo nao existe");
+  /* 6. Quem pode ler cron_estado. */
+  ok(/using \(dono = auth\.uid\(\) and cron_e_dono\(\)\)/.test(sql),
+     "6. a leitura de cron_estado exige dono = auth.uid() E a allowlist");
+  ok(!/create policy[^;]*cron_estado[^;]*to anon/.test(sql),
+     "   e nao ha politica nenhuma para o papel anon");
+  ok(/revoke all on public\.cron_estado\s+from anon;/.test(sql),
+     "   com revoke explicito");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

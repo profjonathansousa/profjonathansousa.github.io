@@ -1272,8 +1272,7 @@ O payload online sai do **mesmo `d`** que o toque legado leva, e `dadosDoEvento`
 ao Supabase pelo simples fato de não existir no payload — não há um segundo
 lugar onde alguém possa esquecer de filtrar.
 
-Replicar título privado com segurança continua sendo assunto da **9C-4**. A
-9C-3 apenas preserva a fronteira que já existia.
+A **9C-4** move essa fronteira sem abrir a pública — ver abaixo.
 
 Duas cláusulas do merge protegem isso e **não podem ser "simplificadas"**:
 
@@ -1304,6 +1303,71 @@ a coluna `del` já existiam desde a 9A. Nada aplicado ao banco.
 privacidade: verifica que a marca sobe, que o título **não** sobe, que o título
 que o outro aparelho já tinha não é apagado pela descida, e que renomear um
 privado já publicado não gera escrita online.
+
+### 9C-4 — O título de evento privado, online
+
+**O título de um evento privado passa a sincronizar entre os aparelhos do dono,
+sem entrar no caminho público.** Havia dois títulos possíveis e agora há dois
+destinos, com uma diferença de exatamente um campo:
+
+| | payload legado (GitHub) | registro online (Supabase) |
+|---|---|---|
+| evento público | `data`, `priv`, **`t`** | `data`, `priv`, **`t`** |
+| evento privado | `data`, `priv` | `data`, `priv`, **`t`** |
+| lápide | `del` | `del`, **sem `t`** |
+
+#### Por que `cron_estado` é lugar seguro para ele
+
+Não é "porque não é o GitHub". São duas propriedades, e as duas foram
+verificadas:
+
+1. **Os dois canos são disjuntos.** O `estado.json` é escrito pelo
+   `dobrar_toques.py` a partir dos *toques*; nada em `cron_estado` alcança o
+   repositório, nem o `entrada.json`, nem o `cron:la-fora`. O título privado não
+   entra no toque, logo não existe caminho por onde chegar lá — e há **dois
+   guardas independentes** nesse cano: `dadosDoEvento` não monta o campo, e a
+   dobra o recusa outra vez.
+2. **A RLS de `cron_estado`** exige `dono = auth.uid() AND cron_e_dono()`, e não
+   há política nenhuma para o papel `anon`. Provado contra o banco em produção:
+   uma conta autenticada fora da allowlist enxerga **zero linhas**.
+
+O título privado fica visível para os aparelhos **autenticados como o dono**, e
+para mais ninguém. É o mesmo modelo de acesso que a 9A definiu.
+
+| Pergunta | Resposta |
+|---|---|
+| aparece em `estado.json`? | não — o toque não o carrega |
+| em `entrada.json`? | não — é escrito pelo pipeline, não pelo app |
+| em `cron:la-fora`? | não — ali há um **booleano**, nunca o texto |
+| no payload legado? | não — dois guardas independentes |
+| em `cron_estado`? | **sim**, e é o ponto: privado por RLS |
+| alguém não autorizado recebe? | não — sem política para `anon` |
+| um aparelho autorizado recupera ao reconectar? | sim, pelo delta |
+| voltar a público converge? | sim — `dadosDoEvento` volta a montar o `t` |
+
+#### As três mudanças de código
+
+- **`tocarEvento`** passa o título ao registro online lendo de `ev.t`, e **não**
+  de `d.t`: o `d` é o payload público, e nele o campo não existe quando privado.
+  São dois payloads de propósito, e a diferença entre eles está neste único
+  lugar.
+- **`mesclarEvento`** perdeu a cláusula `!r.priv`: o título entra **quando
+  viajou**, não quando "é público". Aquela cláusula era cinto sobre suspensório
+  — o `typeof r.t === "string"` já recusava sozinho, porque o payload legado não
+  monta o campo. Com o online passando a carregá-lo, ela deixaria de ser
+  redundante e viraria um **bloqueio**.
+- **`editEv`** ganhou o modo `soOnline`: renomear um privado que já subiu não
+  gera toque (seria uma reconstrução do Pages à toa) mas **atualiza o registro
+  online**. Era a lacuna que a 9C-3 deixou.
+
+Efeito colateral bem-vindo: esse modo pede o instante ao mesmo relógio
+monotônico, e com isso **desaparece a última exceção da 9C-0** — não há mais
+nenhum caminho de escrita destes domínios carimbando o próprio `new Date()`.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**. Nenhuma tabela nova, nenhuma coluna
+nova: o `valor jsonb` já comportava o campo, e a RLS que o protege já existia.
 
 ### Como ligar, e o que a tela diz
 
@@ -1565,7 +1629,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9C-0/9C-1 — relógio, escritor único e repercussão da Revisão | concluídas |
 | 9C-2 — Metas online (segundo domínio na camada) | concluída |
 | 9C-3 — Eventos online (terceiro domínio) | concluída |
-| 9C-4 — título de evento privado no caminho online | não iniciada |
+| 9C-4 — título de evento privado no caminho online | concluída |
 | 9D a 9G — vagas, retomadas, registro, rotinas, trilhos, escrita dupla | não iniciadas |
 
 ### Previsto e ainda não implementado
