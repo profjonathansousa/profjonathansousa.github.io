@@ -339,7 +339,12 @@ function aplicarPrioridadeOnline(linha){
   });
   if(!mudou) return [];
   setPrio(lista, sem);
-  return ["renderHoje"];
+  /* renderHoje cobre a aba Hoje — e, no domingo, a revisao desenhada dentro
+     dela. A aba Revisao e OUTRA view (view-revisao), pintada so pelo setView:
+     com ela na frente, a mudanca chegava e nao aparecia. Ver a Fase 9C-1.
+     O renderVistaRevisao devolve na primeira linha quando a aba nao esta
+     visivel, entao no caso comum isto nao custa nada. */
+  return ["renderHoje", "renderVistaRevisao"];
 }
 
 /* ============== MOTOR DE PRIORIDADES — Fase 3 ==============

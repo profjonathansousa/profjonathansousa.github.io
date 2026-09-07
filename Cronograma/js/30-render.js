@@ -646,8 +646,13 @@ function trazerMeta(i){
   const origem=getMetas(o.mes).filter(function(m){return m.id!==o.meta.id;});
   setMetas(origem,o.mes);
   /* Trazer e mover: nasce uma no mes atual e morre a do mes de origem. Os
-     dois toques saem juntos, senao o outro aparelho ficaria com as duas. */
-  tocarMeta(monthKey,nova,false);
+     dois toques saem juntos, senao o outro aparelho ficaria com as duas.
+     A ORDEM E CRIAR ANTES DE APAGAR, e continua sendo: se so a primeira subir,
+     o outro aparelho ve a meta duas vezes — visivel e corrigivel — em vez de
+     nenhuma vez. A lapide da origem nao precisa de `em`: o item deixou de
+     existir aqui. */
+  nova.em=tocarMeta(monthKey,nova,false)||nova.em;
+  setMetas(destino,monthKey);
   tocarMeta(o.mes,o.meta,true);
   renderMetas();
 }
@@ -663,7 +668,13 @@ function trazerTodas(){
   Object.keys(porMes).forEach(function(k){
     setMetas(getMetas(k).filter(function(m){return porMes[k].indexOf(m.id)<0;}),k);
   });
-  novas.forEach(function(m){ tocarMeta(monthKey, m, false); });
+  /* UM `em` POR META, e nao o `agora` compartilhado acima. Este laco e o pior
+     caso da divergencia que a 9C-0 corrige: N metas nascendo no mesmo
+     milissegundo, todas com o mesmo `agora`, enquanto o relogio monotonico da
+     a cada toque um instante proprio. Da segunda em diante, o `em` local
+     ficava ATRAS do que subiu. */
+  novas.forEach(function(m){ m.em = tocarMeta(monthKey, m, false) || m.em; });
+  setMetas(destino,monthKey);
   p.forEach(function(o){ tocarMeta(o.mes, o.meta, true); });
   renderMetas();
 }
@@ -674,15 +685,39 @@ function trocarMes(k){mesAtivo=k;renderMetas();}
    ultima lista a chegar levaria a outra junto. E `del` e a lapide de uma meta
    removida — sem ela, quem apaga no celular veria a meta voltar do Mac no
    carregamento seguinte, porque ausencia nao se distingue de desconhecimento. */
-function tocarMeta(mes, m, apagada){
-  if(!m || !m.id) return;
-  enfileirarToque("meta", {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
-                           de:m.de||null, del:!!apagada});
+/* DEVOLVE O INSTANTE QUE SUBIU, e o `quandoISO` existe para o botao do acervo.
+   Ate a Fase 9C-0 esta funcao nao devolvia nada e cada caller carimbava o `em`
+   com `new Date()` por conta propria. Os dois relogios coincidem quase sempre —
+   e por isso o defeito era invisivel —, mas o instanteDoToque() e MONOTONICO:
+   quando duas acoes caem no mesmo milissegundo, ele desempata somando 1ms e o
+   `new Date()` do caller nao acompanha. Medido: a 1a acao de um milissegundo
+   coincide, a 2a diverge +1ms, a 3a +2ms. E o caso REAL, porque trazerTodas()
+   emite 2N toques num laco — e ali o codigo era pior ainda, com UM `agora`
+   compartilhado por todas as metas novas.
+
+   Enquanto so havia o caminho do GitHub isso era quase inocuo: a descida
+   reescrevia o item com o mesmo conteudo. A partir do momento em que o `em`
+   passa a decidir quem vence — que e o que a 9C fara —, um `em` local mais
+   ANTIGO do que o instante publicado faz o proprio ato voltar como se fosse
+   novidade de fora. E exatamente a razao pela qual o tocarPrioridade da 9B
+   devolve o iso desde o primeiro dia. */
+function tocarMeta(mes, m, apagada, quandoISO){
+  if(!m || !m.id) return null;
+  return enfileirarToque("meta", {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
+                                  de:m.de||null, del:!!apagada}, quandoISO);
 }
-function toggleMeta(i){const k=mesAtivo;const m=getMetas();if(!m[i])return;m[i].done=!m[i].done;m[i].em=new Date().toISOString();setMetas(m);tocarMeta(k,m[i],false);renderMetas();}
+/* Grava duas vezes, como o togglePrioridadeFeita: o instante so existe depois
+   de enfileirar, e a primeira gravacao garante que a mudanca sobreviva mesmo se
+   o enfileiramento falhar. */
+function toggleMeta(i){const k=mesAtivo;const m=getMetas();if(!m[i])return;
+  m[i].done=!m[i].done;setMetas(m);
+  m[i].em=tocarMeta(k,m[i],false)||m[i].em;setMetas(m);renderMetas();}
 /* Sai do onblur do contenteditable: so enfileira se o texto mudou de verdade,
    senao cada clique fora do campo viraria um toque. */
-function editMeta(i,t){const k=mesAtivo;const m=getMetas();if(!m[i])return;const novo=t.trim()||m[i].t;if(novo===m[i].t)return;m[i].t=novo;m[i].em=new Date().toISOString();setMetas(m);tocarMeta(k,m[i],false);}
+function editMeta(i,t){const k=mesAtivo;const m=getMetas();if(!m[i])return;
+  const novo=t.trim()||m[i].t;if(novo===m[i].t)return;
+  m[i].t=novo;setMetas(m);
+  m[i].em=tocarMeta(k,m[i],false)||m[i].em;setMetas(m);}
 function delMeta(i){const k=mesAtivo;const m=getMetas();const fora=m[i];if(!fora)return;m.splice(i,1);setMetas(m);tocarMeta(k,fora,true);renderMetas();}
 /* Nasce sem texto, e por isso nao enfileira nada: o toque sai no primeiro
    editMeta, ja com o que voce escreveu. */
@@ -756,7 +791,12 @@ function publicarAcervoUmaVez(){
        o estado que ele quer corrigir, a dobra o descartaria como atrasado, e o
        contador mostraria a mesma pendencia para sempre. Medido: a "Prova TOEFL",
        cujo estado veio de uma edicao das 01:35, nao recebia o titulo. */
-    var iso = enfileirarToque("evento", dadosDoEvento(ev, false), x.novo ? ACERVO_EM : null);
+    /* PELO FUNIL, e nao por um enfileirarToque proprio. Ate a 9C-0 este botao
+       era o SEGUNDO escritor de evento — dois caminhos para o mesmo dominio, e
+       o repositorio ja pagou uma vez por isso: o payload daqui ficou para tras
+       no dia em que o titulo passou a viajar. O tocarEvento ganhou o parametro
+       `quandoISO` exatamente para que este caso coubesse nele. */
+    var iso = tocarEvento(ev, false, x.novo ? ACERVO_EM : null);
     marcarLaForaLocal("eventos", ev.id, {q:iso, t:(!ev.priv && !!String(ev.t||"").trim()), p:!!ev.priv});
     if(!ev.em){
       var lista = getEventos();
@@ -765,8 +805,10 @@ function publicarAcervoUmaVez(){
     }
   });
   metas.forEach(function(c){
-    var iso = enfileirarToque("meta", {mes:c.mes, mid:c.m.id, t:c.m.t||"", done:!!c.m.done,
-                                       de:c.m.de||null, del:false}, ACERVO_EM);
+    /* Pelo funil, pela mesma razao do evento acima. O payload que o tocarMeta
+       monta e identico ao que estava escrito aqui, campo por campo — esta
+       troca nao muda um byte do que sobe. */
+    var iso = tocarMeta(c.mes, c.m, false, ACERVO_EM);
     marcarLaForaLocal("metas", c.mes + "/" + c.m.id, iso);
     /* Meta que nunca teve instante passa a ter o que subiu: assim ela deixa de
        ser "tempo desconhecido" aqui dentro e a mesclagem seguinte nao a devolve
@@ -861,9 +903,11 @@ function linhaDeEvento(e){
    Mac no carregamento seguinte, porque ausencia nao se distingue de
    desconhecimento. */
 
-function tocarEvento(ev, apagado){
-  if(!ev || !ev.id) return;
-  enfileirarToque("evento", dadosDoEvento(ev, apagado));
+/* Mesmo contrato do tocarMeta, e pela mesma razao — ver o comentario la. O
+   `quandoISO` existe para o botao do acervo, que precisa do piso ACERVO_EM. */
+function tocarEvento(ev, apagado, quandoISO){
+  if(!ev || !ev.id) return null;
+  return enfileirarToque("evento", dadosDoEvento(ev, apagado), quandoISO);
 }
 
 /* A marca de privado e do EVENTO e atravessa como tudo o mais: vai no toque,
@@ -888,9 +932,9 @@ function privEv(eid){
       "sempre \u2014 mesmo que voc\u00ea apague o evento ou marque como privada de novo depois.")) return;
   }
   e[j].priv = ligando;
-  e[j].em = new Date().toISOString();
   setEventos(e);
-  tocarEvento(e[j], false);
+  e[j].em = tocarEvento(e[j], false) || e[j].em;
+  setEventos(e);
   renderEventos();
 }
 /* Sai do onblur do contenteditable: so grava se o texto mudou de verdade,
@@ -898,16 +942,24 @@ function privEv(eid){
    guarda; o editEv nao fazia, e sem ela o tipo novo multiplicaria marcacao. */
 function editEv(eid,t){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0)return;const novo=t.trim();if(novo===e[j].t)return;
-  e[j].t=novo;e[j].em=new Date().toISOString();setEventos(e);
+  e[j].t=novo;setEventos(e);
   /* Num evento PRIVADO que ja subiu, renomear nao muda nada la fora — o toque
      seria um commit e uma reconstrucao do Pages a troco de nada. Mas se ele
      ainda nem subiu, o toque sai: nomear e o ato que o torna real, e a DATA
-     precisa viajar mesmo que o nome fique aqui. */
-  if(!e[j].priv || !eventoJaSubiu(e[j].id)) tocarEvento(e[j],false);
+     precisa viajar mesmo que o nome fique aqui.
+
+     QUANDO NAO HA TOQUE, O `em` AINDA AVANCA — e com o relogio de parede
+     mesmo, porque nao ha instante publicado a copiar. E o unico caminho de
+     escrita destes dois dominios que legitimamente carimba o proprio tempo:
+     a mudanca existe so aqui dentro. */
+  if(!e[j].priv || !eventoJaSubiu(e[j].id)) e[j].em = tocarEvento(e[j],false) || e[j].em;
+  else e[j].em = new Date().toISOString();
+  setEventos(e);
   renderEventos();}
 function dateEv(eid,v){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0||!v||e[j].data===v)return;
-  e[j].data=v;e[j].em=new Date().toISOString();setEventos(e);tocarEvento(e[j],false);renderEventos();}
+  e[j].data=v;setEventos(e);
+  e[j].em=tocarEvento(e[j],false)||e[j].em;setEventos(e);renderEventos();}
 function delEv(eid){const fora=getEventos().find(x=>x.id===eid);if(!fora)return;
   if(!confirm("Remover \u201c"+((fora.t||"").trim()||"esta data")+"\u201d?"))return;
   setEventos(getEventos().filter(x=>x.id!==eid));tocarEvento(fora,true);renderEventos();}
@@ -1507,6 +1559,27 @@ function renderSemana(){
     vgCarregar().then(function(){ try{ if(!alvo.hidden) renderSemana(); }catch(e){} });
   }
 }
+/* ============ A VISTA DA REVISAO — Fase 9C-1 ============
+   O renderRevisao() DEVOLVE html; quem o pintava era o setView, e so ele. A
+   consequencia: com a aba Revisao aberta, uma prioridade marcada no outro
+   aparelho chegava, entrava no cron:prioridades e nao aparecia — a tela so
+   mudava ao sair e voltar da aba. O aplicador remoto da 9B pedia renderHoje,
+   e o renderHoje escreve em view-hoje, que naquele momento esta `hidden`.
+
+   POR QUE `renderSemana` NAO ENTRA NESTA CORRECAO. A auditoria da 9C dizia que
+   a revisao morava tambem no renderSemana; nao mora — a linha estava dentro do
+   setView. Verificado: renderSemana nao le getPrio, getMetas nem getEventos, e
+   nao tem o que atualizar quando um deles muda. Acrescenta-lo seria desenho a
+   toa, e a regra da 9C-1 e a MENOR repercussao correta.
+
+   SO REDESENHA SE ESTIVER NA FRENTE. Fora isso nao ha o que atualizar: o
+   setView repinta ao entrar, como sempre fez. */
+function renderVistaRevisao(forcar){
+  var alvo = document.getElementById("view-revisao");
+  if(!alvo) return;
+  if(!forcar && alvo.hidden) return;
+  alvo.innerHTML = '<p class="plate-eyebrow">Revis\u00e3o</p>' + renderRevisao();
+}
 function setView(v){
   /* A SEMANA CONTINUA NA LISTA, sem botao na barra. A guarda do `if(b)` e o
      que permite isso: uma view alcancavel so pelo rodape nao tem aba para
@@ -1518,11 +1591,7 @@ function setView(v){
     if(b) b.classList.toggle("active", k===v);
   });
   if(v==="processos") renderProcessos();
-  if(v==="revisao"){
-    var alvoRev = document.getElementById("view-revisao");
-    if(alvoRev) alvoRev.innerHTML =
-      '<p class="plate-eyebrow">Revis\u00e3o</p>' + renderRevisao();
-  }
+  if(v==="revisao") renderVistaRevisao(true);
   if(v==="trilhos") renderTrilhos();
   if(v==="semana") renderSemana();   /* os numeros mudam a cada marcacao */
   if(v==="vagas") vgAbrir();

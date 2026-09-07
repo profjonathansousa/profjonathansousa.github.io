@@ -1097,6 +1097,83 @@ chave publishable. Não havia vazamento — sem sessão ela devolve sempre `fals
 mas a intenção declarada era negar. Corrigido com `revoke ... from public`. O
 `cron_podar()` já revogava de `public` e por isso passou limpo.
 
+### 9C-0 e 9C-1 — o caminho legado corrigido antes de conectar
+
+Duas correções que **não conectam nada**: Metas e Eventos continuam viajando só
+pelo caminho de toques. Existem para que a 9C-2 não tenha de depurar dois
+sistemas ao mesmo tempo.
+
+#### O relógio de Metas e Eventos
+
+`tocarMeta()` e `tocarEvento()` não devolviam nada, e cada caller carimbava o
+`em` com o próprio `new Date()`. O `instanteDoToque()` é **monotônico**: quando
+duas ações caem no mesmo milissegundo ele desempata somando 1ms, e o relógio de
+parede do caller não acompanha.
+
+**Medido antes da correção**, com `new Date()` e `Date.now()` congelados juntos
+— congelar só um mediria a instrumentação, não o mecanismo:
+
+| Ação | `em` do caller | `quando` do toque |
+|---|---|---|
+| 1ª no milissegundo | `…000Z` | `…000Z` — coincidem |
+| 2ª no mesmo ms | `…000Z` | `…001Z` — **divergem** |
+| 3ª no mesmo ms | `…000Z` | `…002Z` — **divergem** |
+
+Prioridades: **zero divergências**, em qualquer posição — o `tocarPrioridade` da
+9B devolve o iso desde o primeiro dia.
+
+O pior caso era o `trazerTodas()`: N metas nascendo com **um `agora`
+compartilhado**, enquanto o relógio dava a cada toque um instante próprio.
+
+Enquanto só existe o caminho do GitHub isso é quase inócuo — a descida reescreve
+o item com o mesmo conteúdo. **A partir do momento em que o `em` decide quem
+vence**, um `em` local mais antigo do que o instante publicado faz o próprio ato
+voltar como se fosse novidade de fora. Por isso a correção vem antes.
+
+A regra passa a ser, nos três domínios: ação → funil → `enfileirarToque` →
+devolve o ISO → o caller grava esse ISO em `em`.
+
+Uma exceção documentada: renomear um evento **privado que já subiu** não emite
+toque — e aí o `em` avança com o relógio de parede mesmo, porque não há instante
+publicado a copiar. É o único caminho de escrita destes domínios que
+legitimamente carimba o próprio tempo.
+
+#### O segundo escritor
+
+`publicarAcervo` chamava `enfileirarToque` direto, contornando os funis:
+
+```
+antes:  meta 2 escritores · evento 2 escritores · prioridade 1
+depois: meta 1 escritor   · evento 1 escritor   · prioridade 1
+```
+
+Os funis ganharam um parâmetro `quandoISO` para que o piso `ACERVO_EM` coubesse
+neles. O payload não mudou um byte: o que `publicarAcervo` montava à mão era
+idêntico, campo por campo, ao que o funil monta.
+
+#### A vista da Revisão
+
+`renderRevisao()` **devolve** HTML; quem o pintava era o `setView`, e só ele.
+Com a aba Revisão aberta, uma prioridade marcada no outro aparelho chegava,
+entrava no `cron:prioridades` e não aparecia — a tela só mudava ao sair e voltar
+da aba. O aplicador remoto pedia `renderHoje`, que escreve em `view-hoje`, e
+naquele momento `view-hoje` está `hidden`.
+
+`renderVistaRevisao()` repinta `view-revisao`, e **só se ela estiver na frente**.
+
+> **`renderSemana` não entrou nesta correção**, e a auditoria da 9C estava errada
+> ao dizer que a revisão morava nele: a linha estava dentro do `setView`.
+> Verificado no corpo real da função — `renderSemana` não lê `getPrio`,
+> `getMetas` nem `getEventos`, e não tem o que atualizar. A regra da 9C-1 é a
+> **menor repercussão correta**.
+
+#### Testes
+
+`teste_sync.js`, seções 26 a 28. O harness ganhou um relógio congelável que
+substitui `new Date()` **e** `Date.now()` juntos. A seção 27 é arquitetural e
+quebra se um segundo escritor voltar, ou se metas/eventos passarem a escrever
+online antes da hora.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1354,7 +1431,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 8 — Notificações (Web Push) | concluída |
 | 9A — Estado online: esquema e infraestrutura | concluída (desligada por padrão) |
 | 9B — Prioridades online (primeiro domínio na camada) | concluída |
-| 9C a 9G — demais domínios, escrita dupla, desativação do GitHub | não iniciadas |
+| 9C-0/9C-1 — relógio, escritor único e repercussão da Revisão | concluídas |
+| 9C-2 em diante — Metas e Eventos online, demais domínios | não iniciadas |
 
 ### Previsto e ainda não implementado
 

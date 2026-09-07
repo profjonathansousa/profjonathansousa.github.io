@@ -170,6 +170,19 @@ function criarAparelho(nome, srv, opcoes) {
     Error, isFinite, isNaN, TextEncoder, btoa: (s) => Buffer.from(s, "binary").toString("base64"),
     atob: (s) => Buffer.from(s, "base64").toString("binary")
   };
+  /* RELOGIO CONGELAVEL — new Date() E Date.now() ao mesmo tempo. Congelar so
+     o Date.now() faria o caller ler o relogio real e o instanteDoToque ler o
+     congelado: a divergencia medida seria artefato da instrumentacao, e nao o
+     mecanismo. Com os dois de acordo, sobra so o que se quer medir — o
+     desempate do relogio monotonico quando duas acoes caem no mesmo ms. */
+  let congelado = null;
+  class DataFalsa extends Date {
+    constructor(...a){ if(!a.length && congelado !== null) super(congelado); else super(...a); }
+    static now(){ return congelado !== null ? congelado : Date.now(); }
+  }
+  ctx.Date = DataFalsa;
+  ctx.__congelar = (ms) => { congelado = ms; };
+  ctx.__descongelar = () => { congelado = null; };
   ctx.window.localStorage = localStorage;
   ctx.globalThis = ctx;
   vm.createContext(ctx);
@@ -850,6 +863,151 @@ console.log("\n=== 25. A sessao NAO entra no backup exportado (9B) ===");
   ok(/storageKey:SYNC_SESSAO_KEY/.test(fonte),
      "e o cliente do Supabase usa essa chave, nao uma literal solta");
   ok(!/storageKey:\s*"cron:/.test(fonte), "nenhuma sessao guardada sob cron:");
+}
+
+console.log("\n=== 26. O relogio de Metas e Eventos (9C-0) ===");
+{
+  /* A DIVERGENCIA ERA REAL E FOI MEDIDA. Antes da 9C-0, tocarMeta/tocarEvento
+     nao devolviam nada e cada caller carimbava o `em` com new Date(). No
+     caminho feliz os dois relogios coincidem — por isso o defeito ficou
+     invisivel. Mas o instanteDoToque() e MONOTONICO: na 2a acao de um mesmo
+     milissegundo ele soma 1ms e o new Date() do caller nao acompanha.
+     Medido no codigo de antes: 1a acao coincide, 2a diverge +1ms, 3a +2ms.
+     Este bloco existe para que nao volte. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv, {ligado: false});
+  const ultimoToque = () => { const t = A.getToques(); return t[t.length - 1]; };
+
+  const casos = [];
+  function medir(nome, acao, lerEm) {
+    const antes = A.getToques().length;
+    acao();
+    const t = ultimoToque();
+    casos.push({nome, em: lerEm(), quando: t.quando, novos: A.getToques().length - antes});
+    return casos[casos.length - 1];
+  }
+
+  A.addMeta();
+  const mi = A.getMetas().length - 1;
+  A.__congelar(1800000000000);
+  const m1 = medir("editMeta 1a no ms",  () => A.editMeta(mi, "primeira"),  () => A.getMetas()[mi].em);
+  const m2 = medir("editMeta 2a no ms",  () => A.editMeta(mi, "segunda"),   () => A.getMetas()[mi].em);
+  const m3 = medir("toggleMeta 3a no ms",() => A.toggleMeta(mi),            () => A.getMetas()[mi].em);
+  A.__descongelar();
+
+  ok(m1.em === m1.quando, "4. o `em` da meta e o ISO do toque (1a no milissegundo)", m1);
+  ok(m2.em === m2.quando, "   e continua sendo na 2a — onde o monotonico desempata", m2);
+  ok(m3.em === m3.quando, "   e na 3a", m3);
+  ok(m2.quando > m1.quando && m3.quando > m2.quando,
+     "   os instantes avancam de verdade (o desempate aconteceu)",
+     [m1.quando, m2.quando, m3.quando]);
+  ok([m1, m2, m3].every(c => c.novos === 1),
+     "11. cada operacao de meta gera EXATAMENTE um toque", casos.map(c => c.novos));
+
+  A.addEv();
+  const eid = A.getEventos()[A.getEventos().length - 1].id;
+  const achaEv = () => A.getEventos().filter(x => x.id === eid)[0];
+  A.__congelar(1800000001000);
+  const e1 = medir("editEv 1a no ms", () => A.editEv(eid, "uma data"),      () => achaEv().em);
+  const e2 = medir("dateEv 2a no ms", () => A.dateEv(eid, "2027-04-01"),    () => achaEv().em);
+  A.__descongelar();
+
+  ok(e1.em === e1.quando, "9. o `em` do evento e o ISO do toque (1a no milissegundo)", e1);
+  ok(e2.em === e2.quando, "   e continua sendo na 2a", e2);
+  ok(e2.quando > e1.quando, "   com os instantes avancando", [e1.quando, e2.quando]);
+  ok(e1.novos === 1 && e2.novos === 1,
+     "11. cada operacao de evento gera EXATAMENTE um toque", [e1.novos, e2.novos]);
+
+  /* trazerTodas era o pior caso: N metas com UM `agora` compartilhado. */
+  const B = criarAparelho("celular", srv, {ligado: false});
+  B.__armazem["cron:metas:2026-07"] = JSON.stringify([
+    {id: "old1", t: "pendente um",  done: false, em: "2026-07-01T00:00:00.000Z"},
+    {id: "old2", t: "pendente dois", done: false, em: "2026-07-01T00:00:00.000Z"}
+  ]);
+  B.__congelar(1800000002000);
+  B.trazerTodas();
+  B.__descongelar();
+  const trazidas = B.getMetas(B.monthKey).filter(m => m.de === "2026-07");
+  ok(trazidas.length === 2, "trazerTodas trouxe as duas", trazidas.length);
+  const toquesT = B.getToques().filter(t => t.tipo === "meta");
+  const porId = {};
+  toquesT.forEach(t => { if (!t.dados.del) porId[t.dados.mid] = t.quando; });
+  ok(trazidas.every(m => m.em === porId[m.id]),
+     "e cada meta trazida ficou com o SEU instante, nao um `agora` compartilhado",
+     trazidas.map(m => ({id: m.id, em: m.em, toque: porId[m.id]})));
+  ok(new Set(trazidas.map(m => m.em)).size === 2,
+     "os dois `em` sao distintos — era aqui que o defeito mordia");
+}
+
+console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
+{
+  const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  ["meta", "evento", "prioridade"].forEach(function (d) {
+    const n = (fonte.match(new RegExp('enfileirarToque\\("' + d + '"', "g")) || []).length;
+    ok(n === 1, "10. ha UM unico enfileirarToque(\"" + d + "\") no codigo", n);
+  });
+  ok(/var iso = tocarEvento\(ev, false, x\.novo \? ACERVO_EM : null\)/.test(fonte),
+     "    e o botao do acervo publica evento PELO FUNIL");
+  ok(/var iso = tocarMeta\(c\.mes, c\.m, false, ACERVO_EM\)/.test(fonte),
+     "    e meta tambem");
+  ok(/function tocarMeta\(mes, m, apagada, quandoISO\)[\s\S]{0,300}return enfileirarToque/.test(fonte),
+     "    o funil da meta aceita quandoISO e DEVOLVE o instante");
+  ok(/function tocarEvento\(ev, apagado, quandoISO\)[\s\S]{0,200}return enfileirarToque/.test(fonte),
+     "    o funil do evento tambem");
+  /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
+  const online = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]);
+  ok(online.length === 1 && online[0] === "prioridade",
+     "12. e SO prioridade escreve online: metas e eventos seguem LEGADOS", online);
+}
+
+console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  ok(typeof A.renderVistaRevisao === "function", "renderVistaRevisao existe");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok(/return \["renderHoje", "renderVistaRevisao"\]/.test(nucleo),
+     "2. e o aplicador remoto de prioridade a pede");
+  /* MENOR REPERCUSSAO CORRETA: renderSemana NAO entra. A auditoria dizia que a
+     revisao morava nele; nao mora — a linha estava no setView. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  /* O CORPO VAI ATE O PRIMEIRO `}` NA COLUNA 0, e nao ate o proximo `function`:
+     cortar no `function` seguinte atravessa para dentro do setView e captura
+     106 linhas em vez de 90 — foi o que fez esta assercao falhar por engano na
+     primeira escrita. */
+  const corpoDe = (fonte, nome) => fonte.split("function " + nome + "(")[1].split("\n}")[0];
+  const corpoSemana = corpoDe(render, "renderSemana");
+  ok(!/getPrio|getMetas|getEventos|renderRevisao/.test(corpoSemana),
+     "5. renderSemana nao depende de prioridade, meta nem evento — e por isso NAO foi acrescentado",
+     corpoSemana.match(/getPrio|getMetas|getEventos|renderRevisao/g));
+  ok(!/renderSemana/.test(corpoDe(nucleo, "aplicarPrioridadeOnline")),
+     "   nenhum render extra foi introduzido");
+
+  /* A view escondida nao e redesenhada; a visivel e. */
+  const vista = A.document.getElementById("view-revisao");
+  vista.hidden = true; vista.innerHTML = "";
+  A.renderVistaRevisao();
+  ok(vista.innerHTML === "", "com a aba escondida, nao redesenha (nada a atualizar)");
+  vista.hidden = false;
+  A.renderVistaRevisao();
+  ok(/Revis/.test(vista.innerHTML), "com a aba na frente, redesenha", vista.innerHTML.slice(0, 40));
+
+  /* O caminho inteiro: chega do Realtime e a vista muda. */
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  const vistaA = A.document.getElementById("view-revisao");
+  vistaA.hidden = false; vistaA.innerHTML = "";
+  B.__prompt = "prioridade vinda do celular";
+  B.addPrioridadeLivre();
+  await B.SYNC.drenarFila();
+  A.SYNC.descarregarRender(true);
+  ok(/prioridade vinda do celular/.test(vistaA.innerHTML),
+     "1+2. alteracao remota com a aba Revisao aberta atualiza a tela",
+     vistaA.innerHTML.slice(0, 80));
+  ok(A.getToques().filter(t => t.tipo === "prioridade").length === 0,
+     "6. e continua sem gerar toque: nenhuma regra de negocio mudou");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");
