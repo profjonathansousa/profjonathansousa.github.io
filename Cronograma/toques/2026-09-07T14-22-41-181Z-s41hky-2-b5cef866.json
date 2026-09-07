@@ -1,0 +1,33 @@
+{
+ "v": 1,
+ "lote": "2026-09-07T14-22-41-181Z-s41hky",
+ "quando": "2026-09-07T14:22:45.433Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-41-181Z-s41hky",
+   "quando": "2026-09-07T14:22:41.181Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-22-41-432Z-s41hky",
+   "quando": "2026-09-07T14:22:41.432Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  }
+ ]
+}
