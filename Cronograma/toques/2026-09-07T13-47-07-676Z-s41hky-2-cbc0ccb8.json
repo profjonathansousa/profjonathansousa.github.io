@@ -1,0 +1,45 @@
+{
+ "v": 1,
+ "lote": "2026-09-07T13-47-07-676Z-s41hky",
+ "quando": "2026-09-07T13:47:13.612Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-07T13-47-07-676Z-s41hky",
+   "quando": "2026-09-07T13:47:07.676Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1788788827676",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a00",
+    "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "feito_em": "",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T13-47-09-608Z-s41hky",
+   "quando": "2026-09-07T13:47:09.608Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1788788829608",
+    "tipo": "trilho",
+    "painel": "pipeline",
+    "projId": "a02",
+    "t": "Set · A categoria de \"religião\" e a primeira modernidade",
+    "feito_em": "",
+    "del": false
+   }
+  }
+ ]
+}
