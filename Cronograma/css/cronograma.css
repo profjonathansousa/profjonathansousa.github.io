@@ -273,6 +273,13 @@
     padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;
     background:var(--paper-2);color:var(--ink);}
   .sync .s-linha{margin-top:8px;text-align:right;}
+  /* Fase 9B: o estado online e um bloco a parte dentro de Sincronizacao, e a
+     linha que o separa e o unico enfeite — sao dois caminhos que convivem ate a
+     Fase 9G, e a tela nao pode dar a entender que um substitui o outro.
+     Nenhuma cor nova, nenhuma fonte nova: as variaveis e as classes ja
+     existentes bastam, como na Fase 2. */
+  .sync .s-online{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+  .sync .s-online input + input{margin-top:6px;}
   .backup-aviso{margin-top:8px;font-size:11px;color:var(--muted);}
   .backup-aviso.velho{color:var(--crimson);}
 

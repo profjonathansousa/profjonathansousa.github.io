@@ -27,7 +27,7 @@ const CAMINHOS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || []
   .map(t => t.match(/src="([^"]+)"/)[1]).map(s => s.split("?")[0]);
 const FONTE = CAMINHOS
   .map(src => fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"))
-  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_LIGADO_KEY, dateKey, monthKey, now};";
+  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_LIGADO_KEY, SYNC_SESSAO_KEY, dateKey, monthKey, now};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -132,10 +132,15 @@ function criarAparelho(nome, srv, opcoes) {
     "cron:aparelho": JSON.stringify(nome),
     "cron:sync-ligado": JSON.stringify(opcoes.ligado !== false)
   }, opcoes.storage || {});
+  /* `length` e `key(i)` NAO sao enfeite: o coletarDados() do backup varre o
+     armazenamento por indice, e sem eles ele percorreria zero chaves — o teste
+     do backup passaria por vacuidade, provando nada. */
   const localStorage = {
     getItem: (k) => (k in armazem ? armazem[k] : null),
     setItem: (k, v) => { armazem[k] = String(v); },
     removeItem: (k) => { delete armazem[k]; },
+    key: (i) => Object.keys(armazem)[i] ?? null,
+    get length() { return Object.keys(armazem).length; },
     clear: () => { for (const k of Object.keys(armazem)) delete armazem[k]; }
   };
   const noFalso = () => ({
@@ -778,6 +783,73 @@ console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ==="
   /* O mesmo instante nos dois caminhos. */
   ok(/var iso = enfileirarToque\("prioridade", d\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
      "e os dois caminhos carregam o MESMO instante da decisao");
+}
+
+console.log("\n=== 24. A tela do estado online (9B) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv, {ligado: false});
+
+  ok(typeof A.entrarSincronia === "function", "entrarSincronia existe");
+  ok(typeof A.sairSincronia === "function", "sairSincronia existe");
+  ok(typeof A.renderSincroniaOnline === "function", "renderSincroniaOnline existe");
+
+  /* A camada tinha SYNC.entrar() desde a 9A e NADA a chamava: estava no ar e
+     era inalcancavel de dentro do aplicativo. Num PWA de iPhone nao ha console. */
+  const html = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8");
+  ok(/id="sync-email"/.test(html) && /id="sync-senha"/.test(html),
+     "e a tela tem os campos de e-mail e senha");
+  ok(/onclick="entrarSincronia\(\)"/.test(html) && /onclick="sairSincronia\(\)"/.test(html),
+     "com os dois botoes ligados aos handlers");
+  ok(/type="password"[^>]*id="sync-senha"/.test(html), "a senha e campo de senha");
+  ok(/id="sync-token"/.test(html) && /onclick="salvarToken\(\)"/.test(html),
+     "e o bloco do token do GitHub continua inteiro — os dois convivem");
+
+  /* A frase muda com a situacao, e a diferenca entre "nao entrei" e "entrei com
+     a conta errada" e o caso que a allowlist cron_dono cria. */
+  A.renderSincroniaOnline();
+  const alvo = A.document.getElementById("sync-online");
+  ok(/desligada/i.test(alvo.textContent), "desligada: a tela diz isso", alvo.textContent);
+  A.SYNC_SITUACAO = "sem-dono";
+  A.renderSincroniaOnline();
+  ok(/não é dona/i.test(alvo.textContent),
+     "conta sem Cronograma: a tela distingue de 'nao entrei'", alvo.textContent);
+  A.SYNC_SITUACAO = "pronto";
+  A.renderSincroniaOnline();
+  ok(/segundos/i.test(alvo.textContent), "ligada: diz o que passa a acontecer", alvo.textContent);
+  A.SYNC_SITUACAO = "offline";
+  A.renderSincroniaOnline();
+  ok(/nada se perde/i.test(alvo.textContent),
+     "offline: diz que nada se perde", alvo.textContent);
+}
+
+console.log("\n=== 25. A sessao NAO entra no backup exportado (9B) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  /* O coletarDados() varre TODA chave que comece com "cron:", excluindo so o
+     que casa com /token/i. Uma sessao guardada em "cron:sync-sessao" — como
+     estava ate aqui — iria para o .json que se baixa e as vezes se manda por
+     e-mail, com JWT e refresh token dentro. */
+  ok(A.SYNC_SESSAO_KEY === "sync:sessao",
+     "a chave da sessao mora fora do prefixo cron:", A.SYNC_SESSAO_KEY);
+  ok(A.SYNC_SESSAO_KEY.indexOf("cron:") !== 0, "e por isso o backup nao a alcanca");
+
+  A.__armazem[A.SYNC_SESSAO_KEY] = JSON.stringify({access_token: "SEGREDO", refresh_token: "SEGREDO"});
+  A.__armazem["sync:token"] = "github_pat_SEGREDO";
+  A.SYNC.salvarAlteracao("prioridade", "2026-W37/p9", {t: "uma qualquer"});
+  const backup = JSON.stringify(A.coletarDados());
+  ok(backup.indexOf("SEGREDO") < 0, "nenhum segredo no backup exportado");
+  ok(backup.indexOf("cron:sync-fila") > -1,
+     "mas a fila vai — ela nao tem segredo e o backup deve preserva-la");
+  ok(Object.keys(A.coletarDados()).length > 3,
+     "e o backup nao esta vazio — a varredura de fato aconteceu",
+     Object.keys(A.coletarDados()).length);
+
+  const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "15-sync.js"), "utf8");
+  ok(/storageKey:SYNC_SESSAO_KEY/.test(fonte),
+     "e o cliente do Supabase usa essa chave, nao uma literal solta");
+  ok(!/storageKey:\s*"cron:/.test(fonte), "nenhuma sessao guardada sob cron:");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

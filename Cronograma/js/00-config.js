@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-06-sync9a";
+const APP_VERSION = "2026-09-07-entrar";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -780,3 +780,7 @@ const SYNC_FILA_KEY   = "cron:sync-fila";
 const SYNC_CACHE_KEY  = "cron:sync-cache";
 const SYNC_MARCA_KEY  = "cron:sync-marca";
 const SYNC_LIGADO_KEY = "cron:sync-ligado";
+/* FORA DO PREFIXO cron:, de proposito — ver o comentario no 15-sync.js. O
+   backup exportado varre tudo que comeca com "cron:", e a sessao nao pode ir
+   junto. Mesma razao e mesmo lugar do TOKEN_KEY. */
+const SYNC_SESSAO_KEY = "sync:sessao";

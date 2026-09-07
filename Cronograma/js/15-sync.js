@@ -524,8 +524,16 @@ SYNC.conectar = function(){
       SYNC_ULTIMO_ERRO = "SDK indisponível";
       return null;
     }
+    /* A CHAVE DA SESSAO MORA FORA DO PREFIXO cron:, e isso e seguranca, nao
+       estilo. O coletarDados() varre TODA chave que comece com "cron:" para
+       dentro do backup exportado, excluindo so o que casa com /token/i. Uma
+       sessao guardada em "cron:sync-sessao" — como esta ate a Fase 9B — seria
+       varrida junto: o JWT e o refresh token iriam para um arquivo .json que
+       se baixa, se guarda e as vezes se manda por e-mail.
+       E exatamente a razao pela qual o TOKEN_KEY do GitHub e "sync:token" e
+       nao "cron:token". A sessao segue a mesma regra. */
     SYNC_CLI = sdk.createClient(SINCRONIA.URL, SINCRONIA.CHAVE, {
-      auth: {persistSession:true, autoRefreshToken:true, storageKey:"cron:sync-sessao"}
+      auth: {persistSession:true, autoRefreshToken:true, storageKey:SYNC_SESSAO_KEY}
     });
     return SYNC_CLI;
   });

@@ -154,4 +154,6 @@ try{
    pode conhecer dominio nenhum — quem conhece os dois lados e o bootstrap. */
 try{ SYNC.assinarDominio("prioridade", aplicarPrioridadeOnline); }
 catch(e){ console.error("sincronia: dominio prioridade:", e); }
-try{ SYNC.iniciar(); }catch(e){ console.error("sincronia online:", e); }
+try{ renderSincroniaOnline(); }catch(e){}
+try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
+catch(e){ console.error("sincronia online:", e); }

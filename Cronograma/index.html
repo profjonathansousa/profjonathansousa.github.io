@@ -12,7 +12,7 @@
      sem estar instalado nao existe Web Push no iOS. -->
 <link rel="manifest" href="manifest.webmanifest">
 <title>Cronograma</title>
-<link rel="stylesheet" href="css/cronograma.css?v=2026-09-06-sync9a">
+<link rel="stylesheet" href="css/cronograma.css?v=2026-09-07-entrar">
 </head>
 <body>
 <div id="ptr">Puxe para atualizar</div>
@@ -64,6 +64,28 @@
           <button onclick="removerToken()">Remover</button>
         </div>
         <span class="backup-aviso" id="sync-estado"></span><br>
+        <!-- Fase 9B: o estado compartilhado online. Bloco proprio, abaixo do
+             token, porque sao dois caminhos que convivem ate a Fase 9G: o token
+             manda os toques para o GitHub; a conta abaixo liga a sincronia
+             imediata. Desligar um nao desliga o outro. -->
+        <div class="s-online">
+          <p class="s-nota"><b>Estado online.</b> Com a conta ligada, uma
+            prioridade criada, marcada ou apagada num aparelho aparece nos outros
+            em segundos, sem recarregar. Sem ela, o Cronograma funciona
+            exatamente como sempre funcionou.</p>
+          <p class="s-nota">A conta é a mesma do Contas de Casa. Os dados não se
+            misturam: cada sistema tem as suas tabelas, e o Cronograma só é
+            visível para a conta que é dona dele.</p>
+          <input type="email" id="sync-email" placeholder="E-mail"
+                 autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <input type="password" id="sync-senha" placeholder="Senha"
+                 autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <div class="s-linha">
+            <button onclick="entrarSincronia()">Entrar</button>
+            <button onclick="sairSincronia()">Sair</button>
+          </div>
+          <span class="backup-aviso" id="sync-online"></span>
+        </div><br>
         <span class="backup-aviso" id="toques-aviso"></span>
         <div class="s-linha"><button onclick="enviarToques()">Enviar agora</button></div>
         <p class="s-nota">As metas e as datas importantes que j\u00e1 estavam neste
@@ -106,11 +128,11 @@
      nucleo, depois regras, depois desenho, e o boot por ultimo. Scripts
      classicos, nao modulos: o escopo global compartilhado e o que mantem a
      superficie publica intacta. -->
-<script src="js/00-config.js?v=2026-09-06-sync9a"></script>
-<script src="js/10-nucleo.js?v=2026-09-06-sync9a"></script>
-<script src="js/15-sync.js?v=2026-09-06-sync9a"></script>
-<script src="js/20-regras.js?v=2026-09-06-sync9a"></script>
-<script src="js/30-render.js?v=2026-09-06-sync9a"></script>
-<script src="js/40-app.js?v=2026-09-06-sync9a"></script>
+<script src="js/00-config.js?v=2026-09-07-entrar"></script>
+<script src="js/10-nucleo.js?v=2026-09-07-entrar"></script>
+<script src="js/15-sync.js?v=2026-09-07-entrar"></script>
+<script src="js/20-regras.js?v=2026-09-07-entrar"></script>
+<script src="js/30-render.js?v=2026-09-07-entrar"></script>
+<script src="js/40-app.js?v=2026-09-07-entrar"></script>
 </body>
 </html>

@@ -1168,6 +1168,71 @@ function renderSyncEstado(){
   el.className = "backup-aviso";
 }
 
+/* ============ A TELA DO ESTADO ONLINE — Fase 9B ============
+   O 15-sync.js tinha SYNC.entrar() desde a Fase 9A e nada o chamava: a camada
+   estava no ar e era inalcancavel de dentro do aplicativo. Num PWA de iPhone
+   nao ha console para digitar, entao "existe a funcao" nao e o mesmo que
+   "da para ligar".
+
+   A FRASE DIZ O QUE ESTA ACONTECENDO, e nao um rotulo. Cada situacao tem uma
+   consequencia diferente para quem le, e a diferenca entre "nao entrei" e
+   "entrei com a conta errada" e exatamente o caso que a allowlist cron_dono
+   cria — sem a frase, os dois pareceriam a mesma coisa na tela. */
+function renderSincroniaOnline(){
+  var el = document.getElementById("sync-online"); if(!el) return;
+  var s;
+  try{ s = SYNC.situacao(); }catch(e){ el.textContent = ""; return; }
+  var fila = s.fila ? " " + s.fila + " altera\u00e7\u00e3o(\u00f5es) esperando envio." : "";
+  var frases = {
+    "desligado": ["Sincronia online desligada. As prioridades continuam viajando pelos toques.", "velho"],
+    "conectando": ["Conectando\u2026", ""],
+    "pronto":     ["Ligada. As prioridades chegam aos outros aparelhos em segundos." + fila, ""],
+    "offline":    ["Sem conex\u00e3o com o estado online." + fila +
+                   " Nada se perde: sobe quando a rede voltar.", "velho"],
+    "sem-dono":   ["Esta conta n\u00e3o \u00e9 dona deste Cronograma. Entre com a outra.", "velho"],
+    "erro":       ["N\u00e3o foi poss\u00edvel falar com o estado online." + fila, "velho"]
+  };
+  var f = frases[s.situacao] || frases["desligado"];
+  el.textContent = f[0];
+  el.className = "backup-aviso" + (f[1] ? " " + f[1] : "");
+}
+
+/* A SENHA NAO FICA NO CAMPO depois de entrar, e nem em caso de erro: o campo e
+   limpo nos dois caminhos. Um PWA de iPhone fica aberto por dias. */
+function entrarSincronia(){
+  var e = document.getElementById("sync-email");
+  var p = document.getElementById("sync-senha");
+  var email = (e && e.value || "").trim(), senha = (p && p.value) || "";
+  if(!email || !senha){ alert("Preencha o e-mail e a senha."); return; }
+  var el = document.getElementById("sync-online");
+  if(el){ el.textContent = "Entrando\u2026"; el.className = "backup-aviso"; }
+  SYNC.entrar(email, senha).then(function(r){
+    if(p) p.value = "";
+    if(!r.ok){
+      if(el){ el.textContent = "N\u00e3o entrou: " + (r.erro || "conta ou senha recusada.");
+              el.className = "backup-aviso velho"; }
+      return;
+    }
+    if(e) e.value = "";
+    return SYNC.iniciar().then(function(){ renderSincroniaOnline(); renderHoje(); });
+  }).catch(function(err){
+    if(p) p.value = "";
+    if(el){ el.textContent = "N\u00e3o entrou: " + String(err && err.message || err);
+            el.className = "backup-aviso velho"; }
+  });
+}
+
+/* SAIR NAO APAGA A FILA, e a diferenca importa: o que voce decidiu continua
+   guardado e sobe quando entrar de novo. Sair e parar de sincronizar, nao
+   desistir do que foi decidido. */
+function sairSincronia(){
+  var fila = 0;
+  try{ fila = SYNC.situacao().fila; }catch(e){}
+  var aviso = fila ? "\n\nH\u00e1 " + fila + " altera\u00e7\u00e3o(\u00f5es) ainda n\u00e3o enviada(s). Elas ficam guardadas e sobem quando voc\u00ea entrar de novo." : "";
+  if(!confirm("Desligar a sincronia online neste aparelho?" + aviso)) return;
+  SYNC.sair().then(function(){ renderSincroniaOnline(); });
+}
+
 /* O toque sobe para repositório público. O motivo é texto livre e não sobe;
    o toque leva apenas a marca de que existe um, para o estado.json saber que
    há uma razão registrada no aparelho. */

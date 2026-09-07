@@ -1097,10 +1097,44 @@ chave publishable. Não havia vazamento — sem sessão ela devolve sempre `fals
 mas a intenção declarada era negar. Corrigido com `revoke ... from public`. O
 `cron_podar()` já revogava de `public` e por isso passou limpo.
 
+### Como ligar, e o que a tela diz
+
+Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
+e-mail, senha, *Entrar* e *Sair*. É a conta do Contas de Casa — o projeto
+Supabase é o mesmo — mas os dados não se misturam: o Cronograma só é visível
+para a conta que está na `cron_dono`.
+
+Até aqui `SYNC.entrar()` existia desde a 9A e **nada o chamava**: a camada estava
+no ar e era inalcançável de dentro do aplicativo. Num PWA de iPhone não há
+console, então "existe a função" não é o mesmo que "dá para ligar".
+
+A frase abaixo dos botões diz o que está acontecendo, e não um rótulo:
+
+| Situação | O que a tela diz |
+|---|---|
+| desligada | *as prioridades continuam viajando pelos toques* |
+| ligada | *chegam aos outros aparelhos em segundos* |
+| offline | *nada se perde: sobe quando a rede voltar*, com a contagem da fila |
+| conta errada | *esta conta não é dona deste Cronograma* |
+
+A última linha existe por causa da allowlist: sem ela, "não entrei" e "entrei com
+a conta da casa" pareceriam a mesma coisa na tela.
+
+**Sair não apaga a fila.** O que foi decidido continua guardado e sobe quando
+você entrar de novo — sair é parar de sincronizar, não desistir do que foi
+decidido. O aviso de confirmação diz quantas alterações estão esperando.
+
+> **A sessão mora em `sync:sessao`, fora do prefixo `cron:`**, e isso é
+> segurança, não estilo. O `coletarDados()` varre toda chave que comece com
+> `cron:` para dentro do backup exportado, excluindo só o que casa com
+> `/token/i`. Uma sessão guardada sob `cron:` iria para o `.json` que se baixa e
+> às vezes se manda por e-mail — com JWT e *refresh token* dentro. É a mesma
+> razão pela qual o token do GitHub é `sync:token` e não `cron:token`.
+
 ### Estado atual
 
-**9A concluída: infraestrutura no ar, desligada por padrão.**
-**9B concluída: Prioridades é o primeiro domínio conectado.** Falta aplicar o `sql/cron_estado.sql` ao projeto e popular a
+**9A concluída: infraestrutura no ar.**
+**9B concluída: Prioridades é o primeiro domínio conectado, e há tela para ligá-lo.** Falta aplicar o `sql/cron_estado.sql` ao projeto e popular a
 `cron_dono` — as duas coisas são operações de banco, feitas uma vez:
 
 ```sql
