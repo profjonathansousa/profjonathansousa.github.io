@@ -1,0 +1,69 @@
+{
+ "v": 1,
+ "lote": "2026-09-07T14-24-17-471Z-s41hky",
+ "quando": "2026-09-07T14:24:22.782Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-07T14-24-17-471Z-s41hky",
+   "quando": "2026-09-07T14:24:17.471Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-07",
+    "pid": "leituras",
+    "projId": "l1",
+    "subId": "l1-1",
+    "projT": "A · Clássicos fundadores",
+    "subT": "Durkheim · As formas elementares da vida religiosa",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-24-18-309Z-s41hky",
+   "quando": "2026-09-07T14:24:18.309Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-07",
+    "pid": "leituras",
+    "projId": "l1",
+    "subId": "l1-1",
+    "projT": "A · Clássicos fundadores",
+    "subT": "Durkheim · As formas elementares da vida religiosa",
+    "de": 1,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-07T14-24-18-779Z-s41hky",
+   "quando": "2026-09-07T14:24:18.779Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-07",
+    "pid": "leituras",
+    "projId": "l1",
+    "subId": "l1-1",
+    "projT": "A · Clássicos fundadores",
+    "subT": "Durkheim · As formas elementares da vida religiosa",
+    "de": 2,
+    "para": 0,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  }
+ ]
+}
