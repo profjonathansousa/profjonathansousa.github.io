@@ -1174,6 +1174,78 @@ substitui `new Date()` **e** `Date.now()` juntos. A seção 27 é arquitetural e
 quebra se um segundo escritor voltar, ou se metas/eventos passarem a escrever
 online antes da hora.
 
+### 9C-2 — Metas online
+
+O **segundo domínio** na camada. Eventos continuam legados.
+
+**A chave é `AAAA-MM/mid`**, e a unidade de sincronização é a meta, nunca o mês.
+Duas metas do mesmo mês, alteradas em dois aparelhos, não se atropelam: o
+servidor guarda duas linhas, não um retrato do mês.
+
+O mês entra na **chave** e não no valor por causa do `trazerMeta`: ele *move*
+uma meta de um mês para outro, e com o mês na chave mover é **criar + lápide** —
+duas linhas, semântica explícita. Se o mês fosse um campo do valor, mover seria
+um update ambíguo.
+
+| Verbo | O que viaja |
+|---|---|
+| criar / editar | `{t, done, de}` |
+| concluir / desconcluir | `done` — **`feito_em` não entrou nesta fase** |
+| excluir | `del: true` — lápide, nunca ausência de linha |
+| trazer | criação no destino **e** lápide na origem, nessa ordem |
+
+`em` **não entra no valor**: é coluna do `cron_estado`, e é por ela que o gatilho
+decide. Duplicá-lo no `jsonb` criaria duas fontes para o mesmo fato.
+
+#### Um merge, duas descidas
+
+`mesclarMeta(lista, mid, r)` foi extraído de dentro do `buscarEstado()` e é
+chamado por `aplicarMetasDoEstado` (legado) e `aplicarMetaOnline` (9C-2) — o
+mesmo movimento que a 9B fez com as prioridades.
+
+A regra foi copiada **letra por letra**, e a fidelidade importa mais do que a
+elegância: a meta *não* substitui o item inteiro como a prioridade faz. O `t` só
+é sobrescrito quando vem preenchido, o `de` só é escrito quando vem (nunca
+apagado), e o `done` é sempre sobrescrito porque `false` é um valor legítimo.
+Mudar isso seria mudar regra de negócio, e a 9C-2 não muda nenhuma.
+
+#### Os renders, mínimos
+
+| | |
+|---|---|
+| `renderMetas` | sempre — repinta o próprio `#metas-wrap` no lugar |
+| `renderVistaRevisao` | sempre — a revisão **lê `getMetas`** (conta as metas concluídas na semana), e a função devolve na primeira linha quando a aba não está visível |
+| `renderHoje` | **só no domingo** — o único dia em que a revisão é desenhada dentro do Hoje. Nos outros dias o Hoje não lê meta nenhuma: o aviso da esteira e as pendências moram dentro do `renderMetas` |
+| `renderSemana` | **nunca** — verificado que não lê `getMetas` |
+
+#### Offline, reconexão e `trazerMeta`
+
+Tudo pela 9A. O cenário testado é o cruzado: o Mac sem rede altera uma meta, o
+celular altera outra, o Mac reconecta — o delta traz a do celular **antes** de a
+fila subir, e nada se perde.
+
+`trazerMeta` enfileira **duas** operações. Sem rede, as duas ficam e sobem
+juntas. Se só a primeira subisse, o outro aparelho veria a meta **duas vezes** —
+visível e auto-corrigível na drenagem seguinte — em vez de nenhuma vez. A ordem
+criar-antes-de-apagar existe para isso.
+
+`trazerTodas` traz **todas** as pendências, inclusive a semente do `ROTEIRO`
+daquele mês: `metaEhSementeIntocada` vale só para o acervo, não para
+`pendencias()`. Cada meta trazida recebe o **seu** instante — a correção da
+9C-0 continua valendo aqui, que era o pior caso dela.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**. O domínio `meta`, a chave `AAAA-MM/id`
+e a coluna `del` já estavam desde a 9A. Nada foi aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 29 a 36 — os 20 casos, com dois aparelhos contra o mesmo
+servidor de mentira. A seção 36 é arquitetural: quebra se um segundo escritor de
+meta aparecer, se surgir uma segunda `mesclarMeta`, ou se `renderSemana` for
+acrescentado sem dependência.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1432,7 +1504,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9A — Estado online: esquema e infraestrutura | concluída (desligada por padrão) |
 | 9B — Prioridades online (primeiro domínio na camada) | concluída |
 | 9C-0/9C-1 — relógio, escritor único e repercussão da Revisão | concluídas |
-| 9C-2 em diante — Metas e Eventos online, demais domínios | não iniciadas |
+| 9C-2 — Metas online (segundo domínio na camada) | concluída |
+| 9C-3 em diante — Eventos online, demais domínios | não iniciadas |
 
 ### Previsto e ainda não implementado
 

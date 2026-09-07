@@ -347,6 +347,99 @@ function aplicarPrioridadeOnline(linha){
   return ["renderHoje", "renderVistaRevisao"];
 }
 
+/* ============ O MERGE DE UMA META — UMA IMPLEMENTACAO SO (Fase 9C-2) ============
+   Mesmo movimento que a 9B fez com o mesclarPrioridade, e pela mesma razao: a
+   meta passou a ter DUAS descidas (o estado.json e o Realtime), e duas descidas
+   para o mesmo dado e o defeito que este repositorio ja pagou uma vez.
+
+   A REGRA E COPIADA LETRA POR LETRA do que estava dentro do buscarEstado, e a
+   fidelidade importa mais do que a elegancia. Em particular, a meta NAO
+   substitui o item inteiro como a prioridade faz:
+
+     · `t` so e sobrescrito quando vem preenchido  (`r.t || lista[j].t`);
+     · `de` so e escrito quando vem                (`if(r.de)`), nunca apagado;
+     · `done` e sempre sobrescrito, porque false e um valor legitimo.
+
+   Mudar isso seria mudar regra de negocio, e a 9C-2 nao muda nenhuma.
+
+   MUTA A LISTA E DEVOLVE SE MUDOU. Quem chama grava, porque quem chama sabe se
+   esta gravando um mes ou varios. */
+function mesclarMeta(lista, mid, r){
+  if(!r || !r.quando) return false;
+  var j = -1;
+  for(var n=0;n<lista.length;n++){ if(lista[n].id === mid){ j = n; break; } }
+  /* O relogio, item a item. Vale para as duas descidas — e e o que impede que
+     uma linha atrasada de um caminho desfaca o que o outro acabou de aplicar,
+     o caso real enquanto os dois convivem, ate a Fase 9G. */
+  if(j > -1 && (lista[j].em || "") >= r.quando) return false;
+  if(r.del){ if(j > -1){ lista.splice(j,1); return true; } return false; }
+  if(j < 0){ lista.push({id:mid, t:r.t||"", done:!!r.done, de:r.de||undefined, em:r.quando}); }
+  else { lista[j].t = r.t || lista[j].t; lista[j].done = !!r.done;
+         if(r.de) lista[j].de = r.de; lista[j].em = r.quando; }
+  return true;
+}
+
+/* A descida pelo estado.json — o caminho legado, agora com nome proprio. */
+function aplicarMetasDoEstado(est){
+  if(!est || !est.metas) return false;
+  var porMes = {};
+  Object.keys(est.metas).forEach(function(k){
+    var corte = k.indexOf("/");
+    if(corte < 0) return;
+    (porMes[k.slice(0,corte)] = porMes[k.slice(0,corte)] || [])
+      .push({mid:k.slice(corte+1), r:est.metas[k]});
+  });
+  var mudou = false;
+  Object.keys(porMes).forEach(function(mes){
+    var lista = getMetas(mes), mudouMes = false;
+    porMes[mes].forEach(function(o){
+      if(mesclarMeta(lista, o.mid, o.r)) mudouMes = true;
+    });
+    if(mudouMes){ setMetas(lista, mes); mudou = true; }
+  });
+  return mudou;
+}
+
+/* ============ A DESCIDA ONLINE DAS METAS — Fase 9C-2 ============
+   O aplicador que o SYNC.assinarDominio("meta", ...) registra. Molde do
+   aplicarPrioridadeOnline, com as mesmas quatro omissoes deliberadas: nao
+   decide sozinho quem vence, nao enfileira toque, nao reescreve online e nao
+   substitui o mes.
+
+   A CHAVE CARREGA O MES porque a identidade logica da meta e `mes + mid`, e
+   porque `trazerMeta` MOVE uma meta de um mes para outro — com o mes na chave,
+   mover e criar mais lapide, duas linhas, semantica explicita. Se o mes fosse
+   um campo do valor, mover seria um update ambiguo.
+
+   OS RENDERS SAO OS MINIMOS QUE A DEPENDENCIA JUSTIFICA:
+     · renderMetas sempre — ele repinta o proprio #metas-wrap no lugar;
+     · renderVistaRevisao sempre — a revisao LE getMetas (revisaoDaSemana conta
+       as metas concluidas na semana), e devolve na primeira linha quando a aba
+       nao esta visivel, entao no caso comum nao custa nada;
+     · renderHoje SO NO DOMINGO, que e o unico dia em que a revisao e desenhada
+       dentro da aba Hoje. Nos outros dias o Hoje nao le meta nenhuma — o aviso
+       da esteira e as pendencias moram dentro do renderMetas.
+   NAO chama renderSemana: verificado que ele nao le getMetas. */
+function aplicarMetaOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var corte = String(linha.chave).indexOf("/");
+  if(corte < 0) return [];
+  var mes = String(linha.chave).slice(0, corte);
+  var mid = String(linha.chave).slice(corte + 1);
+  if(!mes || !mid) return [];
+  var v = linha.valor || {};
+  var lista = getMetas(mes);
+  var mudou = mesclarMeta(lista, mid, {
+    quando: linha.em, del: !!linha.del,
+    t: v.t, done: v.done, de: v.de
+  });
+  if(!mudou) return [];
+  setMetas(lista, mes);
+  var renders = ["renderMetas", "renderVistaRevisao"];
+  if(todayIdx === 0) renders.push("renderHoje");
+  return renders;
+}
+
 /* ============== MOTOR DE PRIORIDADES — Fase 3 ==============
    CLASSIFICA, NAO PONTUA. Nenhuma soma, nenhum peso somado, nenhum corte
    numerico — a mesma decisao que o coletor de vagas tomou na v2, e pela mesma
@@ -954,37 +1047,8 @@ function buscarEstado(){
           }catch(e){}
         }
       }
-      /* ---- Metas do mes ----
-         Chave e "AAAA-MM/id". Meta desconhecida entra; meta com lapide sai;
-         meta conhecida so muda se o que vem de fora for mais novo do que a
-         ultima mudanca feita aqui. */
-      if(est.metas){
-        var porMesR = {};
-        Object.keys(est.metas).forEach(function(k){
-          var corte = k.indexOf("/");
-          if(corte < 0) return;
-          var mes = k.slice(0, corte);
-          (porMesR[mes] = porMesR[mes] || []).push({mid:k.slice(corte+1), r:est.metas[k]});
-        });
-        var mudouAlgumaMeta = false;
-        Object.keys(porMesR).forEach(function(mes){
-          var lista = getMetas(mes), mudouMes = false;
-          porMesR[mes].forEach(function(o){
-            var r = o.r;
-            if(!r || !r.quando) return;
-            var j = -1;
-            for(var n=0;n<lista.length;n++){ if(lista[n].id === o.mid){ j = n; break; } }
-            if(j > -1 && (lista[j].em || "") >= r.quando) return;
-            if(r.del){ if(j > -1){ lista.splice(j,1); mudouMes = true; } return; }
-            if(j < 0){ lista.push({id:o.mid, t:r.t||"", done:!!r.done, de:r.de||undefined, em:r.quando}); }
-            else { lista[j].t = r.t || lista[j].t; lista[j].done = !!r.done;
-                   if(r.de) lista[j].de = r.de; lista[j].em = r.quando; }
-            mudouMes = true;
-          });
-          if(mudouMes){ setMetas(lista, mes); mudouAlgumaMeta = true; }
-        });
-        if(mudouAlgumaMeta){ try{ renderMetas(); }catch(e){} }
-      }
+      /* ---- Metas do mes (agora no aplicarMetasDoEstado, Fase 9C-2) ---- */
+      if(aplicarMetasDoEstado(est)){ try{ renderMetas(); }catch(e){} }
       /* ---- Datas importantes ----
          Chave e o id do evento. SO A DATA ATRAVESSA: o titulo fica no aparelho
          que o escreveu, porque o repositorio e publico e o historico nunca e

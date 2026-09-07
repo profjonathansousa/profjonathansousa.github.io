@@ -703,8 +703,33 @@ function trocarMes(k){mesAtivo=k;renderMetas();}
    devolve o iso desde o primeiro dia. */
 function tocarMeta(mes, m, apagada, quandoISO){
   if(!m || !m.id) return null;
-  return enfileirarToque("meta", {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
-                                  de:m.de||null, del:!!apagada}, quandoISO);
+  var d = {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
+           de:m.de||null, del:!!apagada};
+  var iso = enfileirarToque("meta", d, quandoISO);        /* legado: intacto */
+  /* ============ Fase 9C-2: o mesmo ato, no estado online ============
+     O MESMO INSTANTE NOS DOIS CAMINHOS. E o `iso` que o toque acabou de usar,
+     e nao um segundo relogio — foi para isto que a 9C-0 fez esta funcao
+     devolve-lo. Sem essa igualdade, o mesmo ato poderia vencer por um caminho
+     e perder pelo outro enquanto os dois convivem.
+
+     O PAYLOAD SAI DO MESMO `d` que o toque leva, campo por campo. Montar um
+     segundo objeto aqui repetiria o defeito do `dadosDoEvento` de 29/08: no dia
+     em que um campo novo comecasse a viajar, um dos dois montadores ficaria
+     para tras.
+
+     `em` NAO ENTRA NO VALOR. Ele e coluna do cron_estado, e e por ela que o
+     gatilho do relogio decide; duplica-lo dentro do jsonb criaria duas fontes
+     para o mesmo fato. Mesma escolha da 9B.
+
+     SO ESCREVE COM A SINCRONIA LIGADA: sem a guarda, um aparelho que nunca
+     entrou acumularia fila para sempre, sem nada que a drenasse. */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("meta", d.mes + "/" + d.mid,
+        {t:d.t, done:d.done, de:d.de}, {em: iso, del: d.del});
+    }
+  }catch(e){ try{ console.error("sync: meta nao subiu:", e); }catch(e2){} }
+  return iso;
 }
 /* Grava duas vezes, como o togglePrioridadeFeita: o instante so existe depois
    de enfileirar, e a primeira gravacao garante que a mudanca sobreviva mesmo se

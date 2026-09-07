@@ -950,15 +950,24 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
      "    e o botao do acervo publica evento PELO FUNIL");
   ok(/var iso = tocarMeta\(c\.mes, c\.m, false, ACERVO_EM\)/.test(fonte),
      "    e meta tambem");
-  ok(/function tocarMeta\(mes, m, apagada, quandoISO\)[\s\S]{0,300}return enfileirarToque/.test(fonte),
-     "    o funil da meta aceita quandoISO e DEVOLVE o instante");
+  /* O corpo do tocarMeta cresceu na 9C-2 (ganhou a escrita online), entao a
+     verificacao passou a ser sobre o CONTRATO e nao sobre a proximidade das
+     linhas: aceita quandoISO, repassa-o ao toque, e devolve o iso. */
+  const tocarM = fonte.split("function tocarMeta(")[1].split("\n}")[0];
+  ok(/^mes, m, apagada, quandoISO\)/.test(tocarM), "    o funil da meta aceita quandoISO");
+  ok(/enfileirarToque\("meta", d, quandoISO\)/.test(tocarM), "    e o repassa ao toque");
+  ok(/return iso;/.test(tocarM), "    e DEVOLVE o instante que subiu");
   ok(/function tocarEvento\(ev, apagado, quandoISO\)[\s\S]{0,200}return enfileirarToque/.test(fonte),
      "    o funil do evento tambem");
   /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
+  /* Esta assercao MUDOU na 9C-2, de proposito: metas passaram a escrever
+     online. Eventos, nao — e e essa a metade que continua valendo, e que
+     quebra se alguem conectar Eventos antes da hora. */
   const online = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
-    .map(x => x.match(/"(\w+)"/)[1]);
-  ok(online.length === 1 && online[0] === "prioridade",
-     "12. e SO prioridade escreve online: metas e eventos seguem LEGADOS", online);
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["meta", "prioridade"]),
+     "12. prioridade e meta escrevem online (9B, 9C-2)", online);
+  ok(online.indexOf("evento") < 0, "    e EVENTOS seguem legados nesta fase");
 }
 
 console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
@@ -1008,6 +1017,317 @@ console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
      vistaA.innerHTML.slice(0, 80));
   ok(A.getToques().filter(t => t.tipo === "prioridade").length === 0,
      "6. e continua sem gerar toque: nenhuma regra de negocio mudou");
+}
+
+/* ================= FASE 9C-2 — AS METAS ONLINE ================= */
+const metas    = (ap, mes) => ap.getMetas(mes || ap.monthKey);
+const achaMeta = (ap, id, mes) => metas(ap, mes).filter(x => x.id === id)[0] || null;
+/* addMeta nasce sem texto e NAO emite toque nenhum; o primeiro editMeta e que
+   publica. Este atalho reproduz o gesto real da tela: criar e nomear. */
+function criarMeta(ap, texto) {
+  ap.addMeta();
+  const i = ap.getMetas().length - 1;
+  ap.editMeta(i, texto);
+  return ap.getMetas()[i].id;
+}
+
+console.log("\n=== 29. Criar, editar, concluir, desconcluir, excluir (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const id = criarMeta(A, "Submeter o artigo do patriotismo");
+  await A.SYNC.drenarFila();
+  const noCel = achaMeta(B, id);
+  ok(!!noCel, "1. criar no Mac chega ao celular", metas(B).map(m => m.t));
+  ok(noCel && noCel.t === "Submeter o artigo do patriotismo", "   com o texto certo", noCel && noCel.t);
+  ok(noCel && noCel.em === achaMeta(A, id).em, "   e com o MESMO instante da decisao");
+
+  const i = A.getMetas().findIndex(m => m.id === id);
+  A.editMeta(i, "Submeter o artigo ate sexta");
+  await A.SYNC.drenarFila();
+  ok(achaMeta(B, id).t === "Submeter o artigo ate sexta", "2. editar chega", achaMeta(B, id).t);
+
+  A.toggleMeta(i);
+  await A.SYNC.drenarFila();
+  ok(achaMeta(A, id).done === true, "3. o Mac concluiu");
+  ok(achaMeta(B, id).done === true, "   e o celular recebeu done=true");
+
+  A.toggleMeta(i);
+  await A.SYNC.drenarFila();
+  ok(achaMeta(A, id).done === false, "4. o Mac desconcluiu");
+  ok(achaMeta(B, id).done === false, "   e o celular recebeu done=false");
+
+  A.delMeta(i);
+  await A.SYNC.drenarFila();
+  ok(achaMeta(A, id) === null, "5. o Mac apagou");
+  ok(achaMeta(B, id) === null, "   e sumiu do celular");
+  const linha = srv.linhas.filter(l => l.dominio === "meta" && l.chave.indexOf(id) > 0)[0];
+  ok(!!linha && linha.del === true, "   e a exclusao e LAPIDE, nao ausencia de linha", linha && linha.del);
+  ok(!!linha && linha.chave === A.monthKey + "/" + id,
+     "   a chave e AAAA-MM/mid", linha && linha.chave);
+}
+
+console.log("\n=== 30. Duas metas do mesmo mes nao se atropelam (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  const idA = criarMeta(A, "Meta do Mac");
+  await A.SYNC.drenarFila();
+  const idB = criarMeta(B, "Meta do celular");
+  await B.SYNC.drenarFila();
+
+  ok(idA !== idB, "sao duas metas distintas");
+  ok(!!achaMeta(A, idB) && !!achaMeta(B, idA),
+     "6+7. cada aparelho recebeu a do outro sem perder a sua",
+     {mac: metas(A).filter(m => m.t).map(m => m.t), cel: metas(B).filter(m => m.t).map(m => m.t)});
+
+  const chaves = srv.linhas.filter(l => l.dominio === "meta").map(l => l.chave);
+  ok(chaves.length === 2, "   o servidor tem DUAS linhas, nao um retrato do mes", chaves);
+
+  A.editMeta(A.getMetas().findIndex(m => m.id === idA), "Meta do Mac, revisada");
+  await A.SYNC.drenarFila();
+  ok(achaMeta(B, idA).t === "Meta do Mac, revisada" && achaMeta(B, idB).t === "Meta do celular",
+     "   editar uma nao encosta na outra", metas(B).filter(m => m.t).map(m => m.t));
+}
+
+console.log("\n=== 31. A mesma meta, dois aparelhos: vence o relogio (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  const id = criarMeta(A, "disputada");
+  await A.SYNC.drenarFila();
+  await B.SYNC.reconectar(true);
+  ok(!!achaMeta(B, id), "os dois conhecem a meta");
+
+  B.editMeta(B.getMetas().findIndex(m => m.id === id), "versao do celular");
+  await B.SYNC.drenarFila();
+  ok(achaMeta(B, id).t === "versao do celular", "8. o celular escreveu por ultimo");
+
+  /* Uma linha ANTIGA nao pode desfazer o que ele acabou de escrever. */
+  const velha = {dono: "dono-1", dominio: "meta", chave: A.monthKey + "/" + id,
+                 valor: {t: "versao antiga do mac", done: false, de: null},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-06-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "9. a linha antiga e recusada", r);
+  ok(achaMeta(B, id).t === "versao do celular", "   e o texto mais novo permanece");
+
+  const lista = B.getMetas(A.monthKey);
+  ok(B.mesclarMeta(lista, id, {quando: "2020-01-01T00:00:00.000Z", t: "velha"}) === false,
+     "   e o mesclarMeta a recusa sozinho — a guarda do caminho legado");
+  ok(B.mesclarMeta(lista, id, {quando: "2099-01-01T00:00:00.000Z", t: "futura"}) === true,
+     "   mas aceita a mais nova");
+}
+
+console.log("\n=== 32. Receber nao gera eco nem toque (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const toquesB = B.getToques().length;
+  const id = criarMeta(A, "vinda do Mac");
+  await A.SYNC.drenarFila();
+
+  ok(!!achaMeta(B, id), "a meta chegou ao celular");
+  ok(B.getToques().length === toquesB, "10. e NAO gerou toque no celular", B.getToques().length);
+  ok(B.SYNC.situacao().fila === 0, "    nem enfileirou envio de volta");
+  ok(srv.escritas === 1, "    o servidor recebeu UMA escrita, nao um laco", srv.escritas);
+  const eco = A.SYNC.aplicarRemoto(srv.linhas[0]);
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "    e o eco proprio e recusado no Mac", eco);
+}
+
+console.log("\n=== 33. Offline, fila e reconexao cruzada (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O MAC NAO ASSINA O CANAL — e o que "offline" quer dizer aqui. Com ele
+     assinado, o Realtime do servidor de mentira entregaria a escrita do celular
+     na hora e o cenario deixaria de existir: nao haveria nada para o delta
+     recuperar, e o teste passaria provando outra coisa. */
+  srv.falhar = true;
+  const idA = criarMeta(A, "escrita do Mac, sem rede");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "11. sem rede, a alteracao fica na fila", A.SYNC.situacao().fila);
+  ok(!!achaMeta(A, idA), "    e existe na tela do Mac (otimista)");
+
+  srv.falhar = false;
+  const idB = criarMeta(B, "escrita do celular, com rede");
+  await B.SYNC.drenarFila();
+  ok(!achaMeta(A, idB), "    o Mac ainda nao sabe da meta do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(!!achaMeta(A, idB), "13. o delta trouxe o que se perdeu na desconexao", metas(A).filter(m=>m.t).map(m=>m.t));
+  ok(A.SYNC.situacao().fila === 0, "12. e so entao a fila subiu");
+  ok(!!achaMeta(B, idA), "    e o celular recebeu a do Mac");
+  ok(srv.linhas.filter(l => l.dominio === "meta").length === 2,
+     "    nenhum estado foi perdido: as duas estao no servidor");
+}
+
+console.log("\n=== 34. trazerMeta e trazerTodas (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv, {storage: {
+    "cron:metas:2026-07": JSON.stringify([
+      {id: "velha1", t: "pendente um",  done: false, em: "2026-07-01T00:00:00.000Z"},
+      {id: "velha2", t: "pendente dois", done: false, em: "2026-07-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  const B = criarAparelho("celular", srv, {storage: {
+    "cron:metas:2026-07": JSON.stringify([
+      {id: "velha1", t: "pendente um",  done: false, em: "2026-07-01T00:00:00.000Z"},
+      {id: "velha2", t: "pendente dois", done: false, em: "2026-07-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  A.trazerMeta(0);
+  await A.SYNC.drenarFila();
+  const linhas = srv.linhas.filter(l => l.dominio === "meta");
+  const criada = linhas.filter(l => !l.del)[0];
+  const lapide = linhas.filter(l => l.del)[0];
+  ok(!!criada && criada.chave.indexOf(A.monthKey + "/") === 0,
+     "14. trazerMeta CRIA no mes de destino", criada && criada.chave);
+  ok(!!lapide && lapide.chave === "2026-07/velha1",
+     "    e deixa LAPIDE no mes de origem", lapide && lapide.chave);
+  ok(B.getMetas("2026-07").filter(m => m.id === "velha1").length === 0,
+     "    o celular perdeu a da origem");
+  ok(B.getMetas(A.monthKey).filter(m => m.de === "2026-07").length === 1,
+     "    e ganhou a do destino", B.getMetas(A.monthKey).map(m => m.t));
+
+  /* 15. Falha ENTRE as duas: a fila para na primeira e nada se perde. */
+  const C = criarAparelho("ipad", srv, {storage: {
+    "cron:metas:2026-08": JSON.stringify([
+      {id: "v9", t: "outra pendente", done: false, em: "2026-08-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  C.trazerMeta(C.pendencias().findIndex(o => o.meta.id === "v9"));
+  ok(C.SYNC.situacao().fila === 2, "15. trazerMeta enfileira DUAS operacoes", C.SYNC.situacao().fila);
+  srv.falhar = true;
+  await C.SYNC.drenarFila();
+  ok(C.SYNC.situacao().fila === 2, "    sem rede, as duas ficam — nada se perde");
+  srv.falhar = false;
+  await C.SYNC.drenarFila();
+  ok(C.SYNC.situacao().fila === 0, "    e sobem juntas quando a rede volta");
+  const daC = srv.linhas.filter(l => l.chave.indexOf("v9") > 0 || l.valor.t === "outra pendente");
+  ok(daC.length === 2 && daC.some(l => l.del) && daC.some(l => !l.del),
+     "    criacao e lapide, na ordem", daC.map(l => ({c: l.chave, del: l.del})));
+
+  /* 16. trazerTodas com varias. */
+  /* MES ANTERIOR AO CORRENTE, e nao o corrente: pendencias() varre k < monthKey.
+     Metas do mes de hoje nao sao pendencias — sao as metas do mes. E o mes tem
+     as suas proprias sementes (ROTEIRO/METAS_DEFAULT), entao a contagem e feita
+     sobre AS TRES, e nao sobre o total de linhas do servidor. */
+  const MESPEND = "2026-08";
+  const D = criarAparelho("outro", srv, {storage: {
+    ["cron:metas:" + MESPEND]: JSON.stringify([
+      {id: "t1", t: "tres",   done: false, em: "2026-08-01T00:00:00.000Z"},
+      {id: "t2", t: "quatro", done: false, em: "2026-08-01T00:00:00.000Z"},
+      {id: "t3", t: "cinco",  done: false, em: "2026-08-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  ok(D.pendencias().filter(o => ["t1","t2","t3"].indexOf(o.meta.id) >= 0).length === 3,
+     "as tres estao pendentes antes de trazer");
+  D.trazerTodas();
+  await D.SYNC.drenarFila();
+  const meus = ["tres", "quatro", "cinco"];
+  const lapides = srv.linhas.filter(l => l.del && l.chave.indexOf(MESPEND + "/t") === 0);
+  const criadas = srv.linhas.filter(l => !l.del && meus.indexOf(l.valor.t) >= 0
+                                      && l.chave.indexOf(D.monthKey + "/") === 0);
+  ok(lapides.length === 3 && criadas.length === 3,
+     "16. trazerTodas com 3 metas produz 3 criacoes + 3 lapides",
+     {lapides: lapides.length, criadas: criadas.length});
+  /* TRAZER TODAS TRAZ TODAS, e a semente do ROTEIRO daquele mes e uma pendencia
+     legitima como qualquer outra — metaEhSementeIntocada so vale para o acervo,
+     nao para pendencias(). Entao a assercao e sobre AS MINHAS tres, e a
+     propriedade do instante e verificada sobre o conjunto inteiro, que e onde
+     ela realmente importa. */
+  const trazidas = D.getMetas(D.monthKey).filter(m => m.de === MESPEND);
+  ok(meus.every(t => trazidas.some(m => m.t === t)),
+     "    as tres foram trazidas", trazidas.map(m => m.t));
+  ok(trazidas.length >= 3, "    junto com as demais pendencias do mes", trazidas.length);
+  const ems = trazidas.map(m => m.em);
+  ok(new Set(ems).size === trazidas.length,
+     "    e CADA UMA com o seu instante, sem repetir (a 9C-0 continua valendo)", ems);
+  ok(D.getMetas(MESPEND).filter(m => ["t1","t2","t3"].indexOf(m.id) >= 0).length === 0,
+     "    e sairam do mes de origem");
+}
+
+console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  /* 17. mes diferente nao mexe no mesAtivo. */
+  const antesMes = A.mesAtivo;
+  A.SYNC.aplicarRemoto({dono: "dono-1", dominio: "meta", chave: "2027-05/futura",
+    valor: {t: "meta de maio de 2027", done: false, de: null}, del: false,
+    em: "2027-01-01T00:00:00.000Z", aparelho: "celular", servidor_em: "2030-03-01T00:00:00.000Z"});
+  ok(A.mesAtivo === antesMes, "17. meta de outro mes nao mexe no mesAtivo", A.mesAtivo);
+  ok(A.getMetas("2027-05").filter(m => m.id === "futura").length === 1,
+     "    mas foi gravada no mes dela", A.getMetas("2027-05").length);
+
+  /* 18+19+20. Acervo, legado e online no mesmo ato. */
+  const B = criarAparelho("celular", srv).__conectar();
+  const antesToques = B.getToques().filter(t => t.tipo === "meta").length;
+  const antesLinhas = srv.linhas.filter(l => l.dominio === "meta").length;
+  const id = criarMeta(B, "uma meta qualquer");
+  await B.SYNC.drenarFila();
+  ok(B.getToques().filter(t => t.tipo === "meta").length === antesToques + 1,
+     "19. o toque legado continua sendo emitido", B.getToques().filter(t => t.tipo === "meta").length);
+  ok(srv.linhas.filter(l => l.dominio === "meta").length === antesLinhas + 1,
+     "20. e o online tambem, no mesmo ato");
+  const toque = B.getToques().filter(t => t.tipo === "meta").pop();
+  const online = srv.linhas.filter(l => l.chave.indexOf(id) > 0)[0];
+  ok(toque.quando === online.em, "    com o MESMO instante nos dois caminhos",
+     {toque: toque.quando, online: online.em});
+  ok(toque.dados.t === online.valor.t && toque.dados.done === online.valor.done,
+     "    e o mesmo payload", {legado: toque.dados, online: online.valor});
+
+  /* Eventos permanecem intocados. */
+  const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const dominiosOnline = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["meta", "prioridade"]),
+     "13. SO meta e prioridade escrevem online — Eventos seguem LEGADOS", dominiosOnline);
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["meta", "prioridade"]),
+     "    e so esses dois tem aplicador registrado", assinados);
+}
+
+console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"meta"/g) || []).length === 1,
+     "18. ha UM unico ponto que escreve meta online");
+  ok(/function tocarMeta[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"meta"/.test(render),
+     "    e ele e o tocarMeta, o mesmo funil do caminho legado");
+  ok((render.match(/enfileirarToque\("meta"/g) || []).length === 1,
+     "    e continua havendo UM enfileirarToque de meta (a 9C-0 nao regrediu)");
+  ok((nucleo.match(/function mesclarMeta/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(/aplicarMetasDoEstado[\s\S]*?mesclarMeta/.test(nucleo), "o caminho legado a usa");
+  ok(/aplicarMetaOnline[\s\S]*?mesclarMeta/.test(nucleo), "e o online tambem");
+  ok(/var iso = tocarMeta\(c\.mes, c\.m, false, ACERVO_EM\)/.test(render),
+     "    e o acervo continua publicando pelo funil (9C-0 intacta)");
+  /* Os renders minimos. */
+  const corpo = nucleo.split("function aplicarMetaOnline(")[1].split("\n}")[0];
+  ok(/renderMetas/.test(corpo) && /renderVistaRevisao/.test(corpo),
+     "os renders da meta sao renderMetas e renderVistaRevisao");
+  ok(!/renderSemana/.test(corpo), "e NAO renderSemana — ele nao le getMetas");
+  ok(/todayIdx === 0/.test(corpo),
+     "renderHoje so no domingo, o unico dia em que a revisao mora dentro dele");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");
