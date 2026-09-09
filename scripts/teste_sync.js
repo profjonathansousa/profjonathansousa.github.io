@@ -2897,4 +2897,13 @@ console.log(falhas.length ? "FALHAS: " + falhas.length : "TUDO PASSA");
 falhas.forEach(f => console.log("  - " + f));
 process.exit(falhas.length ? 1 : 0);
 }
-principal().catch(e => { console.error(e); process.exit(1); });
+/* A PROVA DA 9F REUSA ESTE HARNESS, e nao uma copia dele. Um segundo Supabase
+   de mentira seria um segundo servidor a manter de acordo com o Postgres — e o
+   dia em que os dois divergissem, a prova estaria medindo o falso. Rodar
+   `node scripts/teste_sync.js` continua exatamente igual; `require()` daqui nao
+   executa os testes. */
+module.exports = {criarServidor, criarCliente, criarAparelho, RAIZ, FONTE};
+
+if (require.main === module) {
+  principal().catch(e => { console.error(e); process.exit(1); });
+}

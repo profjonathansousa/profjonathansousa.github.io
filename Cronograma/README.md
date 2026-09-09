@@ -1813,6 +1813,74 @@ intacta, esperando a fase que a use. Nada aplicado ao banco.
 varrer também o `20-regras.js`: o funil do TOEFL mora lá, e um guarda que só
 lesse o `30-render.js` diria que o domínio não está conectado.
 
+### 9F — A prova da escrita dupla
+
+    node scripts/prova_dupla_escrita.js
+
+A Fase 9 mantém **dois caminhos vivos de propósito**: o de sempre (toque →
+GitHub → `estado.json`) e o novo (`cron_estado` no Supabase). Conviver não é
+concordar. Esta é a fase que cobra o preço de tê-los mantido: uma prova
+automatizada e determinística de que os dois dizem a **mesma coisa** sobre a
+mesma decisão.
+
+**Não é mais uma bateria de testes de unidade.** O `teste_sync.js` prova cada
+domínio por dentro; a prova da 9F olha para a **fronteira** entre os dois
+caminhos, e só para ela. Por isso mora num arquivo próprio, com um vocabulário
+próprio — `COERENTE` / `DIVERGE` — e um veredicto único no fim.
+
+**O harness é o mesmo, importado e não copiado.** O `teste_sync.js` passou a
+exportar o Supabase de mentira (`module.exports`, com a execução dos testes
+guardada por `require.main === module`). Um segundo servidor falso seria um
+segundo a manter de acordo com o Postgres, e no dia em que divergissem a prova
+mediria o falso.
+
+#### Os dez critérios
+
+| | O que prova |
+|---|---|
+| 1 | uma decisão humana produz o **mesmo `em`** nos dois caminhos, domínio a domínio |
+| 2 | o que desce do Supabase **não vira toque** |
+| 3 | o que desce do `estado.json` **não vira escrita online** |
+| 4 | o LWW é determinístico quando os dois caminhos discordam sobre o mesmo item |
+| 5 | a decisão de 9h, drenada às 18h, **não vence** a das 17h |
+| 6 | o `toefl` é booleano e não transporta estrutura nem texto |
+| 7 | o `item` é progresso, e **progresso não cria estrutura** |
+| 8 | o pipeline continua escrevendo pelo caminho legado, e **não fala com o Supabase** |
+| 9 | a fronteira do `prova: "estrela"` continua **antes da escrita**, e não no desempate |
+| 10 | o registro é append-only, e é provado **fora** do LWW |
+
+O critério 1 compara **três cópias** do instante — o aparelho, o toque e a linha
+online. As três, e não duas: a cópia do aparelho é a que decide o LWW local, e
+foi exatamente ela que divergia antes da correção da 9E.
+
+O critério 9 é o que a Fase 9E mais precisava por escrito: o merge do `item`
+**não conhece** `estrela`, `prova` nem `cowork` — e essa ignorância é o desenho.
+A decisão do autor não é protegida por uma regra de quem vence; é protegida pela
+recusa do `--registrar`, antes de qualquer escrita.
+
+O critério 10 existe porque o registro **não é LWW**: uma linha de 2020 que
+chega depois das de hoje não é recusada por ser velha, é aceita por ser outra.
+Provar append-only com o vocabulário do LWW seria provar a coisa errada.
+
+#### O que a prova não cobre, e por quê
+
+`estrutura_proj` e `estrutura_sub` **não entram**. Não foram conectados, e
+deliberadamente (ver 9E). Provar coerência de quem não escreve seria provar o
+vazio — e a prova diz isso explicitamente, em vez de silenciar.
+
+#### Como ela foi validada
+
+Três mutações, e cada uma faz a prova falhar com saída 1: fazer o `em` do
+aparelho divergir do toque; tirar a deduplicação por id do registro; e mandar o
+`toefl` carregar o texto do item. A primeira revelou uma lacuna na própria
+prova — ela comparava o toque e a linha online, mas não a cópia do aparelho —, e
+o critério 1 foi corrigido antes de a fase fechar.
+
+#### Sem alteração no esquema, e sem escritor novo
+
+`sql/` **não foi tocado**. Nenhum domínio novo, nenhum funil novo, nenhuma
+mudança no merge de três vias. A 9F **só mede**.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -2005,6 +2073,7 @@ tocados.
 | `avisos/enviar.mjs` | o emissor dos avisos, roda só no Actions |
 | `sql/cron_push.sql` | a tabela das inscrições, com RLS |
 | `sql/cron_estado.sql` | Fase 9A: estado, registro e base da estrutura, com RLS |
+| `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
 | `scripts/estado_notificador.json` | o que já foi avisado |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
@@ -2044,6 +2113,7 @@ python3 scripts/teste_coletor.py     # pipeline de vagas
 node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
+node     scripts/prova_dupla_escrita.js  # Fase 9F: os dois caminhos dizem o mesmo?
 ```
 
 O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
@@ -2081,7 +2151,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9D.5 — Dispensas online (fecha a Fase 9D) | concluída |
 | 9E — Trilhos: `item` e `toefl` online | concluída |
 | 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | bloqueada: ver acima |
-| 9F e 9G — escrita dupla, desativação do GitHub | não iniciadas |
+| 9F — Prova da escrita dupla | concluída |
+| 9G — desativação do caminho do GitHub | não iniciada |
 
 ### Previsto e ainda não implementado
 

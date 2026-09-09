@@ -1,0 +1,498 @@
+/* PROVA DA ESCRITA DUPLA — Fase 9F.
+ *
+ *     node scripts/prova_dupla_escrita.js
+ *
+ * A Fase 9 mantém DOIS caminhos vivos de propósito: o de sempre (toque ->
+ * GitHub -> estado.json) e o novo (cron_estado no Supabase). Conviver não é
+ * concordar. Esta prova mede, domínio a domínio, se os dois dizem a MESMA
+ * coisa sobre a mesma decisão — e é ela que justifica ter mantido os dois.
+ *
+ * O QUE ELA NÃO É. Não é mais uma bateria de testes de unidade: o
+ * `teste_sync.js` prova cada domínio por dentro. Esta prova olha para a
+ * FRONTEIRA entre os dois caminhos, e só para ela, com um critério por vez.
+ *
+ * O HARNESS É O MESMO do teste_sync.js, importado e não copiado: um segundo
+ * Supabase de mentira seria um segundo servidor a manter de acordo com o
+ * Postgres, e no dia em que divergissem esta prova mediria o falso.
+ *
+ * A ESTRUTURA (estrutura_proj, estrutura_sub) NÃO ENTRA. Ela não foi
+ * conectada, e deliberadamente: depende do merge de três vias e da
+ * cron_estrutura_base. Provar coerência de quem não escreve seria provar o
+ * vazio. Ver o README, "Fase 9E".
+ */
+const fs = require("fs");
+const path = require("path");
+const {criarServidor, criarAparelho, RAIZ} = require("./teste_sync.js");
+
+let falhas = [];
+function ok(cond, nome, detalhe) {
+  console.log((cond ? "  COERENTE  " : "  DIVERGE   ") + nome +
+    (!cond && detalhe !== undefined ? "  <- " + JSON.stringify(detalhe) : ""));
+  if (!cond) falhas.push(nome);
+}
+function titulo(t) { console.log("\n" + t); }
+
+/* ---- Localizadores: onde cada caminho guarda a mesma decisão ---- */
+const linhaDe = (srv, dominio, chave) =>
+  srv.linhas.find(l => l.dominio === dominio && l.chave === chave);
+const ultimoToque = (X, tipo) => X.getToques().filter(t => t.tipo === tipo).pop();
+
+async function principal() {
+
+/* ============================================================
+   1. MESMA DECISÃO, MESMA IDENTIDADE LÓGICA NOS DOIS CAMINHOS.
+   ============================================================
+   O critério é o `em`: os dois caminhos têm de carimbar o MESMO instante, ou o
+   LWW de um decide diferente do LWW do outro e a Fase 9F não teria como
+   comparar nada. Cada domínio é dirigido pela ação de verdade — a que a tela
+   chama —, e não pelo funil por dentro. */
+titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  /* --- item: a etapa de trilho --- */
+  const pr = (A.getProjs("pipeline") || [])[0];
+  A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
+  await A.SYNC.drenarFila();
+  const chaveItem = "pipeline/" + pr.id + "/" + pr.subs[0].id;
+  const lItem = linhaDe(srv, "item", chaveItem);
+  const tItem = ultimoToque(A, "registro");
+  ok(!!lItem && lItem.em === tItem.quando,
+     "item        · o `em` online é o mesmo ISO do toque legado",
+     {online: lItem && lItem.em, legado: tItem.quando});
+  ok(lItem.valor.st === tItem.dados.para,
+     "item        · e o mesmo st", {online: lItem.valor.st, legado: tItem.dados.para});
+  /* TRÊS CÓPIAS, UM INSTANTE. O subitem no aparelho é a terceira, e é a que
+     decide o LWW local — se ela discordar das outras duas, o aparelho e os dois
+     caminhos passam a ter opiniões diferentes sobre quando aquilo aconteceu, e
+     é o defeito que a 9E corrigiu no `tocarItem`. */
+  let noAparelho = null;
+  (A.getProjs("pipeline") || []).forEach(p => { if (p.id === pr.id)
+    (p.subs || []).forEach(x => { if (x.id === pr.subs[0].id) noAparelho = x; }); });
+  ok(noAparelho.em === tItem.quando && noAparelho.em === lItem.em,
+     "item        · e o subitem no aparelho guarda esse MESMO instante",
+     {aparelho: noAparelho.em, legado: tItem.quando, online: lItem.em});
+
+  /* --- triagem --- */
+  A.vgMarcar("philjobs-9f", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  const lTri = linhaDe(srv, "triagem", "philjobs-9f");
+  const tTri = ultimoToque(A, "triagem");
+  ok(!!lTri && lTri.em === tTri.quando, "triagem     · mesmo ISO nos dois caminhos",
+     {online: lTri && lTri.em, legado: tTri.quando});
+  ok(lTri.valor.st === tTri.dados.st, "triagem     · e o mesmo st");
+
+  /* --- meta --- */
+  A.addMeta();
+  const metas = A.getMetas();
+  A.editMeta(metas.length - 1, "Terminar o capítulo sobre Spinoza");
+  await A.SYNC.drenarFila();
+  const meta = A.getMetas()[A.getMetas().length - 1];
+  /* `mesAtivo` e `semanaAtual` são `let` de topo e não viram propriedade do
+     contexto do vm. A linha é procurada pelo domínio — há uma só — e a FORMA
+     da chave é conferida logo abaixo, que é o que interessa provar. */
+  const lMeta = srv.linhas.find(l => l.dominio === "meta");
+  const tMeta = ultimoToque(A, "meta");
+  ok(!!lMeta && lMeta.em === tMeta.quando, "meta        · mesmo ISO nos dois caminhos",
+     {online: lMeta && lMeta.em, legado: tMeta.quando});
+  ok(lMeta.em === meta.em, "meta        · e o aparelho guardou esse mesmo instante",
+     {linha: lMeta.em, aparelho: meta.em});
+  ok(lMeta.chave === lMeta.chave.slice(0, 7) + "/" + meta.id &&
+     /^\d{4}-\d{2}\/.+/.test(lMeta.chave),
+     "meta        · e a chave é AAAA-MM/id", lMeta.chave);
+
+  /* --- evento --- */
+  A.addEv();
+  const evs = A.getEventos();
+  const eid = evs[evs.length - 1].id;
+  A.editEv(eid, "Defesa na UFRJ");
+  await A.SYNC.drenarFila();
+  const lEv = linhaDe(srv, "evento", eid);
+  const tEv = ultimoToque(A, "evento");
+  ok(!!lEv && lEv.em === tEv.quando, "evento      · mesmo ISO nos dois caminhos",
+     {online: lEv && lEv.em, legado: tEv.quando});
+
+  /* --- prioridade --- */
+  A.__prompt = "Reler a Ética II";           /* addPrioridadeLivre pergunta o texto */
+  A.addPrioridadeLivre();
+  await A.SYNC.drenarFila();
+  const p = A.getPrio()[A.getPrio().length - 1];
+  const lPrio = srv.linhas.find(l => l.dominio === "prioridade");
+  const tPrio = ultimoToque(A, "prioridade");
+  ok(!!lPrio && lPrio.em === tPrio.quando, "prioridade  · mesmo ISO nos dois caminhos",
+     {online: lPrio && lPrio.em, legado: tPrio.quando});
+  ok(/^\d{4}-W\d{2}\/.+/.test(lPrio.chave) && lPrio.chave.indexOf(p.id) > 0,
+     "prioridade  · e a chave é AAAA-Wnn/id", lPrio.chave);
+
+  /* --- retomada --- */
+  A.adiarRetomada("pipeline", pr.id);
+  await A.SYNC.drenarFila();
+  const lRet = linhaDe(srv, "retomada", "pipeline/" + pr.id);
+  const tRet = ultimoToque(A, "retomada");
+  ok(!!lRet && lRet.em === tRet.quando, "retomada    · mesmo ISO nos dois caminhos",
+     {online: lRet && lRet.em, legado: tRet.quando});
+  ok(lRet.valor.ate === tRet.dados.ate, "retomada    · e a mesma data absoluta");
+
+  /* --- toefl --- */
+  const iid = A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id;
+  A.marcarGuia(iid, true);
+  await A.SYNC.drenarFila();
+  const lTo = linhaDe(srv, "toefl", iid);
+  const tTo = ultimoToque(A, "toefl");
+  ok(!!lTo && lTo.em === tTo.quando, "toefl       · mesmo ISO nos dois caminhos",
+     {online: lTo && lTo.em, legado: tTo.quando});
+
+  /* --- registro: a tabela própria, chaveada pelo id do toque --- */
+  const reg = srv.registros.find(r => r.sub_id === pr.subs[0].id);
+  ok(!!reg && reg.id === tItem.id,
+     "registro    · a chave da linha é o próprio id do toque legado",
+     {online: reg && reg.id, legado: tItem.id});
+
+  /* --- rotina e dispensa: SEM caminho legado, e a ausência é a coerência --- */
+  A.toggleCheck("seg-min");
+  A.dispensarAtrasada("2026-09-08", "ter-art");
+  await A.SYNC.drenarFila();
+  ok(!!linhaDe(srv, "rotina", A.dateKey + "/seg-min"), "rotina      · sobe online");
+  ok(A.getToques().every(t => t.tipo !== "rotina"),
+     "rotina      · e NÃO tem par legado: cron:checks nunca atravessou o GitHub");
+  ok(!!linhaDe(srv, "dispensa", "rotina/2026-09-08/ter-art"), "dispensa    · sobe online");
+  ok(A.getToques().every(t => t.tipo !== "dispensa"),
+     "dispensa    · e também não tem par legado");
+}
+
+/* ============================================================
+   2 e 3. RECEBER NÃO É TOCAR — nos dois sentidos.
+   ============================================================
+   O laço que esta prova existe para excluir: aplicar estado de um caminho e,
+   com isso, escrever no outro. Se acontecesse, cada carregamento republicaria
+   tudo, para sempre, e os dois caminhos se alimentariam um do outro. */
+titulo("=== 2. O que desce do Supabase não vira toque ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const pr = (A.getProjs("pipeline") || [])[0];
+  A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
+  A.vgMarcar("philjobs-9f", A.VG_ST.NAO);
+  A.adiarRetomada("pipeline", pr.id);
+  A.toggleCheck("seg-min");
+  A.marcarGuia(A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id, true);
+  const antesToques = B.getToques().length, antesFila = B.SYNC.situacao().fila;
+  const antesEscritas = srv.escritas;
+  await A.SYNC.drenarFila();
+
+  ok(B.getToques().length === antesToques,
+     "cinco domínios desceram e o celular NÃO enfileirou um toque sequer",
+     B.getToques().length - antesToques);
+  ok(B.SYNC.situacao().fila === antesFila,
+     "nem enfileirou subida de volta", B.SYNC.situacao().fila - antesFila);
+  const escritasDoMac = srv.escritas - antesEscritas;
+  await B.SYNC.drenarFila();
+  ok(srv.escritas - antesEscritas === escritasDoMac,
+     "e nada mais foi escrito no servidor: o eco não virou laço",
+     srv.escritas - antesEscritas - escritasDoMac);
+}
+
+titulo("=== 3. O que desce do estado.json não vira escrita online ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const antesEscritas = srv.escritas, antesFila = A.SYNC.situacao().fila;
+
+  /* O estado.json de um OUTRO aparelho, aplicado pelos mesmos aplicadores que
+     o buscarEstado usa. É o caminho legado inteiro, menos a rede. */
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const est = {
+    itens: {}, triagem: {}, metas: {}, eventos: {}, prioridades: {},
+    toefl: {}, retomadas: {}
+  };
+  est.itens["pipeline/" + pr.id + "/" + pr.subs[0].id] =
+    {quando: "2027-01-01T00:00:00.000Z", st: 2, vida: "ativo", temMotivo: false};
+  est.triagem["philjobs-9f"] = {quando: "2027-01-01T00:00:00.000Z", st: 1};
+  est.toefl[A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id] =
+    {quando: "2027-01-01T00:00:00.000Z", feito: true};
+
+  ok(A.aplicarTriagemDoEstado(est) === true, "a triagem do estado.json foi aplicada");
+  ok(A.aplicarToeflDoEstado(est) === true, "e o guia do TOEFL também");
+  ok(srv.escritas === antesEscritas,
+     "e NADA foi escrito no Supabase por receber estado legado",
+     srv.escritas - antesEscritas);
+  ok(A.SYNC.situacao().fila === antesFila,
+     "nem entrou na fila para subir depois", A.SYNC.situacao().fila - antesFila);
+  ok(A.getToques().length === 0, "e nenhum toque foi gerado");
+}
+
+/* ============================================================
+   4 e 5. O LWW É DETERMINÍSTICO, E A ORDEM DE CHEGADA NÃO MANDA.
+   ============================================================
+   O caso que dói: a alteração feita às 9h sem rede, drenada às 18h, não pode
+   vencer a alteração legítima das 17h. É por isso que o relógio é do APARELHO
+   e não do servidor — e é isto que a prova mede, com os dois caminhos
+   representando alterações diferentes do MESMO item. */
+titulo("=== 4. Dois caminhos, alterações diferentes do mesmo item ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const subId = pr.subs[0].id;
+  const acha = () => {
+    let x = null;
+    (A.getProjs("pipeline") || []).forEach(p => { if (p.id === pr.id)
+      (p.subs || []).forEach(s => { if (s.id === subId) x = s; }); });
+    return x;
+  };
+
+  /* O aparelho decide st=1 agora. */
+  A.marcarSub("pipeline", pr.id, subId, 1);
+  const meuEm = acha().em;
+  ok(acha().st === 1, "o aparelho decidiu st=1");
+
+  /* O caminho legado traz st=2, MAIS NOVO. */
+  const est = {itens: {}};
+  est.itens["pipeline/" + pr.id + "/" + subId] =
+    {quando: "2099-01-01T00:00:00.000Z", st: 2, vida: "ativo", temMotivo: false};
+  const projs = A.getProjs("pipeline");
+  let x = null;
+  projs.forEach(p => { if (p.id === pr.id)
+    (p.subs || []).forEach(s => { if (s.id === subId) x = s; }); });
+  ok(A.mesclarItem(x, {quando: est.itens["pipeline/" + pr.id + "/" + subId].quando,
+                       st: 2, vida: "ativo", motivo: ""}) === true,
+     "o legado mais novo entra");
+  /* O merge MUTA e quem chama grava — é o contrato dele, e é o que a descida
+     do estado.json faz com setProjs. Sem gravar, o próximo `acha()` releria o
+     armazenamento e a prova mediria a si mesma. */
+  A.setProjs("pipeline", projs);
+  ok(acha().st === 2, "e o st gravado passa a 2", acha().st);
+
+  /* Agora o ONLINE traz st=0, mais VELHO que os dois. Nada acontece. */
+  const rOnline = A.aplicarItemOnline({
+    chave: "pipeline/" + pr.id + "/" + subId,
+    em: meuEm, valor: {st: 0, vida: "ativo", motivo: ""}});
+  ok(rOnline.length === 0, "e o online mais velho é recusado, chegando depois", rOnline);
+  ok(acha().st === 2, "o st mais novo permanece — a ordem de chegada não manda", acha().st);
+
+  /* Os dois caminhos, dado o MESMO instante, decidem o MESMO: é a definição
+     de determinismo aqui, e por isso a regra mora numa implementação só. */
+  const a = {em: "2026-01-01T00:00:00.000Z", st: 0};
+  const b = {em: "2026-01-01T00:00:00.000Z", st: 0};
+  const r = {quando: "2026-06-01T00:00:00.000Z", st: 2, vida: "ativo", motivo: ""};
+  ok(A.mesclarItem(a, r) === A.mesclarItem(b, r) && a.st === b.st && a.em === b.em,
+     "o mesmo merge, chamado pelos dois caminhos, produz o mesmo resultado");
+  ok(A.mesclarItem(a, {quando: a.em, st: 9}) === false,
+     "e o empate exato fica como está, nos dois");
+}
+
+titulo("=== 5. A decisão de 9h, drenada às 18h, não vence a das 17h ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  /* 9h: o Mac decide SEM REDE. A fila guarda. */
+  srv.falhar = true;
+  A.__congelar(Date.UTC(2026, 8, 9, 9, 0, 0));
+  A.vgMarcar("philjobs-9f", A.VG_ST.SIM);
+  A.__descongelar();
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "9h: a decisão do Mac ficou na fila, sem rede");
+
+  /* 17h: o celular decide outra coisa, com rede. */
+  srv.falhar = false;
+  B.__congelar(Date.UTC(2026, 8, 9, 17, 0, 0));
+  B.vgMarcar("philjobs-9f", B.VG_ST.NAO);
+  B.__descongelar();
+  await B.SYNC.drenarFila();
+  const das17 = linhaDe(srv, "triagem", "philjobs-9f");
+  ok(das17.valor.st === B.VG_ST.NAO, "17h: a decisão do celular está no servidor", das17.valor);
+
+  /* 18h: a rede volta e o Mac drena a decisão das 9h. */
+  await A.SYNC.reconectar(true);
+  const depois = linhaDe(srv, "triagem", "philjobs-9f");
+  ok(depois.valor.st === B.VG_ST.NAO,
+     "18h: a decisão de 9h NÃO venceu a das 17h", depois.valor);
+  ok(depois.em === das17.em, "o servidor guarda o instante das 17h", depois.em);
+  ok(srv.recusados >= 1, "e o gatilho do relógio recusou a mais velha", srv.recusados);
+  ok(A.SYNC.situacao().fila === 0,
+     "a fila do Mac esvaziou mesmo assim: perder por ser mais velha não é falha");
+  ok(A.vgTriagem()["philjobs-9f"].st === B.VG_ST.NAO,
+     "e o Mac já mostra a decisão das 17h", A.vgTriagem()["philjobs-9f"]);
+}
+
+/* ============================================================
+   6 e 7. CADA DOMÍNIO CARREGA O QUE É DELE, E NADA MAIS.
+   ============================================================ */
+titulo("=== 6. O toefl é booleano, e não transporta estrutura nem texto ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const g = A.TOEFL_GUIA[A.TOEFL_FASES[0]];
+  const it = g.itens[0];
+  A.marcarGuia(it.id, true);
+  await A.SYNC.drenarFila();
+
+  const l = linhaDe(srv, "toefl", it.id);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["feito"]),
+     "o valor online tem UM campo: `feito`", Object.keys(l.valor));
+  ok(typeof l.valor.feito === "boolean", "e ele é booleano", typeof l.valor.feito);
+  const texto = JSON.stringify(l.valor) + "|" + JSON.stringify(ultimoToque(A, "toefl").dados);
+  ok(it.t === undefined || texto.indexOf(it.t) < 0,
+     "o texto do item do guia NÃO viaja por nenhum dos dois caminhos", texto);
+  ok(l.chave === it.id, "a chave é o id do item, e a estrutura do guia é do código",
+     l.chave);
+
+  /* Desmarcar viaja; ausência não é false. */
+  A.marcarGuia(it.id, false);
+  await A.SYNC.drenarFila();
+  ok(linhaDe(srv, "toefl", it.id).valor.feito === false, "desmarcar viaja como estado");
+  ok(A.mesclarToefl({}, "nunca-visto", {quando: "", feito: true}) === false,
+     "e ausência é `nunca decidido`, não `false`");
+}
+
+titulo("=== 7. O item é progresso, e progresso não cria estrutura ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const pr = (A.getProjs("pipeline") || [])[0];
+  A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
+  await A.SYNC.drenarFila();
+
+  const l = linhaDe(srv, "item", "pipeline/" + pr.id + "/" + pr.subs[0].id);
+  const campos = Object.keys(l.valor).sort();
+  ok(JSON.stringify(campos) === JSON.stringify(["motivo", "st", "vida", "vidaDesde", "voltar_em"]),
+     "o valor do item é só progresso e ciclo de vida", campos);
+  ok(!("t" in l.valor) && !("subT" in l.valor) && !("subs" in l.valor),
+     "nenhum título, nenhum filho: estrutura não viaja por aqui", Object.keys(l.valor));
+
+  /* Progresso de peça desconhecida não pousa, e não inventa a peça. */
+  const antes = JSON.stringify(A.getProjs("pipeline"));
+  ok(A.aplicarItemOnline({chave: "pipeline/inexistente/x1",
+                          em: "2099-01-01T00:00:00.000Z", valor: {st: 2}}).length === 0,
+     "progresso de peça que este aparelho não conhece não é aplicado");
+  ok(JSON.stringify(A.getProjs("pipeline")) === antes,
+     "e o painel fica exatamente como estava");
+
+  /* E a estrutura continua sem escritor online, como a 9E documentou. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  ok(!/salvarAlteracao\(\s*"estrutura_/.test(render + nucleo + regras),
+     "e estrutura_proj/estrutura_sub seguem sem escritor: fora do escopo da 9F");
+}
+
+/* ============================================================
+   8 e 9. O SEGUNDO ESCRITOR REAL, E A FRONTEIRA DELE.
+   ============================================================ */
+titulo("=== 8. O pipeline continua escrevendo pelo caminho legado ===");
+{
+  const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  ok(/"aparelho": "cowork"/.test(pipe),
+     "o --registrar escreve um toque com aparelho `cowork`");
+  ok(/"tipo": "registro"/.test(pipe),
+     "do tipo `registro` — a mesma porta por onde o iPhone entra");
+  ok(/DIR_TOQUES/.test(pipe) && /json\.dump/.test(pipe),
+     "e o destino é um arquivo de toque, como o de qualquer aparelho");
+  ok(!/supabase|SUPABASE|cron_estado|cron_registro/.test(pipe),
+     "o pipeline NÃO fala com o Supabase: ele não virou espelho de estado");
+  ok(!/service_role|SERVICE_ROLE/.test(pipe),
+     "e não carrega chave de serviço nenhuma");
+
+  /* E o caminho legado continua inteiro no aplicativo, que é o outro lado da
+     dupla escrita: se ele saísse agora, o pipeline ficaria sem interlocutor. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  ok(typeof A.buscarEstado === "function" && typeof A.enviarToques === "function",
+     "e o aplicativo continua lendo e escrevendo o caminho do GitHub");
+  ok(typeof A.gravarNoGitHub === "function", "inclusive a gravação dos toques");
+}
+
+titulo("=== 9. A fronteira do pipeline: prova `estrela` continua dele ===");
+{
+  const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  ok(/prova == "estrela" and not forcar/.test(pipe),
+     "o --registrar RECUSA subitem de prova `estrela`");
+  ok(/return 1/.test(pipe.split('prova == "estrela"')[1].slice(0, 600)),
+     "e sai sem escrever nada quando recusa");
+  ok(/decisao do autor/.test(pipe),
+     "dizendo por quê: a conclusão é decisão do autor, não artefato");
+  ok(/--forcar/.test(pipe),
+     "e a exceção é explícita, e não um caminho silencioso");
+
+  /* O PONTO DA 9F AQUI: a fronteira está ANTES da escrita, e a 9E não a moveu
+     para o desempate. O merge é o mesmo para todo mundo — é a recusa a priori
+     que protege a decisão do autor, e não uma regra de quem vence. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const corpo = nucleo.split("function mesclarItem(")[1].split("\n}")[0];
+  ok(!/estrela|prova|cowork/.test(corpo),
+     "o merge do item não conhece `estrela`, `prova` nem `cowork`", corpo.length);
+  const x = {st: 0, em: "2026-01-01T00:00:00.000Z"};
+  ok(A.mesclarItem(x, {quando: "2027-01-01T00:00:00.000Z", st: 2}) === true,
+     "ele trata toda origem igual — a proteção não mora aqui");
+}
+
+/* ============================================================
+   10. O REGISTRO NÃO É LWW, E POR ISSO É PROVADO À PARTE.
+   ============================================================ */
+titulo("=== 10. O registro é append-only, e a chave une os dois caminhos ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const pr = (A.getProjs("pipeline") || [])[0];
+
+  A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
+  await A.SYNC.drenarFila();
+  A.marcarSub("pipeline", pr.id, pr.subs[0].id, 1);   /* o recuo */
+  await A.SYNC.drenarFila();
+
+  ok(srv.registros.length === 2,
+     "fechar e recuar são DOIS fatos, e os dois ficam", srv.registros.length);
+  ok(srv.registros.every(r => "d" in r && !("em" in r) && !("del" in r)),
+     "sem relógio e sem lápide: histórico não tem versão", Object.keys(srv.registros[0]));
+  ok(B.getReg().length === 2, "e as duas chegaram ao celular");
+
+  /* A ponte com o caminho legado: o id da linha É o id do toque, então o
+     estado.json não a duplica quando trouxer o mesmo toque. */
+  const toques = A.getToques().filter(t => t.tipo === "registro");
+  const ids = srv.registros.map(r => r.id).sort();
+  ok(JSON.stringify(ids) === JSON.stringify(toques.map(t => t.id).sort()),
+     "os ids online são exatamente os ids dos toques legados", ids);
+  const vistos = {};
+  B.getReg().forEach(o => { if (o && o.tid) vistos[o.tid] = true; });
+  ok(toques.every(t => vistos[t.id] === true),
+     "e o critério de deduplicação do estado.json já as reconhece");
+
+  /* Reler não duplica — que é o que substitui o LWW aqui. */
+  const antes = B.getReg().length;
+  await B.SYNC.buscarDeltaRegistro();
+  srv.registros.forEach(r => B.aplicarRegistroOnline(r));
+  ok(B.getReg().length === antes,
+     "reler o histórico inteiro não cria uma linha a mais", B.getReg().length - antes);
+
+  /* E o LWW não se aplica: uma linha "mais velha" não é recusada por ser
+     velha, é aceita por ser outra. */
+  const nova = {id: "2020-01-01T00-00-00-000Z-tablet", d: "2020-01-01",
+                pid: "pipeline", proj_id: pr.id, sub_id: pr.subs[0].id,
+                proj_t: "", sub_t: "", de: null, para: 2, vida: "ativo",
+                motivo: "", aparelho: "tablet"};
+  ok(B.aplicarRegistroOnline(nova).length > 0,
+     "uma linha de 2020 entra depois das de hoje — não há `mais novo vence`");
+  ok(B.getReg().length === antes + 1 && B.getReg()[0].d === "2020-01-01",
+     "e entra no lugar certo, pela data de origem", B.getReg().map(o => o.d));
+}
+
+console.log("\n==============================================================");
+console.log(falhas.length
+  ? "A ESCRITA DUPLA DIVERGE EM " + falhas.length + " PONTO(S)"
+  : "ESCRITA DUPLA COERENTE — os dois caminhos dizem o mesmo");
+falhas.forEach(f => console.log("  - " + f));
+process.exit(falhas.length ? 1 : 0);
+}
+
+principal().catch(e => { console.error(e); process.exit(1); });
