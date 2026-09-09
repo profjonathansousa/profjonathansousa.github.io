@@ -164,6 +164,10 @@ catch(e){ console.error("sincronia: dominio evento:", e); }
    dispensas continuam LEGADOS. */
 try{ SYNC.assinarDominio("triagem", aplicarTriagemOnline); }
 catch(e){ console.error("sincronia: dominio triagem:", e); }
+/* Fase 9D (2 de 5): as retomadas silenciadas. Registro, rotinas e dispensas
+   continuam LEGADOS. */
+try{ SYNC.assinarDominio("retomada", aplicarRetomadaOnline); }
+catch(e){ console.error("sincronia: dominio retomada:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

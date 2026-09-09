@@ -1426,6 +1426,65 @@ vaga já existiam desde a 9A. Nada aplicado ao banco.
 quebra se um segundo escritor voltar, se surgir uma segunda `mesclarTriagem`, ou
 se um domínio ainda não autorizado passar a escrever online.
 
+### 9D (2 de 5) — Retomadas silenciadas online
+
+O **quinto domínio**. Registro, rotinas e dispensas continuam legados.
+
+**A chave é `painel/projeto`** e o valor leva **só o `ate`** — a data absoluta até
+a qual o projeto fica silenciado. O título e o estágio são lidos do trilho no
+aparelho que desenha, e nunca viajam: é a regra da Fase 6B, que esta fase não
+muda.
+
+**O `ate` é data absoluta, não duração.** Um toque que chega três dias depois
+carrega a data que foi decidida; se viajasse "+14 dias", a latência da rede
+mudaria o resultado.
+
+**Não há lápide, e a razão é própria do domínio:** não existe operação de
+*dessilenciar*. A entrada morre pela data que ela mesma carrega — vencida, some
+dos dois leitores sem toque nenhum.
+
+#### Uma cláusula que não pode ser simplificada
+
+```js
+var emLocal = (loc && typeof loc === "object") ? (loc.em || "") : "";
+```
+
+A entrada local pode ser uma **string** — a forma anterior à Fase 6B, que o
+`migrarRetomadas` converte. Entre o carregamento e a migração ela existe, e ler
+pelas duas formas evita que um aparelho que falhe na migração passe a ignorar
+silêncios que ele mesmo pôs. Trocar por `loc.em` daria `undefined`, o `>=` seria
+sempre falso, e qualquer linha remota venceria. Há teste para esse caso.
+
+#### O que já estava certo
+
+**O `em` não precisou de correção.** O `adiarRetomada` sempre gravou o instante
+devolvido pelo toque — ao contrário do `vgMarcar` da 9D.1, que carimbava o
+próprio. Não havia divergência de relógio neste domínio: faltava só o caminho
+online e o escritor único.
+
+**Havia dois escritores**: `adiarRetomada` e `migrarRetomadas`. A migração passou
+pelo funil, e com isso os silêncios anteriores à sincronia entram também no
+estado online.
+
+#### Os renders, ambos comprovados
+
+| | Por quê |
+|---|---|
+| `renderHoje` | `renderRetomadas()` lê `retomadas()`, **e** `renderPrioridades` → `motorDePrioridades()` lê `retomadasAdiadas()` |
+| `renderVistaRevisao` | `revisaoDaSemana` lê `retomadas()` **e** `motorDePrioridades()` |
+
+**`renderSemana` não entra** — verificado que não lê retomada nenhuma. É o
+inverso da 9D.1, onde ele entrou por ler `vgEstado`. E `renderHoje` entra **todo
+dia**, porque o bloco de retomadas está sempre no Hoje.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 51 a 54.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1688,7 +1747,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9C-3 — Eventos online (terceiro domínio) | concluída |
 | 9C-4 — título de evento privado no caminho online | concluída |
 | 9D.1 — Triagem das Vagas online | concluída |
-| 9D.2 a 9D.5 — retomadas, registro, rotinas, dispensas | não iniciadas |
+| 9D.2 — Retomadas silenciadas online | concluída |
+| 9D.3 a 9D.5 — registro, rotinas, dispensas | não iniciadas |
 | 9E a 9G — trilhos, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado

@@ -580,8 +580,11 @@ function migrarRetomadas(){
     if(!(r > hojeStr)) return;                             /* vencida: nao sobe */
     var corte = chave.indexOf("/");
     if(corte < 0) return;
-    enfileirarToque("retomada", {pid:chave.slice(0, corte),
-                                 projId:chave.slice(corte + 1), ate:r}, RETOMADA_EM);
+    /* PELO FUNIL, e nao por um enfileirarToque proprio: ate a Fase 9D.2 esta
+       era a SEGUNDA escrita de retomada, como a migracao da triagem era na
+       9D.1. Passando por aqui, o silencio antigo publicado por esta migracao
+       entra tambem no estado online. */
+    tocarRetomada(chave.slice(0, corte), chave.slice(corte + 1), r, RETOMADA_EM);
     n++;
   });
   save(RETOMADA_KEY, out);
@@ -590,20 +593,68 @@ function migrarRetomadas(){
 }
 /* A DESCIDA. Molde do aplicarToeflDoEstado: mais novo manda, empate fica como
    esta, mais antigo e ignorado. Nao emite toque — receber nao e tocar. */
+/* ============ O MERGE DE UMA RETOMADA — UMA IMPLEMENTACAO SO (Fase 9D.2) ============
+   Quinto dominio a passar por este movimento. A regra e copiada letra por letra
+   do que estava dentro do aplicarRetomadasDoEstado, e uma clausula em especial
+   NAO pode ser simplificada:
+
+     var emLocal = (loc && typeof loc === "object") ? (loc.em || "") : "";
+
+   A entrada local pode ser uma STRING — e a forma antiga, de antes da Fase 6B,
+   que o migrarRetomadas converte. Entre o carregamento e a migracao ela existe,
+   e o comentario do migrarRetomadas diz por que ler pelas duas formas: um
+   aparelho que falhe na migracao passaria a ignorar silencios que ele mesmo
+   pos. Trocar por `loc.em` daria undefined e o `>=` seria sempre falso.
+
+   NAO HA LAPIDE, e a razao e propria do dominio: nao existe operacao de
+   DESSILENCIAR. A entrada morre pela data que ela mesma carrega — vencida, ela
+   some dos dois leitores sem toque nenhum.
+
+   O `ate` E DATA ABSOLUTA, e nao duracao. Um toque que chega tres dias depois
+   carrega a data que foi decidida; se viajasse "+14 dias", a latencia da rede
+   mudaria o resultado. */
+function mesclarRetomada(m, chave, r){
+  if(!r || !r.quando || !r.ate) return false;
+  var loc = m[chave];
+  var emLocal = (loc && typeof loc === "object") ? (loc.em || "") : "";
+  if(loc && emLocal >= r.quando) return false;
+  m[chave] = {ate:r.ate, em:r.quando};
+  return true;
+}
+
+/* A descida pelo estado.json — o caminho legado, agora sobre o merge unico. */
 function aplicarRetomadasDoEstado(est){
   if(!est || !est.retomadas) return false;
   var m = retomadasAdiadas(), mudou = false;
   Object.keys(est.retomadas).forEach(function(chave){
-    var r = est.retomadas[chave];
-    if(!r || !r.quando || !r.ate) return;
-    var loc = m[chave];
-    var emLocal = (loc && typeof loc === "object") ? (loc.em || "") : "";
-    if(loc && emLocal >= r.quando) return;
-    m[chave] = {ate:r.ate, em:r.quando};
-    mudou = true;
+    if(mesclarRetomada(m, chave, est.retomadas[chave])) mudou = true;
   });
   if(mudou) save(RETOMADA_KEY, m);
   return mudou;
+}
+
+/* ============ A DESCIDA ONLINE DAS RETOMADAS — Fase 9D.2 ============
+   Molde dos quatro anteriores. A chave e `painel/projeto`, e o valor leva so o
+   `ate`: o titulo e o estagio do projeto sao lidos do trilho no aparelho que
+   desenha, e nunca viajam — e a regra da Fase 6B, que esta fase nao muda.
+
+   OS RENDERS SAO DOIS, e ambos comprovados por leitura:
+     · renderHoje — o renderRetomadas() le retomadas(), e o renderPrioridades
+       passa pelo motorDePrioridades(), que le retomadasAdiadas() para saber o
+       que esta silenciado. Entra TODO DIA, e nao so no domingo como nas metas;
+     · renderVistaRevisao — a revisaoDaSemana le retomadas() E
+       motorDePrioridades().
+   NAO chama renderSemana: verificado que ele nao le retomada nenhuma — ao
+   contrario da triagem da 9D.1, que ele le. */
+function aplicarRetomadaOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var chave = String(linha.chave);
+  if(chave.indexOf("/") < 0) return [];
+  var v = linha.valor || {};
+  var m = retomadasAdiadas();
+  if(!mesclarRetomada(m, chave, {quando: linha.em, ate: v.ate})) return [];
+  save(RETOMADA_KEY, m);
+  return ["renderHoje", "renderVistaRevisao"];
 }
 
 function getToques(){ return LS("cron:toques", []) || []; }

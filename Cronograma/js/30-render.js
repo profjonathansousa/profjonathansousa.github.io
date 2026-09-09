@@ -1191,13 +1191,38 @@ function adotarSugestao(painel, projId){ addPrioridadeTrilho(painel + "/" + proj
 /* A ORDEM E A GARANTIA. `manuais` primeiro, sempre. O motor recebe as manuais
    para saber quantas vagas sobraram e o que NAO repetir — e nao tem como
    devolve-las diferentes, porque nao as toca. */
+/* ============ O UNICO ESCRITOR DA RETOMADA — Fase 9D.2 ============
+   Molde do tocarTriagem. O `quandoISO` existe para a migracao das entradas
+   antigas, que publica com o piso RETOMADA_EM.
+
+   O `em` JA VINHA CERTO AQUI, ao contrario do vgMarcar da 9D.1: o adiarRetomada
+   sempre gravou o instante devolvido pelo toque. Nao havia divergencia de
+   relogio a corrigir neste dominio — o que faltava era o caminho online e o
+   escritor unico.
+
+   NAO HA LAPIDE: nao existe operacao de dessilenciar. Ver mesclarRetomada. */
+function tocarRetomada(pid, projId, ate, quandoISO){
+  if(!pid || !projId || !ate) return null;
+  var chave = pid + "/" + projId;
+  var iso = enfileirarToque("retomada", {pid:pid, projId:projId, ate:ate},
+                            quandoISO);                  /* legado: intacto */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      /* SO O `ate` VIAJA. O titulo e o estagio do projeto sao lidos do trilho
+         no aparelho que desenha — regra da Fase 6B, que esta fase nao muda. */
+      SYNC.salvarAlteracao("retomada", chave, {ate: ate}, {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: retomada nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+
 function adiarRetomada(pid, projId){
   var m = retomadasAdiadas();
   var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
   var ate = ymd(d);
   /* O instante gravado e EXATAMENTE o que subiu no toque: guardar outro faria
      os dois lados discordarem sobre quando a decisao foi tomada. */
-  var iso = enfileirarToque("retomada", {pid:pid, projId:projId, ate:ate});
+  var iso = tocarRetomada(pid, projId, ate);
   m[pid + "/" + projId] = {ate:ate, em:iso};
   save(RETOMADA_KEY, m);
   renderHoje();

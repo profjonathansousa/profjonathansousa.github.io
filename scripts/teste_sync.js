@@ -980,9 +980,9 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
      (triagem, toefl, retomada, rotina, dispensa, item, estrutura_*) sao 9D. */
   const online = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "12. prioridade, meta, evento e triagem escrevem online (9B, 9C, 9D)", online);
-  ok(["toefl","retomada","rotina","dispensa","item","estrutura_proj","estrutura_sub"]
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "12. os cinco dominios online (9B, 9C x3, 9D.1, 9D.2)", online);
+  ok(["toefl","rotina","dispensa","item","estrutura_proj","estrutura_sub"]
        .every(d => online.indexOf(d) < 0),
      "    e nenhum dominio ainda nao autorizado foi antecipado", online);
 }
@@ -1315,12 +1315,12 @@ console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
   const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const dominiosOnline = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "13. os tres da Fase 9C mais a triagem da 9D", dominiosOnline);
+  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "13. os tres da 9C mais triagem e retomada da 9D", dominiosOnline);
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "    e os quatro tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "    e os cinco tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
@@ -1567,11 +1567,11 @@ console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ==
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const dominios = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominios) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "prioridade, meta, evento e triagem escrevem online", dominios);
+  ok(JSON.stringify(dominios) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "prioridade, meta, evento, triagem e retomada escrevem online", dominios);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "   e os quatro tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "   e os cinco tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
@@ -1722,8 +1722,8 @@ console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
   const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "L. quatro dominios online — a 9D acrescentou a triagem", online);
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "L. cinco dominios online — a 9D.2 acrescentou a retomada", online);
 }
 
 console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ===");
@@ -1902,14 +1902,14 @@ console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "O. quatro dominios online: os tres da 9C mais a triagem", online);
-  ok(["retomada", "rotina", "dispensa", "item", "estrutura_proj", "estrutura_sub"]
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "O. cinco dominios online: os tres da 9C mais triagem e retomada", online);
+  ok(["rotina", "dispensa", "item", "estrutura_proj", "estrutura_sub"]
        .every(d => online.indexOf(d) < 0),
-     "O. e nenhum dos proximos da 9D/9E foi antecipado", online);
+     "O. e nenhum dos proximos da 9D/9E foi antecipado (rotina, dispensa, trilhos)", online);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
-     "   e os quatro tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "   e os cinco tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
@@ -1948,6 +1948,182 @@ console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
   ok(/vgEstado/.test(corpoDe(regras, "revisaoDaSemana")), "   a revisao tambem le vgEstado");
   ok(/vgEstado/.test(corpoDe(regras, "contagemDeVagas")),
      "   e o indicador do Hoje passa pelo contagemDeVagas");
+}
+
+/* ================= FASE 9D (2 de 5) — AS RETOMADAS SILENCIADAS ================= */
+const silencio  = (ap, pid, projId) => ap.retomadasAdiadas()[pid + "/" + projId] || null;
+const linhaRet  = (srv, chave) => srv.linhas.filter(l => l.dominio === "retomada" && l.chave === chave)[0];
+
+console.log("\n=== 51. Silenciar propaga entre aparelhos (9D.2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const CHAVE = "pipeline/a01";
+
+  ok(silencio(B, "pipeline", "a01") === null, "o celular comeca sem silencio sobre o a01");
+
+  A.adiarRetomada("pipeline", "a01");
+  await A.SYNC.drenarFila();
+  const noMac = silencio(A, "pipeline", "a01");
+  const noCel = silencio(B, "pipeline", "a01");
+  ok(!!noMac && /^\d{4}-\d{2}-\d{2}$/.test(noMac.ate), "o Mac silenciou ate uma data", noMac);
+  ok(!!noCel, "e o silencio chegou ao celular", noCel);
+  ok(noCel.ate === noMac.ate, "com a MESMA data absoluta", {mac: noMac.ate, cel: noCel.ate});
+  ok(noCel.em === noMac.em, "e o MESMO instante da decisao");
+
+  const l = linhaRet(srv, CHAVE);
+  ok(!!l && l.chave === CHAVE, "a chave online e painel/projeto", l && l.chave);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["ate"]),
+     "e o valor leva SO o `ate` — nem titulo nem estagio", Object.keys(l.valor));
+  ok(l.del === false, "sem lapide: nao existe operacao de dessilenciar", l.del);
+}
+
+console.log("\n=== 52. Relogio, eco e ausencia de toque ao receber (9D.2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  A.adiarRetomada("pipeline", "a01");
+  await A.SYNC.drenarFila();
+  B.adiarRetomada("leituras", "l1");
+  await B.SYNC.drenarFila();
+  ok(!!silencio(A, "leituras", "l1") && !!silencio(B, "pipeline", "a01"),
+     "dois silencios independentes convivem nos dois aparelhos");
+  ok(srv.linhas.filter(l => l.dominio === "retomada").length === 2,
+     "duas linhas no servidor, uma por projeto");
+
+  /* Linha antiga nao vence a mais nova. */
+  const emAtual = silencio(B, "pipeline", "a01").em;
+  const velha = {dono: "dono-1", dominio: "retomada", chave: "pipeline/a01",
+                 valor: {ate: "2020-01-01"}, del: false, em: "2020-01-01T00:00:00.000Z",
+                 aparelho: "mac", servidor_em: "2030-09-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "a linha antiga e recusada", r);
+  ok(silencio(B, "pipeline", "a01").em === emAtual, "e o silencio mais novo permanece");
+
+  /* Empate e mais-novo, direto no merge. */
+  const m = B.retomadasAdiadas();
+  ok(B.mesclarRetomada(m, "pipeline/a01", {quando: emAtual, ate: "2099-01-01"}) === false,
+     "empate exato nao muda nada");
+  ok(B.mesclarRetomada(m, "pipeline/a01", {quando: "2099-01-01T00:00:00.000Z", ate: "2099-01-01"}) === true,
+     "mas o mais novo vence");
+  ok(B.mesclarRetomada(m, "pipeline/a01", {quando: "2099-02-01T00:00:00.000Z"}) === false,
+     "e sem `ate` nao ha silencio a aplicar");
+
+  /* A FORMA ANTIGA (string) continua sendo lida — a clausula que nao pode ser
+     simplificada. Uma entrada string vale como "sem instante", entao qualquer
+     coisa com `quando` vence. */
+  const m2 = {"tecnico/p1": "2027-01-01"};
+  ok(B.mesclarRetomada(m2, "tecnico/p1", {quando: "2026-01-01T00:00:00.000Z", ate: "2026-06-01"}) === true,
+     "a entrada em forma ANTIGA (string) e tratada como sem instante");
+  ok(m2["tecnico/p1"].em === "2026-01-01T00:00:00.000Z", "e vira a forma nova", m2["tecnico/p1"]);
+
+  /* Receber nao e tocar; eco proprio recusado. */
+  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  A.adiarRetomada("posdoc", "pd1");
+  await A.SYNC.drenarFila();
+  ok(!!silencio(B, "posdoc", "pd1"), "o terceiro silencio chegou ao celular");
+  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
+     B.getToques().length - toquesB);
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou envio de volta");
+  const eco = A.SYNC.aplicarRemoto(linhaRet(srv, "posdoc/pd1"));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
+}
+
+console.log("\n=== 53. Offline, fila e delta antes da fila (9D.2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O Mac NAO assina: e o que "desconectado" quer dizer aqui. */
+
+  srv.falhar = true;
+  A.adiarRetomada("pipeline", "a01");
+  await A.SYNC.drenarFila();
+  ok(!!silencio(A, "pipeline", "a01"), "sem rede, o silencio vale na hora no Mac");
+  ok(A.SYNC.situacao().fila === 1, "e fica na fila", A.SYNC.situacao().fila);
+
+  srv.falhar = false;
+  B.adiarRetomada("leituras", "l1");
+  await B.SYNC.drenarFila();
+  ok(silencio(A, "leituras", "l1") === null, "o Mac ainda nao sabe do silencio do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(!!silencio(A, "leituras", "l1"), "o delta chegou ANTES de a fila subir");
+  ok(A.SYNC.situacao().fila === 0, "e so entao a fila subiu");
+  ok(!!silencio(B, "pipeline", "a01"), "e o celular recebeu o do Mac");
+  ok(srv.linhas.filter(l => l.dominio === "retomada").length === 2, "nada se perdeu");
+}
+
+console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"retomada"/g) || []).length === 1,
+     "ha UM unico ponto que escreve retomada online");
+  const tr = (render.match(/enfileirarToque\("retomada"/g) || []).length;
+  const tn = (nucleo.match(/enfileirarToque\("retomada"/g) || []).length;
+  ok(tr + tn === 1, "e UM unico enfileirarToque (a migracao passou a usar o funil)",
+     {render: tr, nucleo: tn});
+  ok(/migrarRetomadas[\s\S]*?tocarRetomada\(chave\.slice\(0, corte\)/.test(nucleo),
+     "e a migracao das entradas antigas passa pelo funil");
+  ok(/var iso = tocarRetomada\(pid, projId, ate\)/.test(corpoDe(render, "adiarRetomada")),
+     "o adiarRetomada chama o funil");
+  ok((nucleo.match(/function mesclarRetomada/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(/aplicarRetomadasDoEstado[\s\S]*?mesclarRetomada/.test(nucleo), "o caminho legado a usa");
+  ok(/aplicarRetomadaOnline[\s\S]*?mesclarRetomada/.test(nucleo), "e o online tambem");
+  /* A clausula que le as DUAS formas nao pode ser simplificada. */
+  ok(/typeof loc === "object"/.test(corpoDe(nucleo, "mesclarRetomada")),
+     "o merge le a entrada local nas duas formas (string antiga e objeto)");
+
+  /* Os renders: dois, e ambos comprovados. */
+  const corpo = corpoDe(nucleo, "aplicarRetomadaOnline");
+  ok(/renderHoje/.test(corpo) && /renderVistaRevisao/.test(corpo),
+     "os renders sao renderHoje e renderVistaRevisao");
+  ok(!/renderSemana/.test(corpo),
+     "e NAO renderSemana — ele nao le retomada (ao contrario da triagem da 9D.1)");
+  ok(!/renderSemana/.test(corpo) &&
+     !/retomadasAdiadas|renderRetomadas/.test(corpoDe(render, "renderSemana")),
+     "   verificado: renderSemana nao le retomada nenhuma");
+  ok(/renderRetomadas/.test(corpoDe(render, "renderHoje")), "   renderHoje desenha as retomadas");
+  ok(/retomadas\(\)/.test(corpoDe(regras, "revisaoDaSemana")), "   e a revisao le retomadas()");
+  ok(/retomadasAdiadas/.test(corpoDe(regras, "motorDePrioridades")),
+     "   e o motor de prioridades le o que esta silenciado");
+
+  /* Seis dominios online, e nenhum a mais. */
+  const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "cinco dominios online: 9B, 9C x3, 9D.1 e 9D.2", online);
+  ok(["rotina", "dispensa", "toefl", "item", "estrutura_proj", "estrutura_sub"]
+       .every(d => online.indexOf(d) < 0),
+     "e nenhum dominio ainda nao autorizado foi antecipado", online);
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "e os cinco tem aplicador registrado", assinados);
+
+  /* Legado e online no mesmo ato, com o mesmo ISO. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  A.adiarRetomada("concursos", "c1");
+  await A.SYNC.drenarFila();
+  const toque = A.getToques().filter(t => t.tipo === "retomada").pop();
+  const l = linhaRet(srv, "concursos/c1");
+  ok(toque.quando === l.em, "legado e online com o MESMO ISO",
+     {legado: toque.quando, online: l.em});
+  ok(toque.dados.ate === l.valor.ate, "e a mesma data absoluta");
+  ok(!("t" in l.valor) && !("projT" in l.valor),
+     "e nem titulo nem estagio viajam (regra da Fase 6B)", Object.keys(l.valor));
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");
