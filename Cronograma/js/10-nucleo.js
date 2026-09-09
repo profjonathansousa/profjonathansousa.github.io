@@ -92,6 +92,56 @@ function migrarEsquema(){
 }
 /* Entrada externa (Passo 4): o arquivo manda na ESTRUTURA, o aparelho guarda
    o que é dele. st e vida NUNCA são tocados por aqui. */
+/* ====== O MERGE DE TRES VIAS DA ESTRUTURA — A REGRA (Fase 9G-0 B1) ======
+
+   AINDA NAO E CHAMADA, e a espera e deliberada. O mesclarEntrada() logo abaixo
+   continua de DUAS vias ate a cron_estrutura_base existir de verdade — e ela so
+   passa a existir na primeira publicacao real da estrutura, pelo
+   `dobrar_toques.py --publicar-estrutura`. Ligar esta regra a uma base vazia
+   seria pior do que nao liga-la: "o pipeline nunca mudou nada" e verdade sobre
+   uma base vazia, e a regra concluiria que NENHUMA atualizacao legitima pode
+   escrever. A estrutura pararia de chegar.
+
+   O DEFEITO QUE ELA CORRIGE. Hoje, discordancia entre o entrada.json e o
+   aparelho so pode significar "o aparelho esta desatualizado":
+
+       if(novo.t && novo.t!==alvo.t){ alvo.t=novo.t; }
+
+   Mas discordancia tambem pode significar QUE VOCE EDITOU. Renomear um projeto
+   a mao e desfeito pela proxima publicacao, em silencio — verdade desde a Fase
+   4, e nao consequencia da Fase 9.
+
+   A CAUSA E O MERGE SER DE DUAS VIAS, e a correcao e uma terceira: o que o
+   pipeline publicou da ultima vez. Com ela, campo a campo:
+
+       o campo mudou no entrada.json desde a ultima publicacao?
+          nao  -> nao escreve. O que voce editou a mao sobrevive.
+          sim  -> voce tambem mudou esse campo depois?
+                  nao -> escreve. E atualizacao legitima do pipeline.
+                  sim -> conflito real: vence o relogio, e fica registrado.
+
+   NAO HA HIERARQUIA ENTRE ESCRITORES. Cada um manda no que efetivamente mexeu.
+
+   Devolve {escreve, conflito}: `escreve` e se o valor da entrada deve entrar;
+   `conflito` marca o caso em que os dois mexeram no mesmo campo — quem chama
+   registra, porque conflito silencioso e o que esta fase existe para acabar. */
+function mesclarEstrutura(local, entrada, base, temBase){
+  var mesmo = function(a, b){ return JSON.stringify(a) === JSON.stringify(b); };
+  /* SEM BASE, DUAS VIAS: e o comportamento de hoje, e e o certo enquanto a
+     terceira via nao existir para aquela chave. Uma peca publicada pela
+     primeira vez cai aqui, e deve mesmo entrar. */
+  if(!temBase) return {escreve: !mesmo(entrada, local), conflito: false};
+
+  var pipelineMexeu = !mesmo(entrada, base);
+  var voceMexeu     = !mesmo(local, base);
+
+  if(!pipelineMexeu) return {escreve: false, conflito: false};  /* a sua edicao fica */
+  if(!voceMexeu)     return {escreve: true,  conflito: false};  /* atualizacao legitima */
+  /* Os dois mexeram no MESMO campo. Vence o relogio — e aqui o relogio e a
+     publicacao, que carrega `gerado_em`; quem chama compara e registra. */
+  return {escreve: true, conflito: true};
+}
+
 function mesclarEntrada(){
   var ent = LS("cron:entrada", null);
   if(!ent || !ent.paineis) return;

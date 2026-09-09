@@ -1950,6 +1950,95 @@ agora verifica que, falando, o pipeline continua afirmando um fato seu: mesmo
 `em`, mesmo id, um domínio só, assinatura de aparelho, gravação antes da
 publicação e credenciais só do ambiente.
 
+### 9G-0 B1 — A publicação da estrutura, e a base que a registra
+
+    python3 scripts/dobrar_toques.py --publicar-estrutura /caminho/entrada-nova.json
+
+#### O elo que faltava tinha um nome
+
+O `entrada.json` **não é gerado por script nenhum** — o próprio arquivo diz quem
+o escreve: `"_escritor": "Cowork. Não editar à mão."`. A cadeia é
+`pipeline → mapa_portal.json → Cowork → entrada.json → commit`, e os dois
+primeiros elos vivem fora deste repositório. Foi por isso que a busca por um
+gerador não achou nada: o publicador **é o Cowork**, o mesmo agente que roda o
+`--registrar`.
+
+Com isso o bloqueio se dissolve, e a solução fica simétrica à da Parte A: assim
+como o `--registrar` grava o toque **e** publica o `item` no mesmo ato, o
+`--publicar-estrutura` grava o `entrada.json` **e** registra a
+`cron_estrutura_base` no mesmo ato.
+
+#### Por que os dois têm de ser um ato só
+
+A base guarda *o que o pipeline publicou da última vez* — é a **terceira via**.
+Publicar o arquivo sem registrar a base deixaria a base **mentindo**: dizendo
+"o pipeline nunca mexeu nisso" sobre um campo que ele acabou de mexer. E base
+que mente é pior do que base nenhuma, porque o merge de três vias voltaria a ser
+de duas **sem ninguém perceber**.
+
+Daí a ordem, que é a garantia:
+
+1. o arquivo novo é escrito num **temporário**, ao lado do definitivo;
+2. a base é publicada;
+3. só então o temporário toma o lugar do `entrada.json`.
+
+Falhou a base → o temporário cai e **nada muda**: o arquivo anterior e a base
+anterior continuam de acordo um com o outro. Por isso, ao contrário do
+`--registrar`, aqui publicar **não é melhor esforço**: sem credenciais o comando
+**recusa**, em vez de publicar metade.
+
+#### O que a base registra
+
+| | chave | valor |
+|---|---|---|
+| projeto | `painel/proj` | `t, n, mes` |
+| subitem | `painel/proj/sub` | `t, n, onde, prova, medida, ordem` |
+
+Só isso, e carimbado com o `_gerado_em` **da publicação**. Nem os filhos nem o
+id entram no valor — a chave já diz quem é. E **exatamente** a estrutura
+publicada: a peça que sai do arquivo sai da base, por `DELETE` explícito. Deixar
+a linha de uma peça que não é mais publicada faria a base afirmar que o pipeline
+ainda a publica.
+
+**A base nasce da primeira publicação real.** Nada lê o `entrada.json` do disco
+para "preencher" a base — semear seria afirmar que o pipeline publicou algo que
+talvez nunca tenha publicado.
+
+#### A regra de três vias existe, e ainda não está ligada
+
+`mesclarEstrutura(local, entrada, base, temBase)` implementa a regra, campo a
+campo, e tem teste para os três casos: **só você mexeu** (o rename sobrevive),
+**só o pipeline mexeu** (atualização legítima entra), **os dois mexeram** (conflito
+real, registrado). Sem base, ela cai em duas vias — que é o certo para uma peça
+publicada pela primeira vez.
+
+**O `mesclarEntrada()` continua de duas vias**, e a espera é deliberada: contra
+uma base **vazia**, "o pipeline nunca mudou nada" é verdade sobre tudo, e a regra
+concluiria que nenhuma atualização legítima pode escrever — a estrutura pararia
+de chegar. Ela é ligada quando a base existir de verdade, isto é, depois da
+primeira publicação real.
+
+#### O navegador continua só lendo
+
+A `cron_estrutura_base` dá ao app `SELECT` e mais nada, e a ausência de política
+de escrita é o ponto: se ele pudesse reescrevê-la, poderia forjar "o pipeline
+nunca mudou isso". Há teste para as duas metades — que o SQL não tem política de
+escrita, e que nenhum arquivo do aplicativo escreve nela.
+
+#### O que esta etapa NÃO fez
+
+**B2 continua aberto**: `cron:arquivo`, `delProj`, `delSub` e o arquivamento por
+índice estão exatamente como estavam. `estrutura_proj` e `estrutura_sub`
+continuam sem escritor no aplicativo.
+
+#### Testes
+
+`scripts/teste_publicar_estrutura.py` sobe um PostgREST de mentira em localhost e
+exercita o comando de verdade: a base nascendo vazia, a republicação que retira o
+que saiu, a falha no meio que não publica metade, a recusa sem credenciais e as
+estruturas inválidas. `teste_sync.js`, seções 66 e 67, cobrem a regra de três
+vias e quem pode escrever a base.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -2143,6 +2232,7 @@ tocados.
 | `sql/cron_push.sql` | a tabela das inscrições, com RLS |
 | `sql/cron_estado.sql` | Fase 9A: estado, registro e base da estrutura, com RLS |
 | `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
+| `scripts/teste_publicar_estrutura.py` | Fase 9G-0 B1: a publicação da estrutura e a base |
 | `scripts/estado_notificador.json` | o que já foi avisado |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
@@ -2183,6 +2273,7 @@ node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
 node     scripts/prova_dupla_escrita.js  # Fase 9F: os dois caminhos dizem o mesmo?
+python3  scripts/teste_publicar_estrutura.py  # Fase 9G-0 B1: entrada.json + a base
 ```
 
 O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
@@ -2221,7 +2312,9 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9E — Trilhos: `item` e `toefl` online | concluída |
 | 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | bloqueada: ver acima |
 | 9F — Prova da escrita dupla | concluída |
-| 9G-0 — pré-requisitos: pipeline online (feito) e estrutura (bloqueada) | parcial |
+| 9G-0 A — pipeline com caminho online | concluída |
+| 9G-0 B1 — publicação da estrutura + `cron_estrutura_base` | concluída |
+| 9G-0 B2 — aposentar o `cron:arquivo` | aberta: decisão sobre o arquivo real |
 | 9G — desativação do caminho do GitHub | não iniciada |
 
 ### Previsto e ainda não implementado

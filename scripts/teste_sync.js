@@ -2835,13 +2835,109 @@ console.log("\n=== 65. O guia do TOEFL online, e a estrutura que a 9E NAO fez (9
   ok(/cron_estrutura_base/.test(SQL), "a cron_estrutura_base continua no esquema, intacta");
   ok(/grant select\s+on public\.cron_estrutura_base/.test(SQL),
      "e o app segue com SELECT e mais nada: quem escreve a base e o pipeline");
-  /* SO O CODIGO: um comentario que MENCIONA a cron_estrutura_base nao e
-     escrever nela. Mesma distincao do bloco 12, e pela mesma razao — um teste
-     que nao a faz proibiria documentar. */
+  /* SUPERADO PELA 9G-0 B1: o pipeline passou a escrever a base, e e justamente
+     isso que destrava o merge de tres vias. O que a 9E guardava aqui — que a
+     base nao fosse forjada — continua guardado na secao 67, com mais precisao.
+     A ESTRUTURA em si segue sem escritor no aplicativo, que e o outro metade
+     do bloqueio. */
   const PIPE_CODIGO = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8")
     .split("\n").filter(l => !/^\s*#/.test(l)).join("\n");
-  ok(!/cron_estrutura_base/.test(PIPE_CODIGO),
-     "que ainda nao a escreve — e por isso o merge de tres vias nao foi feito pela metade");
+  ok(/cron_estrutura_base/.test(PIPE_CODIGO),
+     "e a base passou a ser escrita pelo publicador da estrutura (9G-0 B1)");
+}
+
+console.log("\n=== 66. O merge de tres vias da estrutura (9G-0 B1) ===");
+{
+  const A = criarAparelho("mac", criarServidor());
+  const M = (local, entrada, base, temBase) => A.mesclarEstrutura(local, entrada, base, temBase);
+
+  /* (a) MUDANCA APENAS LOCAL. O pipeline publicou "Artigo", voce renomeou para
+         "Artigo sobre Lutero", e a publicacao seguinte traz "Artigo" de novo —
+         porque o pipeline nao mexeu nisso. E o defeito que a base corrige. */
+  let r = M("Artigo sobre Lutero", "Artigo", "Artigo", true);
+  ok(r.escreve === false, "(a) so voce mexeu: o pipeline NAO desfaz o seu rename", r);
+  ok(r.conflito === false, "    e nao ha conflito a registrar");
+
+  /* (b) MUDANCA APENAS REMOTA. Voce nao tocou; o pipeline renomeou. Entra. */
+  r = M("Artigo", "Artigo revisado", "Artigo", true);
+  ok(r.escreve === true, "(b) so o pipeline mexeu: e atualizacao legitima, e entra", r);
+  ok(r.conflito === false, "    e tambem nao ha conflito");
+
+  /* (c) MUDANCA CONCORRENTE. Os dois mexeram no MESMO campo, a partir da mesma
+         base. Ai sim ha conflito — e ele nao pode ser silencioso. */
+  r = M("Artigo do Jonathan", "Artigo revisado", "Artigo", true);
+  ok(r.escreve === true && r.conflito === true,
+     "(c) os dois mexeram no mesmo campo: conflito real, e fica registrado", r);
+
+  /* Nada mudou em lugar nenhum: nao escreve e nao inventa conflito. */
+  r = M("Artigo", "Artigo", "Artigo", true);
+  ok(r.escreve === false && r.conflito === false, "ninguem mexeu: nada acontece", r);
+
+  /* SEM BASE, DUAS VIAS — e e o certo. Uma peca publicada pela primeira vez nao
+     tem terceira via, e tem de entrar. E tambem o motivo de a regra ainda nao
+     estar ligada: contra uma base VAZIA, "o pipeline nunca mudou nada" e
+     verdade sobre tudo, e nenhuma atualizacao legitima passaria. */
+  r = M("", "Artigo novo", null, false);
+  ok(r.escreve === true, "sem base, uma peca nova entra (duas vias, como hoje)", r);
+  r = M("Artigo", "Artigo", null, false);
+  ok(r.escreve === false, "e sem base, o que ja e igual continua nao escrevendo", r);
+
+  /* Vale para qualquer campo, e nao so texto: `medida` e `ordem` sao objetos e
+     numeros, e a comparacao e por valor. */
+  ok(M({n: 3}, {n: 3}, {n: 3}, true).escreve === false, "compara objetos por valor");
+  ok(M({n: 3}, {n: 4}, {n: 3}, true).escreve === true, "e ve a mudanca dentro deles");
+
+  /* A REGRA AINDA NAO ESTA LIGADA, e a espera e o desenho. */
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const corpoEntrada = nucleo.split("function mesclarEntrada(")[1].split("\n}")[0];
+  ok(!/mesclarEstrutura/.test(corpoEntrada),
+     "o mesclarEntrada continua de DUAS vias ate a base existir de verdade");
+  ok((nucleo.match(/function mesclarEstrutura/g) || []).length === 1,
+     "e ha UMA implementacao da regra, esperando");
+}
+
+console.log("\n=== 67. Quem escreve a cron_estrutura_base, e quem so le (9G-0 B1) ===");
+{
+  const SQL = fs.readFileSync(path.join(RAIZ, "sql", "cron_estado.sql"), "utf8");
+  const CODIGO = SQL.split("\n").filter(l => !/^\s*--/.test(l)).join("\n");
+
+  /* O NAVEGADOR SO LE, e a ausencia de politica de escrita e o ponto: se o app
+     pudesse reescrever a base, poderia forjar "o pipeline nunca mudou isso" e o
+     merge de tres vias viraria de duas outra vez. */
+  ok(/create policy cron_estrutura_base_ler[\s\S]{0,200}for select/.test(CODIGO),
+     "o app tem politica de SELECT na cron_estrutura_base");
+  ok(!/create policy[^;]*on public\.cron_estrutura_base[^;]*for (insert|update|delete)/i.test(CODIGO),
+     "e NENHUMA de escrita: ele nao pode forjar a base");
+  ok(/grant select\s+on public\.cron_estrutura_base\s+to authenticated/.test(CODIGO),
+     "o grant tambem e so de leitura");
+  ok(/revoke all on public\.cron_estrutura_base\s+from anon/.test(CODIGO),
+     "e o anon nao alcanca nada");
+
+  /* Nada no aplicativo escreve a base — nem por acidente. */
+  const app = ["00-config", "10-nucleo", "15-sync", "20-regras", "30-render", "40-app"]
+    .map(f => fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f + ".js"), "utf8")).join("\n");
+  ok(!/TABELA_BASE[\s\S]{0,120}(upsert|insert|delete)/.test(app),
+     "e nenhum arquivo do aplicativo escreve nela");
+
+  /* QUEM ESCREVE E O PUBLICADOR DA ESTRUTURA, e so ele. */
+  const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  ok((pipe.match(/"\/cron_estrutura_base"/g) || []).length === 1,
+     "ha UM unico ponto que escreve a base");
+  const corpo = pipe.split("def publicar_estrutura")[1].split("\ndef ")[0];
+  ok(/linhas_da_base\(entrada\)/.test(corpo),
+     "e ele registra a estrutura que RECEBEU, e nao outra reconstruida");
+  ok(!/ARQ_ENTRADA[^)]*\)\s*as f:\s*\n\s*entrada = json\.load/.test(corpo),
+     "nao le o entrada.json do disco para semear a base");
+  /* MEDE A CHAMADA, e nao a mencao: a docstring da funcao fala da
+     cron_estrutura_base logo na primeira linha, e comparar posicoes de texto
+     media o comentario. O que importa e onde esta o POST. */
+  ok(/os\.replace\(temporario, ARQ_ENTRADA\)/.test(corpo) &&
+     corpo.indexOf('"/cron_estrutura_base"') > 0 &&
+     corpo.indexOf('"/cron_estrutura_base"') < corpo.indexOf("os.replace"),
+     "a base e registrada ANTES de o arquivo tomar o lugar do anterior",
+     {post: corpo.indexOf('"/cron_estrutura_base"'), replace: corpo.indexOf("os.replace")});
+  ok(/RECUSADO: faltam/.test(corpo),
+     "e sem credenciais o comando recusa a publicacao inteira");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

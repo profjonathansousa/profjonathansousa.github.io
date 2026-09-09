@@ -57,6 +57,17 @@ USO:
     python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-4 --para 2
     python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-5 --para 1 --seco
 
+    # o Cowork publicando a estrutura que acabou de montar:
+    python3 scripts/dobrar_toques.py --publicar-estrutura /tmp/entrada-nova.json
+    python3 scripts/dobrar_toques.py --publicar-estrutura /tmp/entrada-nova.json --seco
+
+O --publicar-estrutura escreve Cronograma/entrada.json E registra na
+cron_estrutura_base exatamente a estrutura publicada, no mesmo ato. Ele RECEBE a
+estrutura pronta — não a reconstrói de outra fonte — e recusa a publicação inteira
+se não puder registrar a base: publicar só metade deixaria a base mentindo, e o
+merge de três vias viraria de duas em silêncio. Exige SUPABASE_URL e
+SUPABASE_SECRET_KEY no ambiente.
+
 O --registrar escreve um toque com aparelho "cowork" e dobra em seguida: grava o
 arquivo na pasta conectada e lê de volta no mesmo comando. É a metade que faltava
 do elo pipeline -> Cronograma.
@@ -357,6 +368,162 @@ def procurar_na_entrada(pid, proj_id, sub_id):
     return (None, None, None)
 
 
+# ===================== A PUBLICACAO DA ESTRUTURA (9G-0 B1) =====================
+# O entrada.json e escrito pelo Cowork a partir do que o pipeline produziu (ver o
+# `_escritor` dentro do proprio arquivo). Ate aqui isso era um `write` solto: o
+# arquivo ia para o repositorio e ninguem registrava O QUE tinha sido publicado.
+#
+# A cron_estrutura_base existe justamente para guardar isso, e e a TERCEIRA VIA
+# do merge: sem ela, discordancia entre o entrada.json e o aparelho so pode
+# significar "o aparelho esta desatualizado" — e renomear a mao vira coisa que a
+# proxima publicacao desfaz em silencio. Com ela, a pergunta passa a ser "o
+# pipeline mudou este campo desde a ultima publicacao?", que e outra pergunta.
+#
+# POR ISSO OS DOIS SAO UM ATO SO. Publicar o arquivo sem registrar a base
+# deixaria a base MENTINDO — dizendo "o pipeline nunca mexeu nisso" sobre um
+# campo que ele acabou de mexer —, e uma base que mente e pior do que base
+# nenhuma: o merge de tres vias viraria de duas sem ninguem perceber.
+#
+# A ORDEM E A GARANTIA. O arquivo novo e escrito num temporario, a base e
+# publicada, e so entao o temporario toma o lugar do entrada.json. Se a
+# publicacao falhar, o temporario e removido e NADA muda: o arquivo anterior e a
+# base anterior continuam de acordo um com o outro. E por isso que aqui, ao
+# contrario do --registrar, publicar NAO e melhor esforco — sem credenciais o
+# comando recusa, em vez de publicar so metade.
+#
+# A BASE NASCE DA PRIMEIRA PUBLICACAO REAL, e nao de uma semeadura: nada aqui le
+# o entrada.json que ja esta no disco para "preencher" a base. Semear seria
+# afirmar que o pipeline publicou algo que ele talvez nunca tenha publicado —
+# exatamente a mentira que o paragrafo acima descreve.
+CAMPOS_PROJETO = ("t", "n", "mes")
+CAMPOS_SUBITEM = ("t", "n", "onde", "prova", "medida", "ordem")
+
+
+def _so_campos(d, campos):
+    """O valor guardado e SO o que o esquema declara para aquele tipo. Guardar o
+    objeto inteiro faria a base carregar campos que nao sao estrutura (um `st`,
+    por exemplo) e o merge passaria a comparar progresso como se fosse titulo."""
+    return {c: d[c] for c in campos if c in d}
+
+
+def linhas_da_base(entrada):
+    """Converte a estrutura PUBLICADA nas linhas da cron_estrutura_base. Recebe o
+    objeto que vai para o disco — nunca o que ja estava la, nunca o estado."""
+    fora = []
+    for pid, projetos in (entrada.get("paineis") or {}).items():
+        for pr in (projetos or []):
+            if not pr or not pr.get("id"):
+                continue
+            fora.append({"chave": "%s/%s" % (pid, pr["id"]), "tipo": "projeto",
+                         "valor": _so_campos(pr, CAMPOS_PROJETO)})
+            for sub in (pr.get("subs") or []):
+                if not sub or not sub.get("id"):
+                    continue
+                fora.append({"chave": "%s/%s/%s" % (pid, pr["id"], sub["id"]),
+                             "tipo": "subitem",
+                             "valor": _so_campos(sub, CAMPOS_SUBITEM)})
+    return fora
+
+
+def _conferir_entrada(entrada):
+    """Recusa cedo o que nao e uma estrutura publicavel. Um arquivo meio escrito
+    que chegasse a base seria pior do que um erro: viraria a versao `publicada`."""
+    if not isinstance(entrada, dict):
+        raise RuntimeError("a estrutura precisa ser um objeto JSON")
+    paineis = entrada.get("paineis")
+    if not isinstance(paineis, dict) or not paineis:
+        raise RuntimeError("a estrutura nao tem `paineis`")
+    if not entrada.get("_gerado_em"):
+        raise RuntimeError("a estrutura nao tem `_gerado_em`: sem ele a base nao "
+                           "sabe de que publicacao ela e")
+    vistas = set()
+    for pid, projetos in paineis.items():
+        if not isinstance(projetos, list):
+            raise RuntimeError("paineis['%s'] deveria ser uma lista" % pid)
+        for pr in projetos:
+            if not isinstance(pr, dict) or not pr.get("id"):
+                raise RuntimeError("projeto sem id em '%s'" % pid)
+            k = "%s/%s" % (pid, pr["id"])
+            if k in vistas:
+                raise RuntimeError("id de projeto repetido: %s" % k)
+            vistas.add(k)
+            for sub in (pr.get("subs") or []):
+                if not isinstance(sub, dict) or not sub.get("id"):
+                    raise RuntimeError("subitem sem id em %s" % k)
+                ks = "%s/%s" % (k, sub["id"])
+                if ks in vistas:
+                    raise RuntimeError("id de subitem repetido: %s" % ks)
+                vistas.add(ks)
+
+
+def publicar_estrutura(caminho_novo, seco):
+    """Publica a estrutura de `caminho_novo` como Cronograma/entrada.json e
+    registra na cron_estrutura_base EXATAMENTE o que foi publicado."""
+    with open(caminho_novo, "r", encoding="utf-8") as f:
+        entrada = json.load(f)
+    _conferir_entrada(entrada)
+    linhas = linhas_da_base(entrada)
+    gerado_em = entrada["_gerado_em"]
+
+    print("Estrutura a publicar (de %s):" % os.path.relpath(caminho_novo, RAIZ))
+    print("  %d projeto(s) e %d subitem(ns), gerada em %s"
+          % (sum(1 for l in linhas if l["tipo"] == "projeto"),
+             sum(1 for l in linhas if l["tipo"] == "subitem"), gerado_em))
+    if seco:
+        print("\n--seco: nada foi escrito, nem no disco nem na base.")
+        return 0
+
+    url, chave = _credenciais()
+    if not url or not chave:
+        print("\nRECUSADO: faltam %s e/ou %s no ambiente." % (API_URL, API_CHAVE))
+        print("Publicar o arquivo sem registrar a base deixaria a base mentindo, e")
+        print("o merge de tres vias viraria de duas em silencio. Nada foi escrito.")
+        return 1
+
+    # 1. o arquivo novo, ainda ao lado do definitivo
+    temporario = ARQ_ENTRADA + ".novo"
+    with open(temporario, "w", encoding="utf-8") as f:
+        json.dump(entrada, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+    # 2. a base. Se qualquer parte falhar, o temporario cai e nada muda.
+    try:
+        dono = _dono(url, chave)
+        agora = _agora_iso()
+        corpo = [{"dono": dono, "chave": l["chave"], "tipo": l["tipo"],
+                  "valor": l["valor"], "gerado_em": gerado_em} for l in linhas]
+        if corpo:
+            _pedir(url, chave, "/cron_estrutura_base", "POST", corpo,
+                   prefer="resolution=merge-duplicates,return=minimal")
+        # EXATAMENTE a estrutura publicada: o que saiu do arquivo sai da base.
+        # Deixar a linha de uma peca que nao e mais publicada faria a base
+        # afirmar que o pipeline ainda a publica.
+        antigas = _pedir(url, chave, "/cron_estrutura_base?select=chave&dono=eq." + dono)
+        vivas = set(l["chave"] for l in linhas)
+        mortas = [a["chave"] for a in antigas if a.get("chave") not in vivas]
+        for k in mortas:
+            _pedir(url, chave, "/cron_estrutura_base?dono=eq.%s&chave=eq.%s"
+                   % (dono, _escapar(k)), "DELETE", prefer="return=minimal")
+    except Exception as e:
+        try:
+            os.remove(temporario)
+        except OSError:
+            pass
+        print("\nFALHOU ao registrar a base: %s" % e)
+        print("NADA foi publicado: o entrada.json anterior e a base anterior")
+        print("continuam de acordo um com o outro. Corrija e repita.")
+        return 1
+
+    # 3. so agora o arquivo toma o lugar do anterior
+    os.replace(temporario, ARQ_ENTRADA)
+    print("\nPublicado:")
+    print("  %s" % os.path.relpath(ARQ_ENTRADA, RAIZ))
+    print("  cron_estrutura_base: %d linha(s) registrada(s)%s"
+          % (len(linhas), (", %d retirada(s)" % len(mortas)) if mortas else ""))
+    print("  A base agora diz exatamente o que este arquivo publica (%s)." % agora)
+    return 0
+
+
 # ======================= O CAMINHO ONLINE DO --registrar =======================
 # Fase 9G-0. O pipeline sempre foi um segundo escritor REAL, e nao um espelho: ele
 # afirma um fato que so ele verifica (o artefato existe), e o afirma pela mesma
@@ -413,6 +580,13 @@ def _pedir(url, chave, caminho, metodo="GET", corpo=None, prefer=None):
     with urllib.request.urlopen(req, timeout=20) as r:
         bruto = r.read().decode("utf-8") or "[]"
     return json.loads(bruto) if bruto.strip() else []
+
+
+def _escapar(v):
+    """PostgREST le virgula e ponto como sintaxe do filtro. Uma chave e
+    `painel/proj/sub` e nao os tem hoje — mas amanha pode ter, e um id com
+    virgula viraria dois filtros silenciosamente. Aspas resolvem."""
+    return '"' + str(v).replace('"', '""') + '"'
 
 
 def _dono(url, chave):
@@ -539,6 +713,21 @@ def arg(nome, padrao=None):
 
 def main():
     seco = "--seco" in sys.argv
+
+    if "--publicar-estrutura" in sys.argv:
+        caminho = arg("--publicar-estrutura")
+        if not caminho:
+            print("Falta o arquivo: --publicar-estrutura caminho/para/entrada.json")
+            return 1
+        if not os.path.exists(caminho):
+            print("Nao existe: %s" % caminho)
+            return 1
+        try:
+            return publicar_estrutura(caminho, seco)
+        except Exception as e:
+            print("RECUSADO: %s" % e)
+            print("Nada foi escrito.")
+            return 1
 
     if "--registrar" in sys.argv:
         para = arg("--para")
