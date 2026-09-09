@@ -27,7 +27,7 @@ const CAMINHOS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || []
   .map(t => t.match(/src="([^"]+)"/)[1]).map(s => s.split("?")[0]);
 const FONTE = CAMINHOS
   .map(src => fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"))
-  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_LIGADO_KEY, SYNC_SESSAO_KEY, dateKey, monthKey, now};";
+  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_MARCA_REG_KEY, SYNC_LIGADO_KEY, SYNC_SESSAO_KEY, dateKey, monthKey, now};";
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -47,7 +47,9 @@ function criarServidor() {
     falhar: false,         /* simula rede fora */
     assinantes: [],        /* callbacks do Realtime */
     recusados: 0,          /* upserts descartados pelo gatilho */
-    escritas: 0
+    escritas: 0,
+    registros: [],         /* cron_registro */
+    repetidos: 0           /* inserts de registro que bateram na chave primaria */
   };
   srv.chave = (l) => l.dono + "|" + l.dominio + "|" + l.chave;
 
@@ -63,7 +65,31 @@ function criarServidor() {
     if (atual) Object.assign(atual, nova); else srv.linhas.push(nova);
     srv.escritas++;
     const entregue = atual || nova;
-    srv.assinantes.forEach(fn => { try { fn({new: JSON.parse(JSON.stringify(entregue))}); } catch (e) {} });
+    srv.assinantes.forEach(a => {
+      if (a.tabela !== "cron_estado") return;
+      try { a.fn({new: JSON.parse(JSON.stringify(entregue))}); } catch (e) {}
+    });
+    return {ok: true};
+  };
+  /* cron_registro: SO CRESCE. A chave primaria e (dono, id), e o id e o do
+     toque. O `ignoreDuplicates` do cliente vira ON CONFLICT DO NOTHING: mandar
+     a mesma linha de novo e silencio, e nao erro — sem isso uma drenagem que
+     caiu no meio travaria a fila para sempre no mesmo item. E NAO HA UPDATE:
+     o grant da tabela e `select, insert`, entao reescrever linha de historico
+     nem sequer e uma possibilidade. */
+  srv.inserirRegistro = function (linha) {
+    if (srv.falhar) throw new Error("sem rede");
+    const k = linha.dono + "|" + linha.id;
+    if (srv.registros.some(x => x.dono + "|" + x.id === k)) { srv.repetidos++; return {ok: true}; }
+    srv.seq++;
+    const nova = Object.assign({}, linha,
+      {servidor_em: new Date(Date.UTC(2030, 0, 1) + srv.seq * 1000).toISOString()});
+    srv.registros.push(nova);
+    srv.escritas++;
+    srv.assinantes.forEach(a => {
+      if (a.tabela !== "cron_registro") return;
+      try { a.fn({new: JSON.parse(JSON.stringify(nova))}); } catch (e) {}
+    });
     return {ok: true};
   };
   return srv;
@@ -81,10 +107,24 @@ function criarCliente(srv, uid) {
     f.order = () => f;
     f.limit = (n) => { f._limite = n; return f; };
     f.range = (a, b) => { f._de = a; f._ate = b; return f; };
-    f.upsert = (linha) => {
+    f.upsert = (linha, opts) => {
       const p = {};
       p.then = (res, rej) => {
-        try { srv.upsert(linha); return Promise.resolve({error: null}).then(res, rej); }
+        try {
+          if (f.tabela === "cron_registro") {
+            /* O 15-sync.js TEM de pedir ON CONFLICT DO NOTHING aqui: a tabela
+               nao da UPDATE ao aplicativo. Um upsert de verdade seria negado
+               pelo Postgres, e o teste passaria contra um servidor mais
+               permissivo do que o real. */
+            if (!opts || opts.ignoreDuplicates !== true || opts.onConflict !== "dono,id") {
+              throw new Error("cron_registro so aceita insert com ON CONFLICT DO NOTHING");
+            }
+            srv.inserirRegistro(linha);
+          } else {
+            srv.upsert(linha);
+          }
+          return Promise.resolve({error: null}).then(res, rej);
+        }
         catch (e) { return Promise.resolve({error: {message: e.message}}).then(res, rej); }
       };
       return p;
@@ -96,7 +136,8 @@ function criarCliente(srv, uid) {
         if (f.tabela === "cron_dono") {
           out = srv.donos.filter(d => d === uid).map(d => ({uid: d}));
         } else {
-          out = srv.linhas.filter(l => f.filtros.every(([c, op, v]) =>
+          const fonte = f.tabela === "cron_registro" ? srv.registros : srv.linhas;
+          out = fonte.filter(l => f.filtros.every(([c, op, v]) =>
             op === "eq" ? l[c] === v : op === "in" ? v.indexOf(l[c]) >= 0 : String(l[c]) >= String(v)));
           out = out.slice(f._de, f._ate + 1);
         }
@@ -112,9 +153,16 @@ function criarCliente(srv, uid) {
     from: consulta,
     removeChannel() {},
     channel() {
-      const c = {};
-      c.on = (_t, _o, fn) => { c._fn = fn; return c; };
-      c.subscribe = (cb) => { srv.assinantes.push(l => c._fn(l)); if (cb) cb("SUBSCRIBED"); return c; };
+      /* UM canal, VARIOS .on — um por tabela, como o Realtime de verdade. Guardar
+         so o ultimo callback (era o que este falso fazia) faria o teste do
+         registro passar e o do estado sumir, sem ninguem perceber. */
+      const c = {_ons: []};
+      c.on = (_t, o, fn) => { c._ons.push({tabela: o && o.table, fn}); return c; };
+      c.subscribe = (cb) => {
+        c._ons.forEach(x => srv.assinantes.push({tabela: x.tabela, fn: x.fn}));
+        if (cb) cb("SUBSCRIBED");
+        return c;
+      };
       return c;
     },
     auth: {
@@ -2124,6 +2172,227 @@ console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
   ok(toque.dados.ate === l.valor.ate, "e a mesma data absoluta");
   ok(!("t" in l.valor) && !("projT" in l.valor),
      "e nem titulo nem estagio viajam (regra da Fase 6B)", Object.keys(l.valor));
+}
+
+console.log("\n=== 55. Um ato, tres consumidores, um id so (9D.3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const PROJ = {id: "a01", t: "Artigo sobre Lutero"};
+  const SUB  = {id: "s1", t: "Levantamento", vida: "ativo", motivo: "parei na Dieta de Worms"};
+
+  const antes = A.getReg().length;
+  A.logar("pipeline", PROJ, SUB, 0, 2);
+  await A.SYNC.drenarFila();
+
+  ok(A.getReg().length === antes + 1, "a linha entrou em cron:registro na hora");
+  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
+  ok(!!toque, "e o toque legado foi enfileirado do mesmo jeito");
+  ok(srv.registros.length === 1, "e UMA linha subiu para cron_registro", srv.registros.length);
+
+  const l = srv.registros[0];
+  ok(l.id === toque.id, "com o MESMO id do toque — a chave que une os dois caminhos",
+     {toque: toque.id, online: l.id});
+  ok(l.pid === "pipeline" && l.proj_id === "a01" && l.sub_id === "s1",
+     "o endereco viaja em colunas, nao num blob", {pid: l.pid, proj: l.proj_id, sub: l.sub_id});
+  ok(l.de === 0 && l.para === 2, "o de/para viaja inteiro", {de: l.de, para: l.para});
+  ok(l.proj_t === PROJ.t && l.sub_t === SUB.t, "e os titulos fotografados no momento");
+  ok(l.aparelho === "mac", "carimbado com o aparelho que escreveu", l.aparelho);
+
+  /* O MOTIVO. O caminho do GitHub o corta (repositorio publico); este nao. */
+  ok(l.motivo === SUB.motivo, "o motivo VIAJA no caminho online — a base e privada", l.motivo);
+  ok(!("motivo" in toque.dados) && toque.dados.temMotivo === true,
+     "e continua NAO viajando no caminho do GitHub", toque.dados);
+
+  /* Nao ha relogio nem lapide: historico nao tem versao. */
+  ok(!("em" in l) && !("del" in l), "sem `em` e sem lapide: historico nao tem versao",
+     Object.keys(l));
+  ok(srv.linhas.length === 0, "e nada disso foi parar em cron_estado", srv.linhas.length);
+}
+
+console.log("\n=== 56. O registro chega ao outro aparelho, e no lugar certo (9D.3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  ok(B.getReg().length === 0, "o celular comeca sem registro");
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento", motivo: "com razao"}, 0, 2);
+  await A.SYNC.drenarFila();
+
+  const noCel = B.getReg();
+  ok(noCel.length === 1, "a linha do Mac chegou ao celular pelo Realtime", noCel.length);
+  ok(noCel[0].projId === "a01" && noCel[0].subId === "s1", "com o endereco certo", noCel[0]);
+  ok(noCel[0].para === 2 && noCel[0].de === 0, "e o de/para inteiro");
+  ok(noCel[0].motivo === "com razao", "e com o motivo, e nao com um rotulo", noCel[0].motivo);
+  ok(!!noCel[0].tid, "a linha recebida guarda o tid — e por ele que ela nao repete");
+
+  /* APPEND-ONLY: fechar de novo nao substitui, acrescenta. */
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento"}, 2, 1);
+  await A.SYNC.drenarFila();
+  ok(srv.registros.length === 2, "o recuo virou OUTRA linha, e nao uma correcao da primeira",
+     srv.registros.length);
+  ok(B.getReg().length === 2, "e as duas estao no celular");
+  ok(B.getReg().filter(o => o.para === 1).length === 1, "inclusive o recuo");
+
+  /* ORDEM POR DATA DE ORIGEM, e nao por ordem de chegada. */
+  const antiga = {id: "2020-01-01T00-00-00-000Z-tablet", dono: "dono-1", d: "2020-01-01",
+                  pid: "leituras", proj_id: "l1", sub_id: "x1", proj_t: "Spinoza", sub_t: "Etica",
+                  de: null, para: 2, vida: "ativo", motivo: "", aparelho: "tablet",
+                  servidor_em: "2030-09-01T00:00:00.000Z"};
+  const renders = B.aplicarRegistroOnline(antiga);
+  const reg = B.getReg();
+  ok(reg.length === 3 && reg[0].subId === "x1",
+     "uma linha de 2020 entra NA FRENTE, e nao no fim da lista", reg.map(o => o.d));
+  ok(JSON.stringify(renders) === JSON.stringify(["renderRegistro", "renderSemana", "renderVistaRevisao"]),
+     "e pede os tres renders que leem o registro", renders);
+}
+
+console.log("\n=== 57. Nao duplica: por id, por aparelho, e entre os dois caminhos (9D.3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento"}, 0, 2);
+  await A.SYNC.drenarFila();
+  const linha = JSON.parse(JSON.stringify(srv.registros[0]));
+  ok(B.getReg().length === 1, "chegou uma vez");
+
+  /* 1. Reler a mesma linha (delta com sobreposicao) nao repete. */
+  ok(B.aplicarRegistroOnline(linha).length === 0, "reaplicar a MESMA linha nao devolve render");
+  ok(B.getReg().length === 1, "e nao cria segunda copia");
+  await B.SYNC.buscarDeltaRegistro();
+  ok(B.getReg().length === 1, "nem o delta com sobreposicao de 30s");
+
+  /* 2. Eco proprio: quem escreveu ja tem a linha. */
+  const eco = A.SYNC.aplicarRegistroRemoto(linha);
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "toque meu nao desce nunca", eco);
+  ok(A.getReg().length === 1, "e o Mac continua com uma linha so");
+
+  /* 3. A PONTE ENTRE OS DOIS CAMINHOS. O mesmo toque, agora chegando pelo
+        estado.json: o tid ja esta visto, entao a descida legada o ignora. */
+  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
+  const vistos = {};
+  B.getReg().forEach(o => { if (o && o.tid) vistos[o.tid] = true; });
+  ok(vistos[toque.id] === true,
+     "a linha que desceu pelo Supabase ja esta vista pelo criterio do estado.json");
+
+  /* 4. Receber nao e tocar. */
+  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  A.logar("leituras", {id: "l1", t: "Spinoza"}, {id: "s9", t: "Etica II"}, 1, 2);
+  await A.SYNC.drenarFila();
+  ok(B.getReg().length === 2, "a segunda linha chegou ao celular");
+  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
+     B.getToques().length - toquesB);
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
+
+  /* 5. Reenviar o mesmo item, depois de uma drenagem que caiu no meio, e
+        silencio — e nao erro que trava a fila. */
+  const item = A.SYNC.registrar(
+    {d: "2026-09-09", pid: "pipeline", projId: "a01", subId: "s1", para: 2},
+    {id: srv.registros[0].id});
+  const r = await A.SYNC.drenarFila();
+  ok(!r.falha, "reenviar id ja gravado nao e falha", r.falha);
+  ok(srv.repetidos === 1, "o servidor o descartou pela chave primaria", srv.repetidos);
+  ok(A.SYNC.situacao().fila === 0, "e a fila nao travou", A.SYNC.situacao().fila);
+}
+
+console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  /* A fila e a MESMA, e a garantia de offline tambem. */
+  srv.falhar = true;
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento"}, 0, 2);
+  ok(A.getReg().length === 1, "sem rede, a linha vale na hora no Mac");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "e espera na fila", A.SYNC.situacao().fila);
+
+  srv.falhar = false;
+  B.logar("leituras", {id: "l1", t: "Spinoza"}, {id: "s9", t: "Etica"}, 1, 2);
+  await B.SYNC.drenarFila();
+  ok(A.getReg().length === 1, "o Mac ainda nao sabe da linha do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(A.getReg().length === 2, "o delta do registro trouxe a linha do celular");
+  ok(A.SYNC.situacao().fila === 0, "e a fila do Mac subiu depois", A.SYNC.situacao().fila);
+  ok(B.getReg().length === 2, "e o celular recebeu a do Mac");
+  ok(srv.registros.length === 2, "duas linhas no servidor, nenhuma perdida");
+
+  /* MARCA PROPRIA: uma marca so faria a entrega de uma tabela adiantar o
+     ponto de partida da outra. */
+  const est = A.__armazem[A.SYNC_MARCA_KEY], reg = A.__armazem[A.SYNC_MARCA_REG_KEY];
+  ok(A.SYNC_MARCA_REG_KEY === "cron:sync-marca-reg", "o registro tem marca propria",
+     A.SYNC_MARCA_REG_KEY);
+  ok(!!reg, "e ela avancou com a entrega do registro", reg);
+  ok(est !== reg, "as duas marcas sao independentes", {estado: est, registro: reg});
+
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const sync = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "15-sync.js"), "utf8");
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  /* UM ESCRITOR. */
+  ok((nucleo.match(/SYNC\.registrar\(/g) || []).length === 1,
+     "ha UM unico ponto que escreve registro online");
+  ok((nucleo.match(/enfileirarToque\("registro"/g) || []).length === 1,
+     "e UM unico enfileirarToque de registro");
+  ok(/enfileirarToque\("registro"[\s\S]{0,600}?SYNC\.registrar\(/.test(corpoDe(nucleo, "logar")),
+     "os dois no MESMO ato, dentro do logar()");
+  ok((render.match(/SYNC\.registrar\(/g) || []).length === 0,
+     "e nada no 30-render.js escreve registro por fora");
+
+  /* UMA FORMULA PARA O ID, que e o que faz a ponte funcionar. */
+  ok((nucleo.match(/replace\(\/\[:\.\]\/g,"-"\) \+ "-" \+ aparelhoId\(\)/g) || []).length === 1,
+     "ha UMA formula do id do toque, e nao duas");
+  ok(/id: idDoToque\(iso\)/.test(corpoDe(nucleo, "enfileirarToque")),
+     "o enfileirarToque a usa");
+  ok(/idDoToque\(iso\)/.test(corpoDe(nucleo, "logar")), "e o registro online tambem");
+
+  /* NAO E DOMINIO DO cron_estado: o CHECK do Postgres nao o conhece. */
+  const dominios = A.SINCRONIA.DOMINIOS;
+  ok(dominios.indexOf("registro") < 0,
+     "`registro` NAO entrou na lista de dominios do cron_estado", dominios);
+  ok(/assinarRegistro\(aplicarRegistroOnline\)/.test(app),
+     "ele tem caminho proprio, registrado pelo assinarRegistro");
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "triagem"]),
+     "e os cinco dominios de estado seguem os mesmos cinco", assinados);
+
+  /* SEM MERGE, SEM RELOGIO, SEM LAPIDE — e a ausencia e o desenho. */
+  const corpo = corpoDe(nucleo, "aplicarRegistroOnline");
+  ok(!/venceRemoto|mesclar|\bdel\b/.test(corpo),
+     "o aplicador do registro nao tem relogio, merge nem lapide");
+  ok(/tid === linha\.id/.test(corpo), "a unica pergunta e se o id ja esta aqui");
+  ok(/REG_TETO/.test(corpo) && /registro-arquivo/.test(corpo),
+     "e o teto e o arquivo do excedente sao os mesmos do logar()");
+
+  /* OS RENDERS, cada um comprovado no arquivo que o justifica. */
+  ok(/renderRegistro/.test(corpoDe(render, "renderTrilhos")),
+     "   renderRegistro desenha o painel");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  ok(/getReg\(\)/.test(corpoDe(regras, "ritmoDoRegistro")) &&
+     /ritmoDoRegistro/.test(corpoDe(render, "renderSemana")),
+     "   renderSemana le o registro pelo ritmoDoRegistro");
+  ok(/getReg\(\)/.test(corpoDe(regras, "revisaoDaSemana")),
+     "   e a revisao da semana tambem le");
+
+  /* O CAMINHO LEGADO CONTINUA INTEIRO. */
+  ok(/est\.historico/.test(nucleo) && /t\.tipo !== "registro"/.test(nucleo),
+     "a descida pelo estado.json continua onde estava");
+  ok(/function semMotivo/.test(nucleo) && /semMotivo\(linha\)/.test(nucleo),
+     "e o semMotivo continua cortando o motivo do caminho publico");
+  ok((sync.match(/TABELA_REGISTRO/g) || []).length >= 4,
+     "a camada fala com cron_registro em leitura, delta, Realtime e escrita");
+  ok(/ignoreDuplicates:true/.test(sync.replace(/\s/g, "")),
+     "e escreve com ON CONFLICT DO NOTHING — a tabela nao da UPDATE ao app");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

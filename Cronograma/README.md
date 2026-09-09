@@ -1485,6 +1485,106 @@ dia**, porque o bloco de retomadas está sempre no Hoje.
 
 `teste_sync.js`, seções 51 a 54.
 
+### 9D (3 de 5) — Registro datado online
+
+O **sexto domínio** a sair do caminho legado, e o primeiro que **não é um
+domínio do `cron_estado`**. Rotinas e dispensas continuam legadas.
+
+#### Por que ele tem tabela própria
+
+O registro **não é estado corrente**. Não existe "vence o mais recente" para
+ele: cada linha vale por si e a lista só cresce. As três peças que governam
+todos os outros domínios — o relógio, o cache e a lápide — existem para decidir
+entre *versões do mesmo fato*, e aqui não há versões. Fechar uma etapa e depois
+recuá-la são **dois fatos**, e os dois ficam.
+
+Por isso a linha vai para `cron_registro`, que já existia desde a 9A, e por isso
+ela **não passa** pelo `salvarAlteracao`, pelo `aplicarRemoto` nem pelo
+`assinarDominio`. `registro` não está — e não deve estar — na lista de domínios
+do `SINCRONIA.DOMINIOS`: o `CHECK` do Postgres na `cron_estado` não o conhece.
+
+| | estado corrente | registro datado |
+|---|---|---|
+| tabela | `cron_estado` | `cron_registro` |
+| chave | `(dono, domínio, chave)` | `(dono, id do toque)` |
+| relógio | `em`, LWW por aparelho | não tem |
+| lápide | `del` | não tem |
+| escrita | `upsert` | `insert ... on conflict do nothing` |
+| assinatura | `SYNC.assinarDominio` | `SYNC.assinarRegistro` |
+
+#### A chave é o id do toque, e é isso que faz os dois caminhos conviverem
+
+A linha em `cron_registro` tem como chave primária **o mesmo id do toque** que o
+caminho do GitHub grava em `tid` ao receber pelo `historico`. Consequência: uma
+linha que desceu pelo Supabase **já está vista** quando o `estado.json` trouxer
+o mesmo toque, e vice-versa. Os dois caminhos convivem até a 9G sem duplicar
+linha, e sem precisarem saber um do outro — a chave basta.
+
+Para isso a fórmula do id saiu de dentro do `enfileirarToque` e virou
+`idDoToque(iso)`, usada pelos dois. Duas fórmulas iguais em dois lugares seriam
+uma divergência esperando acontecer.
+
+#### O motivo viaja — e só por aqui
+
+O `semMotivo()` corta o motivo do toque porque **aquele** repositório é público e
+nunca podado. A razão é do repositório, não do registro. Esta base é privada, a
+coluna `motivo` foi criada para isto na 9A, e não mandá-la custaria informação: o
+caminho legado ao menos avisa que *existe* um motivo do outro lado
+("motivo registrado no outro aparelho"), e o online, com a coluna vazia, avisaria
+**menos** do que o legado. O rótulo continua sendo do caminho do GitHub, onde ele
+é a única coisa que dá para dizer.
+
+#### Uma fila, duas marcas
+
+A subida do registro entra na **mesma fila** (`cron:sync-fila`), com a mesma
+drenagem, o mesmo corte por id e o mesmo teto. Duas filas seriam dois mecanismos
+de offline, e o segundo seria o que ninguém exercita. O ponto de entrada virou
+um só, `syncEnfileirar()`.
+
+A **marca de entrega**, ao contrário, é própria: `cron:sync-marca-reg`. O
+`servidor_em` de `cron_registro` e o de `cron_estado` são sequências
+independentes; uma marca só faria a entrega de uma tabela adiantar o ponto de
+partida da outra, e o catch-up da segunda pularia o que ficasse entre as duas
+leituras.
+
+O Realtime, esse sim, é **um canal só** com dois `.on`: um canal por tabela
+seriam dois WebSockets a manter de pé, dois a morrer no segundo plano do Safari
+e dois a reconectar, sem nada a ganhar.
+
+#### `on conflict do nothing`, e não um upsert
+
+O `grant` da `cron_registro` é `select, insert` — sem `update`, de propósito:
+linha de histórico não se reescreve. Um upsert de verdade seria negado pelo
+Postgres. E reenviar a mesma linha depois de uma drenagem que caiu no meio tem
+de ser **silêncio**, não erro: um erro ali travaria a fila para sempre no mesmo
+item.
+
+#### Os três renders
+
+| | Por quê |
+|---|---|
+| `renderRegistro` | é o painel do registro, dentro de Trilhos |
+| `renderSemana` | chama `ritmoDoRegistro()`, que lê `getReg()` |
+| `renderVistaRevisao` | `revisaoDaSemana` lê `getReg()` |
+
+São **três**, e não o `renderRegistro` sozinho que a descida legada chama. A
+assimetria do caminho legado é anterior a esta fase e não foi tocada.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: a `cron_registro`, suas políticas, seu
+`grant` e sua entrada na publicação do Realtime existem desde a 9A. Nada
+aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 55 a 58. O Supabase de mentira ganhou a segunda tabela,
+com a chave primária de verdade, e **recusa** um upsert em `cron_registro` que
+não peça `on conflict do nothing` — um servidor de teste mais permissivo do que
+o real não prova nada. O canal falso passou a guardar um callback por tabela:
+guardar só o último faria o teste do registro passar e o do estado sumir sem
+ninguém perceber.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1748,7 +1848,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9C-4 — título de evento privado no caminho online | concluída |
 | 9D.1 — Triagem das Vagas online | concluída |
 | 9D.2 — Retomadas silenciadas online | concluída |
-| 9D.3 a 9D.5 — registro, rotinas, dispensas | não iniciadas |
+| 9D.3 — Registro datado online (tabela própria) | concluída |
+| 9D.4 e 9D.5 — rotinas, dispensas | não iniciadas |
 | 9E a 9G — trilhos, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado

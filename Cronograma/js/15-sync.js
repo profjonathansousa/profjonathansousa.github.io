@@ -23,6 +23,7 @@ var SYNC_CLI         = null;   /* cliente do SDK, ou null */
 var SYNC_CANAL       = null;   /* canal Realtime, ou null */
 var SYNC_DONO        = null;   /* uuid do usuário autenticado */
 var SYNC_APLICADORES = {};     /* dominio -> function(linha) -> [nomes de render] */
+var SYNC_APLICADOR_REG = null; /* function(linha do cron_registro) -> [renders] */
 var SYNC_PEDIDOS     = {};     /* nomes de render acumulados */
 var SYNC_TIMER       = null;
 var SYNC_DRENANDO    = false;
@@ -54,6 +55,8 @@ function syncCache(){ var v = LS(SYNC_CACHE_KEY, {}); return (v && typeof v === 
 function syncSalvarCache(c){ save(SYNC_CACHE_KEY, c); }
 function syncMarca(){ return LS(SYNC_MARCA_KEY, "") || ""; }
 function syncSalvarMarca(m){ if(m && m > syncMarca()) save(SYNC_MARCA_KEY, m); }
+function syncMarcaReg(){ return LS(SYNC_MARCA_REG_KEY, "") || ""; }
+function syncSalvarMarcaReg(m){ if(m && m > syncMarcaReg()) save(SYNC_MARCA_REG_KEY, m); }
 
 /* O ␟ é o mesmo separador do chaveTitulo() no 10-nucleo.js, e pela mesma razão:
    não aparece em id nenhum, então a chave composta nunca é ambígua. */
@@ -188,6 +191,15 @@ SYNC.salvarAlteracao = function(dominio, chave, valor, opts){
     {valor:item.valor, del:item.del, em:em, aparelho:item.aparelho};
   syncSalvarCache(cache);
 
+  syncEnfileirar(item);
+  return item;
+};
+
+/* UMA FILA, e por isso um lugar só onde se entra nela. O estado corrente e o
+   registro datado vão para tabelas diferentes, mas a garantia de que uma
+   decisão tomada sem rede não se perde é a MESMA garantia — e duas
+   implementações dela seriam duas, das quais só uma estaria testada. */
+function syncEnfileirar(item){
   var fila = syncFila();
   fila.push(item);
   /* Mesmo desenho do TOQUES_TETO: o que passa do teto não é descartado. */
@@ -197,10 +209,9 @@ SYNC.salvarAlteracao = function(dominio, chave, valor, opts){
     save("cron:sync-fila-excedente", (LS("cron:sync-fila-excedente", []) || []).concat(sobra));
   }
   syncSalvarFila(fila);
-
   SYNC.agendarDrenagem();
   return item;
-};
+}
 
 /* AGENDAR, E NAO DRENAR NA HORA. Duas razões:
 
@@ -273,6 +284,7 @@ SYNC.drenarFila = function(){
 
 SYNC.persistir = function(it){
   if(!SYNC.pronto()) return Promise.resolve({ok:false, erro:"sem sessão"});
+  if(it && it.tabela === "registro") return SYNC.persistirRegistro(it);
   return SYNC_CLI.from(SINCRONIA.TABELA).upsert({
     dono: SYNC_DONO, dominio: it.dominio, chave: it.chave,
     valor: it.valor, del: it.del, em: it.em,
@@ -345,6 +357,159 @@ SYNC.buscarDelta = function(){
     });
 };
 
+/* ==================== O REGISTRO DATADO (Fase 9D.3) ====================
+   Segunda tabela, e não um domínio a mais — porque o registro NÃO É ESTADO
+   CORRENTE. Não existe "vence o mais recente" para ele: cada linha vale por si
+   e a lista só cresce. Por isso ele não passa pelo relógio, não passa pelo
+   cache e não tem lápide: as três coisas existem para decidir entre versões do
+   MESMO fato, e aqui não há versões. Fechar a mesma etapa duas vezes são dois
+   fatos, e os dois ficam.
+
+   O QUE ELE COMPARTILHA COM O ESTADO, de propósito: a MESMA fila, a mesma
+   drenagem, o mesmo corte por id e o mesmo teto. Uma decisão tomada sem rede
+   tem de sobreviver do mesmo jeito nos dois casos, e duas filas seriam dois
+   mecanismos de offline — o segundo sendo o que ninguém exercita.
+
+   A CHAVE É O ID DO TOQUE, o mesmo que o caminho do GitHub grava em `tid`
+   quando recebe pelo `historico`. É isso, e só isso, que faz os dois caminhos
+   conviverem até a Fase 9G sem duplicar linha: o que desceu por aqui já está
+   visto quando o estado.json trouxer o mesmo toque, e vice-versa. */
+SYNC.assinarRegistro = function(fn){ SYNC_APLICADOR_REG = fn; };
+
+/* A subida. Recebe a MESMA linha que o logar() acabou de gravar em
+   cron:registro — uma fonte, três consumidores agora (o armazenamento, o toque
+   e a tabela) — e o id do toque que a acompanha. */
+SYNC.registrar = function(linha, opts){
+  opts = opts || {};
+  if(!linha || !linha.subId) throw new Error("registro sem subitem");
+  if(!opts.id) throw new Error("registro sem id de toque");
+  var item = {
+    id: String(opts.id),
+    tabela: "registro",
+    d: linha.d,
+    pid: linha.pid, proj_id: linha.projId, sub_id: linha.subId,
+    proj_t: linha.projT || "", sub_t: linha.subT || "",
+    de: (linha.de === undefined || linha.de === null) ? null : linha.de,
+    para: linha.para,
+    vida: linha.vida || "ativo",
+    /* O MOTIVO VIAJA, e só por aqui. O semMotivo() do caminho do GitHub existe
+       porque AQUELE repositório é público e nunca podado — a razão é do
+       repositório, não do registro. Esta base é privada e a coluna foi feita
+       para isto (ver sql/cron_estado.sql). Não mandá-lo custaria informação: o
+       caminho legado ao menos avisa que existe um motivo do outro lado, e o
+       online, sem a coluna, avisaria menos do que o legado. */
+    motivo: linha.motivo || "",
+    aparelho: aparelhoId()
+  };
+  syncEnfileirar(item);
+  return item;
+};
+
+/* ON CONFLICT DO NOTHING, e não um upsert de verdade. Duas razões, e as duas
+   são de correção:
+     · a tabela dá ao aplicativo `select, insert` e mais nada (ver o grant no
+       sql/cron_estado.sql). Um upsert que caísse no UPDATE seria negado;
+     · linha de histórico não se reescreve. Reenviar a mesma, depois de uma
+       drenagem que caiu no meio, tem de ser silêncio — e não erro, senão a
+       fila trava para sempre no mesmo item. */
+SYNC.persistirRegistro = function(it){
+  return SYNC_CLI.from(SINCRONIA.TABELA_REGISTRO).upsert({
+    id: it.id, dono: SYNC_DONO, d: it.d,
+    pid: it.pid, proj_id: it.proj_id, sub_id: it.sub_id,
+    proj_t: it.proj_t, sub_t: it.sub_t,
+    de: it.de, para: it.para, vida: it.vida,
+    motivo: it.motivo, aparelho: it.aparelho
+  }, {onConflict:"dono,id", ignoreDuplicates:true}).then(function(r){
+    if(r && r.error) return {ok:false, erro:r.error.message || String(r.error)};
+    return {ok:true};
+  }, function(e){
+    return {ok:false, erro:String((e && e.message) || e)};
+  });
+};
+
+/* A descida. Mesma forma do aplicarRemoto e pela mesma razão — roda dentro de
+   um ouvinte de WebSocket e não pode lançar —, mas com três passos a menos: não
+   há relógio a consultar nem cache a atualizar, e a lápide não existe.
+
+   A MARCA AVANÇA ANTES DA RECUSA DE ECO, exatamente como lá: uma linha
+   recusada por ser minha foi ENTREGUE do mesmo jeito, e uma marca que não
+   avançasse deixaria o catch-up rebuscando o mesmo trecho para sempre. */
+SYNC.aplicarRegistroRemoto = function(linha){
+  if(!linha || !linha.id) return {aplicou:false, motivo:"linha sem id"};
+  if(SYNC_DONO && linha.dono && linha.dono !== SYNC_DONO) return {aplicou:false, motivo:"dono alheio"};
+
+  syncSalvarMarcaReg(linha.servidor_em);
+
+  /* TOQUE MEU NÃO DESCE NUNCA — a regra que o caminho do GitHub já tinha, aqui
+     pela mesma razão: quem escreveu a linha já a tem em cron:registro, por
+     construção do logar(). A dedupe por id no aplicador segura o resto; esta é
+     a primeira das duas camadas, como no estado. */
+  if(SYNC.ecoProprio(linha)) return {aplicou:false, motivo:"eco do próprio aparelho"};
+
+  if(!SYNC_APLICADOR_REG) return {aplicou:false, motivo:"sem aplicador"};
+  try{
+    var renders = SYNC_APLICADOR_REG(linha) || [];
+    if(!renders.length) return {aplicou:false, motivo:"já conhecida"};
+    SYNC.pedirRender(renders);
+    return {aplicou:true, motivo:""};
+  }catch(e){
+    try{ console.error("sync: aplicador do registro falhou:", e); }catch(e2){}
+    return {aplicou:false, motivo:"aplicador falhou"};
+  }
+};
+
+/* A leitura inicial, página a página — anos de histórico não cabem num pedido
+   só, e este é justamente o domínio que mais cresce. */
+SYNC.carregarRegistro = function(){
+  if(!SYNC.pronto()) return Promise.resolve({lidas:0, motivo:"sem sessão"});
+  var lidas = 0, aplicadas = 0;
+  var pagina = function(de){
+    return SYNC_CLI.from(SINCRONIA.TABELA_REGISTRO).select("*")
+      .eq("dono", SYNC_DONO)
+      .order("servidor_em", {ascending:true})
+      .range(de, de + SINCRONIA.LOTE - 1)
+      .then(function(r){
+        if(r && r.error) throw new Error(r.error.message || String(r.error));
+        var linhas = (r && r.data) || [];
+        linhas.forEach(function(l){ lidas++; if(SYNC.aplicarRegistroRemoto(l).aplicou) aplicadas++; });
+        if(linhas.length === SINCRONIA.LOTE) return pagina(de + SINCRONIA.LOTE);
+        return null;
+      });
+  };
+  return pagina(0).then(function(){
+    return {lidas:lidas, aplicadas:aplicadas};
+  }, function(e){
+    SYNC_SITUACAO = "offline";
+    SYNC_ULTIMO_ERRO = String((e && e.message) || e);
+    return {lidas:lidas, aplicadas:aplicadas, erro:SYNC_ULTIMO_ERRO};
+  });
+};
+
+/* O catch-up do registro, com a mesma sobreposição de 30s e pela mesma razão:
+   ordem de commit não é ordem de servidor_em. Reler não custa — o aplicador
+   reconhece pelo id o que já entrou. */
+SYNC.buscarDeltaRegistro = function(){
+  if(!SYNC.pronto()) return Promise.resolve({lidas:0, motivo:"sem sessão"});
+  var marca = syncMarcaReg();
+  if(!marca) return SYNC.carregarRegistro();
+  var desde = new Date(new Date(marca).getTime() - SINCRONIA.SOBREPOSICAO).toISOString();
+  var lidas = 0, aplicadas = 0;
+  return SYNC_CLI.from(SINCRONIA.TABELA_REGISTRO).select("*")
+    .eq("dono", SYNC_DONO).gte("servidor_em", desde)
+    .order("servidor_em", {ascending:true})
+    .then(function(r){
+      if(r && r.error) throw new Error(r.error.message || String(r.error));
+      ((r && r.data) || []).forEach(function(l){
+        lidas++; if(SYNC.aplicarRegistroRemoto(l).aplicou) aplicadas++;
+      });
+      return {lidas:lidas, aplicadas:aplicadas, desde:desde};
+    }, function(e){
+      SYNC_SITUACAO = "offline";
+      SYNC_ULTIMO_ERRO = String((e && e.message) || e);
+      return {lidas:lidas, aplicadas:aplicadas, erro:SYNC_ULTIMO_ERRO};
+    });
+};
+
 /* ==================== REALTIME ==================== */
 SYNC.assinarMudancas = function(){
   if(!SYNC.pronto()) return Promise.resolve({assinado:false, motivo:"sem sessão"});
@@ -360,6 +525,17 @@ SYNC.assinarMudancas = function(){
           if(!l) return;
           SYNC.aplicarRemoto(l);
         })
+    /* Fase 9D.3: a segunda tabela entra no MESMO canal. Um canal por tabela
+       seriam dois WebSockets a manter de pé, dois a cair no segundo plano do
+       Safari e dois a reconectar — e nada a ganhar: o Realtime já entrega
+       eventos de tabelas diferentes pelo mesmo. */
+    .on("postgres_changes",
+        {event:"*", schema:"public", table:SINCRONIA.TABELA_REGISTRO, filter:"dono=eq." + SYNC_DONO},
+        function(msg){
+          var l = msg && (msg.new || msg.record);
+          if(!l) return;
+          SYNC.aplicarRegistroRemoto(l);
+        })
     .subscribe(function(status){
       if(status === "SUBSCRIBED"){
         SYNC_SITUACAO = "pronto";
@@ -367,6 +543,7 @@ SYNC.assinarMudancas = function(){
            canal ficar de pé há uma janela em que uma mudança do outro aparelho
            não é nem lida nem recebida. Um delta logo após assinar a fecha. */
         SYNC.buscarDelta();
+        SYNC.buscarDeltaRegistro();
       } else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){
         SYNC_SITUACAO = "offline";
         SYNC.agendarReconexao();
@@ -391,6 +568,7 @@ SYNC.reconectar = function(forcar){
   SYNC_ULTIMA_RECONEXAO = agora;
   return SYNC.assinarMudancas()
     .then(function(){ return SYNC.buscarDelta(); })
+    .then(function(d){ return SYNC.buscarDeltaRegistro().then(function(){ return d; }); })
     .then(function(d){
       return SYNC.drenarFila().then(function(f){
         if(!d.erro && !f.falha) SYNC_SITUACAO = "pronto";
@@ -610,6 +788,7 @@ SYNC.iniciar = function(){
       if(!s.dono) return {ligado:false, motivo:s.erro || "sem sessão"};
       SYNC.ouvir();
       return SYNC.carregarEstado()
+        .then(function(){ return SYNC.carregarRegistro(); })
         .then(function(){ return SYNC.assinarMudancas(); })
         .then(function(){ return SYNC.drenarFila(); })
         .then(function(){

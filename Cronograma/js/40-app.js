@@ -164,10 +164,16 @@ catch(e){ console.error("sincronia: dominio evento:", e); }
    dispensas continuam LEGADOS. */
 try{ SYNC.assinarDominio("triagem", aplicarTriagemOnline); }
 catch(e){ console.error("sincronia: dominio triagem:", e); }
-/* Fase 9D (2 de 5): as retomadas silenciadas. Registro, rotinas e dispensas
-   continuam LEGADOS. */
+/* Fase 9D (2 de 5): as retomadas silenciadas. Rotinas e dispensas continuam
+   LEGADAS. */
 try{ SYNC.assinarDominio("retomada", aplicarRetomadaOnline); }
 catch(e){ console.error("sincronia: dominio retomada:", e); }
+/* Fase 9D (3 de 5): o registro datado. NAO e assinarDominio, e nao por
+   distracao: o registro nao mora em cron_estado — tem tabela propria, e a
+   camada trata os dois caminhos separados porque as regras sao outras (nao ha
+   relogio nem lapide para historico). Rotinas e dispensas continuam LEGADAS. */
+try{ SYNC.assinarRegistro(aplicarRegistroOnline); }
+catch(e){ console.error("sincronia: registro datado:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

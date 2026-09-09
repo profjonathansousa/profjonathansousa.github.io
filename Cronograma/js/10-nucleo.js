@@ -727,6 +727,14 @@ function instanteDoToque(quandoISO){
   return ms;
 }
 
+/* O ID DE UM TOQUE, numa formula so. Ate a Fase 9D.3 ele era construido dentro
+   do enfileirarToque e nao saia de la; agora o registro online usa o MESMO id
+   como chave primaria em cron_registro, e e essa coincidencia que faz os dois
+   caminhos de descida — GitHub e Supabase — reconhecerem a mesma linha e nao
+   duplicarem. Duas formulas iguais em dois lugares seriam uma divergencia
+   esperando acontecer. */
+function idDoToque(iso){ return String(iso).replace(/[:.]/g,"-") + "-" + aparelhoId(); }
+
 /* Hora de verdade, não a do carregamento da página: o `now` do topo é fixado
    quando o app abre, e um celular que passa a noite aberto carimbaria ontem.
 
@@ -742,7 +750,7 @@ function enfileirarToque(tipo, dados, quandoISO){
   var iso = new Date(instanteDoToque(quandoISO)).toISOString();
   var f = getToques();
   f.push({ v:TOQUES_SCHEMA,
-           id: iso.replace(/[:.]/g,"-") + "-" + aparelhoId(),
+           id: idDoToque(iso),
            quando: iso,
            aparelho: aparelhoId(),
            app: APP_VERSION,
@@ -969,8 +977,73 @@ function logar(pid, proj, sub, de, para){
   }
   save("cron:registro", r);
   /* A fila leva a MESMA linha que o registro guarda: uma fonte, dois
-     consumidores. Se um dia o registro mudar de forma, o toque muda junto. */
-  enfileirarToque("registro", semMotivo(linha));
+     consumidores. Se um dia o registro mudar de forma, o toque muda junto.
+     Fase 9D.3: sao tres consumidores, e continua sendo uma fonte. */
+  var iso = enfileirarToque("registro", semMotivo(linha));       /* legado: intacto */
+  /* O MESMO id do toque vira a chave primaria da linha em cron_registro. Nao e
+     economia: e o que impede a mesma etapa de virar duas linhas quando ela
+     descer pelos dois caminhos, que e o que vai acontecer ate a Fase 9G. */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.registrar(linha, {id: idDoToque(iso)});
+    }
+  }catch(e){ try{ console.error("sync: registro nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+
+/* A descida do registro pelo caminho online (Fase 9D.3).
+
+   NAO HA MESCLA, e a ausencia dela e o desenho: o registro nao e estado
+   corrente. Nao existe versao mais nova de uma linha de historico — existe
+   outra linha. Por isso aqui nao ha relogio, nao ha lapide e nao ha LWW: ha
+   uma pergunta so, "esta linha ja esta aqui?", e a resposta e o id do toque.
+
+   E O MESMO `tid` DO CAMINHO DO GITHUB. Uma linha que entrou por aqui ja tem
+   tid, entao a descida do estado.json a reconhece e nao a repete; uma que
+   entrou por la ja tem tid, entao esta a reconhece e nao a repete. Os dois
+   caminhos convivem sem acordo entre eles, so pela chave.
+
+   RECEBER NAO E TOCAR: nao chama logar(), nao enfileira toque e nao reescreve
+   online. Um logar() aqui subiria de volta o que acabou de descer. */
+function aplicarRegistroOnline(linha){
+  if(!linha || !linha.id || !linha.sub_id || !linha.d) return [];
+  var reg = getReg();
+  for(var i = 0; i < reg.length; i++){
+    if(reg[i] && reg[i].tid === linha.id) return [];
+  }
+  var nova = {d: String(linha.d).slice(0, 10),
+              pid: linha.pid, projId: linha.proj_id, subId: linha.sub_id,
+              projT: linha.projT || linha.proj_t || "",
+              subT: linha.subT || linha.sub_t || "",
+              de: (linha.de === undefined || linha.de === null) ? null : linha.de,
+              para: linha.para,
+              vida: linha.vida || "ativo",
+              /* O motivo vem inteiro: a base e privada e a coluna existe. O
+                 rotulo "motivo registrado no outro aparelho" continua sendo do
+                 caminho do GitHub, onde ele e a unica coisa que da para dizer. */
+              motivo: linha.motivo || "",
+              tid: linha.id};
+  /* Ordena por `d`, a data de origem, e nao pela de chegada: uma linha do
+     celular de ontem entra ANTES da que este aparelho escreveu hoje. A
+     ordenacao e estavel, entao dentro do mesmo dia o que ja estava aqui
+     continua na frente — mesma regra da descida pelo estado.json. */
+  var todas = reg.concat([nova]);
+  todas.sort(function(a, b){
+    var x = (a && a.d) || "", y = (b && b.d) || "";
+    return x < y ? -1 : (x > y ? 1 : 0);
+  });
+  /* Mesmo teto do logar(), e mesmo destino para o excedente: o registro so
+     cresce, mas nada e descartado. */
+  if(todas.length > REG_TETO){
+    save("cron:registro-arquivo",
+         (LS("cron:registro-arquivo", []) || []).concat(todas.slice(0, todas.length - REG_TETO)));
+    todas = todas.slice(-REG_TETO);
+  }
+  save("cron:registro", todas);
+  /* Tres telas leem o registro, e nao uma: o painel (renderRegistro), o ritmo
+     semanal (ritmoDoRegistro, dentro do renderSemana) e a revisao da semana
+     (revisaoDaSemana). */
+  return ["renderRegistro", "renderSemana", "renderVistaRevisao"];
 }
 function escapeHtml(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 var VG_FILTRO = "abertas";

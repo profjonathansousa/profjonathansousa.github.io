@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-09-retomadas";
+const APP_VERSION = "2026-09-09-registro";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -779,6 +779,12 @@ const SINCRONIA = {
 const SYNC_FILA_KEY   = "cron:sync-fila";
 const SYNC_CACHE_KEY  = "cron:sync-cache";
 const SYNC_MARCA_KEY  = "cron:sync-marca";
+/* MARCA PROPRIA DO REGISTRO (Fase 9D.3). Duas tabelas, dois relogios de
+   entrega: o servidor_em de cron_registro e o de cron_estado sao sequencias
+   independentes. Uma marca so faria a entrega de uma tabela adiantar o
+   ponto de partida da outra, e o catch-up da segunda pularia o que ficou
+   entre as duas leituras. */
+const SYNC_MARCA_REG_KEY = "cron:sync-marca-reg";
 const SYNC_LIGADO_KEY = "cron:sync-ligado";
 /* FORA DO PREFIXO cron:, de proposito — ver o comentario no 15-sync.js. O
    backup exportado varre tudo que comeca com "cron:", e a sessao nao pode ir
