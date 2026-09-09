@@ -481,11 +481,17 @@ console.log("\n=== 12. O que continua local ===");
      "o cache guarda so o que passou pela camada", Object.keys(cache));
 }
 
-console.log("\n=== 13. Nenhum dominio foi conectado (criterio de parada de 9A) ===");
+console.log("\n=== 13. Dominios AINDA nao conectados nao tocam o estado local ===");
 {
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  /* Um evento de cada dominio: nada pode mexer no estado das telas. */
+  /* ESTA SECAO NASCEU NA 9A como "nenhum dominio foi conectado", e o seu
+     sentido evoluiu a cada fase: prioridade (9B), meta (9C-2), evento (9C-3) e
+     triagem (9D) passaram a escrever o proprio estado, de proposito. O que ela
+     guarda agora e o COMPLEMENTO — os dominios que ainda NAO foram conectados
+     continuam inertes, e a linha deles fica no cache esperando a fase que os
+     conectar. Ela quebra na hora em que alguem conectar um deles sem passar
+     por uma fase que o autorize. */
   const antes = {
     pipeline: A.__armazem["cron:pipeline"],
     toefl: A.__armazem["cron:toefl-guia"],
@@ -498,9 +504,12 @@ console.log("\n=== 13. Nenhum dominio foi conectado (criterio de parada de 9A) =
       aparelho: "celular", servidor_em: "2030-02-01T00:00:00.000Z"});
   });
   ok(A.__armazem["cron:pipeline"] === antes.pipeline, "cron:pipeline intacto");
-  ok(A.__armazem["cron:toefl-guia"] === antes.toefl, "cron:toefl-guia intacto");
-  ok(A.__armazem["cron:triagem"] === antes.triagem, "cron:triagem intacto");
-  ok(A.__armazem["cron:prioridades:2026-W37"] === antes.prio, "as prioridades intactas");
+  ok(A.__armazem["cron:toefl-guia"] === antes.toefl, "cron:toefl-guia intacto (toefl e 9D-futuro)");
+  /* A triagem SAIU desta lista na 9D: agora ela tem aplicador e escreve. */
+  ok(A.__armazem["cron:triagem"] !== antes.triagem,
+     "cron:triagem JA responde — conectada na 9D");
+  ok(A.__armazem["cron:prioridades:2026-W37"] === antes.prio,
+     "e a chave sem periodo nao vira prioridade (o aplicador exige AAAA-Wnn/id)");
   ok(Object.keys(JSON.parse(A.__armazem["cron:sync-cache"])).length === 11,
      "as onze linhas ficaram no cache, esperando 9B");
   ok(A.getToques().length === 0, "e nenhum toque foi gerado por nada disso");
@@ -971,10 +980,11 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
      (triagem, toefl, retomada, rotina, dispensa, item, estrutura_*) sao 9D. */
   const online = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade"]),
-     "12. prioridade, meta e evento escrevem online (9B, 9C-2, 9C-3)", online);
-  ok(["triagem","toefl","retomada","rotina","dispensa","item"].every(d => online.indexOf(d) < 0),
-     "    e nenhum dominio da 9D foi antecipado", online);
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "12. prioridade, meta, evento e triagem escrevem online (9B, 9C, 9D)", online);
+  ok(["toefl","retomada","rotina","dispensa","item","estrutura_proj","estrutura_sub"]
+       .every(d => online.indexOf(d) < 0),
+     "    e nenhum dominio ainda nao autorizado foi antecipado", online);
 }
 
 console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
@@ -1305,12 +1315,12 @@ console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
   const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const dominiosOnline = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["evento", "meta", "prioridade"]),
-     "13. os tres dominios da Fase 9C escrevem online", dominiosOnline);
+  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "13. os tres da Fase 9C mais a triagem da 9D", dominiosOnline);
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade"]),
-     "    e os tres tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "    e os quatro tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
@@ -1557,11 +1567,11 @@ console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ==
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const dominios = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominios) === JSON.stringify(["evento", "meta", "prioridade"]),
-     "prioridade, meta e evento escrevem online — e mais nenhum", dominios);
+  ok(JSON.stringify(dominios) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "prioridade, meta, evento e triagem escrevem online", dominios);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade"]),
-     "   e os tres tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "   e os quatro tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
@@ -1712,8 +1722,8 @@ console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
   const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade"]),
-     "L. continuam sendo tres dominios online", online);
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "L. quatro dominios online — a 9D acrescentou a triagem", online);
 }
 
 console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ===");
@@ -1746,6 +1756,198 @@ console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ==="
      "   e nao ha politica nenhuma para o papel anon");
   ok(/revoke all on public\.cron_estado\s+from anon;/.test(sql),
      "   com revoke explicito");
+}
+
+/* ================= FASE 9D (1 de 5) — A TRIAGEM DAS VAGAS ================= */
+const triagem  = (ap) => ap.vgTriagem();
+const stDe     = (ap, vid) => ap.vgEstado(vid);
+const linhaTri = (srv, vid) => srv.linhas.filter(l => l.dominio === "triagem" && l.chave === vid)[0];
+
+console.log("\n=== 46. Registrar, mudar e propagar a decisao (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const VAGA = "philjobs-31649";
+
+  ok(stDe(B, VAGA) === A.VG_ST.NOVO, "o celular comeca sem decisao sobre a vaga");
+
+  A.vgMarcar(VAGA, A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, VAGA) === A.VG_ST.SIM, "A. o Mac decidiu 'vou me candidatar'");
+  ok(stDe(B, VAGA) === A.VG_ST.SIM, "C. e a decisao chegou ao celular", stDe(B, VAGA));
+  ok(triagem(B)[VAGA].em === triagem(A)[VAGA].em,
+     "L. com o MESMO instante da decisao", triagem(B)[VAGA]);
+
+  const l = linhaTri(srv, VAGA);
+  ok(!!l && l.chave === VAGA, "M. a chave online e o ID DA VAGA", l && l.chave);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["st"]),
+     "N. e o valor leva SO a decisao — nada de veredicto", Object.keys(l.valor));
+
+  A.vgMarcar(VAGA, A.VG_ST.NAO);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, VAGA) === A.VG_ST.NAO && stDe(B, VAGA) === A.VG_ST.NAO,
+     "B. mudar a decisao propaga", stDe(B, VAGA));
+
+  /* Tocar de novo desmarca: st 0 e um VALOR, nao uma exclusao. */
+  A.vgMarcar(VAGA, A.VG_ST.NAO);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, VAGA) === A.VG_ST.NOVO, "   tocar de novo desmarca, como sempre");
+  ok(stDe(B, VAGA) === A.VG_ST.NOVO, "   e o desmarcar tambem viaja", stDe(B, VAGA));
+  ok(linhaTri(srv, VAGA).del === false,
+     "   sem lapide: descartar uma vaga nao a apaga do lote", linhaTri(srv, VAGA).del);
+}
+
+console.log("\n=== 47. Varias vagas, conflito, empate e eco (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  A.vgMarcar("vaga-1", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  B.vgMarcar("vaga-2", B.VG_ST.NAO);
+  await B.SYNC.drenarFila();
+  ok(stDe(A, "vaga-1") === 1 && stDe(A, "vaga-2") === 2,
+     "D. o Mac tem as duas decisoes", [stDe(A, "vaga-1"), stDe(A, "vaga-2")]);
+  ok(stDe(B, "vaga-1") === 1 && stDe(B, "vaga-2") === 2, "   e o celular tambem");
+  ok(srv.linhas.filter(l => l.dominio === "triagem").length === 2,
+     "   duas linhas no servidor, uma por vaga");
+
+  /* E/G. relogio: linha antiga recusada. */
+  const velha = {dono: "dono-1", dominio: "triagem", chave: "vaga-1",
+                 valor: {st: 2}, del: false, em: "2020-01-01T00:00:00.000Z",
+                 aparelho: "mac", servidor_em: "2030-08-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "G. a linha antiga e recusada", r);
+  ok(stDe(B, "vaga-1") === 1, "   e a decisao mais nova permanece");
+
+  /* F. empate fica como esta. */
+  const emAtual = triagem(B)["vaga-1"].em;
+  const lista = B.vgTriagem();
+  ok(B.mesclarTriagem(lista, "vaga-1", {quando: emAtual, st: 3}) === false,
+     "F. empate exato nao muda nada");
+  ok(B.mesclarTriagem(lista, "vaga-1", {quando: "2099-01-01T00:00:00.000Z", st: 3}) === true,
+     "E. mas o mais novo vence");
+
+  /* J+K. no-echo, e receber nao e tocar. */
+  const toquesB = B.getToques().length;
+  const filaB = B.SYNC.situacao().fila;
+  A.vgMarcar("vaga-3", A.VG_ST.ARQ);
+  await A.SYNC.drenarFila();
+  ok(stDe(B, "vaga-3") === 3, "   a terceira decisao chegou ao celular");
+  ok(B.getToques().length === toquesB, "K. e NAO gerou toque no celular",
+     B.getToques().length - toquesB);
+  ok(B.SYNC.situacao().fila === filaB, "   nem enfileirou envio de volta");
+  const eco = A.SYNC.aplicarRemoto(linhaTri(srv, "vaga-3"));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "J. e o eco proprio e recusado", eco);
+}
+
+console.log("\n=== 48. Offline, fila e delta antes da fila (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O Mac NAO assina: e o que "desconectado" quer dizer aqui. */
+
+  srv.falhar = true;
+  A.vgMarcar("vaga-X", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, "vaga-X") === 1, "H. sem rede, a decisao aparece na tela do Mac (otimista)");
+  ok(A.SYNC.situacao().fila === 1, "   e fica na fila", A.SYNC.situacao().fila);
+
+  srv.falhar = false;
+  B.vgMarcar("vaga-Y", B.VG_ST.NAO);
+  await B.SYNC.drenarFila();
+  ok(stDe(A, "vaga-Y") === 0, "   o Mac ainda nao sabe da decisao do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(stDe(A, "vaga-Y") === 2, "I. o delta de Y chegou ANTES de a fila de X subir",
+     stDe(A, "vaga-Y"));
+  ok(A.SYNC.situacao().fila === 0, "H. e so entao a fila subiu");
+  ok(stDe(B, "vaga-X") === 1, "   e o celular recebeu a do Mac");
+  ok(srv.linhas.filter(l => l.dominio === "triagem").length === 2,
+     "   nenhuma decisao foi perdida");
+}
+
+console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  /* N. veredicto e triagem sao eixos separados: o veredicto vem do coletor,
+     em dados/vagas.json, e nao passa por aqui. */
+  A.vgMarcar("vaga-Z", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  const l = linhaTri(srv, "vaga-Z");
+  ["veredicto", "t", "titulo", "prazo", "url", "novo", "urgente"].forEach(function (campo) {
+    ok(!(campo in l.valor), "N. `" + campo + "` nao viaja na triagem", Object.keys(l.valor));
+  });
+
+  /* O toque legado e o online carregam o mesmo instante e o mesmo payload. */
+  const toque = A.getToques().filter(t => t.tipo === "triagem").pop();
+  ok(toque.quando === l.em, "L. legado e online com o MESMO ISO",
+     {legado: toque.quando, online: l.em});
+  ok(toque.dados.vid === l.chave && toque.dados.st === l.valor.st,
+     "   e o mesmo payload", {legado: toque.dados, online: l.valor});
+  ok(typeof A.aplicarTriagemDoEstado === "function",
+     "   a descida pelo estado.json continua existindo");
+
+  /* O. nenhum dominio posterior da 9D/9E foi antecipado. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "O. quatro dominios online: os tres da 9C mais a triagem", online);
+  ok(["retomada", "rotina", "dispensa", "item", "estrutura_proj", "estrutura_sub"]
+       .every(d => online.indexOf(d) < 0),
+     "O. e nenhum dos proximos da 9D/9E foi antecipado", online);
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "triagem"]),
+     "   e os quatro tem aplicador registrado", assinados);
+}
+
+console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"triagem"/g) || []).length === 1,
+     "ha UM unico ponto que escreve triagem online");
+  /* Ate a 9D havia DOIS enfileirarToque de triagem: o vgMarcar e a migracao. */
+  const toquesRender = (render.match(/enfileirarToque\("triagem"/g) || []).length;
+  const toquesNucleo = (nucleo.match(/enfileirarToque\("triagem"/g) || []).length;
+  ok(toquesRender + toquesNucleo === 1,
+     "e UM unico enfileirarToque de triagem (a migracao passou a usar o funil)",
+     {render: toquesRender, nucleo: toquesNucleo});
+  ok(/migrarTriagemUmaVez[\s\S]*?tocarTriagem\(vid, r\.st, em\)/.test(nucleo),
+     "e a migracao das marcacoes antigas passa pelo funil");
+  ok(/function tocarTriagem[\s\S]{0,1400}SYNC\.salvarAlteracao\(\s*"triagem"/.test(render),
+     "o escritor e o tocarTriagem, e o vgMarcar passa por ele");
+  const vg = render.split("function vgMarcar(")[1].split("\n}")[0];
+  ok(/var iso = tocarTriagem\(id, st\)/.test(vg), "   o vgMarcar chama o funil");
+  ok(!/new Date\(\)\.toISOString\(\)/.test(vg.split("iso ? new Date(iso)")[0]),
+     "   e nao carimba um `em` proprio antes dele");
+  ok((nucleo.match(/function mesclarTriagem/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(/aplicarTriagemDoEstado[\s\S]*?mesclarTriagem/.test(nucleo), "o caminho legado a usa");
+  ok(/aplicarTriagemOnline[\s\S]*?mesclarTriagem/.test(nucleo), "e o online tambem");
+
+  /* Os renders, todos comprovados por leitura de vgEstado(). */
+  const corpo = nucleo.split("function aplicarTriagemOnline(")[1].split("\n}")[0];
+  ["renderVistaVagas", "renderHoje", "renderSemana", "renderVistaRevisao"].forEach(function (r) {
+    ok(corpo.indexOf(r) > -1, "o aplicador pede " + r);
+  });
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const corpoDe = (fonte, nome) => fonte.split("function " + nome + "(")[1].split("\n}")[0];
+  ok(/vgEstado/.test(corpoDe(render, "renderSemana")),
+     "   e renderSemana ENTRA por prova: ele le vgEstado (ao contrario de meta e evento)");
+  ok(/vgEstado/.test(corpoDe(regras, "revisaoDaSemana")), "   a revisao tambem le vgEstado");
+  ok(/vgEstado/.test(corpoDe(regras, "contagemDeVagas")),
+     "   e o indicador do Hoje passa pelo contagemDeVagas");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

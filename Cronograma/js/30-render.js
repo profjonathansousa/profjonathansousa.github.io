@@ -1639,6 +1639,20 @@ function renderSemana(){
     vgCarregar().then(function(){ try{ if(!alvo.hidden) renderSemana(); }catch(e){} });
   }
 }
+/* ============ A VISTA DAS VAGAS — Fase 9D ============
+   Mesmo molde do renderVistaRevisao, e pela mesma razao: so redesenha se a aba
+   estiver na frente. Escondida nao ha o que atualizar — e o vgRender le
+   VG_VAGAS/VG_CHAMADAS, que so estao carregados depois de a aba ter sido
+   aberta uma vez. E a regra que a descida pelo estado.json ja seguia; aqui ela
+   ganha nome para poder ser pedida pelo SYNC.pedirRender. */
+function renderVistaVagas(){
+  try{
+    var alvo = document.getElementById("view-vagas");
+    if(!alvo || alvo.hidden) return;
+    if(typeof vgRender === "function") vgRender();
+  }catch(e){}
+}
+
 /* ============ A VISTA DA REVISAO — Fase 9C-1 ============
    O renderRevisao() DEVOLVE html; quem o pintava era o setView, e so ele. A
    consequencia: com a aba Revisao aberta, uma prioridade marcada no outro
@@ -1687,16 +1701,47 @@ function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
 
    ADITIVO: nao le nem escreve nenhuma chave que ja existia.
    =============================================================== */
+/* ============ O UNICO ESCRITOR DA TRIAGEM — Fase 9D ============
+   Molde do tocarMeta e do tocarEvento. O `quandoISO` existe para a migracao das
+   marcacoes antigas, que publica com o instante da marcacao original.
+
+   O MESMO INSTANTE NOS DOIS CAMINHOS. Antes da 9D o vgMarcar carimbava o `em`
+   com `new Date()` e o toque usava o instanteDoToque() — a mesma divergencia
+   que a 9C-0 mediu e corrigiu em meta e evento, e que aqui ainda existia. No
+   caminho feliz os dois coincidem; na segunda marcacao dentro do mesmo
+   milissegundo o monotonico desempata e o relogio de parede nao acompanha.
+   Marcar varias vagas em sequencia e exatamente esse caso.
+
+   NAO HA LAPIDE: descartar uma vaga nao a apaga do lote. Ver mesclarTriagem. */
+function tocarTriagem(vid, st, quandoISO){
+  if(!vid) return null;
+  var d = {vid:vid, st:st};
+  var iso = enfileirarToque("triagem", d, quandoISO);   /* legado: intacto */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      /* SO A DECISAO VIAJA. O veredicto do coletor, o texto da vaga e tudo o
+         mais que dados/vagas.json carrega ficam de fora: aquilo e do pipeline
+         e e reescrito a cada coleta. Aqui vai `st`, e nada mais. */
+      SYNC.salvarAlteracao("triagem", d.vid, {st: d.st}, {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: triagem nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+
+/* A ORDEM AQUI E DIFERENTE DA DO tocarMeta, e de proposito: o payload da
+   triagem nao le o objeto guardado — leva `{vid, st}`, que ja estao em mao.
+   Entao o instante e obtido ANTES e a gravacao acontece uma vez so, com o
+   valor definitivo. Nao ha janela em que o `em` esteja provisorio. */
 function vgMarcar(id, st){
   var t = vgTriagem();
   if((t[id] && t[id].st) === st) st = VG_ST.NOVO;   /* tocar de novo desmarca */
-  /* `quando` continua sendo o dia, que e o que a tela mostra; `em` e o
-     instante, e existe porque sem ele nao ha como decidir quem venceu
-     quando o Mac e o celular marcam a mesma vaga no mesmo dia. */
-  var agora = new Date();
-  t[id] = {st:st, quando:ymd(agora), em:agora.toISOString()};
+  var iso = tocarTriagem(id, st);
+  /* `quando` continua sendo o dia, que e o que a tela mostra, e agora e o dia
+     DO INSTANTE que subiu — nao um segundo relogio. O `em` e quem decide quem
+     venceu quando o Mac e o celular marcam a mesma vaga no mesmo dia. */
+  var quando = iso ? new Date(iso) : new Date();
+  t[id] = {st:st, quando:ymd(quando), em: iso || quando.toISOString()};
   vgSalvarTriagem(t);
-  enfileirarToque("triagem", {vid:id, st:st});
   vgRender();
 }
 function vgEsc(s){ return String(s==null?"":s)

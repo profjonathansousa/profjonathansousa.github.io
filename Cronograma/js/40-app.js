@@ -160,6 +160,10 @@ catch(e){ console.error("sincronia: dominio meta:", e); }
 /* Fase 9C-3: as datas importantes sao o terceiro. */
 try{ SYNC.assinarDominio("evento", aplicarEventoOnline); }
 catch(e){ console.error("sincronia: dominio evento:", e); }
+/* Fase 9D (1 de 5): a triagem das vagas. Retomadas, registro, rotinas e
+   dispensas continuam LEGADOS. */
+try{ SYNC.assinarDominio("triagem", aplicarTriagemOnline); }
+catch(e){ console.error("sincronia: dominio triagem:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

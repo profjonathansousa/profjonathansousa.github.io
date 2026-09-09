@@ -1369,6 +1369,63 @@ nenhum caminho de escrita destes domínios carimbando o próprio `new Date()`.
 `sql/cron_estado.sql` **não foi tocado**. Nenhuma tabela nova, nenhuma coluna
 nova: o `valor jsonb` já comportava o campo, e a RLS que o protege já existia.
 
+### 9D (1 de 5) — Triagem das Vagas online
+
+O **quarto domínio** na camada, e o primeiro da Fase 9D. Retomadas, registro,
+rotinas e dispensas continuam legados.
+
+**A chave é o id da vaga** — `philjobs-31649` —, que é estável e sobrevive à
+coleta semanal: `dados/vagas.json` é reescrito inteiro toda segunda, e a decisão
+não se perde porque nunca morou lá. O valor leva **só `{st}`**.
+
+**Veredicto e triagem continuam sendo dois eixos.** O veredicto é do coletor e
+vem no arquivo; a triagem é a sua decisão. A 9D transporta **apenas a decisão** —
+nada de veredicto, título, prazo ou url. Há teste para cada um desses campos.
+
+**Não há lápide, e a ausência é do domínio.** Descartar uma vaga **não a apaga do
+lote**: ela continua em `dados/vagas.json`. "Não marcada" é um estado
+(`VG_ST.NOVO`, `st` 0) e viaja como qualquer outro — é assim que *desmarcar*
+atravessa aparelhos.
+
+#### Duas correções que vieram junto
+
+**O `vgMarcar` carimbava o próprio `em`** com `new Date()`, enquanto o toque
+usava o `instanteDoToque()`. É a mesma divergência que a 9C-0 mediu e corrigiu em
+metas e eventos, e que aqui ainda existia — marcar várias vagas em sequência é
+exatamente o caso em que o monotônico desempata e o relógio de parede não
+acompanha. Agora o instante vem do funil, e o `quando` (o dia que a tela mostra)
+é derivado dele.
+
+**Havia dois escritores**: o `vgMarcar` e a `migrarTriagemUmaVez`, que publicava
+as marcações anteriores à sincronia chamando `enfileirarToque` direto. A migração
+passou a usar o funil — e com isso aquelas marcações antigas entram **também** no
+estado online.
+
+#### Os renders, todos comprovados
+
+| | Por quê |
+|---|---|
+| `renderVistaVagas` | `vgRender` lê `vgEstado` — só redesenha com a aba na frente |
+| `renderHoje` | `renderVagasIndicador` → `contagemDeVagas` → `vgEstado` |
+| **`renderSemana`** | **lê `vgEstado`** — o primeiro domínio em que ele entra |
+| `renderVistaRevisao` | `revisaoDaSemana` lê `vgEstado` |
+
+`renderSemana` ficou de fora nas fases 9C-2 e 9C-3 porque não lia meta nem
+evento. Lê triagem, e por isso entra — por prova, não por segurança. E
+`renderHoje` entra **todo dia**, e não só no domingo como nas metas, porque o
+indicador de vagas do Hoje depende da triagem sempre.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: o domínio `triagem` e a chave por id da
+vaga já existiam desde a 9A. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 46 a 50 — os casos A a O. A seção 50 é arquitetural e
+quebra se um segundo escritor voltar, se surgir uma segunda `mesclarTriagem`, ou
+se um domínio ainda não autorizado passar a escrever online.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1630,7 +1687,9 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9C-2 — Metas online (segundo domínio na camada) | concluída |
 | 9C-3 — Eventos online (terceiro domínio) | concluída |
 | 9C-4 — título de evento privado no caminho online | concluída |
-| 9D a 9G — vagas, retomadas, registro, rotinas, trilhos, escrita dupla | não iniciadas |
+| 9D.1 — Triagem das Vagas online | concluída |
+| 9D.2 a 9D.5 — retomadas, registro, rotinas, dispensas | não iniciadas |
+| 9E a 9G — trilhos, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado
 

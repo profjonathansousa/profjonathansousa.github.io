@@ -953,7 +953,11 @@ function migrarTriagemUmaVez(){
       var dia = (r.quando && /^\d{4}-\d{2}-\d{2}$/.test(r.quando)) ? r.quando : ymd(new Date());
       var em = new Date(new Date(dia + "T12:00:00.000Z").getTime() + n).toISOString();
       r.em = em; t[vid] = r;
-      enfileirarToque("triagem", {vid:vid, st:r.st}, em);
+      /* PELO FUNIL, e nao por um enfileirarToque proprio: ate a Fase 9D esta
+         era a SEGUNDA escrita de triagem, como o publicarAcervo era para meta e
+         evento antes da 9C-0. Passando por aqui, a marcacao antiga publicada
+         por esta migracao entra tambem no estado online. */
+      tocarTriagem(vid, r.st, em);
       n++;
     });
     save("cron:triagem", t);
@@ -961,6 +965,66 @@ function migrarTriagemUmaVez(){
     if(n) console.log("triagem: " + n + " marcacao(oes) anterior(es) publicada(s).");
   }catch(e){ console.error("migracao da triagem falhou:", e); }
 }
+/* ============ O MERGE DE UMA TRIAGEM — UMA IMPLEMENTACAO SO (Fase 9D) ============
+   Quarto dominio a passar por este movimento, depois de prioridade, meta e
+   evento. A regra e copiada letra por letra do que estava dentro do
+   buscarEstado.
+
+   NAO HA LAPIDE AQUI, e a ausencia e do dominio, nao um esquecimento: descartar
+   uma vaga NAO a apaga do lote. A vaga continua existindo em dados/vagas.json,
+   que e escrito pelo coletor; o que a triagem guarda e so a DECISAO de quem le.
+   "Nao marcada" e um estado (VG_ST.NOVO, st 0) e viaja como qualquer outro —
+   e assim que desmarcar atravessa aparelhos.
+
+   O `quando` E DERIVADO, e nao um segundo relogio: e o dia do proprio instante.
+   A tela mostra o dia; o `em` decide quem vence. */
+function mesclarTriagem(tri, vid, r){
+  if(!r || !r.quando) return false;
+  var atual = tri[vid];
+  if(atual && (atual.em || "") >= r.quando) return false;
+  tri[vid] = {st:r.st, quando:String(r.quando).slice(0,10), em:r.quando};
+  return true;
+}
+
+/* A descida pelo estado.json — o caminho legado, agora com nome proprio. */
+function aplicarTriagemDoEstado(est){
+  if(!est || !est.triagem) return false;
+  var tri = vgTriagem(), mudou = false;
+  Object.keys(est.triagem).forEach(function(vid){
+    if(mesclarTriagem(tri, vid, est.triagem[vid])) mudou = true;
+  });
+  if(mudou) vgSalvarTriagem(tri);
+  return mudou;
+}
+
+/* ============ A DESCIDA ONLINE DA TRIAGEM — Fase 9D ============
+   Molde dos tres anteriores. A chave e o ID DA VAGA, que e estavel
+   (philjobs-31649) e sobrevive a coleta semanal — dados/vagas.json e reescrito
+   inteiro toda segunda, e a decisao nao se perde porque nunca morou la.
+
+   O VEREDICTO NAO VIAJA POR AQUI. Ele e do coletor, vem em dados/vagas.json e
+   e recalculado a cada coleta; a triagem e a decisao do usuario. Os dois eixos
+   nao se confundem, e esta fase nao os mistura.
+
+   OS QUATRO RENDERS SAO TODOS COMPROVADOS por leitura de vgEstado():
+     · renderVistaVagas  -> vgRender               (a aba Vagas)
+     · renderHoje        -> renderVagasIndicador -> contagemDeVagas
+     · renderSemana      -> vgEstado, na linha dos prazos
+     · renderVistaRevisao-> revisaoDaSemana
+
+   ESTE E O PRIMEIRO DOMINIO EM QUE renderSemana ENTRA, e entra por prova: nas
+   fases 9C-2 e 9C-3 ele ficou de fora porque nao lia meta nem evento. Le
+   triagem. E o renderHoje entra TODO DIA, e nao so no domingo como nas metas,
+   porque o indicador de vagas do Hoje depende da triagem sempre. */
+function aplicarTriagemOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var v = linha.valor || {};
+  var tri = vgTriagem();
+  if(!mesclarTriagem(tri, String(linha.chave), {quando: linha.em, st: v.st})) return [];
+  vgSalvarTriagem(tri);
+  return ["renderVistaVagas", "renderHoje", "renderSemana", "renderVistaRevisao"];
+}
+
 function vgEstado(id){ var t = vgTriagem()[id]; return t ? (t.st||0) : 0; }
 
 function vgBuscar(u){
@@ -1130,24 +1194,7 @@ function buscarEstado(){
          Mesma regra do relogio, vaga a vaga. O id da vaga e estavel
          (philjobs-31649), entao a triagem sobrevive a coleta semanal, que
          reescreve dados/vagas.json inteiro toda segunda. */
-      if(est.triagem){
-        var tri = LS("cron:triagem", {}) || {}, mudouTri = false;
-        Object.keys(est.triagem).forEach(function(vid){
-          var r = est.triagem[vid];
-          if(!r || !r.quando) return;
-          var atual = tri[vid];
-          if(atual && (atual.em || "") >= r.quando) return;
-          tri[vid] = {st:r.st, quando:String(r.quando).slice(0,10), em:r.quando};
-          mudouTri = true;
-        });
-        if(mudouTri){
-          save("cron:triagem", tri);
-          try{
-            var abaVg = document.getElementById("view-vagas");
-            if(abaVg && !abaVg.hidden && typeof vgRender === "function") vgRender();
-          }catch(e){}
-        }
-      }
+      if(aplicarTriagemDoEstado(est)){ try{ renderVistaVagas(); }catch(e){} }
       /* ---- Metas do mes (agora no aplicarMetasDoEstado, Fase 9C-2) ---- */
       if(aplicarMetasDoEstado(est)){ try{ renderMetas(); }catch(e){} }
       /* ---- Datas importantes ----
