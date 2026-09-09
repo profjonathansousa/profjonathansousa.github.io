@@ -32,6 +32,38 @@ function ok(cond, nome, detalhe) {
 }
 function titulo(t) { console.log("\n" + t); }
 
+/* CONTRAPARTE AUSENTE É DIVERGÊNCIA, E NÃO EXCEÇÃO.
+ *
+ * Uma prova que estoura ao não encontrar o que procurava não cumpre o próprio
+ * contrato: o caso em que ela mais precisa falar — um caminho não escreveu o
+ * que o outro escreveu — é justamente o que a derrubava com TypeError, sem
+ * DIVERGE, sem veredicto e com o código de saída errado.
+ *
+ * Então toda contraparte esperada passa por aqui: a ausência vira uma linha
+ * DIVERGE, e o que segue recebe um objeto vazio para que as asserções seguintes
+ * também possam falar em vez de derrubar tudo. O `valor` e o `dados` já vêm
+ * como objetos porque é neles que a prova entra em seguida.
+ *
+ * ISTO NÃO ENGOLE ERRO DE PROGRAMAÇÃO. Só a ausência da contraparte é tratada;
+ * qualquer outra exceção continua subindo, e o `catch` do rodapé continua
+ * imprimindo o erro e saindo com 1. */
+const AUSENTE = Object.freeze({valor: Object.freeze({}), dados: Object.freeze({})});
+function contraparte(v, nome, detalhe) {
+  ok(!!v, nome, detalhe);
+  return v || AUSENTE;
+}
+
+/* A peça de trilho de que quase toda seção depende. Se o entrada.json mudar e
+   ela sumir, a prova diz isso numa linha em vez de estourar em dez. */
+function pecaDeTrilho(X) {
+  const pr = (X.getProjs("pipeline") || [])[0];
+  if (pr && pr.subs && pr.subs[0]) return pr;
+  /* Só fala quando falta: uma linha por seção dizendo que está tudo bem seria
+     ruído em oito lugares. */
+  ok(false, "há uma peça de trilho com subitem para exercitar");
+  return {id: "sem-peca", subs: [{id: "sem-sub"}]};
+}
+
 /* ---- Localizadores: onde cada caminho guarda a mesma decisão ---- */
 const linhaDe = (srv, dominio, chave) =>
   srv.linhas.find(l => l.dominio === dominio && l.chave === chave);
@@ -52,15 +84,17 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   const A = criarAparelho("mac", srv).__conectar();
 
   /* --- item: a etapa de trilho --- */
-  const pr = (A.getProjs("pipeline") || [])[0];
+  const pr = pecaDeTrilho(A);
   A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
   await A.SYNC.drenarFila();
   const chaveItem = "pipeline/" + pr.id + "/" + pr.subs[0].id;
-  const lItem = linhaDe(srv, "item", chaveItem);
-  const tItem = ultimoToque(A, "registro");
-  ok(!!lItem && lItem.em === tItem.quando,
+  const lItem = contraparte(linhaDe(srv, "item", chaveItem),
+                            "item        · há linha online para a decisão", chaveItem);
+  const tItem = contraparte(ultimoToque(A, "registro"),
+                            "item        · e há toque legado para ela");
+  ok(lItem.em === tItem.quando,
      "item        · o `em` online é o mesmo ISO do toque legado",
-     {online: lItem && lItem.em, legado: tItem.quando});
+     {online: lItem.em, legado: tItem.quando});
   ok(lItem.valor.st === tItem.dados.para,
      "item        · e o mesmo st", {online: lItem.valor.st, legado: tItem.dados.para});
   /* TRÊS CÓPIAS, UM INSTANTE. O subitem no aparelho é a terceira, e é a que
@@ -70,6 +104,7 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   let noAparelho = null;
   (A.getProjs("pipeline") || []).forEach(p => { if (p.id === pr.id)
     (p.subs || []).forEach(x => { if (x.id === pr.subs[0].id) noAparelho = x; }); });
+  noAparelho = contraparte(noAparelho, "item        · o subitem existe no aparelho");
   ok(noAparelho.em === tItem.quando && noAparelho.em === lItem.em,
      "item        · e o subitem no aparelho guarda esse MESMO instante",
      {aparelho: noAparelho.em, legado: tItem.quando, online: lItem.em});
@@ -77,10 +112,12 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   /* --- triagem --- */
   A.vgMarcar("philjobs-9f", A.VG_ST.SIM);
   await A.SYNC.drenarFila();
-  const lTri = linhaDe(srv, "triagem", "philjobs-9f");
-  const tTri = ultimoToque(A, "triagem");
-  ok(!!lTri && lTri.em === tTri.quando, "triagem     · mesmo ISO nos dois caminhos",
-     {online: lTri && lTri.em, legado: tTri.quando});
+  const lTri = contraparte(linhaDe(srv, "triagem", "philjobs-9f"),
+                           "triagem     · há linha online para a decisão");
+  const tTri = contraparte(ultimoToque(A, "triagem"),
+                           "triagem     · e há toque legado para ela");
+  ok(lTri.em === tTri.quando, "triagem     · mesmo ISO nos dois caminhos",
+     {online: lTri.em, legado: tTri.quando});
   ok(lTri.valor.st === tTri.dados.st, "triagem     · e o mesmo st");
 
   /* --- meta --- */
@@ -88,14 +125,17 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   const metas = A.getMetas();
   A.editMeta(metas.length - 1, "Terminar o capítulo sobre Spinoza");
   await A.SYNC.drenarFila();
-  const meta = A.getMetas()[A.getMetas().length - 1];
+  const meta = contraparte(A.getMetas()[A.getMetas().length - 1],
+                           "meta        · a meta existe no aparelho");
   /* `mesAtivo` e `semanaAtual` são `let` de topo e não viram propriedade do
      contexto do vm. A linha é procurada pelo domínio — há uma só — e a FORMA
      da chave é conferida logo abaixo, que é o que interessa provar. */
-  const lMeta = srv.linhas.find(l => l.dominio === "meta");
-  const tMeta = ultimoToque(A, "meta");
-  ok(!!lMeta && lMeta.em === tMeta.quando, "meta        · mesmo ISO nos dois caminhos",
-     {online: lMeta && lMeta.em, legado: tMeta.quando});
+  const lMeta = contraparte(srv.linhas.find(l => l.dominio === "meta"),
+                            "meta        · há linha online para a decisão");
+  const tMeta = contraparte(ultimoToque(A, "meta"),
+                            "meta        · e há toque legado para ela");
+  ok(lMeta.em === tMeta.quando, "meta        · mesmo ISO nos dois caminhos",
+     {online: lMeta.em, legado: tMeta.quando});
   ok(lMeta.em === meta.em, "meta        · e o aparelho guardou esse mesmo instante",
      {linha: lMeta.em, aparelho: meta.em});
   ok(lMeta.chave === lMeta.chave.slice(0, 7) + "/" + meta.id &&
@@ -105,49 +145,59 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   /* --- evento --- */
   A.addEv();
   const evs = A.getEventos();
-  const eid = evs[evs.length - 1].id;
+  const eid = contraparte(evs[evs.length - 1], "evento      · o evento existe no aparelho").id;
   A.editEv(eid, "Defesa na UFRJ");
   await A.SYNC.drenarFila();
-  const lEv = linhaDe(srv, "evento", eid);
-  const tEv = ultimoToque(A, "evento");
-  ok(!!lEv && lEv.em === tEv.quando, "evento      · mesmo ISO nos dois caminhos",
-     {online: lEv && lEv.em, legado: tEv.quando});
+  const lEv = contraparte(linhaDe(srv, "evento", eid),
+                          "evento      · há linha online para a decisão", eid);
+  const tEv = contraparte(ultimoToque(A, "evento"),
+                          "evento      · e há toque legado para ela");
+  ok(lEv.em === tEv.quando, "evento      · mesmo ISO nos dois caminhos",
+     {online: lEv.em, legado: tEv.quando});
 
   /* --- prioridade --- */
   A.__prompt = "Reler a Ética II";           /* addPrioridadeLivre pergunta o texto */
   A.addPrioridadeLivre();
   await A.SYNC.drenarFila();
-  const p = A.getPrio()[A.getPrio().length - 1];
-  const lPrio = srv.linhas.find(l => l.dominio === "prioridade");
-  const tPrio = ultimoToque(A, "prioridade");
-  ok(!!lPrio && lPrio.em === tPrio.quando, "prioridade  · mesmo ISO nos dois caminhos",
-     {online: lPrio && lPrio.em, legado: tPrio.quando});
+  const p = contraparte(A.getPrio()[A.getPrio().length - 1],
+                        "prioridade  · a prioridade existe no aparelho");
+  const lPrio = contraparte(srv.linhas.find(l => l.dominio === "prioridade"),
+                            "prioridade  · há linha online para a decisão");
+  const tPrio = contraparte(ultimoToque(A, "prioridade"),
+                            "prioridade  · e há toque legado para ela");
+  ok(lPrio.em === tPrio.quando, "prioridade  · mesmo ISO nos dois caminhos",
+     {online: lPrio.em, legado: tPrio.quando});
   ok(/^\d{4}-W\d{2}\/.+/.test(lPrio.chave) && lPrio.chave.indexOf(p.id) > 0,
      "prioridade  · e a chave é AAAA-Wnn/id", lPrio.chave);
 
   /* --- retomada --- */
   A.adiarRetomada("pipeline", pr.id);
   await A.SYNC.drenarFila();
-  const lRet = linhaDe(srv, "retomada", "pipeline/" + pr.id);
-  const tRet = ultimoToque(A, "retomada");
-  ok(!!lRet && lRet.em === tRet.quando, "retomada    · mesmo ISO nos dois caminhos",
-     {online: lRet && lRet.em, legado: tRet.quando});
+  const lRet = contraparte(linhaDe(srv, "retomada", "pipeline/" + pr.id),
+                           "retomada    · há linha online para a decisão");
+  const tRet = contraparte(ultimoToque(A, "retomada"),
+                           "retomada    · e há toque legado para ela");
+  ok(lRet.em === tRet.quando, "retomada    · mesmo ISO nos dois caminhos",
+     {online: lRet.em, legado: tRet.quando});
   ok(lRet.valor.ate === tRet.dados.ate, "retomada    · e a mesma data absoluta");
 
   /* --- toefl --- */
   const iid = A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id;
   A.marcarGuia(iid, true);
   await A.SYNC.drenarFila();
-  const lTo = linhaDe(srv, "toefl", iid);
-  const tTo = ultimoToque(A, "toefl");
-  ok(!!lTo && lTo.em === tTo.quando, "toefl       · mesmo ISO nos dois caminhos",
-     {online: lTo && lTo.em, legado: tTo.quando});
+  const lTo = contraparte(linhaDe(srv, "toefl", iid),
+                          "toefl       · há linha online para a decisão", iid);
+  const tTo = contraparte(ultimoToque(A, "toefl"),
+                          "toefl       · e há toque legado para ela");
+  ok(lTo.em === tTo.quando, "toefl       · mesmo ISO nos dois caminhos",
+     {online: lTo.em, legado: tTo.quando});
 
   /* --- registro: a tabela própria, chaveada pelo id do toque --- */
-  const reg = srv.registros.find(r => r.sub_id === pr.subs[0].id);
-  ok(!!reg && reg.id === tItem.id,
+  const reg = contraparte(srv.registros.find(r => r.sub_id === pr.subs[0].id),
+                          "registro    · há linha no cron_registro para a decisão");
+  ok(reg.id === tItem.id,
      "registro    · a chave da linha é o próprio id do toque legado",
-     {online: reg && reg.id, legado: tItem.id});
+     {online: reg.id, legado: tItem.id});
 
   /* --- rotina e dispensa: SEM caminho legado, e a ausência é a coerência --- */
   A.toggleCheck("seg-min");
@@ -174,7 +224,7 @@ titulo("=== 2. O que desce do Supabase não vira toque ===");
   const B = criarAparelho("celular", srv).__conectar();
   await B.SYNC.assinarMudancas();
 
-  const pr = (A.getProjs("pipeline") || [])[0];
+  const pr = pecaDeTrilho(A);
   A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
   A.vgMarcar("philjobs-9f", A.VG_ST.NAO);
   A.adiarRetomada("pipeline", pr.id);
@@ -204,7 +254,7 @@ titulo("=== 3. O que desce do estado.json não vira escrita online ===");
 
   /* O estado.json de um OUTRO aparelho, aplicado pelos mesmos aplicadores que
      o buscarEstado usa. É o caminho legado inteiro, menos a rede. */
-  const pr = (A.getProjs("pipeline") || [])[0];
+  const pr = pecaDeTrilho(A);
   const est = {
     itens: {}, triagem: {}, metas: {}, eventos: {}, prioridades: {},
     toefl: {}, retomadas: {}
@@ -236,13 +286,13 @@ titulo("=== 4. Dois caminhos, alterações diferentes do mesmo item ===");
 {
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  const pr = (A.getProjs("pipeline") || [])[0];
+  const pr = pecaDeTrilho(A);
   const subId = pr.subs[0].id;
   const acha = () => {
     let x = null;
     (A.getProjs("pipeline") || []).forEach(p => { if (p.id === pr.id)
       (p.subs || []).forEach(s => { if (s.id === subId) x = s; }); });
-    return x;
+    return x || AUSENTE;      /* ausência é divergência mais abaixo, não estouro */
   };
 
   /* O aparelho decide st=1 agora. */
@@ -306,19 +356,22 @@ titulo("=== 5. A decisão de 9h, drenada às 18h, não vence a das 17h ===");
   B.vgMarcar("philjobs-9f", B.VG_ST.NAO);
   B.__descongelar();
   await B.SYNC.drenarFila();
-  const das17 = linhaDe(srv, "triagem", "philjobs-9f");
+  const das17 = contraparte(linhaDe(srv, "triagem", "philjobs-9f"),
+                            "17h: há linha online da decisão do celular");
   ok(das17.valor.st === B.VG_ST.NAO, "17h: a decisão do celular está no servidor", das17.valor);
 
   /* 18h: a rede volta e o Mac drena a decisão das 9h. */
   await A.SYNC.reconectar(true);
-  const depois = linhaDe(srv, "triagem", "philjobs-9f");
+  const depois = contraparte(linhaDe(srv, "triagem", "philjobs-9f"),
+                             "18h: a linha continua no servidor");
   ok(depois.valor.st === B.VG_ST.NAO,
      "18h: a decisão de 9h NÃO venceu a das 17h", depois.valor);
   ok(depois.em === das17.em, "o servidor guarda o instante das 17h", depois.em);
   ok(srv.recusados >= 1, "e o gatilho do relógio recusou a mais velha", srv.recusados);
   ok(A.SYNC.situacao().fila === 0,
      "a fila do Mac esvaziou mesmo assim: perder por ser mais velha não é falha");
-  ok(A.vgTriagem()["philjobs-9f"].st === B.VG_ST.NAO,
+  ok(contraparte(A.vgTriagem()["philjobs-9f"],
+                 "o Mac tem a vaga na triagem").st === B.VG_ST.NAO,
      "e o Mac já mostra a decisão das 17h", A.vgTriagem()["philjobs-9f"]);
 }
 
@@ -334,11 +387,14 @@ titulo("=== 6. O toefl é booleano, e não transporta estrutura nem texto ===");
   A.marcarGuia(it.id, true);
   await A.SYNC.drenarFila();
 
-  const l = linhaDe(srv, "toefl", it.id);
+  const l = contraparte(linhaDe(srv, "toefl", it.id),
+                        "há linha online para o item do guia", it.id);
   ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["feito"]),
      "o valor online tem UM campo: `feito`", Object.keys(l.valor));
   ok(typeof l.valor.feito === "boolean", "e ele é booleano", typeof l.valor.feito);
-  const texto = JSON.stringify(l.valor) + "|" + JSON.stringify(ultimoToque(A, "toefl").dados);
+  const texto = JSON.stringify(l.valor) + "|" +
+                JSON.stringify(contraparte(ultimoToque(A, "toefl"),
+                                           "e há toque legado para ele").dados);
   ok(it.t === undefined || texto.indexOf(it.t) < 0,
      "o texto do item do guia NÃO viaja por nenhum dos dois caminhos", texto);
   ok(l.chave === it.id, "a chave é o id do item, e a estrutura do guia é do código",
@@ -347,7 +403,9 @@ titulo("=== 6. O toefl é booleano, e não transporta estrutura nem texto ===");
   /* Desmarcar viaja; ausência não é false. */
   A.marcarGuia(it.id, false);
   await A.SYNC.drenarFila();
-  ok(linhaDe(srv, "toefl", it.id).valor.feito === false, "desmarcar viaja como estado");
+  ok(contraparte(linhaDe(srv, "toefl", it.id),
+                 "a linha do guia continua no servidor").valor.feito === false,
+     "desmarcar viaja como estado");
   ok(A.mesclarToefl({}, "nunca-visto", {quando: "", feito: true}) === false,
      "e ausência é `nunca decidido`, não `false`");
 }
@@ -356,11 +414,12 @@ titulo("=== 7. O item é progresso, e progresso não cria estrutura ===");
 {
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  const pr = (A.getProjs("pipeline") || [])[0];
+  const pr = pecaDeTrilho(A);
   A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
   await A.SYNC.drenarFila();
 
-  const l = linhaDe(srv, "item", "pipeline/" + pr.id + "/" + pr.subs[0].id);
+  const l = contraparte(linhaDe(srv, "item", "pipeline/" + pr.id + "/" + pr.subs[0].id),
+                        "há linha online para o progresso");
   const campos = Object.keys(l.valor).sort();
   ok(JSON.stringify(campos) === JSON.stringify(["motivo", "st", "vida", "vidaDesde", "voltar_em"]),
      "o valor do item é só progresso e ciclo de vida", campos);
@@ -444,7 +503,7 @@ titulo("=== 10. O registro é append-only, e a chave une os dois caminhos ===");
   const A = criarAparelho("mac", srv).__conectar();
   const B = criarAparelho("celular", srv).__conectar();
   await B.SYNC.assinarMudancas();
-  const pr = (A.getProjs("pipeline") || [])[0];
+  const pr = pecaDeTrilho(A);
 
   A.marcarSub("pipeline", pr.id, pr.subs[0].id, 2);
   await A.SYNC.drenarFila();
