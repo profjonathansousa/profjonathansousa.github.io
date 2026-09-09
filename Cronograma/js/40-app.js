@@ -179,6 +179,11 @@ catch(e){ console.error("sincronia: registro datado:", e); }
    continuam LEGADAS. */
 try{ SYNC.assinarDominio("rotina", aplicarRotinaOnline); }
 catch(e){ console.error("sincronia: dominio rotina:", e); }
+/* Fase 9D (5 de 5): as dispensas de rotina atrasada. Fecha a 9D — e, como a
+   rotina, estreia em vez de migrar: cron:hoje-dispensados tambem nunca
+   atravessou aparelho. */
+try{ SYNC.assinarDominio("dispensa", aplicarDispensaOnline); }
+catch(e){ console.error("sincronia: dominio dispensa:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

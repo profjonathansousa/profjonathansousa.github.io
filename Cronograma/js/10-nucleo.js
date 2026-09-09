@@ -1173,6 +1173,34 @@ function aplicarRotinaOnline(linha){
   return ["renderHoje", "renderVistaRevisao"];
 }
 
+/* A descida das dispensas (Fase 9D.5).
+
+   TRADUZ A CHAVE: `rotina/AAAA-MM-DD/id` vira `AAAA-MM-DD|id`. Uma chave de
+   outra forma — a `meta-aviso/AAAA-MM` que o esquema preve e que nada ainda
+   escreve — e IGNORADA, e nao adivinhada: gravar um formato que nenhum leitor
+   entende sujaria a gaveta sem ninguem notar.
+
+   SEM MESCLA COM `em` LOCAL, e sem lapide, pelas mesmas razoes da rotina: a
+   entrada e `{chave: true}` e nunca guardou instante, quem decide o relogio e o
+   cache da camada, e dispensar nao tem operacao inversa.
+
+   RECEBER NAO E TOCAR: nao passa pelo tocarDispensa e nao volta a subir. */
+function aplicarDispensaOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var partes = String(linha.chave).split("/");
+  if(partes.length !== 3 || partes[0] !== "rotina") return [];
+  var dia = partes[1], id = partes[2];
+  if(!dia || !id) return [];
+  var disp = LS(ATRASO_KEY, {}) || {};
+  var k = dia + "|" + id;
+  if(disp[k]) return [];                     /* ja dispensada: nao repinta a toa */
+  disp[k] = true;
+  save(ATRASO_KEY, disp);
+  /* UM render, e so um: `atrasadas()` e lida pelo bloco "ficou para tras" do
+     Hoje, e por mais ninguem. */
+  return ["renderHoje"];
+}
+
 function aplicarTriagemOnline(linha){
   if(!linha || !linha.chave) return [];
   var v = linha.valor || {};

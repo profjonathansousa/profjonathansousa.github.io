@@ -73,10 +73,38 @@ function marcarAtrasada(dia, id){
   tocarRotina(dia, id, true);
   renderHoje();
 }
-function dispensarAtrasada(dia, id){
+/* O FUNIL DAS DISPENSAS (Fase 9D.5), e o unico lugar que escreve
+   `cron:hoje-dispensados`. Mesma historia da 9D.4 e pela mesma razao: a chave
+   era local porque o repositorio e publico, nunca houve toque `dispensa` nem
+   secao no estado.json, e nao se inventa um agora — o caminho do GitHub sai na
+   9G.
+
+   AS DUAS FORMAS DA CHAVE. No aparelho a entrada e `AAAA-MM-DD|id`, com barra
+   vertical; no estado online e `rotina/AAAA-MM-DD/id`, o formato que o esquema
+   declara desde a 9A (ha uma segunda forma prevista la, `meta-aviso/AAAA-MM`,
+   que nada ainda escreve). O prefixo existe porque a tabela guarda os dois
+   tipos de dispensa na mesma chave composta.
+
+   NAO HA LAPIDE, e a ausencia e do dominio: nao existe "desdispensar". A
+   entrada some sozinha quando o dia sai da janela de sete dias — e do servidor,
+   pelo `expira_em`, com a mesma vida da marca de rotina. */
+function tocarDispensa(dia, id){
+  if(!dia || !id) return null;
   var disp = podarDispensados();
   disp[dia+"|"+id] = true;
   save(ATRASO_KEY, disp);
+  var iso = null;
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      var it = SYNC.salvarAlteracao("dispensa", "rotina/" + dia + "/" + id, {},
+                                    {expira_em: rotinaExpira(dia)});
+      iso = it && it.em;
+    }
+  }catch(e){ try{ console.error("sync: dispensa nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+function dispensarAtrasada(dia, id){
+  tocarDispensa(dia, id);
   renderHoje();
 }
 function renderAtrasadas(){
@@ -622,7 +650,8 @@ function renderHoje(){
   html+=renderRetomadas();
   /* O PAINEL DE ROTINAS NAO MARCADAS SAIU DA TELA, e so da tela: renderAtrasadas,
      atrasadas, marcarAtrasada, dispensarAtrasada e podarDispensados continuam
-     inteiros logo acima, e cron:hoje-dispensados nao foi tocada. Basta
+     inteiros logo acima, e cron:hoje-dispensados continua sendo a mesma chave
+     (desde a 9D.5 ela tambem viaja, pelo funil). Basta
      descomentar esta linha para o painel voltar.
 
      A implementacao fica porque atrasadas() NAO e so deste painel: a revisao

@@ -1029,9 +1029,9 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
      (triagem, toefl, retomada, rotina, dispensa, item, estrutura_*) sao 9D. */
   const online = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "12. os seis dominios online (9B, 9C x3, 9D.1, 9D.2, 9D.4)", online);
-  ok(["toefl","dispensa","item","estrutura_proj","estrutura_sub"]
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "12. os sete dominios online (9B, 9C x3 e a 9D inteira)", online);
+  ok(["toefl","item","estrutura_proj","estrutura_sub"]
        .every(d => online.indexOf(d) < 0),
      "    e nenhum dominio ainda nao autorizado foi antecipado", online);
 }
@@ -1364,11 +1364,11 @@ console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
   const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const dominiosOnline = (fonte.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "13. os tres da 9C mais triagem, retomada e rotina da 9D", dominiosOnline);
+  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "13. os tres da 9C mais os quatro da 9D", dominiosOnline);
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
      "    e os seis tem aplicador registrado", assinados);
 }
 
@@ -1616,11 +1616,11 @@ console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ==
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const dominios = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(dominios) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "prioridade, meta, evento, triagem, retomada e rotina escrevem online", dominios);
+  ok(JSON.stringify(dominios) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "os sete dominios de estado escrevem online", dominios);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "   e os cinco tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "   e os sete tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
@@ -1771,8 +1771,8 @@ console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
   const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "L. seis dominios online — a 9D.4 acrescentou a rotina", online);
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "L. sete dominios online — a 9D.5 acrescentou a dispensa", online);
 }
 
 console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ===");
@@ -1951,14 +1951,14 @@ console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "O. seis dominios online: os tres da 9C mais triagem, retomada e rotina", online);
-  ok(["dispensa", "item", "estrutura_proj", "estrutura_sub"]
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "O. sete dominios online: os tres da 9C mais os quatro da 9D", online);
+  ok(["item", "estrutura_proj", "estrutura_sub"]
        .every(d => online.indexOf(d) < 0),
-     "O. e nenhum dos proximos da 9D/9E foi antecipado (rotina, dispensa, trilhos)", online);
+     "O. e nenhum dos proximos da 9E foi antecipado (trilhos, item, TOEFL)", online);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "   e os cinco tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "   e os sete tem aplicador registrado", assinados);
 }
 
 console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
@@ -2152,14 +2152,14 @@ console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
   /* Seis dominios online, e nenhum a mais. */
   const online = (render.match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
     .map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(online) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "seis dominios online: 9B, 9C x3, 9D.1, 9D.2 e 9D.4", online);
-  ok(["dispensa", "toefl", "item", "estrutura_proj", "estrutura_sub"]
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "sete dominios online: 9B, 9C x3 e a 9D inteira", online);
+  ok(["toefl", "item", "estrutura_proj", "estrutura_sub"]
        .every(d => online.indexOf(d) < 0),
      "e nenhum dominio ainda nao autorizado foi antecipado", online);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "e os seis tem aplicador registrado", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "e os sete tem aplicador registrado", assinados);
 
   /* Legado e online no mesmo ato, com o mesmo ISO. */
   const srv = criarServidor();
@@ -2364,8 +2364,8 @@ console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
   ok(/assinarRegistro\(aplicarRegistroOnline\)/.test(app),
      "ele tem caminho proprio, registrado pelo assinarRegistro");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
-     "e os dominios de estado agora sao seis", assinados);
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "meta", "prioridade", "retomada", "rotina", "triagem"]),
+     "e os dominios de estado agora sao sete", assinados);
 
   /* SEM MERGE, SEM RELOGIO, SEM LAPIDE — e a ausencia e o desenho. */
   const corpo = corpoDe(nucleo, "aplicarRegistroOnline");
@@ -2519,6 +2519,132 @@ console.log("\n=== 60. Um funil, tres escritores, e o que a 9D.4 NAO tem (9D.4) 
   ok(/cron:checks:/.test(corpoDe(regras, "revisaoDaSemana")), "   e a revisao da semana tambem");
   ok(!/cron:checks/.test(corpoDe(render, "renderSemana")),
      "   e renderSemana NAO le — por isso ele nao entra nos renders");
+}
+
+console.log("\n=== 61. Dispensar uma rotina atrasada atravessa aparelhos (9D.5) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const DIA = "2026-09-08", ID = "ter-art";
+  const K = DIA + "|" + ID, ONLINE = "rotina/" + DIA + "/" + ID;
+  const dispensada = (X, k) => !!(X.LS("cron:hoje-dispensados", {}) || {})[k];
+  const linhaDisp = (k) => srv.linhas.find(l => l.dominio === "dispensa" && l.chave === k);
+
+  ok(dispensada(B, K) === false, "o celular comeca sem a dispensa");
+  A.dispensarAtrasada(DIA, ID);
+  await A.SYNC.drenarFila();
+
+  ok(dispensada(A, K) === true, "o Mac dispensou");
+  ok(dispensada(B, K) === true, "e a dispensa chegou ao celular");
+
+  /* AS DUAS FORMAS DA CHAVE: `|` no aparelho, `rotina/.../...` no estado. */
+  const l = linhaDisp(ONLINE);
+  ok(!!l, "a chave online e rotina/AAAA-MM-DD/id", srv.linhas.filter(x => x.dominio === "dispensa").map(x => x.chave));
+  ok(Object.keys(B.LS("cron:hoje-dispensados", {})).indexOf(K) >= 0,
+     "e no aparelho ela continua sendo AAAA-MM-DD|id", Object.keys(B.LS("cron:hoje-dispensados", {})));
+  ok(JSON.stringify(l.valor) === "{}", "o valor e vazio: a chave ja diz tudo", l.valor);
+  ok(l.del === false, "sem lapide: nao existe desdispensar", l.del);
+
+  /* Expira de velha, com a mesma vida da marca de rotina. */
+  ok(!!l.expira_em, "a linha carrega expira_em", l.expira_em);
+  const vida = (new Date(l.expira_em) - new Date(DIA + "T00:00:00.000Z")) / 86400000;
+  ok(vida === 90, "de 90 dias a partir do DIA dispensado, nao do envio", vida);
+
+  /* O efeito de verdade: a rotina para de aparecer no bloco do celular. */
+  ok(B.atrasadas().every(o => !(o.dia === DIA && o.id === ID)),
+     "e o `ficou para tras` do celular deixou de listar aquela rotina");
+
+  /* Chave de outra forma e IGNORADA, e nao adivinhada. */
+  const antes = JSON.stringify(B.LS("cron:hoje-dispensados", {}));
+  ok(B.aplicarDispensaOnline({chave: "meta-aviso/2026-09"}).length === 0,
+     "a forma meta-aviso (prevista no esquema, sem escritor) e ignorada");
+  ok(B.aplicarDispensaOnline({chave: "rotina/so-duas-partes"}).length === 0,
+     "e uma chave malformada tambem");
+  /* O caso que so o PREFIXO pega: tres partes, forma errada. */
+  ok(B.aplicarDispensaOnline({chave: "meta-aviso/2026-09/x"}).length === 0,
+     "e uma de tres partes com o prefixo errado — quem recusa aqui e o prefixo");
+  ok(JSON.stringify(B.LS("cron:hoje-dispensados", {})) === antes,
+     "nenhuma das duas sujou a gaveta");
+}
+
+console.log("\n=== 62. Um funil, sem caminho legado, e a 9D fechada (9D.5) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const DIA = "2026-09-07", ID = "seg-esc";
+  const dispensada = (X, k) => !!(X.LS("cron:hoje-dispensados", {}) || {})[k];
+
+  /* Receber nao e tocar. */
+  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  A.dispensarAtrasada(DIA, ID);
+  await A.SYNC.drenarFila();
+  ok(dispensada(B, DIA + "|" + ID), "a dispensa chegou");
+  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
+     B.getToques().length - toquesB);
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
+  const eco = A.SYNC.aplicarRemoto(
+    srv.linhas.find(l => l.dominio === "dispensa" && l.chave === "rotina/" + DIA + "/" + ID));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
+  ok(B.aplicarDispensaOnline({chave: "rotina/" + DIA + "/" + ID}).length === 0,
+     "reaplicar a mesma dispensa nao pede render");
+
+  /* Offline: a decisao vale na hora e espera na fila. */
+  srv.falhar = true;
+  A.dispensarAtrasada("2026-09-06", "dom-rev");
+  ok(dispensada(A, "2026-09-06|dom-rev"), "sem rede, a dispensa vale na hora no Mac");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "e fica na fila", A.SYNC.situacao().fila);
+  srv.falhar = false;
+  await A.SYNC.reconectar(true);
+  ok(A.SYNC.situacao().fila === 0, "que sobe na reconexao");
+  ok(dispensada(B, "2026-09-06|dom-rev"), "e chega ao celular");
+
+  /* ESTRUTURA. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"dispensa"/g) || []).length === 1,
+     "ha UM unico ponto que escreve dispensa online");
+  const grava = (render.match(/save\(ATRASO_KEY/g) || []).length +
+                (nucleo.match(/save\(ATRASO_KEY/g) || []).length +
+                (regras.match(/save\(ATRASO_KEY/g) || []).length;
+  ok(grava === 2, "e so DOIS lugares gravam a chave: o funil e a descida", grava);
+  ok(/save\(ATRASO_KEY/.test(corpoDe(render, "tocarDispensa")), "   o funil");
+  ok(/save\(ATRASO_KEY/.test(corpoDe(nucleo, "aplicarDispensaOnline")), "   e o aplicador");
+  ok(/tocarDispensa\(/.test(corpoDe(render, "dispensarAtrasada")),
+     "   e dispensarAtrasada passa por ele");
+  ok(/podarDispensados\(\)/.test(corpoDe(render, "tocarDispensa")),
+     "a poda local dos sete dias continua acontecendo na escrita");
+
+  /* Sem caminho legado — nao havia, e nao se inventou um. */
+  ok((render.match(/enfileirarToque\("dispensa"/g) || []).length === 0 &&
+     (nucleo.match(/enfileirarToque\("dispensa"/g) || []).length === 0,
+     "nao existe toque `dispensa`: a chave nunca atravessou pelo GitHub");
+  ok(A.getToques().every(t => t.tipo !== "dispensa"),
+     "e dispensar nao passou a emitir um", A.getToques().map(t => t.tipo));
+
+  /* Um render, e so um. */
+  const corpo = corpoDe(nucleo, "aplicarDispensaOnline");
+  ok(/renderHoje/.test(corpo) && !/renderVistaRevisao|renderSemana/.test(corpo),
+     "o unico render e renderHoje", corpo.match(/render\w+/g));
+  ok(/ATRASO_KEY/.test(corpoDe(regras, "atrasadas")),
+     "   porque atrasadas() e o unico leitor, e ele desenha no Hoje");
+
+  /* A 9D esta fechada: os onze dominios do esquema, sete conectados. */
+  const dominios = A.SINCRONIA.DOMINIOS;
+  ok(dominios.length === 11, "o esquema segue com onze dominios", dominios.length);
+  ["triagem", "retomada", "rotina", "dispensa"].forEach(d => {
+    ok(dominios.indexOf(d) >= 0, "   " + d + " esta no esquema desde a 9A");
+  });
+  ok(["item", "estrutura_proj", "estrutura_sub", "toefl"]
+       .every(d => !new RegExp('salvarAlteracao\\(\\s*"' + d + '"').test(render)),
+     "e os quatro que sobram para a 9E nao foram antecipados");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");

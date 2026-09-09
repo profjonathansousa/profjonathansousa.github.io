@@ -1672,6 +1672,58 @@ Nada aplicado ao banco.
 
 `teste_sync.js`, seções 59 e 60.
 
+### 9D (5 de 5) — Dispensas online, e a Fase 9D fechada
+
+O **oitavo domínio**, e o par exato da 9D.4: `cron:hoje-dispensados` também
+nunca atravessou aparelho, pela mesma razão registrada no esquema, e também
+**estreia em vez de migrar**. Nenhum toque `dispensa` foi inventado.
+
+Com ela a **Fase 9D está completa**: vagas, retomadas, registro, rotinas e
+dispensas. Sete domínios de estado mais a tabela do registro.
+
+#### As duas formas da chave
+
+| | forma |
+|---|---|
+| no aparelho | `AAAA-MM-DD\|id` (barra vertical) |
+| no estado online | `rotina/AAAA-MM-DD/id` |
+
+O prefixo não é enfeite: a tabela guarda os dois tipos de dispensa na mesma
+chave composta. O esquema prevê desde a 9A uma segunda forma,
+`meta-aviso/AAAA-MM`, que **nada ainda escreve** — e o aplicador a **ignora**
+em vez de adivinhar. Gravar um formato que nenhum leitor entende sujaria a
+gaveta sem ninguém notar. Uma chave de três partes com o prefixo errado é o
+caso que só a checagem do prefixo pega, e há teste para ele.
+
+#### Sem lápide
+
+Não existe "desdispensar". A entrada some sozinha quando o dia sai da janela de
+sete dias, e do servidor pelo `expira_em` — **90 dias a partir do dia
+dispensado**, a mesma vida da marca de rotina, pelo mesmo `rotinaExpira()`.
+
+#### A poda local continua onde estava
+
+`podarDispensados()` corta as entradas com mais de sete dias, e continua sendo
+chamada **na escrita**, dentro do funil — nada mudou nisso. Ela e o `expira_em`
+do servidor fazem trabalhos diferentes: uma limpa a gaveta deste aparelho, o
+outro impede que a tabela guarde para sempre o rastro de uma rotina que morreu
+de velha.
+
+#### Um render
+
+`renderHoje`, e só. `atrasadas()` é o único leitor da chave, e ele desenha no
+bloco "ficou para trás" do Hoje.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: `dispensa` está no `CHECK` desde a 9A,
+com as duas formas da chave e o `expira_em` já escritos lá. Nada aplicado ao
+banco.
+
+#### Testes
+
+`teste_sync.js`, seções 61 e 62.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1937,8 +1989,9 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9D.2 — Retomadas silenciadas online | concluída |
 | 9D.3 — Registro datado online (tabela própria) | concluída |
 | 9D.4 — Rotinas do dia online (primeira estreia sem caminho legado) | concluída |
-| 9D.5 — dispensas | não iniciada |
-| 9E a 9G — trilhos, escrita dupla, desativação do GitHub | não iniciadas |
+| 9D.5 — Dispensas online (fecha a Fase 9D) | concluída |
+| 9E — Trilhos (item, estrutura, merge de três vias) | não iniciada |
+| 9F e 9G — escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado
 
