@@ -68,11 +68,21 @@ function guiaFeito(iid){ var r = guiaStore()[iid]; return !!(r && r.feito); }
 
    Desmarcar viaja (feito:false com instante proprio). Ausencia nao viaja, e
    nao e false: e "nunca decidido". */
-function marcarGuia(iid, feito){
+/* O FUNIL DO GUIA (Fase 9E), e o unico escritor. O `quandoISO` existe para a
+   migracao, que publica marcacao antiga com um piso fixo no passado — sem ele
+   uma marca de meses atras subiria com a data de hoje e venceria uma decisao
+   recente do outro aparelho. */
+function marcarGuia(iid, feito, quandoISO){
   var st = guiaStore();
-  var iso = enfileirarToque("toefl", {iid:iid, feito:!!feito});
+  var iso = enfileirarToque("toefl", {iid:iid, feito:!!feito}, quandoISO); /* legado: intacto */
   st[iid] = {feito:!!feito, em:iso};
   save(TOEFL_GUIA_KEY, st);
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("toefl", String(iid), {feito: !!feito}, {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: toefl nao subiu:", e); }catch(e2){} }
+  return iso;
 }
 /* MESMA ASSINATURA DE SEMPRE: devolve {indice:true} da fase pedida. Quem chama
    (guiaItens) continua sem precisar saber que a identidade virou `id`. */

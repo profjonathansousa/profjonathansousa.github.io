@@ -1131,10 +1131,43 @@ function marcarSub(pid, projId, subId, novoSt){
   var x = normSub(p[pi].subs[si]), de = x.st;
   if(novoSt === de) return null;
   x.st = novoSt;
-  x.em = new Date().toISOString();
+  tocarItem(pid, p[pi], x, de);
   setProjs(pid, p);
-  logar(pid, p[pi], x, de, x.st);
   return {pid:pid, pi:pi, si:si, de:de, para:x.st};
+}
+
+/* O FUNIL DO PROGRESSO (Fase 9E), e o unico ponto que carimba o `em` de um
+   subitem. Eram dois — marcarSub e ciclarVida —, cada um com o seu
+   `new Date().toISOString()`.
+
+   E ESSE new Date() ERA UM DEFEITO, nao so uma duplicacao: o toque nasce do
+   instanteDoToque(), o relogio monotonico, e o `x.em` nascia do relogio de
+   parede. Duas mudancas no mesmo milissegundo recebiam o MESMO `x.em`, e a
+   segunda perdia o desempate contra a primeira; pior, o aparelho e o toque
+   passavam a discordar sobre quando aquilo aconteceu. E a mesma divergencia
+   que a 9C-0 mediu em metas e eventos e a 9D.1 corrigiu no vgMarcar. Agora o
+   instante vem do logar(), que e quem fala com o relogio.
+
+   TRES CONSUMIDORES, UMA FONTE: o subitem no aparelho, o toque do caminho
+   legado (que o pipeline tambem le e escreve) e a linha do cron_estado. */
+function tocarItem(pid, proj, x, de){
+  var iso = logar(pid, proj, x, de, x.st);          /* legado: toque + registro */
+  x.em = iso;                                        /* o MESMO instante */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("item", pid + "/" + proj.id + "/" + x.id,
+                           {st: x.st, vida: x.vida || "ativo",
+                            /* O motivo VIAJA aqui, e nao no caminho do GitHub:
+                               a razao do semMotivo() e o repositorio ser
+                               publico, e esta base nao e. Mesma decisao da
+                               9D.3 para o registro. */
+                            motivo: x.motivo || "",
+                            voltar_em: x.voltar_em || "",
+                            vidaDesde: x.vidaDesde || ""},
+                           {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: item nao subiu:", e); }catch(e2){} }
+  return iso;
 }
 function cycleSub(pid,pi,si){
   var p=getProjs(pid), pr=p[pi], x=pr && pr.subs && normSub(pr.subs[si]);
@@ -1339,8 +1372,8 @@ function ciclarVida(pid,pi,si){
   if(x.vida==="inaplicavel"){
     if(!confirm("Esta etapa esta marcada como \u201cn\u00e3o se aplica\u201d"+(x.motivo?" ("+x.motivo+")":"")+".\n\nVoltar para ativa?")) return;
     x.vida="ativo"; x.motivo=""; x.voltar_em=""; x.vidaDesde=ymd(now);
-    x.em=new Date().toISOString();
-    setProjs(pid,p); logar(pid, p[pi], x, x.st, x.st);
+    tocarItem(pid, p[pi], x, x.st);
+    setProjs(pid,p);
     renderPainel(pid); renderRegistro(); sincronizarHoje(pid); return;
   }
   var prox=VIDA_ORDEM[(VIDA_ORDEM.indexOf(x.vida)+1)%VIDA_ORDEM.length];
@@ -1357,9 +1390,8 @@ function ciclarVida(pid,pi,si){
     } else { x.voltar_em=""; }
   }
   x.vidaDesde=ymd(now);
-  x.em=new Date().toISOString();
+  tocarItem(pid, p[pi], x, x.st);
   setProjs(pid,p);
-  logar(pid, p[pi], x, x.st, x.st);
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
 /* ================== TOQUES — fila de sincronização (Passo 5) ==================

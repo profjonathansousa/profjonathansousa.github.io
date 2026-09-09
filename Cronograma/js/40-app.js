@@ -184,6 +184,16 @@ catch(e){ console.error("sincronia: dominio rotina:", e); }
    atravessou aparelho. */
 try{ SYNC.assinarDominio("dispensa", aplicarDispensaOnline); }
 catch(e){ console.error("sincronia: dominio dispensa:", e); }
+/* Fase 9E: os Trilhos. O `item` e o unico dominio com DOIS escritores reais —
+   voce e o pipeline, pelo `--registrar` —, e a fronteira que os separa esta no
+   dado e nao no desempate: o pipeline recusa subitem de prova "estrela". O
+   `toefl` vem junto por ser progresso pela mesma regra. A ESTRUTURA
+   (estrutura_proj, estrutura_sub) NAO entrou: ela depende do merge de tres vias
+   e da cron_estrutura_base, que so o pipeline pode escrever. Ver o README. */
+try{ SYNC.assinarDominio("item", aplicarItemOnline); }
+catch(e){ console.error("sincronia: dominio item:", e); }
+try{ SYNC.assinarDominio("toefl", aplicarToeflOnline); }
+catch(e){ console.error("sincronia: dominio toefl:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

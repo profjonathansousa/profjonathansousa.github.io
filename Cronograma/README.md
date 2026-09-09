@@ -1724,6 +1724,95 @@ banco.
 
 `teste_sync.js`, seções 61 e 62.
 
+### 9E — Trilhos: o progresso online, e a estrutura que ficou
+
+Dois domínios conectados — **`item`** (progresso) e **`toefl`** (o guia) — e
+dois **deliberadamente não conectados**: `estrutura_proj` e `estrutura_sub`.
+Nove domínios de estado no ar, mais a tabela do registro.
+
+#### Os dois escritores reais, e onde está a autoridade
+
+Este é o único domínio da Fase 9 em que dois escritores já são verdade **hoje**:
+você, no aparelho, e o pipeline, pelo `dobrar_toques.py --registrar`, que
+escreve um toque com aparelho `"cowork"` e entra pela mesma porta que o iPhone.
+
+A regra de desempate é o relógio — mas **a autoridade não é "quem chegou por
+último"**, e a distinção importa. O que impede o relógio de apagar uma decisão
+sua não é o desempate: é a **fronteira do que a máquina pode afirmar**, e ela
+está no dado, **antes de qualquer escrita**. O `--registrar` **recusa** subitem
+de prova `"estrela"` — as etapas cuja conclusão é decisão do autor. Sobre elas o
+pipeline não opina, então não há conflito a desempatar. Nas outras, progresso é
+fato verificável (o artefato existe ou não existe), e ali o mais recente manda
+mesmo.
+
+**A 9E não move essa fronteira para o desempate, e não torna o pipeline um
+escritor do Supabase.** Ele continua no caminho legado, como mais um aparelho —
+que é exatamente o que a dupla escrita preserva até a 9G. Há teste para cada uma
+dessas quatro afirmações.
+
+#### O `em` do subitem vinha do relógio errado
+
+`marcarSub` e `ciclarVida` carimbavam `x.em = new Date().toISOString()`, o
+relógio de parede, enquanto o toque nascia do `instanteDoToque()`, o monotônico.
+Duas consequências, ambas reais e ambas medidas:
+
+- duas mudanças no mesmo milissegundo recebiam o **mesmo** `x.em`, e a segunda
+  perdia o desempate contra a primeira;
+- o aparelho e o toque passavam a **discordar sobre quando aquilo aconteceu**.
+
+É a mesma divergência que a 9C-0 mediu em metas e eventos e a 9D.1 corrigiu no
+`vgMarcar`. O `tocarItem` agora toma o instante do `logar()`, que é quem fala
+com o relógio — uma fonte, três consumidores: o subitem, o toque legado e a
+linha do `cron_estado`.
+
+#### Progresso não cria estrutura
+
+O aplicador do `item` exige que o subitem **exista** neste aparelho. Progresso
+de peça que o aparelho não conhece não tem onde pousar, e inventá-la seria criar
+estrutura pelo caminho do progresso — exatamente a separação que o esquema
+mantém ao dar linhas distintas a `item` e `estrutura_sub`.
+
+#### O motivo viaja, e só por aqui
+
+Mesma decisão da 9D.3: o `semMotivo()` corta o motivo do caminho do GitHub
+porque **aquele** repositório é público. A base é privada, a coluna está no
+contrato, e o rótulo "motivo registrado no outro aparelho" continua sendo do
+caminho legado, onde ele é a única coisa que dá para dizer.
+
+#### O que a 9E NÃO fez, e por quê
+
+**`estrutura_proj` e `estrutura_sub` não foram conectadas.** Ligar a estrutura
+sem o merge de três vias seria ligá-la errado, e o pedido era explícito: não
+simplificar o merge. Faltam **dois pré-requisitos**, nenhum deles código deste
+branch:
+
+1. **A `cron_estrutura_base` precisa ser escrita**, e quem a escreve é o
+   pipeline, do Actions, com a chave `service_role`. O app tem `SELECT` e mais
+   nada — e essa ausência é o ponto: se ele pudesse reescrever a base, poderia
+   forjar "o pipeline nunca mudou isso" e o merge de três vias viraria de duas
+   outra vez. Isso exige um segredo novo no Actions, que é decisão sua.
+2. **O `cron:arquivo` precisa ser aposentado** em favor de `vida='arquivado'`,
+   como o próprio esquema declara. Hoje `delProj`/`delSub` fazem `splice` no
+   array e guardam numa gaveta paralela **indexada por posição** — que se
+   desloca. Apagar e restaurar não têm como atravessar aparelhos nessa forma.
+
+Enquanto isso não existe, o defeito conhecido continua sendo o de sempre e **não
+piorou**: renomear um projeto à mão é desfeito pela próxima publicação do
+pipeline, em silêncio. Isso é verdade desde a Fase 4 e não é consequência da
+Fase 9.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: `item` e `toefl` estão no `CHECK`
+desde a 9A, com chave e valor já escritos lá, e a `cron_estrutura_base` continua
+intacta, esperando a fase que a use. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 63 a 65. Os guardas de lista de domínios passaram a
+varrer também o `20-regras.js`: o funil do TOEFL mora lá, e um guarda que só
+lesse o `30-render.js` diria que o domínio não está conectado.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1990,7 +2079,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9D.3 — Registro datado online (tabela própria) | concluída |
 | 9D.4 — Rotinas do dia online (primeira estreia sem caminho legado) | concluída |
 | 9D.5 — Dispensas online (fecha a Fase 9D) | concluída |
-| 9E — Trilhos (item, estrutura, merge de três vias) | não iniciada |
+| 9E — Trilhos: `item` e `toefl` online | concluída |
+| 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | bloqueada: ver acima |
 | 9F e 9G — escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado

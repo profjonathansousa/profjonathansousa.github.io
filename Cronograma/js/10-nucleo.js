@@ -164,35 +164,60 @@ function restaurarArquivo(k){
 }
 let checks = LS("cron:checks:"+dateKey, {});
 function guiaStore(){ return LS(TOEFL_GUIA_KEY, {}) || {}; }
+/* ====== O MERGE DE UM ITEM DO GUIA — UMA IMPLEMENTACAO SO (Fase 9E) ======
+   Mesma razao do mesclarPrioridade: a 9E deu ao TOEFL um SEGUNDO caminho de
+   descida (o Realtime), ao lado do estado.json. Duas descidas para o mesmo dado
+   com duas copias da regra e o defeito que este repositorio ja pagou uma vez.
+
+   O `r` chega na forma {quando, feito} — a do estado.json. A linha do Supabase
+   e convertida na entrada, para que a forma do banco nao vaze para dentro da
+   regra. NAO HA LAPIDE: o item do guia nao pode ser apagado, so marcado ou
+   desmarcado, e `feito:false` que chega mais novo desmarca aqui. */
+function mesclarToefl(st, iid, r){
+  if(!r || !r.quando) return false;
+  var loc = st[iid];
+  if(loc && (loc.em || "") >= r.quando) return false;   /* empate fica como esta */
+  st[iid] = {feito: !!r.feito, em: r.quando};
+  return true;
+}
 function aplicarToeflDoEstado(est){
   if(!est || !est.toefl) return false;
   var st = guiaStore(), mudou = false;
   Object.keys(est.toefl).forEach(function(iid){
     var r = est.toefl[iid];
-    if(!r || !r.quando) return;
-    var loc = st[iid];
-    if(loc && (loc.em || "") >= r.quando) return;   /* empate fica como esta */
-    st[iid] = {feito: !!r.feito, em: r.quando};
-    mudou = true;
+    if(mesclarToefl(st, iid, {quando: r && r.quando, feito: r && r.feito})) mudou = true;
   });
   if(mudou) save(TOEFL_GUIA_KEY, st);
   return mudou;
 }
+/* A descida do guia pelo caminho online (Fase 9E). Receber nao e tocar: nao
+   passa pelo marcarGuia, nao enfileira toque e nao reescreve online. */
+function aplicarToeflOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var st = guiaStore();
+  if(!mesclarToefl(st, String(linha.chave),
+                   {quando: linha.em, feito: linha.valor && linha.valor.feito})) return [];
+  save(TOEFL_GUIA_KEY, st);
+  return ["renderProcessos"];
+}
 function migrarGuiaToefl(){
   if(LS(TOEFL_MIGRADO_KEY, false)) return 0;
-  var st = guiaStore(), n = 0;
+  var n = 0;
   TOEFL_FASES.forEach(function(fid){
     var g = TOEFL_GUIA[fid]; if(!g) return;
     var velho = LS("cron:toefl-guia:"+fid, {}) || {};
     g.itens.forEach(function(it, i){
       if(velho[i] !== true) return;
+      /* Rele a cada volta: o funil grava o store, entao uma copia presa antes
+         do laco ficaria defasada e reescreveria por cima. */
+      var st = guiaStore();
       if(st[it.id] && st[it.id].feito) return;
-      st[it.id] = {feito:true, em:TOEFL_EM};
-      enfileirarToque("toefl", {iid:it.id, feito:true}, TOEFL_EM);
+      /* PELO FUNIL, e nao pelo enfileirarToque direto: eram dois escritores do
+         guia, e so um deles subia ao estado online. */
+      marcarGuia(it.id, true, TOEFL_EM);
       n++;
     });
   });
-  save(TOEFL_GUIA_KEY, st);
   save(TOEFL_MIGRADO_KEY, true);
   return n;
 }
@@ -242,6 +267,65 @@ function setProjAberto(pid,id,v){var a=abertos();a[pid+"/"+id]=v;save("cron:pain
    ============================================================================ */
 function getPrio(sem){ var v = LS("cron:prioridades:" + (sem||semanaAtual), []); return (v&&v.forEach)?v:[]; }
 function setPrio(lista, sem){ save("cron:prioridades:" + (sem||semanaAtual), lista); }
+
+/* ====== O MERGE DE UM ITEM DO TRILHO — UMA IMPLEMENTACAO SO (Fase 9E) ======
+
+   ESTE E O DOMINIO DE DOIS ESCRITORES REAIS, e o unico da Fase 9 em que isso ja
+   e verdade hoje: voce, no aparelho, e o pipeline, pelo
+   `dobrar_toques.py --registrar`, que escreve um toque com aparelho "cowork" e
+   entra pela mesma porta que o iPhone.
+
+   A AUTORIDADE NAO E "QUEM CHEGOU POR ULTIMO" — e isso importa dizer, porque a
+   regra AQUI e mesmo o relogio. O que impede o relogio de apagar uma decisao
+   sua nao e o desempate: e a FRONTEIRA DO QUE A MAQUINA PODE AFIRMAR, e ela
+   esta no dado, antes de qualquer escrita. O --registrar RECUSA subitem de
+   prova "estrela" — as etapas cuja conclusao e decisao do autor. O pipeline nao
+   opina sobre elas, entao nao ha conflito a desempatar. Nas outras, progresso e
+   fato verificavel (o artefato existe ou nao existe), e ali o mais recente
+   manda mesmo. A 9E NAO MEXE NESSA FRONTEIRA, e nao a move para o desempate.
+
+   O `r` chega na forma {quando, st, vida, motivo} — a do estado.json, com o
+   motivo ja resolvido por quem chama. MUTA O SUBITEM E DEVOLVE SE MUDOU. */
+function mesclarItem(x, r){
+  if(!x || !r || !r.quando) return false;
+  if((x.em || "") >= r.quando) return false;      /* empate fica como esta */
+  if(typeof r.st === "number") x.st = r.st;
+  if(r.vida) x.vida = r.vida;
+  x.motivo = (typeof r.motivo === "string") ? r.motivo : "";
+  if(typeof r.voltar_em === "string") x.voltar_em = r.voltar_em;
+  if(typeof r.vidaDesde === "string") x.vidaDesde = r.vidaDesde;
+  x.em = r.quando;
+  return true;
+}
+
+/* A descida do progresso pelo caminho online (Fase 9E). A chave e
+   painel/projeto/subitem, e o subitem tem de EXISTIR aqui: progresso de peca
+   que este aparelho nao conhece nao tem onde pousar, e inventa-la seria criar
+   estrutura pelo caminho do progresso — exatamente a separacao que o esquema
+   mantem. Ela chega pela estrutura, que e outro dominio.
+
+   RECEBER NAO E TOCAR: nao chama marcarSub nem logar. */
+function aplicarItemOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var partes = String(linha.chave).split("/");
+  if(partes.length !== 3) return [];
+  var projs = getProjs(partes[0]);
+  if(!projs || !projs.forEach) return [];
+  var alvo = null;
+  projs.forEach(function(pr){
+    if(pr.id !== partes[1]) return;
+    (pr.subs || []).forEach(function(x){ if(x.id === partes[2]) alvo = x; });
+  });
+  if(!alvo) return [];
+  var v = linha.valor || {};
+  if(!mesclarItem(normSub(alvo), {quando: linha.em, st: v.st, vida: v.vida,
+                                  motivo: v.motivo, voltar_em: v.voltar_em,
+                                  vidaDesde: v.vidaDesde})) return [];
+  setProjs(partes[0], projs);
+  /* Os mesmos quatro que a descida do estado.json ja dispara quando um item
+     muda: o progresso de um subitem atravessa o aplicativo inteiro. */
+  return ["renderOrdo", "renderHoje", "renderSemana", "renderTrilhos"];
+}
 
 /* ============ O MERGE DE UMA PRIORIDADE — UMA IMPLEMENTACAO SO ============
    A Fase 9B deu um SEGUNDO caminho de descida as prioridades (o Realtime do
@@ -1361,16 +1445,14 @@ function buscarEstado(){
           (pr.subs||[]).forEach(function(x){
             normSub(x);
             var r = est.itens[P.id + "/" + pr.id + "/" + x.id];
-            if(!r || !r.quando) return;
-            if((x.em || "") >= r.quando) return;
-            if(typeof r.st === "number") x.st = r.st;
-            if(r.vida) x.vida = r.vida;
-            /* O motivo nao viaja: e texto livre e o repositorio e publico. Quem
-               recebe ve a marca e sabe onde esta a razao, em vez de ver um
-               motivo velho do proprio aparelho colado numa marca nova. */
-            x.motivo = r.temMotivo ? "motivo registrado no outro aparelho" : "";
-            x.em = r.quando;
-            mudouAqui = true;
+            /* O MOTIVO NAO VIAJA POR AQUI: e texto livre e o repositorio e
+               publico. Quem recebe ve a marca e sabe onde esta a razao, em vez
+               de ver um motivo velho do proprio aparelho colado numa marca
+               nova. O rotulo e montado na entrada porque e proprio DESTE
+               caminho — o online manda o motivo inteiro. */
+            if(mesclarItem(x, r && {quando:r.quando, st:r.st, vida:r.vida,
+                                    motivo: r.temMotivo ? "motivo registrado no outro aparelho" : ""}))
+              mudouAqui = true;
           });
         });
         if(mudouAqui){ setProjs(P.id, projs); mudou = true; }
