@@ -1140,6 +1140,39 @@ function aplicarTriagemDoEstado(est){
    fases 9C-2 e 9C-3 ele ficou de fora porque nao lia meta nem evento. Le
    triagem. E o renderHoje entra TODO DIA, e nao so no domingo como nas metas,
    porque o indicador de vagas do Hoje depende da triagem sempre. */
+/* A descida das rotinas (Fase 9D.4).
+
+   NAO HA MESCLA COM `em` LOCAL, e a ausencia e do formato: `cron:checks:` e
+   `{id: booleano}` e nunca guardou instante. Quem decide o relogio aqui e o
+   cache da camada, no aplicarRemoto, que ja recusou o que nao e mais novo
+   antes de chegar neste ponto. A regra nao tem furo porque `cron:sync-cache` e
+   `cron:checks:` moram no MESMO localStorage: somem juntos e voltam juntos —
+   o mesmo argumento que sustenta "toque meu nao desce nunca" no registro.
+
+   SEM LAPIDE: `{feito:false}` e um estado, e e assim que DESMARCAR atravessa.
+
+   RECEBER NAO E TOCAR: nao passa pelo tocarRotina, nao escreve online e nao
+   volta a subir. */
+function aplicarRotinaOnline(linha){
+  if(!linha || !linha.chave) return [];
+  var chave = String(linha.chave), corte = chave.indexOf("/");
+  if(corte < 0) return [];
+  var dia = chave.slice(0, corte), id = chave.slice(corte + 1);
+  if(!dia || !id) return [];
+  var feito = !!(linha.valor && linha.valor.feito);
+  var ck = LS("cron:checks:"+dia, {}) || {};
+  if(!!ck[id] === feito) return [];          /* nada mudou: nao repinta a toa */
+  ck[id] = feito;
+  save("cron:checks:"+dia, ck);
+  /* O `checks` em memoria e do dia de hoje. Sem esta linha o renderHoje
+     repintaria a copia velha e a marca recebida sumiria da tela. */
+  if(dia === dateKey) checks = ck;
+  /* Dois renders, e so dois: o Hoje (as caixas e o "ficou para tras") e a
+     revisao da semana (a contagem de rotinas concluidas). O renderSemana nao
+     le cron:checks. */
+  return ["renderHoje", "renderVistaRevisao"];
+}
+
 function aplicarTriagemOnline(linha){
   if(!linha || !linha.chave) return [];
   var v = linha.valor || {};

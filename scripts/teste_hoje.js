@@ -877,8 +877,8 @@ const revRY = RY.revisaoDaSemana();
 ok(revRY.concluido.rotinas >= 1, "rotina marcada entra na contagem",
    revRY.concluido.rotinas);
 const htmlRY = RY.renderRevisao();
-ok(/neste aparelho/.test(htmlRY),
-   "e o numero vem com o rotulo 'neste aparelho' — cron:checks e local");
+ok(!/neste aparelho/.test(htmlRY),
+   "e o rotulo 'neste aparelho' SAIU: desde a 9D.4 a marca de rotina viaja");
 ok(/rotina(s)? conclu/.test(htmlRY), "com a contagem escrita", htmlRY.slice(0,0));
 
 console.log("\n=== 30. Prioridades: manual, livre e sugestao ===");

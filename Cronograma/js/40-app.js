@@ -174,6 +174,11 @@ catch(e){ console.error("sincronia: dominio retomada:", e); }
    relogio nem lapide para historico). Rotinas e dispensas continuam LEGADAS. */
 try{ SYNC.assinarRegistro(aplicarRegistroOnline); }
 catch(e){ console.error("sincronia: registro datado:", e); }
+/* Fase 9D (4 de 5): as marcas de rotina do dia. Elas NUNCA atravessaram
+   aparelho — nao ha caminho legado a preservar aqui, so um a estrear. Dispensas
+   continuam LEGADAS. */
+try{ SYNC.assinarDominio("rotina", aplicarRotinaOnline); }
+catch(e){ console.error("sincronia: dominio rotina:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
 try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
 catch(e){ console.error("sincronia online:", e); }

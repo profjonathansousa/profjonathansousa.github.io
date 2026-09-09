@@ -3,7 +3,50 @@
    apagar, trocar de aba). Nenhuma regra de dominio mora aqui: quem decide o
    que e verdade sao 20-regras.js e 10-nucleo.js; aqui so se desenha e se
    reage ao toque na tela. */
-function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,checks);renderHoje();}
+/* O FUNIL DAS ROTINAS (Fase 9D.4), e o UNICO lugar que escreve `cron:checks`.
+   Antes eram tres — toggleCheck, marcarAtrasada e limparHoje —, cada um
+   gravando por conta propria. Enquanto a marca era local isso nao custava
+   nada; a partir do momento em que ela viaja, tres escritores seriam tres
+   chances de uma marca ficar so aqui.
+
+   NAO HA CAMINHO LEGADO PARA ESTE DOMINIO, e a ausencia e da historia dele:
+   `cron:checks:` nunca atravessou aparelho. Nao havia toque `rotina` nem secao
+   no estado.json, e nao e hora de inventar um — o caminho do GitHub sai na
+   9G. A razao de ele ser local era "historico permanente em repositorio
+   publico por um valor que morre numa semana"; numa base privada e podavel a
+   razao nao sobrevive, e e por isso que a 9D.4 existe.
+
+   ELA MORRE DE VELHA, e por isso `expira_em`. atrasadas() le sete dias para
+   tras e a revisao le a semana corrente: marca de rotina com mais de 90 dias
+   nao e lida por ninguem. Sem lapide — "nao marcada" e um estado, e e assim
+   que DESMARCAR atravessa aparelhos. */
+function rotinaExpira(dia){
+  try{
+    var t = new Date(String(dia) + "T00:00:00.000Z").getTime();
+    if(!isFinite(t)) return null;
+    return new Date(t + ROTINA_VIDA_DIAS * 86400000).toISOString();
+  }catch(e){ return null; }
+}
+function tocarRotina(dia, id, feito){
+  if(!dia || !id) return null;
+  var ck = LS("cron:checks:"+dia, {}) || {};
+  ck[id] = !!feito;
+  save("cron:checks:"+dia, ck);
+  /* O `checks` do 10-nucleo.js e uma copia em memoria do dia de hoje, lida uma
+     vez no carregamento. Gravar sem atualiza-la faria o renderHoje repintar o
+     valor velho. */
+  if(dia === dateKey) checks = ck;
+  var iso = null;
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      var it = SYNC.salvarAlteracao("rotina", dia + "/" + id, {feito: !!feito},
+                                    {expira_em: rotinaExpira(dia)});
+      iso = it && it.em;
+    }
+  }catch(e){ try{ console.error("sync: rotina nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+function toggleCheck(id){ tocarRotina(dateKey, id, !checks[id]); renderHoje(); }
 
 /* ================== O QUE FICOU PARA TRAS ==================
    As marcacoes do dia sao por DATA (cron:checks:AAAA-MM-DD). Isso e certo — o
@@ -20,15 +63,14 @@ function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,chec
    e voce so lembrou no sabado, quem recebe a marca e a quarta. Marcar em hoje
    faria a semana mentir duas vezes: quarta vazia e sabado cheio.
 
-   ISTO NAO VIAJA, e nao e esquecimento: cron:checks: sempre foi por aparelho,
-   e nada aqui muda o que atravessa. O bloco le e escreve a mesma chave que a
-   aba Hoje ja usava.
+   ISTO VIAJA DESDE A FASE 9D.4. Ate ali `cron:checks:` era por aparelho, e o
+   bloco dizia isso. Agora marcar a quarta no Mac marca a quarta no celular —
+   e a gravacao continua sendo na DATA DE ORIGEM, entao o que viaja e a quarta,
+   e nao o sabado em que voce lembrou. O bloco le e escreve a mesma chave que a
+   aba Hoje ja usava, agora pelo mesmo funil.
    =========================================================== */
 function marcarAtrasada(dia, id){
-  var ck = LS("cron:checks:"+dia, {}) || {};
-  ck[id] = true;
-  save("cron:checks:"+dia, ck);
-  if(dia === dateKey) checks = ck;
+  tocarRotina(dia, id, true);
   renderHoje();
 }
 function dispensarAtrasada(dia, id){
@@ -391,10 +433,12 @@ function renderRevisao(){
     });
     C.metas.forEach(function(m){ h += _revLinha('<b>Meta</b> \u00b7 '+escapeHtml(m.t), ""); });
     if(C.rotinas){
-      /* O rotulo nao e enfeite: cron:checks: e por aparelho, e o numero seria
-         outro no celular. */
+      /* O rotulo "neste aparelho" saiu na Fase 9D.4, e nao por enxugar texto:
+         a marca de rotina passou a viajar, entao o numero deixou de ser local.
+         Manter a ressalva seria dizer ao leitor uma coisa que o programa nao
+         faz mais. */
       h += '<div class="rev-local">'+C.rotinas+' rotina'+(C.rotinas===1?'':'s')+
-           ' conclu\u00edda'+(C.rotinas===1?'':'s')+' \u00b7 <i>neste aparelho</i></div>';
+           ' conclu\u00edda'+(C.rotinas===1?'':'s')+'</div>';
     }
   }
   h += '</div>';
@@ -1715,7 +1759,17 @@ function setView(v){
   if(v==="semana") renderSemana();   /* os numeros mudam a cada marcacao */
   if(v==="vagas") vgAbrir();
   try{window.scrollTo(0,0);}catch(e){}}
-function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
+/* LIMPAR E DESMARCAR UMA A UMA, e nao esvaziar a gaveta. Zerar o objeto
+   apagava as marcas sem dizer a ninguem que elas cairam: o outro aparelho
+   continuaria mostrando o dia cheio, e a proxima descida traria tudo de volta.
+   Cada id vira `{feito:false}`, que e o estado que atravessa. Para quem le
+   (`if(ck[id])`) `false` e ausencia sao a mesma coisa — nada muda na tela. */
+function limparHoje(){
+  Object.keys(checks || {}).forEach(function(id){
+    if(checks[id]) tocarRotina(dateKey, id, false);
+  });
+  renderHoje();
+}
 
 /* ==================== PAINEL VAGAS — Passo 4 ====================
    O ARQUIVO DESCREVE, O APARELHO DECIDE. dados/vagas.json e dados/chamadas.json

@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-09-registro";
+const APP_VERSION = "2026-09-09-rotinas";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -427,6 +427,12 @@ const VIDA_LBL = {ativo:"", adiado:"adiada", abandonado:"abandonada", arquivada:
    tem o que fazer. Nao e "abandonada": ninguem abandonou nada, a etapa e que nao
    cabe. Um item inaplicavel sai da conta de progresso e nao vira "proxima etapa". */
 const ATRASO_DIAS = 7;
+/* VIDA DA MARCA DE ROTINA NO ESTADO ONLINE (Fase 9D.4), em dias. Espelha o
+   `expira_em` que o cron_podar() usa: atrasadas() le ATRASO_DIAS para tras e a
+   revisao le a semana corrente, entao marca com mais de 90 dias nao e lida por
+   ninguem. Podar o rastro de uma rotina que morreu de velha nao contraria
+   "nada se perde" — aquilo vale para decisao, e a marca do dia nao e uma. */
+const ROTINA_VIDA_DIAS = 90;
 const ATRASO_KEY = "cron:hoje-dispensados";
 /* A chave de dispensa so precisa viver os sete dias da janela: passado isso o
    item ja saiu por conta propria e a marca vira lixo. Podar na escrita evita

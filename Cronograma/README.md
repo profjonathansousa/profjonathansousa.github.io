@@ -1585,6 +1585,93 @@ o real não prova nada. O canal falso passou a guardar um callback por tabela:
 guardar só o último faria o teste do registro passar e o do estado sumir sem
 ninguém perceber.
 
+### 9D (4 de 5) — Rotinas do dia online
+
+O **sétimo domínio**, e o primeiro que **não tinha caminho legado nenhum**.
+Dispensas continuam legadas.
+
+#### A marca de rotina nunca atravessou aparelho
+
+Não havia toque `rotina` nem seção no `estado.json`: `cron:checks:AAAA-MM-DD`
+sempre foi local, e o código dizia isso em três lugares. A razão estava
+registrada e era boa — *"histórico permanente em repositório público por um
+valor que morre numa semana"*. Numa base privada e podável a razão não
+sobrevive, e o que sobra é a discordância: marcar uma rotina no Mac e o iPhone
+mostrar o dia incompleto é exatamente o tipo de coisa que faz alguém deixar de
+confiar no app.
+
+Logo: **não há caminho legado a preservar aqui, só um a estrear**. Nenhum toque
+`rotina` foi inventado — o caminho do GitHub sai na 9G, e não é hora de lhe
+acrescentar mecanismo. Há teste que verifica justamente isso.
+
+#### Um funil onde havia três escritores
+
+`toggleCheck`, `marcarAtrasada` e `limparHoje` gravavam `cron:checks` cada um
+por conta própria. Enquanto a marca era local isso não custava nada; a partir do
+momento em que ela viaja, três escritores seriam três chances de uma marca ficar
+só num aparelho. Os três passam agora por `tocarRotina(dia, id, feito)`.
+
+**`limparHoje` deixou de esvaziar a gaveta.** Zerar o objeto apagava as marcas
+sem dizer a ninguém que elas caíram: o outro aparelho continuaria mostrando o
+dia cheio, e a próxima descida traria tudo de volta. Agora cada id vira
+`{feito:false}` — e para quem lê (`if(ck[id])`) `false` e ausência são a mesma
+coisa, então nada muda na tela.
+
+#### Sem lápide, e a ausência é do domínio
+
+**"Não marcada" é um estado**, e é assim que *desmarcar* atravessa aparelhos —
+mesmo desenho da triagem da 9D.1. A lápide existe para dizer "isto foi apagado";
+aqui não se apaga nada, alterna-se um booleano.
+
+#### `expira_em`, porque a marca morre de velha
+
+É o único domínio, com `dispensa`, que preenche `expira_em`: **90 dias contados
+a partir do dia da marca**, não do envio. `atrasadas()` lê sete dias para trás e
+a revisão lê a semana corrente — marca de rotina com mais de 90 dias não é lida
+por ninguém, e o `cron_podar()` a leva. Isso não contraria *"nada se perde"*:
+aquilo vale para decisão, e a marca do dia não é uma.
+
+#### O relógio mora no cache, e é suficiente
+
+`cron:checks:` é `{id: booleano}` e **nunca guardou instante** — não há, e não
+deve haver, um `mesclar*` comparando `em` local. Quem decide é o cache da
+camada, no `aplicarRemoto`, que já recusou o que não é mais novo antes de o
+aplicador ser chamado. A regra não tem furo porque `cron:sync-cache` e
+`cron:checks:` moram no **mesmo** localStorage: somem juntos e voltam juntos —
+o mesmo argumento que sustenta "toque meu não desce nunca" no registro.
+
+#### A cópia em memória
+
+`checks` é uma cópia em memória do dia de hoje, lida uma vez no carregamento.
+Gravar em `cron:checks` sem atualizá-la faria o `renderHoje` repintar o valor
+velho e a marca recebida sumir da tela. O funil e o aplicador atualizam os dois.
+
+#### Os dois renders
+
+| | Por quê |
+|---|---|
+| `renderHoje` | as caixas do dia e o bloco "ficou para trás" (`atrasadas()`) |
+| `renderVistaRevisao` | `revisaoDaSemana` conta as rotinas concluídas |
+
+**`renderSemana` não entra** — verificado que não lê `cron:checks`.
+
+#### O rótulo "neste aparelho" saiu
+
+A revisão dominical dizia *"3 rotinas concluídas · neste aparelho"*. A ressalva
+existia porque o número era local; agora não é. Mantê-la seria dizer ao leitor
+uma coisa que o programa não faz mais.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: `rotina` está no `CHECK` de domínios,
+o contrato da chave (`AAAA-MM-DD/idDaRotina`) e do valor (`{feito}`) está escrito
+lá desde a 9A, e o `expira_em` e o `cron_podar()` foram feitos para este caso.
+Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 59 e 60.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1849,7 +1936,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9D.1 — Triagem das Vagas online | concluída |
 | 9D.2 — Retomadas silenciadas online | concluída |
 | 9D.3 — Registro datado online (tabela própria) | concluída |
-| 9D.4 e 9D.5 — rotinas, dispensas | não iniciadas |
+| 9D.4 — Rotinas do dia online (primeira estreia sem caminho legado) | concluída |
+| 9D.5 — dispensas | não iniciada |
 | 9E a 9G — trilhos, escrita dupla, desativação do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado
