@@ -1881,6 +1881,75 @@ o critério 1 foi corrigido antes de a fase fechar.
 `sql/` **não foi tocado**. Nenhum domínio novo, nenhum funil novo, nenhuma
 mudança no merge de três vias. A 9F **só mede**.
 
+### 9G-0 — Pré-requisitos para aposentar o GitHub
+
+Duas coisas bloqueavam a 9G. Esta etapa resolve **uma** e documenta por que a
+outra não pode ser resolvida por código.
+
+#### Parte A — o segundo escritor ganhou caminho online ✅
+
+O `--registrar` sempre foi um escritor **real**, e não um espelho: ele afirma um
+fato que só ele verifica (o artefato existe), pela mesma porta por onde o iPhone
+entra. Até aqui essa porta era só o arquivo de toque — o que faria dele um órfão
+no dia em que o caminho do GitHub saísse.
+
+Agora ele publica o **mesmo toque** também no estado compartilhado: uma linha
+`item` em `cron_estado` e uma linha em `cron_registro`, com o **id do toque**
+como chave primária — a mesma ponte da 9D.3, que faz as duas descidas
+reconhecerem a mesma linha sem duplicá-la.
+
+O que continua exatamente como era:
+
+| | |
+|---|---|
+| a fronteira `prova: "estrela"` | a recusa acontece **antes**, no `registrar()`, e nada no publicador a alcança |
+| o `em` | o mesmo instante nos dois caminhos — sem isso a prova da 9F não teria o que comparar |
+| a autoridade | assina como `cowork` também online: um aparelho, não uma autoridade |
+| a separação | publica `item`, e **um domínio só**. Nunca estrutura |
+| o LWW | o gatilho `cron_estado_relogio()` descarta o `em` atrasado: o pipeline não desfaz decisão mais recente sua |
+| terceiro escritor | nenhum — é a mesma função `registrar()` |
+
+**O toque é o artefato durável.** Publicar vem **depois** de gravar, e é melhor
+esforço: rede fora ou credenciais ausentes fazem o comando dizer o que não fez e
+seguir. O caminho do GitHub fica inteiro.
+
+**Nenhum segredo novo.** `SUPABASE_URL` (repository *variable*) e
+`SUPABASE_SECRET_KEY` (*secret*, papel `service_role`) **já existem** e já são
+usadas pelo `avisos/enviar.mjs`. O `dobrar-toques.yml` passou a recebê-las no
+ambiente do job. O uuid do dono vem da própria `cron_dono` — dois donos é
+ambiguidade, e o pipeline para e diz, em vez de escolher.
+
+#### Parte B — a estrutura continua bloqueada, por duas decisões suas ⛔
+
+Não improvisei. Os dois pontos abaixo não são de código:
+
+**B1 — não existe, neste repositório, quem publique o `entrada.json`.** O
+`dobrar_toques.py` apenas o **lê** (`procurar_na_entrada`); nada aqui o escreve.
+A `cron_estrutura_base` guarda *o que o pipeline publicou da última vez*, e essa
+é a informação inteira do merge de três vias. Preenchê-la a partir de um arquivo
+que o pipeline não publicou seria **forjar a base** — exatamente o que o
+`sql/cron_estado.sql` avisa: com uma base forjada, o merge de três vias vira de
+duas outra vez, e em silêncio. Enquanto o publicador do `entrada.json` não
+estiver neste repositório (ou não escrever a base ele mesmo), não há onde
+ancorar a terceira via.
+
+**B2 — aposentar o `cron:arquivo` exige decidir o que fazer com o que já está
+arquivado.** Hoje `delProj`/`delSub` fazem `splice` no array e guardam numa
+gaveta paralela indexada por **posição** — e as posições já se deslocaram desde
+que cada entrada foi guardada. Migrar para `vida='arquivado'` muda, aparelho por
+aparelho, o que cada um mostra, de forma irreversível; e essas entradas **nunca
+viajaram**, então cada aparelho tem as suas. É uma decisão sobre o seu arquivo
+real, não sobre o código. E fazer só a parte fácil seria aposentar o
+`cron:arquivo` **pela metade**, que é o que você proibiu.
+
+#### Testes
+
+A prova da 9F teve o **critério 8 reescrito**, e ficou mais forte: em vez de
+"o pipeline não fala com o Supabase" — afirmação que esta etapa supera —, ele
+agora verifica que, falando, o pipeline continua afirmando um fato seu: mesmo
+`em`, mesmo id, um domínio só, assinatura de aparelho, gravação antes da
+publicação e credenciais só do ambiente.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -2152,6 +2221,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9E — Trilhos: `item` e `toefl` online | concluída |
 | 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | bloqueada: ver acima |
 | 9F — Prova da escrita dupla | concluída |
+| 9G-0 — pré-requisitos: pipeline online (feito) e estrutura (bloqueada) | parcial |
 | 9G — desativação do caminho do GitHub | não iniciada |
 
 ### Previsto e ainda não implementado

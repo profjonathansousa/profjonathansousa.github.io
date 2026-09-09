@@ -445,7 +445,7 @@ titulo("=== 7. O item é progresso, e progresso não cria estrutura ===");
 /* ============================================================
    8 e 9. O SEGUNDO ESCRITOR REAL, E A FRONTEIRA DELE.
    ============================================================ */
-titulo("=== 8. O pipeline continua escrevendo pelo caminho legado ===");
+titulo("=== 8. O pipeline escreve nos dois caminhos, e não vira espelho ===");
 {
   const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
   ok(/"aparelho": "cowork"/.test(pipe),
@@ -454,10 +454,45 @@ titulo("=== 8. O pipeline continua escrevendo pelo caminho legado ===");
      "do tipo `registro` — a mesma porta por onde o iPhone entra");
   ok(/DIR_TOQUES/.test(pipe) && /json\.dump/.test(pipe),
      "e o destino é um arquivo de toque, como o de qualquer aparelho");
-  ok(!/supabase|SUPABASE|cron_estado|cron_registro/.test(pipe),
-     "o pipeline NÃO fala com o Supabase: ele não virou espelho de estado");
-  ok(!/service_role|SERVICE_ROLE/.test(pipe),
-     "e não carrega chave de serviço nenhuma");
+
+  /* A 9G-0 deu ao pipeline o caminho online que faltava. O critério não é mais
+     "ele não fala com o Supabase" — é que, falando, ele continue afirmando um
+     FATO SEU e não espelhando estado alheio. */
+  ok(/def publicar_online/.test(pipe),
+     "e desde a 9G-0 publica o MESMO toque também no estado compartilhado");
+  const corpo = pipe.split("def publicar_online")[1].split("\ndef ")[0];
+  ok(/toque\["quando"\]/.test(corpo),
+     "com o `em` do próprio toque, e não um instante novo");
+  ok(/toque\["id"\]/.test(corpo),
+     "e com o id do próprio toque como chave do registro");
+  ok(/"dominio": "item"/.test(corpo) && !/estrutura_/.test(corpo),
+     "publica `item` e NUNCA estrutura: a separação do esquema é respeitada");
+  const dominios = (corpo.match(/"dominio": "(\w+)"/g) || []).map(x => x.match(/"(\w+)"$/)[1]);
+  ok(JSON.stringify(dominios) === JSON.stringify(["item"]),
+     "e um domínio só, o dele: não é espelho de estado", dominios);
+  ok(/aparelho": "cowork"/.test(corpo),
+     "assinando como `cowork` também online — um aparelho, não uma autoridade");
+
+  /* O toque é o artefato durável: publicar vem DEPOIS de gravar, e falhar em
+     publicar não pode custar o toque. */
+  /* A ordem que importa é a da rodada de verdade. O `--seco` também chama o
+     publicador, antes — mas para dizer que não publicou nada, e ele retorna
+     sem escrever arquivo nenhum. Medir a primeira ocorrência mediria isso. */
+  const reg = pipe.split("def registrar(")[1];
+  const daRodadaReal = reg.split("os.makedirs(DIR_TOQUES")[1] || "";
+  ok(daRodadaReal.indexOf("json.dump") >= 0 &&
+     daRodadaReal.indexOf("json.dump") < daRodadaReal.indexOf("publicar_online"),
+     "na rodada de verdade, grava o arquivo de toque ANTES de tentar publicar");
+  ok(/if seco:[\s\S]{0,220}return 0/.test(reg),
+     "e o --seco sai antes de escrever qualquer coisa");
+  ok(/except Exception as e:[\s\S]{0,200}nao publicado online/.test(reg),
+     "e uma rede fora não custa o toque: diz o que não fez e segue");
+
+  /* Nenhum segredo no repositório: só leitura do ambiente. */
+  ok(/os\.environ\.get\(API_URL\)/.test(pipe) && /os\.environ\.get\(API_CHAVE\)/.test(pipe),
+     "as credenciais vêm do ambiente, e só de lá");
+  ok(!/eyJ[A-Za-z0-9_-]{20,}/.test(pipe) && !/service_role"\s*:/.test(pipe),
+     "e nenhuma chave está gravada no arquivo");
 
   /* E o caminho legado continua inteiro no aplicativo, que é o outro lado da
      dupla escrita: se ele saísse agora, o pipeline ficaria sem interlocutor. */

@@ -57,9 +57,15 @@ USO:
     python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-4 --para 2
     python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-5 --para 1 --seco
 
-O --registrar escreve um toque com aparelho "cowork" e dobra em seguida. Não passa
-pela rede: grava o arquivo na pasta conectada e lê de volta no mesmo comando. É a
-metade que faltava do elo pipeline -> Cronograma.
+O --registrar escreve um toque com aparelho "cowork" e dobra em seguida: grava o
+arquivo na pasta conectada e lê de volta no mesmo comando. É a metade que faltava
+do elo pipeline -> Cronograma.
+
+DESDE A FASE 9G-0 ele também publica o MESMO toque no estado compartilhado (uma
+linha `item` e uma linha de registro), quando SUPABASE_URL e SUPABASE_SECRET_KEY
+estiverem no ambiente. Sem elas, grava o toque, diz que não publicou e segue — o
+caminho do GitHub continua inteiro. O toque é o artefato durável; publicar é
+melhor esforço.
 
 REGRA DURA DO --registrar: ele RECUSA subitem de prova "estrela". O mapa_portal.json
 marca assim as etapas cuja conclusão é decisão do autor e não artefato — a escolha
@@ -351,6 +357,116 @@ def procurar_na_entrada(pid, proj_id, sub_id):
     return (None, None, None)
 
 
+# ======================= O CAMINHO ONLINE DO --registrar =======================
+# Fase 9G-0. O pipeline sempre foi um segundo escritor REAL, e nao um espelho: ele
+# afirma um fato que so ele verifica (o artefato existe), e o afirma pela mesma
+# porta por onde o iPhone entra. Ate aqui essa porta era so o arquivo de toque.
+# Enquanto o caminho do GitHub existir isso basta; no dia em que ele sair, o
+# pipeline ficaria sem interlocutor. Esta e a metade que faltava, e ela e
+# preparada AGORA justamente para que a 9G nao precise inventar nada depois.
+#
+# O QUE ELE PUBLICA, e nada alem disso:
+#   · uma linha `item` em cron_estado — progresso e ciclo de vida;
+#   · uma linha em cron_registro, com o id DO TOQUE como chave primaria.
+# Nao publica estrutura. A separacao entre progresso e estrutura e do esquema, e
+# a base de tres vias (cron_estrutura_base) tem dono proprio e outro momento.
+#
+# O MESMO `em` NOS DOIS CAMINHOS: o `agora` que carimba o toque e o mesmo que
+# sobe na linha. Sem isso o LWW de um caminho decidiria diferente do outro, e a
+# prova da 9F nao teria o que comparar.
+#
+# A FRONTEIRA CONTINUA ANTES: a recusa de prova "estrela" acontece la em cima,
+# no registrar(), e nada aqui a alcanca. Publicar e o ultimo passo de um toque
+# que ja foi autorizado — nunca uma segunda chance para um que nao foi.
+#
+# O RELOGIO DO SERVIDOR RECUSA O ATRASADO: o gatilho cron_estado_relogio()
+# descarta upsert cujo `em` nao seja mais novo. O pipeline nao pode desfazer uma
+# decisao mais recente sua, nem que tente.
+#
+# O TOQUE E O ARTEFATO DURAVEL. Publicar e melhor esforco: se a rede cair ou as
+# credenciais faltarem, o arquivo de toque ja esta gravado e a dobra segue como
+# sempre. O comando diz o que deixou de fazer, em vez de fingir que fez.
+API_URL   = "SUPABASE_URL"
+API_CHAVE = "SUPABASE_SECRET_KEY"
+
+
+def _credenciais():
+    """Devolve (url, chave) ou (None, None). As duas ja existem no repositorio,
+    usadas pelo avisos/enviar.mjs: SUPABASE_URL e uma variable e
+    SUPABASE_SECRET_KEY um secret. NENHUMA delas mora no codigo, e nenhuma e
+    inventada aqui."""
+    url = (os.environ.get(API_URL) or "").rstrip("/")
+    chave = os.environ.get(API_CHAVE) or ""
+    return (url, chave) if (url and chave) else (None, None)
+
+
+def _pedir(url, chave, caminho, metodo="GET", corpo=None, prefer=None):
+    import urllib.request
+    import urllib.error
+    cabecalho = {"apikey": chave, "Authorization": "Bearer " + chave,
+                 "Content-Type": "application/json"}
+    if prefer:
+        cabecalho["Prefer"] = prefer
+    dados = json.dumps(corpo).encode("utf-8") if corpo is not None else None
+    req = urllib.request.Request(url + "/rest/v1" + caminho, data=dados,
+                                 headers=cabecalho, method=metodo)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        bruto = r.read().decode("utf-8") or "[]"
+    return json.loads(bruto) if bruto.strip() else []
+
+
+def _dono(url, chave):
+    """O uuid do dono vem da cron_dono, e nao de um segredo a mais. DOIS DONOS E
+    AMBIGUIDADE, nao um caso a resolver por escolha: o pipeline para e diz."""
+    linhas = _pedir(url, chave, "/cron_dono?select=uid&limit=2")
+    if len(linhas) != 1:
+        raise RuntimeError("cron_dono tem %d linha(s); esperava exatamente 1" % len(linhas))
+    return linhas[0]["uid"]
+
+
+def publicar_online(toque, seco):
+    """Sobe o MESMO toque para o estado compartilhado. Devolve um texto do que
+    aconteceu — quem chama imprime, e nunca deixa isto derrubar a gravacao."""
+    url, chave = _credenciais()
+    if not url or not chave:
+        return ("nao publicado online: faltam %s e/ou %s no ambiente.\n"
+                "  O caminho do GitHub segue inteiro. Para publicar tambem online,\n"
+                "  rode onde as duas existam (ver .github/workflows/dobrar-toques.yml)."
+                % (API_URL, API_CHAVE))
+    if seco:
+        return "--seco: nada publicado online."
+
+    d = toque["dados"]
+    dono = _dono(url, chave)
+    chave_item = "%s/%s/%s" % (d["pid"], d["projId"], d["subId"])
+
+    # `item`: progresso e ciclo de vida. Nem titulo, nem filhos — estrutura nao
+    # viaja por aqui. O `motivo` vai vazio de proposito: o pipeline nao tem
+    # motivo a dar, e temMotivo do toque ja e False.
+    _pedir(url, chave, "/cron_estado", "POST", [{
+        "dono": dono, "dominio": "item", "chave": chave_item,
+        "valor": {"st": d["para"], "vida": d.get("vida") or "ativo",
+                  "motivo": "", "voltar_em": "", "vidaDesde": ""},
+        "del": False, "em": toque["quando"], "aparelho": "cowork",
+        "expira_em": None,
+    }], prefer="resolution=merge-duplicates,return=minimal")
+
+    # `cron_registro`: a chave e o id DO TOQUE, a mesma que o caminho do GitHub
+    # grava em `tid`. E o que faz as duas descidas reconhecerem a mesma linha e
+    # nao duplica-la. ignore-duplicates porque reenviar tem de ser silencio.
+    _pedir(url, chave, "/cron_registro", "POST", [{
+        "id": toque["id"], "dono": dono, "d": d["d"],
+        "pid": d["pid"], "proj_id": d["projId"], "sub_id": d["subId"],
+        "proj_t": d.get("projT") or "", "sub_t": d.get("subT") or "",
+        "de": d.get("de"), "para": d["para"], "vida": d.get("vida") or "ativo",
+        "motivo": "", "aparelho": "cowork",
+    }], prefer="resolution=ignore-duplicates,return=minimal")
+
+    return ("publicado online: item %s e uma linha de registro (%s).\n"
+            "  O relogio do servidor descarta a linha se ja houver decisao mais nova."
+            % (chave_item, toque["id"]))
+
+
 def registrar(alvo, para, vida, forcar, seco):
     """Escreve UM toque, como se o Cowork fosse mais um aparelho."""
     partes = (alvo or "").split("/")
@@ -391,6 +507,7 @@ def registrar(alvo, para, vida, forcar, seco):
     print("  st %s -> %s   vida=%s   prova=%s" % (de, para, vida, prova or "?"))
     if seco:
         print("\n--seco: nada foi escrito.")
+        print("  " + publicar_online(toque, True))
         return 0
 
     os.makedirs(DIR_TOQUES, exist_ok=True)
@@ -401,6 +518,14 @@ def registrar(alvo, para, vida, forcar, seco):
                   f, ensure_ascii=False, indent=1)
         f.write("\n")
     print("\nEscrito em %s" % os.path.relpath(caminho, RAIZ))
+
+    # DEPOIS de gravado, e nunca antes: o arquivo e o artefato duravel, e uma
+    # rede fora nao pode custar o toque.
+    try:
+        print("  " + publicar_online(toque, seco))
+    except Exception as e:
+        print("  nao publicado online: %s" % e)
+        print("  O toque esta gravado. A dobra e o caminho do GitHub seguem inteiros.")
     return 0
 
 

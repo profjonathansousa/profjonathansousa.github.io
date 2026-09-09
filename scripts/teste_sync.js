@@ -2746,8 +2746,13 @@ console.log("\n=== 64. Dois escritores: voce e o pipeline (9E) ===");
   ok(/RECUSADO/.test(pipe), "e diz por que recusou");
   ok(/aparelho": "cowork"/.test(pipe) || /"aparelho": "cowork"/.test(pipe),
      "e escreve como um aparelho a mais, e nao como autoridade");
-  ok(!/supabase|cron_estado/i.test(pipe),
-     "o pipeline NAO virou escritor do Supabase: ele continua no caminho legado");
+  /* SUPERADO PELA 9G-0, que deu ao pipeline o caminho online que faltava. O que
+     a 9E guardava aqui continua guardado, e com mais precisao: ele publica o
+     MESMO toque, num dominio so, e nao vira espelho de estado. */
+  ok(/def publicar_online/.test(pipe),
+     "o pipeline publica o proprio toque online desde a 9G-0");
+  ok(/"dominio": "item"/.test(pipe) && !/"dominio": "(?!item)/.test(pipe),
+     "e so no dominio `item`: continua afirmando um fato seu, nao espelhando estado");
 
   /* 4. Receber nao e tocar: aplicar um item remoto nao gera toque nem fila. */
   const B = criarAparelho("celular", srv).__conectar();
@@ -2830,7 +2835,12 @@ console.log("\n=== 65. O guia do TOEFL online, e a estrutura que a 9E NAO fez (9
   ok(/cron_estrutura_base/.test(SQL), "a cron_estrutura_base continua no esquema, intacta");
   ok(/grant select\s+on public\.cron_estrutura_base/.test(SQL),
      "e o app segue com SELECT e mais nada: quem escreve a base e o pipeline");
-  ok(!/cron_estrutura_base/.test(fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8")),
+  /* SO O CODIGO: um comentario que MENCIONA a cron_estrutura_base nao e
+     escrever nela. Mesma distincao do bloco 12, e pela mesma razao — um teste
+     que nao a faz proibiria documentar. */
+  const PIPE_CODIGO = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8")
+    .split("\n").filter(l => !/^\s*#/.test(l)).join("\n");
+  ok(!/cron_estrutura_base/.test(PIPE_CODIGO),
      "que ainda nao a escreve — e por isso o merge de tres vias nao foi feito pela metade");
 }
 

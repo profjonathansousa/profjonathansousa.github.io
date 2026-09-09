@@ -59,6 +59,19 @@ jobs:
       # entrada da conta. Recalcular custa segundos; rebasear nao funciona.
       - name: Dobrar e gravar
         id: gravar
+        # As DUAS ja existem no repositorio e ja sao usadas pelo avisos.yml:
+        # SUPABASE_URL e uma repository variable, SUPABASE_SECRET_KEY e um
+        # secret (o papel service_role). NENHUM SEGREDO NOVO E PRECISO.
+        #
+        # A dobra em si NAO usa nenhuma das duas: ela le toques e escreve
+        # estado.json, e continua exatamente como sempre foi. Elas estao aqui
+        # para o `--registrar` da Fase 9G-0, que publica o mesmo toque tambem no
+        # estado compartilhado quando roda neste job. Sem elas, ele grava o
+        # toque, diz que nao publicou e segue — o caminho do GitHub fica
+        # inteiro, que e o desenho ate a 9G.
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
           git config user.name  "dobra-de-toques"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
