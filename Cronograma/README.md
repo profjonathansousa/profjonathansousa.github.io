@@ -2328,6 +2328,78 @@ security`, nenhuma política de escrita), então isto não fecha uma brecha aber
 tira a segunda linha de defesa da lista de coisas em que é preciso confiar.
 Aplicado em produção; `service_role` intocada.
 
+### A marcação pelo artefato — o elo que nunca fechou
+
+Auditado em 10/09/2026, e o resultado surpreendeu: **nenhum toque com aparelho
+`cowork` existe.** Nem no `estado.json` — 247 linhas de histórico, dois
+aparelhos, nenhum deles o Cowork — nem no `cron_estado`. O `--registrar` existe
+desde a 9G-0 e **nunca rodou com sucesso uma única vez.**
+
+`prova: "maquina"` significa, no `mapa_portal.json`, "a etapa está feita porque
+o arquivo existe". Mas nada lia a pasta de produção: a marcação dependia de
+alguém executar o comando na sessão de Cowork certa, com a pasta certa
+conectada. Quando isso não acontecia — e nunca aconteceu — a instrução mandava
+registrar "não" no CONCLUIDO, e o "não" nunca era resgatado. A regra era
+especificação, não comportamento, e o painel ficava atrás do trabalho.
+
+#### O que a Fase 9 piorou, e a correção
+
+Enquanto o aplicativo lia o `estado.json`, um toque gravado chegava aos
+aparelhos pelo repositório mesmo que a publicação online falhasse. A 9G-3 cortou
+essa leitura. O arquivo de toque continua existindo e sendo dobrado — é artefato
+e trilha auditável —, mas **deixou de ser um canal**.
+
+O `publicar_online` não acompanhou o corte: sem credenciais ele imprimia *"O
+caminho do GitHub segue inteiro"*, o que virou falso naquele dia. Dizia que
+estava tudo bem exatamente quando a marcação morria em silêncio.
+
+Agora o `--registrar` **recusa sem credenciais**, pelo mesmo argumento que o
+`--publicar-estrutura` já usava: publicar só metade deixa o outro lado mentindo.
+Gravar sem poder publicar produziria um comando que termina com sucesso e uma
+marcação que ninguém vê. O `--seco` continua funcionando sem nada, porque não
+escreve.
+
+#### `derivar_do_pipeline.py` — inverter a dependência
+
+Em vez de esperar que alguém se lembre, o script pergunta ao disco: para cada
+subitem de prova `maquina`, resolve o caminho do artefato e testa a existência.
+Roda uma vez por dia pelo launchd e **resgata retroativamente** tudo o que ficou
+para trás — não é preciso caçar os "não" nos CONCLUIDO.
+
+Só roda no Mac. O Actions não enxerga o iCloud, e por isso a derivação não vive
+no `dobrar-toques.yml`: ausência de pasta não é erro, é o caso normal de lá — o
+script sai limpo, código 0, sem escrever nada.
+
+As cinco regras duras, cada uma com um caso concreto por trás:
+
+| regra | por quê |
+|---|---|
+| nunca toca em `estrela` | a conclusão é decisão do autor; o relógio do Cowork a venceria e apagaria |
+| nunca rebaixa | um artefato apagado por engano não pode apagar o histórico — divergência é **reportada**, não corrigida |
+| nunca sobrescreve `inaplicavel` | o `a00-3` é o caso: o mapa argumentativo não existe e não deve existir |
+| nunca edita o `estado.json` | o escritor único continua sendo o `dobrar_toques.py`; o script fala com ele por toque |
+| nunca adivinha o `slug` | o mapa usa `[slug]` no caminho e o `entrada.json` identifica por título; casar por heurística erraria em silêncio. Projeto sem `slug` é **pulado com aviso** |
+
+O `teste_derivar.py` prova as cinco contra o código real, com uma pasta de
+produção falsa. Quatro mutações o derrubam — apagar a regra da `estrela`, a do
+`inaplicavel`, a do não-rebaixar e a do `slug`.
+
+**Uma lição de teste registrada aqui porque voltou a acontecer:** a primeira
+versão da asserção do `inaplicavel` passava sem provar nada — o `a00-3` estava
+sendo excluído por falta de artefato, não pela regra, e a mutação que apagava a
+regra passou incólume. O fixture precisou ganhar o arquivo para que a regra
+fosse a **única** coisa que excluía o item.
+
+#### O que ainda falta, e depende de decisão
+
+O `slug` precisa nascer no **gerador** do `entrada.json`, não no arquivo: o
+Cowork o reescreve a cada geração, e o que for posto à mão se perde. Enquanto
+não existir, os projetos do pipeline são pulados com aviso — que é o
+comportamento correto, e não uma falha silenciosa.
+
+O portão `aNN-4b` (NotebookLM) da Correção 3 do briefing tem o mesmo problema e
+o mesmo caminho.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:

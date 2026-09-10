@@ -163,10 +163,34 @@ dobrar_toques.ARQ_ESTADO = os.path.join(TMP2, "Cronograma", "estado.json")
 dobrar_toques.ARQ_ENTRADA = os.path.join(TMP2, "Cronograma", "entrada.json")
 import io as _io
 import contextlib
+
+# SEM CREDENCIAIS, ELE RECUSA — e a regra nasceu com a 9G-3. Enquanto o
+# aplicativo lia o estado.json, gravar o toque bastava: ele chegava aos
+# aparelhos pelo repositorio mesmo que a publicacao online falhasse. Nao chega
+# mais. Gravar sem poder publicar produziria um comando que termina com sucesso
+# e uma marcacao que ninguem ve, e e disso que esta assercao e a guarda.
+for _v in (dobrar_toques.API_URL, dobrar_toques.API_CHAVE):
+    os.environ.pop(_v, None)
+buf = _io.StringIO()
+with contextlib.redirect_stdout(buf):
+    cod_sem = dobrar_toques.registrar("pipeline/a00/a00-4", 2, "ativo", False, False)
+ok(cod_sem != 0, "sem credenciais o --registrar RECUSA (9G-3)", buf.getvalue()[-160:])
+ok(not os.path.exists(os.path.join(TMP2, "Cronograma", "toques")) or
+   not [x for x in os.listdir(os.path.join(TMP2, "Cronograma", "toques")) if x.endswith(".json")],
+   "   e nao deixa arquivo de toque para tras")
+
+# COM AS CREDENCIAIS PRESENTES, escreve. O endereco aponta para uma porta morta
+# de proposito: o que a regra exige e que as credenciais EXISTAM, e a publicacao
+# online segue sendo melhor esforco depois de o arquivo estar gravado. Assim
+# esta secao prova as duas coisas de uma vez, sem rede nenhuma.
+os.environ[dobrar_toques.API_URL] = "http://127.0.0.1:9"
+os.environ[dobrar_toques.API_CHAVE] = "chave-de-mentira-do-teste"
 buf = _io.StringIO()
 with contextlib.redirect_stdout(buf):
     cod = dobrar_toques.registrar("pipeline/a00/a00-4", 2, "ativo", False, False)
 ok(cod == 0, "o --registrar do pipeline escreve o toque", buf.getvalue()[-200:])
+ok("nao publicado online" in buf.getvalue(),
+   "   e diz que nao publicou quando a rede falha, sem perder o toque")
 # registrar() SO ESCREVE O TOQUE. Quem consolida e a dobra seguinte — no uso
 # real o proprio main() encadeia as duas na mesma execucao.
 est5 = dobrar_em(TMP2)
