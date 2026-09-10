@@ -1044,6 +1044,76 @@ function migrarTriagemUmaVez(){
     if(n) console.log("triagem: " + n + " marcacao(oes) anterior(es) publicada(s).");
   }catch(e){ console.error("migracao da triagem falhou:", e); }
 }
+/* ====== AS DECISOES ANTERIORES AO CORTE, PUBLICADAS UMA VEZ ======
+   Uma decisao tomada antes de a 9G-3 desligar o GitHub tem `em` e nao tem
+   linha online: o funil carimbou o instante e o toque subiu para o
+   estado.json, que ninguem mais le. Medido em 10/09: 103 vagas triadas num
+   aparelho, DUAS linhas de triagem no banco. Nada se perdeu — nada subiu.
+
+   POR QUE NAO SERVE O migrarTriagemUmaVez. Ele pula quem ja tem `em`
+   ("ja nasceu com instante: ja viaja"). Essa premissa valia enquanto havia
+   DOIS caminhos: ter instante significava ter viajado por um deles. Com um
+   caminho so, ter instante nao diz nada sobre estar no estado compartilhado.
+
+   O INSTANTE PUBLICADO E O VERDADEIRO, e e isso que torna esta rotina segura
+   de rodar nos dois aparelhos. Nao ha piso inventado como no botao do acervo,
+   porque aqui NAO E PRECISO: a decisao antiga guardou o `em` de quando foi
+   tomada. Republicar com ele deixa o relogio decidir vaga a vaga, item a item
+   — a decisao mais recente vence, venha de onde vier. Uma marca antiga nao
+   atropela uma recente do outro aparelho, e uma republicacao repetida nao
+   muda nada, porque o servidor recusa o que nao e mais novo.
+
+   O CRITERIO E O `em`, E NAO O `st`. Ter instante quer dizer que houve uma
+   decisao; `st = 0` com instante e uma vaga DESMARCADA de proposito, que
+   precisa viajar tanto quanto uma marcada. Sem instante e "nunca decidido", e
+   isso nao se publica: publicar ausencia como decisao apagaria a marca
+   legitima do outro aparelho.
+
+   RECEBER NAO E TOCAR, E REPUBLICAR NAO E DECIDIR: nao chama logar(), nao
+   carimba tempo novo e nao cria linha de registro. As linhas de registro
+   daquelas decisoes ja existem aqui, escritas no dia em que foram tomadas.
+
+   SO CORRE COM A SINCRONIA LIGADA, e a trava so e gravada quando correu de
+   verdade: um aparelho que abrir a pagina deslogado tenta de novo depois. */
+function publicarDecisoesAntigas(){
+  var fora = {triagem:0, itens:0, correu:false};
+  try{
+    if(LS(PUBLICADO_ONLINE_KEY, false)) return fora;
+    if(typeof SYNC === "undefined" || !SYNC.ligado()) return fora;
+
+    var tri = vgTriagem();
+    Object.keys(tri).forEach(function(vid){
+      var r = tri[vid];
+      if(!r || !r.em) return;                 /* sem instante: nunca decidido */
+      /* PELO ESCRITOR, E NAO PELO FUNIL. O tocarTriagem pede um instante ao
+         relogio monotonico, e o relogio, para uma base ja usada, devolve o
+         seguinte: duas decisoes que dividem o mesmo `em` sairiam daqui com
+         instantes deslocados, e republicar duas vezes deslocaria de novo.
+         Republicar nao e decidir — o instante ja existe, e o que se quer e
+         repeti-lo exatamente. */
+      if(escreverTriagemOnline(vid, r.st || 0, r.em)) fora.triagem++;
+    });
+
+    PAINEIS.forEach(function(P){
+      var projs = getProjs(P.id) || [];
+      projs.forEach(function(pr){
+        (pr.subs || []).forEach(function(sx){
+          var x = normSub(sx);
+          if(!x.em) return;                   /* sem instante: nunca decidido */
+          if(escreverItemOnline(P.id, pr.id, x, x.em)) fora.itens++;
+        });
+      });
+    });
+
+    save(PUBLICADO_ONLINE_KEY, true);
+    fora.correu = true;
+    if(fora.triagem || fora.itens)
+      console.log("publicadas " + fora.triagem + " decisao(oes) de triagem e " +
+                  fora.itens + " de subitem que estavam so neste aparelho.");
+  }catch(e){ console.error("publicacao das decisoes antigas falhou:", e); }
+  return fora;
+}
+
 /* ============ O MERGE DE UMA TRIAGEM — UMA IMPLEMENTACAO SO (Fase 9D) ============
    Quarto dominio a passar por este movimento, depois de prioridade, meta e
    evento. A regra e copiada letra por letra do que estava dentro do

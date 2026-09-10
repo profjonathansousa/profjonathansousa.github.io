@@ -18,6 +18,9 @@
     -webkit-font-smoothing:antialiased;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
   .wrap{max-width:560px;margin:0 auto;padding:20px 18px 64px;}
+  /* .ordo e .ordo-seg: as caixas de numero romano do topo, retiradas em 10/09.
+     As regras ficam porque o rodape herda a paleta delas e porque restaura-las
+     e uma linha de HTML, se um dia fizerem falta. */
   .ordo{display:flex;gap:6px;margin-bottom:22px;}
   .ordo-seg{flex:1;text-align:center;padding:7px 4px 8px;border:1px solid var(--line);
     border-radius:8px;background:var(--paper-2);font-family:var(--display);color:var(--ink-soft);
@@ -215,13 +218,26 @@
   .tguia .g-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;}
   .tguia .g-body{padding:0 15px 14px;}
   .tguia .g-meta{font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin:0 0 8px;}
-  .tguia .g-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid rgba(169,124,30,.18);cursor:pointer;}
-  .tguia .g-item:first-of-type{border-top:none;}
-  .tguia .g-item .box{width:20px;height:20px;margin-top:1px;}
-  .tguia .g-item.on .box{background:var(--gold);border-color:var(--gold);}
-  .tguia .g-item.on .box svg{opacity:1;transform:scale(1);}
+  /* O SELETOR PRECISA ALCANCAR OS DOIS LUGARES ONDE O GUIA E DESENHADO.
+     Ele nasceu dentro de uma gaveta .tguia, no Hoje; a Fase 4 levou o corpo do
+     processo para a aba Processos, que o desenha dentro de .proc-corpo e NAO
+     tem .tguia por cima. O HTML era o mesmo, o CSS nao alcancava: a caixa
+     ficava sem o display:flex (dai o desalinhamento) e, pior, sem a regra
+     .on .box — marcar gravava e nao acendia, e o clique parecia nao fazer
+     nada. Fazia: a linha subia para o cron_estado a cada toque. */
+  .tguia .g-item,
+  .proc-corpo .g-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid rgba(169,124,30,.18);cursor:pointer;}
+  .tguia .g-item:first-of-type,
+  .proc-corpo .g-item:first-of-type{border-top:none;}
+  .tguia .g-item .box,
+  .proc-corpo .g-item .box{width:20px;height:20px;margin-top:1px;}
+  .tguia .g-item.on .box,
+  .proc-corpo .g-item.on .box{background:var(--gold);border-color:var(--gold);}
+  .tguia .g-item.on .box svg,
+  .proc-corpo .g-item.on .box svg{opacity:1;transform:scale(1);}
   .tguia .g-x{font-size:13px;line-height:1.4;}
-  .tguia .g-item.on .g-x{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  .tguia .g-item.on .g-x,
+  .proc-corpo .g-item.on .g-x{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line-strong);}
   .tguia .g-links{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
   .tguia .g-links a{font-size:12.5px;color:var(--ink);text-decoration:none;border:1px solid var(--gold-soft);
     background:var(--card);border-radius:9px;padding:9px 11px;}
@@ -332,6 +348,14 @@
   .rev-s{color:var(--muted);font-size:11.5px;margin-left:auto;text-align:right;}
   .rev-vazio{font-size:12px;color:var(--muted);font-style:italic;padding:4px 0;}
   .rev-local{font-size:11.5px;color:var(--muted);padding:6px 0 0;}
+
+  /* AS TRES FASES DO MES, no rodape. Uma por linha, porque sao tres frases
+     inteiras e nao rotulos: emendadas viram um paragrafo que ninguem le. A
+     corrente ganha a cor do texto e o peso; as outras ficam no tom apagado,
+     que e o que faz "hoje" saltar sem precisar de mais nenhum enfeite. */
+  .fase-linha{display:block;color:var(--muted);}
+  .fase-linha + .fase-linha{margin-top:2px;}
+  .fase-linha.agora{color:var(--ink-soft);font-weight:600;}
 
   /* Fase 4 — a aba Processos. Reusa .g-item, .g-grupo, .g-meta e .aviso-cal do
      guia, que ja existiam: o corpo do processo E o guia, so que sem gaveta. */

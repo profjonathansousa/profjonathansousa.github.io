@@ -219,10 +219,12 @@ function corpoDoTrilho(pid, pr){
   var atual = r.estagio ? r.estagio.subId : "";
   var h = '<div class="g-body">';
   if(pr.n) h += '<p class="g-meta">' + escapeHtml(pr.n) + '</p>';
-  if(r.estagio){
-    h += '<div class="proc-linha agora"><span class="pl-r">Agora</span>' +
-         '<span class="pl-v">' + escapeHtml(r.estagio.subT) + '</span></div>';
-  }
+  /* A LINHA "Agora" SAIU (10/09), e a razao e que ela dizia duas vezes a mesma
+     coisa: o mesmo subitem aparecia aqui em cima e de novo na lista logo
+     abaixo, ali marcado "agora". Num trilho de tres etapas isso e metade do
+     painel repetindo-se. A lista NAO perdeu nada — ela ja destaca a etapa
+     corrente pelo rotulo e pela classe .agora, que e a mesma marcacao visual.
+     O `atual` continua sendo calculado, e continua sendo ele quem marca. */
   h += '<div class="g-grupo primeiro">Etapas <em>\u00b7 ' +
        r.feito + ' de ' + r.total + ' conclu\u00eddas</em></div>';
   (pr.subs || []).forEach(function(sx){

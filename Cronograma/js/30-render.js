@@ -139,19 +139,25 @@ function renderAtrasadas(){
   });
   return h + '</div></details>';
 }
+/* AS CAIXAS DE NUMERO ROMANO SAIRAM DO TOPO (10/09). Elas mostravam as quatro
+   semanas do mes com o rotulo livre/EBD e a semana corrente acesa, e comiam a
+   primeira tela de um telefone para dizer algo que nao muda em sete dias.
+
+   O QUE ELAS DIZIAM NAO SE PERDEU: passou inteiro para o rodape. Antes so a
+   fase CORRENTE aparecia la; agora as tres linhas aparecem juntas, com a de
+   hoje destacada — quem olha o rodape ve o mes todo, que era exatamente o que
+   as caixas ofereciam de relance. Nenhum dos tres textos foi reescrito. */
 function renderOrdo(){
-  const romans=["I","II","III","IV"], labels=["livre","livre","EBD","EBD"];
-  document.getElementById("ordo").innerHTML = romans.map((r,i)=>{
-    const wk=i+1, cls=["ordo-seg"];
-    if(wk>=3) cls.push("sprint"); if(wk===wom) cls.push("now");
-    return `<div class="${cls.join(' ')}"><span class="rom">${r}</span><span class="lbl">${labels[i]}</span></div>`;
+  const notes = [
+    {fase:"livre", t:"Semanas I–II · produção livre: artigo, pós-doc, agentes, técnico, Acolher."},
+    {fase:"ebd1", t:"Semana III · sprint EBD acende — Momento 1 (Cowork)."},
+    {fase:"ebd2", t:"Semana IV · sprint EBD — Momento 2: revisar e formatar o material do mês seguinte."}
+  ];
+  const el = document.getElementById("phase-note"); if(!el) return;
+  el.innerHTML = notes.map(function(o){
+    return '<span class="fase-linha' + (o.fase === phase ? ' agora' : '') + '">' +
+           escapeHtml(o.t) + '</span>';
   }).join("");
-  const notes={
-    livre:"Semanas I–II · produção livre: artigo, pós-doc, agentes, técnico, Acolher.",
-    ebd1:"Semana III · sprint EBD acende — Momento 1 (Cowork).",
-    ebd2:"Semana IV · sprint EBD — Momento 2: revisar e formatar o material do mês seguinte."
-  };
-  document.getElementById("phase-note").textContent=notes[phase];
 }
 function tag(t){return t?`<span class="tag">${t}</span>`:"";}
 function toggleGuia(fid,i){
@@ -395,7 +401,10 @@ function renderRetomadas(){
   var aberto = LS("cron:retomadas-open", false);
   var h = '<details class="carry retomadas" ' + (aberto?"open":"") +
           ' ontoggle="save(\'cron:retomadas-open\', this.open)">' +
-          '<summary>' + r.length + ' projeto' + (r.length===1?'':'s') + ' sem avan\u00e7o' +
+          /* O ESPACO E PARTE DO TEXTO. O .c-sub so vira bloco proprio quando a gaveta
+             esta recolhida (ver .carry.recolhido > summary .c-sub); aberta, ele e um
+             span inline e colava no que vinha antes — "sem avancoha 21 dias". */
+          '<summary>' + r.length + ' projeto' + (r.length===1?'':'s') + ' sem avan\u00e7o ' +
           '<span class="c-sub">h\u00e1 ' + RETOMADA_DIAS + ' dias ou mais \u00b7 lembrete, n\u00e3o cobran\u00e7a</span>' +
           '</summary><div class="c-corpo">';
   r.forEach(function(o){
@@ -549,15 +558,13 @@ function renderRevisao(){
   return h;
 }
 
-function renderContexto(){
-  var c = getContexto();
-  return '<div class="ctx-barra">' +
-    '<button class="' + (c==="casa"?"on":"") + '" onclick="setContexto(\'casa\')">Em casa</button>' +
-    '<button class="' + (c==="fora"?"on":"") + '" onclick="setContexto(\'fora\')">Fora de casa</button>' +
-    '<span class="ctx-nota">' + (c==="fora"
-      ? "s\u00f3 o telefone \u00b7 o que pede computador fica marcado"
-      : "computador e telefone \u00b7 voc\u00ea escolhe") + '</span></div>';
-}
+/* OS DOIS BOTOES SAIRAM (10/09): em quase um mes de uso ninguem trocou de
+   contexto a mao, e um controle que nao se usa ocupa a primeira tela por nada.
+   O AVISO "pede computador" FICA — ele e o que tinha valor, e continua lendo o
+   cron:contexto pelo getContexto(). A chave permanece com o padrao "casa", que
+   e o estado em que a barra vivia; o setContexto tambem fica, para o dia em que
+   houver um gatilho melhor do que um botao (a rede, a hora, o lugar). */
+function renderContexto(){ return ""; }
 function renderHoje(){
   const d=DIAS[todayIdx];
   const dateStr=now.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
@@ -660,7 +667,10 @@ function renderHoje(){
   /* html+=renderAtrasadas(); */
   /* O renderGuia() saiu daqui na Fase 4: ele e a ESTRUTURA do processo, e
      estrutura mora em Processos. O Hoje ficou com a execucao. */
-  html+=`<div class="rule"><b>No Uber:</b> ${d.uber} </div>`;
+  /* A LINHA "No Uber" SAIU DA TELA (10/09). O campo `uber` CONTINUA nos sete
+     dias do DIAS: ele descreve a janela de trabalho de cada dia e nao e lixo —
+     so deixou de merecer uma linha fixa no Hoje. Tirar o dado junto seria
+     apagar informacao para resolver um problema de tela. */
   html+=`<div id="metas-wrap"></div>`;
   html+=`<div class="shead">Datas importantes</div><div id="eventos"></div>`;
   html+=renderVagasIndicador();
@@ -1032,23 +1042,37 @@ function marcarSub(pid, projId, subId, novoSt){
 
    TRES CONSUMIDORES, UMA FONTE: o subitem no aparelho, o toque do caminho
    legado (que o pipeline tambem le e escreve) e a linha do cron_estado. */
-function tocarItem(pid, proj, x, de){
-  var iso = logar(pid, proj, x, de, x.st);          /* legado: toque + registro */
-  x.em = iso;                                        /* o MESMO instante */
+/* A ESCRITA ONLINE DE UM SUBITEM — uma implementacao so.
+   Extraida do tocarItem para que a republicacao das decisoes antigas
+   (publicarDecisoesAntigas, em 10-nucleo.js) use o MESMO payload em vez de
+   montar um proprio. Foi assim que o `dadosDoEvento` nasceu, e pela mesma
+   razao: dois lugares montando o mesmo payload envelhecem em ritmos
+   diferentes, e um dia um deles passa a mentir.
+
+   ELA NAO CARIMBA TEMPO E NAO REGISTRA. Recebe o instante pronto de quem
+   chama: no tocarItem e o instante da decisao de agora; na republicacao e o
+   instante VERDADEIRO da decisao antiga, que e o que faz o relogio continuar
+   decidindo direito. */
+function escreverItemOnline(pid, projId, x, iso){
   try{
-    if(typeof SYNC !== "undefined" && SYNC.ligado()){
-      SYNC.salvarAlteracao("item", pid + "/" + proj.id + "/" + x.id,
-                           {st: x.st, vida: x.vida || "ativo",
-                            /* O motivo VIAJA aqui, e nao no caminho do GitHub:
-                               a razao do semMotivo() e o repositorio ser
-                               publico, e esta base nao e. Mesma decisao da
-                               9D.3 para o registro. */
-                            motivo: x.motivo || "",
-                            voltar_em: x.voltar_em || "",
-                            vidaDesde: x.vidaDesde || ""},
-                           {em: iso});
-    }
-  }catch(e){ try{ console.error("sync: item nao subiu:", e); }catch(e2){} }
+    if(typeof SYNC === "undefined" || !SYNC.ligado()) return false;
+    SYNC.salvarAlteracao("item", pid + "/" + projId + "/" + x.id,
+                         {st: x.st, vida: x.vida || "ativo",
+                          /* O motivo VIAJA aqui, e nao no caminho do GitHub:
+                             a razao do semMotivo() e o repositorio ser
+                             publico, e esta base nao e. Mesma decisao da
+                             9D.3 para o registro. */
+                          motivo: x.motivo || "",
+                          voltar_em: x.voltar_em || "",
+                          vidaDesde: x.vidaDesde || ""},
+                         {em: iso});
+    return true;
+  }catch(e){ try{ console.error("sync: item nao subiu:", e); }catch(e2){} return false; }
+}
+function tocarItem(pid, proj, x, de){
+  var iso = logar(pid, proj, x, de, x.st);          /* registro datado */
+  x.em = iso;                                        /* o MESMO instante */
+  escreverItemOnline(pid, proj.id, x, iso);
   return iso;
 }
 function cycleSub(pid,projId,subId){
@@ -1744,18 +1768,24 @@ function limparHoje(){
    Marcar varias vagas em sequencia e exatamente esse caso.
 
    NAO HA LAPIDE: descartar uma vaga nao a apaga do lote. Ver mesclarTriagem. */
+/* A ESCRITA ONLINE DE UMA TRIAGEM — uma implementacao so, como no item.
+   Recebe o instante PRONTO: o tocarTriagem pede um ao relogio, a republicacao
+   das decisoes antigas passa o instante verdadeiro que a decisao ja tem.
+
+   SO A DECISAO VIAJA. O veredicto do coletor, o texto da vaga e tudo o mais que
+   dados/vagas.json carrega ficam de fora: aquilo e do pipeline e e reescrito a
+   cada coleta. Aqui vai `st`, e nada mais. */
+function escreverTriagemOnline(vid, st, iso){
+  try{
+    if(typeof SYNC === "undefined" || !SYNC.ligado()) return false;
+    SYNC.salvarAlteracao("triagem", vid, {st: st}, {em: iso});
+    return true;
+  }catch(e){ try{ console.error("sync: triagem nao subiu:", e); }catch(e2){} return false; }
+}
 function tocarTriagem(vid, st, quandoISO){
   if(!vid) return null;
-  var d = {vid:vid, st:st};
   var iso = instanteISO(quandoISO);
-  try{
-    if(typeof SYNC !== "undefined" && SYNC.ligado()){
-      /* SO A DECISAO VIAJA. O veredicto do coletor, o texto da vaga e tudo o
-         mais que dados/vagas.json carrega ficam de fora: aquilo e do pipeline
-         e e reescrito a cada coleta. Aqui vai `st`, e nada mais. */
-      SYNC.salvarAlteracao("triagem", d.vid, {st: d.st}, {em: iso});
-    }
-  }catch(e){ try{ console.error("sync: triagem nao subiu:", e); }catch(e2){} }
+  escreverTriagemOnline(vid, st, iso);
   return iso;
 }
 
