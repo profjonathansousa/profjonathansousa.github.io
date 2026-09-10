@@ -27,7 +27,12 @@ const CAMINHOS = (HTML.match(/<script[^>]*\ssrc="[^"]+"[^>]*><\/script>/g) || []
   .map(t => t.match(/src="([^"]+)"/)[1]).map(s => s.split("?")[0]);
 const FONTE = CAMINHOS
   .map(src => fs.readFileSync(path.join(RAIZ, "Cronograma", src), "utf8"))
-  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_LIGADO_KEY, SYNC_SESSAO_KEY, dateKey, monthKey, now};";
+  .join("\n") + "\n;globalThis.__const = {SINCRONIA, SYNC_FILA_KEY, SYNC_CACHE_KEY, SYNC_MARCA_KEY, SYNC_MARCA_REG_KEY, SYNC_LIGADO_KEY, SYNC_SESSAO_KEY, dateKey, monthKey, now, TOEFL_FASES, TOEFL_GUIA};\n;globalThis.__checks = function(){ return checks; };";
+
+/* O 20-regras.js entra nos guardas de lista desde a 9E: o funil do TOEFL
+   (marcarGuia) mora la, e um guarda que so varresse o 30-render.js diria que o
+   dominio nao esta conectado. */
+const regrasSrc = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
 
 let falhas = [];
 function ok(cond, nome, detalhe) {
@@ -47,7 +52,9 @@ function criarServidor() {
     falhar: false,         /* simula rede fora */
     assinantes: [],        /* callbacks do Realtime */
     recusados: 0,          /* upserts descartados pelo gatilho */
-    escritas: 0
+    escritas: 0,
+    registros: [],         /* cron_registro */
+    repetidos: 0           /* inserts de registro que bateram na chave primaria */
   };
   srv.chave = (l) => l.dono + "|" + l.dominio + "|" + l.chave;
 
@@ -63,7 +70,31 @@ function criarServidor() {
     if (atual) Object.assign(atual, nova); else srv.linhas.push(nova);
     srv.escritas++;
     const entregue = atual || nova;
-    srv.assinantes.forEach(fn => { try { fn({new: JSON.parse(JSON.stringify(entregue))}); } catch (e) {} });
+    srv.assinantes.forEach(a => {
+      if (a.tabela !== "cron_estado") return;
+      try { a.fn({new: JSON.parse(JSON.stringify(entregue))}); } catch (e) {}
+    });
+    return {ok: true};
+  };
+  /* cron_registro: SO CRESCE. A chave primaria e (dono, id), e o id e o do
+     toque. O `ignoreDuplicates` do cliente vira ON CONFLICT DO NOTHING: mandar
+     a mesma linha de novo e silencio, e nao erro — sem isso uma drenagem que
+     caiu no meio travaria a fila para sempre no mesmo item. E NAO HA UPDATE:
+     o grant da tabela e `select, insert`, entao reescrever linha de historico
+     nem sequer e uma possibilidade. */
+  srv.inserirRegistro = function (linha) {
+    if (srv.falhar) throw new Error("sem rede");
+    const k = linha.dono + "|" + linha.id;
+    if (srv.registros.some(x => x.dono + "|" + x.id === k)) { srv.repetidos++; return {ok: true}; }
+    srv.seq++;
+    const nova = Object.assign({}, linha,
+      {servidor_em: new Date(Date.UTC(2030, 0, 1) + srv.seq * 1000).toISOString()});
+    srv.registros.push(nova);
+    srv.escritas++;
+    srv.assinantes.forEach(a => {
+      if (a.tabela !== "cron_registro") return;
+      try { a.fn({new: JSON.parse(JSON.stringify(nova))}); } catch (e) {}
+    });
     return {ok: true};
   };
   return srv;
@@ -81,10 +112,24 @@ function criarCliente(srv, uid) {
     f.order = () => f;
     f.limit = (n) => { f._limite = n; return f; };
     f.range = (a, b) => { f._de = a; f._ate = b; return f; };
-    f.upsert = (linha) => {
+    f.upsert = (linha, opts) => {
       const p = {};
       p.then = (res, rej) => {
-        try { srv.upsert(linha); return Promise.resolve({error: null}).then(res, rej); }
+        try {
+          if (f.tabela === "cron_registro") {
+            /* O 15-sync.js TEM de pedir ON CONFLICT DO NOTHING aqui: a tabela
+               nao da UPDATE ao aplicativo. Um upsert de verdade seria negado
+               pelo Postgres, e o teste passaria contra um servidor mais
+               permissivo do que o real. */
+            if (!opts || opts.ignoreDuplicates !== true || opts.onConflict !== "dono,id") {
+              throw new Error("cron_registro so aceita insert com ON CONFLICT DO NOTHING");
+            }
+            srv.inserirRegistro(linha);
+          } else {
+            srv.upsert(linha);
+          }
+          return Promise.resolve({error: null}).then(res, rej);
+        }
         catch (e) { return Promise.resolve({error: {message: e.message}}).then(res, rej); }
       };
       return p;
@@ -96,7 +141,8 @@ function criarCliente(srv, uid) {
         if (f.tabela === "cron_dono") {
           out = srv.donos.filter(d => d === uid).map(d => ({uid: d}));
         } else {
-          out = srv.linhas.filter(l => f.filtros.every(([c, op, v]) =>
+          const fonte = f.tabela === "cron_registro" ? srv.registros : srv.linhas;
+          out = fonte.filter(l => f.filtros.every(([c, op, v]) =>
             op === "eq" ? l[c] === v : op === "in" ? v.indexOf(l[c]) >= 0 : String(l[c]) >= String(v)));
           out = out.slice(f._de, f._ate + 1);
         }
@@ -112,9 +158,16 @@ function criarCliente(srv, uid) {
     from: consulta,
     removeChannel() {},
     channel() {
-      const c = {};
-      c.on = (_t, _o, fn) => { c._fn = fn; return c; };
-      c.subscribe = (cb) => { srv.assinantes.push(l => c._fn(l)); if (cb) cb("SUBSCRIBED"); return c; };
+      /* UM canal, VARIOS .on — um por tabela, como o Realtime de verdade. Guardar
+         so o ultimo callback (era o que este falso fazia) faria o teste do
+         registro passar e o do estado sumir, sem ninguem perceber. */
+      const c = {_ons: []};
+      c.on = (_t, o, fn) => { c._ons.push({tabela: o && o.table, fn}); return c; };
+      c.subscribe = (cb) => {
+        c._ons.forEach(x => srv.assinantes.push({tabela: x.tabela, fn: x.fn}));
+        if (cb) cb("SUBSCRIBED");
+        return c;
+      };
       return c;
     },
     auth: {
@@ -170,6 +223,19 @@ function criarAparelho(nome, srv, opcoes) {
     Error, isFinite, isNaN, TextEncoder, btoa: (s) => Buffer.from(s, "binary").toString("base64"),
     atob: (s) => Buffer.from(s, "base64").toString("binary")
   };
+  /* RELOGIO CONGELAVEL — new Date() E Date.now() ao mesmo tempo. Congelar so
+     o Date.now() faria o caller ler o relogio real e o instanteDoToque ler o
+     congelado: a divergencia medida seria artefato da instrumentacao, e nao o
+     mecanismo. Com os dois de acordo, sobra so o que se quer medir — o
+     desempate do relogio monotonico quando duas acoes caem no mesmo ms. */
+  let congelado = null;
+  class DataFalsa extends Date {
+    constructor(...a){ if(!a.length && congelado !== null) super(congelado); else super(...a); }
+    static now(){ return congelado !== null ? congelado : Date.now(); }
+  }
+  ctx.Date = DataFalsa;
+  ctx.__congelar = (ms) => { congelado = ms; };
+  ctx.__descongelar = () => { congelado = null; };
   ctx.window.localStorage = localStorage;
   ctx.globalThis = ctx;
   vm.createContext(ctx);
@@ -203,10 +269,31 @@ console.log("\n=== 1. Carrega, e nao liga nada por conta propria ===");
      "e iniciar() devolve na primeira linha", r);
   ok(srv.escritas === 0 && srv.linhas.length === 0,
      "nada foi escrito no servidor por carregar a pagina");
-  ok(typeof A.enviarToques === "function" && typeof A.buscarEstado === "function",
-     "13. o caminho antigo do GitHub continua inteiro");
-  ok(typeof A.enfileirarToque === "function" && typeof A.gravarNoGitHub === "function",
-     "    e a fila de toques tambem");
+  /* 9G: o GitHub saiu dos DOIS lados — subida na 9G-2, descida na 9G-3. */
+  ok(typeof A.enviarToques === "undefined" && typeof A.gravarNoGitHub === "undefined" &&
+     typeof A.enfileirarToque === "undefined" && typeof A.getToques === "undefined",
+     "13. a subida para o GitHub nao existe mais");
+  ok(typeof A.buscarEstado === "undefined",
+     "    e a descida tambem nao: o buscarEstado saiu na 9G-3");
+  ["aplicarPrioridadesDoEstado", "aplicarMetasDoEstado", "aplicarEventosDoEstado",
+   "aplicarRetomadasDoEstado", "aplicarTriagemDoEstado", "aplicarToeflDoEstado"
+  ].forEach(function (f) {
+    ok(typeof A[f] === "undefined", "    nem o " + f);
+  });
+  /* O QUE PROVA QUE A LEITURA SUMIU, e nao so o nome: o unico fetch que o
+     aparelho ainda faz no repositorio e o do entrada.json (estrutura) e o do
+     00-config.js (versao). O estado.json nao e pedido por ninguem. */
+  const nucleoSrc = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const appSrc    = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const semCom = s => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const alvos = ((semCom(nucleoSrc) + semCom(appSrc) +
+                  semCom(fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8")) +
+                  semCom(regrasSrc)).match(/fetch\(\s*"([^"?]+)/g) || [])
+                .map(x => x.replace(/^fetch\(\s*"/, "")).sort();
+  ok(alvos.indexOf("estado.json") < 0,
+     "    e nenhum arquivo do aparelho faz fetch de estado.json", alvos);
+  ok(alvos.indexOf("entrada.json") > -1,
+     "    o entrada.json (ESTRUTURA) continua sendo buscado", alvos);
 }
 
 console.log("\n=== 2. O relogio: quem vence, quem nao vence, e o empate ===");
@@ -241,8 +328,10 @@ console.log("\n=== 3. Eco proprio e ausencia de toque ===");
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
   const S = A.SYNC;
-  const antesToques = A.getToques().length;
   const it = S.salvarAlteracao("meta", "2026-09/m1", {done: true});
+  /* Medido DEPOIS da escrita propria: prova-se que RECEBER nao acrescenta a
+     fila, e nao que a fila esteja vazia. */
+  const antesToques = A.SYNC.situacao().fila;
   const eco = S.aplicarRemoto({dono: "dono-1", dominio: "meta", chave: "2026-09/m1",
     valor: {done: true}, em: it.em, aparelho: "mac", servidor_em: "2030-01-01T00:00:30.000Z"});
   ok(eco.aplicou === false && /eco/.test(eco.motivo),
@@ -251,8 +340,8 @@ console.log("\n=== 3. Eco proprio e ausencia de toque ===");
     valor: {done: true}, em: "2027-01-01T00:00:00.000Z", aparelho: "celular",
     servidor_em: "2030-01-01T00:00:40.000Z"});
   ok(deOutro.aplicou === true, "   evento de outro aparelho e aplicado");
-  ok(A.getToques().length === antesToques,
-     "4. NENHUM toque foi gerado — receber nao e tocar", A.getToques().length);
+  ok(A.SYNC.situacao().fila === antesToques,
+     "4. NADA foi enfileirado — receber nao e tocar", A.SYNC.situacao().fila);
   ok(S.aplicarRemoto({dono: "dono-2", dominio: "meta", chave: "x",
      valor: {}, em: "2027-01-01T00:00:00.000Z", aparelho: "estranho"}).aplicou === false,
      "   linha de outro dono e recusada antes de tocar o cache");
@@ -347,7 +436,6 @@ console.log("\n=== 7. Realtime: chega no outro aparelho, sem toque e sem volta =
   const MAC = criarAparelho("mac", srv).__conectar();
   const CEL = criarAparelho("celular", srv).__conectar();
   await CEL.SYNC.assinarMudancas();
-  const toquesAntes = CEL.getToques().length;
 
   MAC.SYNC.salvarAlteracao("item", "pipeline/a01/a01-4", {st: 2});
   await MAC.SYNC.drenarFila();
@@ -356,10 +444,9 @@ console.log("\n=== 7. Realtime: chega no outro aparelho, sem toque e sem volta =
   ok(!!cache["item␟pipeline/a01/a01-4"], "o evento chegou ao celular pelo Realtime",
      Object.keys(cache));
   ok(cache["item␟pipeline/a01/a01-4"].valor.st === 2, "com o valor certo");
-  ok(CEL.getToques().length === toquesAntes,
-     "4. e nao gerou toque nenhum no celular", CEL.getToques().length);
   ok(CEL.SYNC.situacao().fila === 0,
-     "   nem reenviou a alteracao de volta", CEL.SYNC.situacao().fila);
+     "4. e nao enfileirou nada no celular — receber nao e tocar",
+     CEL.SYNC.situacao().fila);
   ok(srv.escritas === 1, "   o servidor recebeu UMA escrita, nao um laco", srv.escritas);
 }
 
@@ -468,11 +555,17 @@ console.log("\n=== 12. O que continua local ===");
      "o cache guarda so o que passou pela camada", Object.keys(cache));
 }
 
-console.log("\n=== 13. Nenhum dominio foi conectado (criterio de parada de 9A) ===");
+console.log("\n=== 13. Dominios AINDA nao conectados nao tocam o estado local ===");
 {
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  /* Um evento de cada dominio: nada pode mexer no estado das telas. */
+  /* ESTA SECAO NASCEU NA 9A como "nenhum dominio foi conectado", e o seu
+     sentido evoluiu a cada fase: prioridade (9B), meta (9C-2), evento (9C-3) e
+     triagem (9D) passaram a escrever o proprio estado, de proposito. O que ela
+     guarda agora e o COMPLEMENTO — os dominios que ainda NAO foram conectados
+     continuam inertes, e a linha deles fica no cache esperando a fase que os
+     conectar. Ela quebra na hora em que alguem conectar um deles sem passar
+     por uma fase que o autorize. */
   const antes = {
     pipeline: A.__armazem["cron:pipeline"],
     toefl: A.__armazem["cron:toefl-guia"],
@@ -485,12 +578,16 @@ console.log("\n=== 13. Nenhum dominio foi conectado (criterio de parada de 9A) =
       aparelho: "celular", servidor_em: "2030-02-01T00:00:00.000Z"});
   });
   ok(A.__armazem["cron:pipeline"] === antes.pipeline, "cron:pipeline intacto");
-  ok(A.__armazem["cron:toefl-guia"] === antes.toefl, "cron:toefl-guia intacto");
-  ok(A.__armazem["cron:triagem"] === antes.triagem, "cron:triagem intacto");
-  ok(A.__armazem["cron:prioridades:2026-W37"] === antes.prio, "as prioridades intactas");
+  /* O toefl SAIU desta lista na 9E, junto com o item. */
+  ok(A.__armazem["cron:toefl-guia"] !== antes.toefl,
+     "cron:toefl-guia JA responde — conectado na 9E");
+  /* A triagem SAIU desta lista na 9D: agora ela tem aplicador e escreve. */
+  ok(A.__armazem["cron:triagem"] !== antes.triagem,
+     "cron:triagem JA responde — conectada na 9D");
+  ok(A.__armazem["cron:prioridades:2026-W37"] === antes.prio,
+     "e a chave sem periodo nao vira prioridade (o aplicador exige AAAA-Wnn/id)");
   ok(Object.keys(JSON.parse(A.__armazem["cron:sync-cache"])).length === 11,
      "as onze linhas ficaram no cache, esperando 9B");
-  ok(A.getToques().length === 0, "e nenhum toque foi gerado por nada disso");
 }
 
 /* ================= FASE 9B — AS PRIORIDADES ONLINE =================
@@ -661,7 +758,6 @@ console.log("\n=== 20. Receber nao gera envio, nem eco, nem toque (9B) ===");
   const srv = criarServidor();
   const [A, B] = parOnline(srv);
   await B.SYNC.assinarMudancas();
-  const toquesB = B.getToques().length;
 
   A.__prompt = "Fechar o capitulo 3";
   A.addPrioridadeLivre();
@@ -669,9 +765,8 @@ console.log("\n=== 20. Receber nao gera envio, nem eco, nem toque (9B) ===");
   await A.SYNC.drenarFila();
 
   ok(!!acharPrio(B, id), "a prioridade chegou ao celular");
-  ok(B.getToques().length === toquesB,
-     "10. e NAO gerou toque no celular — receber nao e tocar", B.getToques().length);
-  ok(B.SYNC.situacao().fila === 0, "    nem enfileirou envio de volta");
+  ok(B.SYNC.situacao().fila === 0,
+     "10. e NAO enfileirou no celular — receber nao e tocar", B.SYNC.situacao().fila);
   ok(srv.escritas === 1, "    o servidor recebeu UMA escrita, nao um laco", srv.escritas);
 
   /* O proprio evento voltando: nao pode ser reaplicado. */
@@ -743,24 +838,25 @@ console.log("\n=== 22. O que a 9B NAO mudou ===");
   ok(typeof A.renderHoje === "function" && (A.renderHoje(), true),
      "    e o Hoje desenha sem erro");
 
-  /* 14. cron:checks continua local. */
+  /* 14. cron:checks passou a viajar na 9D.4 — e continua morando aqui. */
   A.toggleCheck("seg-min");
   await A.SYNC.drenarFila();
   const dominios = srv.linhas.map(l => l.dominio);
-  ok(dominios.indexOf("rotina") < 0,
-     "14. marcar rotina NAO virou dominio online nesta fase", dominios);
-  ok(!!A.__armazem["cron:checks:" + A.dateKey], "    cron:checks continua no aparelho");
-  ok(dominios.every(d => d === "prioridade"),
-     "    e SO prioridade subiu: nenhum outro dominio foi conectado", dominios);
+  ok(dominios.indexOf("rotina") >= 0,
+     "14. marcar rotina virou dominio online na 9D.4", dominios);
+  ok(!!A.__armazem["cron:checks:" + A.dateKey],
+     "    e cron:checks continua sendo onde a marca mora no aparelho");
+  ok(dominios.every(d => d === "prioridade" || d === "rotina"),
+     "    e nenhum outro dominio foi conectado por tabela", dominios);
 
-  /* O caminho legado continua inteiro e continua recebendo o mesmo ato. */
-  const tiposDeToque = A.getToques().map(x => x.tipo);
-  /* DOIS, e nao tres: o segundo addPrioridadeTrilho e recusado por duplicata
-     antes de tocar em nada — que e a semantica de sempre, verificada acima. */
-  ok(tiposDeToque.filter(x => x === "prioridade").length === 2,
-     "    e o toque legado continua sendo emitido por toda operacao", tiposDeToque);
-  ok(typeof A.aplicarPrioridadesDoEstado === "function",
-     "    a descida pelo estado.json continua existindo");
+  /* 9G-2: a subida legada saiu. O ato continua produzindo UMA escrita online
+     por operacao — DUAS, e nao tres: o segundo addPrioridadeTrilho e recusado
+     por duplicata antes de tocar em nada, que e a semantica de sempre. */
+  ok(srv.linhas.filter(l => l.dominio === "prioridade").length === 2,
+     "    e cada operacao continua produzindo a sua escrita online",
+     srv.linhas.filter(l => l.dominio === "prioridade").length);
+  ok(typeof A.aplicarPrioridadesDoEstado === "undefined",
+     "    e a descida pelo estado.json nao existe mais (9G-3)");
 }
 
 console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ===");
@@ -773,16 +869,19 @@ console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ==="
   ok(escritores === 1, "ha UM unico ponto que escreve prioridade online", escritores);
   ok(/function tocarPrioridade[\s\S]{0,1400}SYNC\.salvarAlteracao\(\s*"prioridade"/.test(fonte),
      "e ele e o tocarPrioridade, por onde as cinco operacoes ja passavam");
-  /* E UMA implementacao de merge, usada pelos dois caminhos de descida. */
+  /* E UMA implementacao de merge. Enquanto houve duas descidas, isto provava
+     que as duas usavam a mesma; com a legada aposentada na 9G-3, o que resta a
+     provar e que o merge continua SEPARADO do aplicador — e o que o mantem
+     testavel sem rede e impede que uma descida futura nasca com regra propria. */
   ok((nucleo.match(/function mesclarPrioridade/g) || []).length === 1,
      "ha UMA implementacao de merge");
-  ok(/aplicarPrioridadesDoEstado[\s\S]*?mesclarPrioridade/.test(nucleo),
-     "o caminho legado (estado.json) a usa");
+  ok(!/function aplicarPrioridadesDoEstado/.test(nucleo),
+     "o caminho legado (estado.json) saiu na 9G-3");
   ok(/aplicarPrioridadeOnline[\s\S]*?mesclarPrioridade/.test(nucleo),
-     "e o caminho online tambem — nao ha logica de relogio paralela");
+     "e o caminho online a usa — nao ha logica de relogio paralela");
   /* O mesmo instante nos dois caminhos. */
-  ok(/var iso = enfileirarToque\("prioridade", d\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
-     "e os dois caminhos carregam o MESMO instante da decisao");
+  ok(/var iso = instanteISO\(\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
+     "e o instante da decisao vem do relogio, e e o que sobe");
 }
 
 console.log("\n=== 24. A tela do estado online (9B) ===");
@@ -802,8 +901,8 @@ console.log("\n=== 24. A tela do estado online (9B) ===");
   ok(/onclick="entrarSincronia\(\)"/.test(html) && /onclick="sairSincronia\(\)"/.test(html),
      "com os dois botoes ligados aos handlers");
   ok(/type="password"[^>]*id="sync-senha"/.test(html), "a senha e campo de senha");
-  ok(/id="sync-token"/.test(html) && /onclick="salvarToken\(\)"/.test(html),
-     "e o bloco do token do GitHub continua inteiro — os dois convivem");
+  ok(!/id="sync-token"/.test(html) && !/onclick="salvarToken\(\)"/.test(html),
+     "e o bloco do token do GitHub SAIU na 9G-2");
 
   /* A frase muda com a situacao, e a diferenca entre "nao entrei" e "entrei com
      a conta errada" e o caso que a allowlist cron_dono cria. */
@@ -850,6 +949,2341 @@ console.log("\n=== 25. A sessao NAO entra no backup exportado (9B) ===");
   ok(/storageKey:SYNC_SESSAO_KEY/.test(fonte),
      "e o cliente do Supabase usa essa chave, nao uma literal solta");
   ok(!/storageKey:\s*"cron:/.test(fonte), "nenhuma sessao guardada sob cron:");
+}
+
+console.log("\n=== 26. O relogio de Metas e Eventos (9C-0) ===");
+{
+  /* A DIVERGENCIA ERA REAL E FOI MEDIDA. Antes da 9C-0, tocarMeta/tocarEvento
+     nao devolviam nada e cada caller carimbava o `em` com new Date(). No
+     caminho feliz os dois relogios coincidem — por isso o defeito ficou
+     invisivel. Mas o instanteDoToque() e MONOTONICO: na 2a acao de um mesmo
+     milissegundo ele soma 1ms e o new Date() do caller nao acompanha.
+     Medido no codigo de antes: 1a acao coincide, 2a diverge +1ms, 3a +2ms.
+     Este bloco existe para que nao volte. */
+  const srv = criarServidor();
+  /* 9G-2: LIGADO. Este bloco media o `em` do dominio contra o `quando` do
+     toque; o toque saiu, e o que resta para comparar e o item da fila do SYNC —
+     que carrega o MESMO instante. A propriedade medida nao mudou. */
+  const A = criarAparelho("mac", srv).__conectar();
+  const ultimoToque = () => {
+    const f = A.LS("cron:sync-fila", []) || []; return {quando: (f[f.length - 1] || {}).em};
+  };
+
+  const casos = [];
+  function medir(nome, acao, lerEm) {
+    const antes = A.SYNC.situacao().fila;
+    acao();
+    const t = ultimoToque();
+    casos.push({nome, em: lerEm(), quando: t.quando, novos: A.SYNC.situacao().fila - antes});
+    return casos[casos.length - 1];
+  }
+
+  A.addMeta();
+  const mi = A.getMetas().length - 1;
+  A.__congelar(1800000000000);
+  const m1 = medir("editMeta 1a no ms",  () => A.editMeta(mi, "primeira"),  () => A.getMetas()[mi].em);
+  const m2 = medir("editMeta 2a no ms",  () => A.editMeta(mi, "segunda"),   () => A.getMetas()[mi].em);
+  const m3 = medir("toggleMeta 3a no ms",() => A.toggleMeta(mi),            () => A.getMetas()[mi].em);
+  A.__descongelar();
+
+  ok(m1.em === m1.quando, "4. o `em` da meta e o ISO que sobe online (1a no milissegundo)", m1);
+  ok(m2.em === m2.quando, "   e continua sendo na 2a — onde o monotonico desempata", m2);
+  ok(m3.em === m3.quando, "   e na 3a", m3);
+  ok(m2.quando > m1.quando && m3.quando > m2.quando,
+     "   os instantes avancam de verdade (o desempate aconteceu)",
+     [m1.quando, m2.quando, m3.quando]);
+  ok([m1, m2, m3].every(c => c.novos === 1),
+     "11. cada operacao de meta gera EXATAMENTE uma escrita online", casos.map(c => c.novos));
+
+  A.addEv();
+  const eid = A.getEventos()[A.getEventos().length - 1].id;
+  const achaEv = () => A.getEventos().filter(x => x.id === eid)[0];
+  A.__congelar(1800000001000);
+  const e1 = medir("editEv 1a no ms", () => A.editEv(eid, "uma data"),      () => achaEv().em);
+  const e2 = medir("dateEv 2a no ms", () => A.dateEv(eid, "2027-04-01"),    () => achaEv().em);
+  A.__descongelar();
+
+  ok(e1.em === e1.quando, "9. o `em` do evento e o ISO que sobe online (1a no milissegundo)", e1);
+  ok(e2.em === e2.quando, "   e continua sendo na 2a", e2);
+  ok(e2.quando > e1.quando, "   com os instantes avancando", [e1.quando, e2.quando]);
+  ok(e1.novos === 1 && e2.novos === 1,
+     "11. cada operacao de evento gera EXATAMENTE um toque", [e1.novos, e2.novos]);
+
+  /* trazerTodas era o pior caso: N metas com UM `agora` compartilhado. */
+  const B = criarAparelho("celular", srv, {ligado: false});
+  B.__armazem["cron:metas:2026-07"] = JSON.stringify([
+    {id: "old1", t: "pendente um",  done: false, em: "2026-07-01T00:00:00.000Z"},
+    {id: "old2", t: "pendente dois", done: false, em: "2026-07-01T00:00:00.000Z"}
+  ]);
+  B.__congelar(1800000002000);
+  B.trazerTodas();
+  B.__descongelar();
+  const trazidas = B.getMetas(B.monthKey).filter(m => m.de === "2026-07");
+  ok(trazidas.length === 2, "trazerTodas trouxe as duas", trazidas.length);
+  /* 9G-2: sem fila de toques, o que prova o ponto e o proprio instante de cada
+     meta — DISTINTOS entre si, que e a definicao de "nao um `agora`
+     compartilhado". O relogio monotonico e quem os separa. */
+  const instantes = trazidas.map(m => m.em);
+  ok(instantes.every(e => !!e) && new Set(instantes).size === instantes.length,
+     "e cada meta trazida ficou com o SEU instante, nao um `agora` compartilhado",
+     trazidas.map(m => ({id: m.id, em: m.em})));
+  ok(new Set(trazidas.map(m => m.em)).size === 2,
+     "os dois `em` sao distintos — era aqui que o defeito mordia");
+}
+
+console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
+{
+  const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  ["meta", "evento", "prioridade"].forEach(function (d) {
+    const n = (fonte.match(new RegExp('salvarAlteracao\\(\\s*"' + d + '"', "g")) || []).length;
+    ok(n === 1, "10. ha UMA unica escrita online de \"" + d + "\" no codigo", n);
+  });
+  /* O BOTAO DO ACERVO SAIU NA 9G-3, e com ele as duas chamadas que este teste
+     verificava. Ele existia para publicar no estado.json as metas e datas
+     escritas antes de a sincronia existir; publicadas, e sem estado.json a
+     alimentar, nao havia mais o que migrar. O que a secao guarda continua de
+     pe pelas assercoes de "UMA unica escrita online" acima. */
+  ok(!/function publicarAcervoUmaVez/.test(fonte) && !/function marcarLaForaLocal/.test(fonte) &&
+     !/function renderAcervoEstado/.test(fonte),
+     "    e o botao do acervo saiu inteiro do 30-render.js (9G-3)");
+  /* O corpo do tocarMeta cresceu na 9C-2 (ganhou a escrita online), entao a
+     verificacao passou a ser sobre o CONTRATO e nao sobre a proximidade das
+     linhas: aceita quandoISO, repassa-o ao relogio, e devolve o iso. */
+  const tocarM = fonte.split("function tocarMeta(")[1].split("\n}")[0];
+  ok(/^mes, m, apagada, quandoISO\)/.test(tocarM), "    o funil da meta aceita quandoISO");
+  ok(/instanteISO\(quandoISO\)/.test(tocarM), "    e o repassa ao relogio");
+  ok(/return iso;/.test(tocarM), "    e DEVOLVE o instante que subiu");
+  /* Mesmo motivo do tocarMeta acima: o corpo cresceu na 9C-3 (ganhou a escrita
+     online), entao verifica-se o CONTRATO e nao a proximidade das linhas. */
+  const tocarE = fonte.split("function tocarEvento(")[1].split("\n}")[0];
+  /* O `opts` saiu na 9G-3: o unico chamador que o passava decidia pelo
+     eventoJaSubiu(), que lia a fotografia do estado.json. O `quandoISO` fica —
+     e por ele que as migracoes de uma vez por aparelho escrevem com piso. */
+  ok(/^ev, apagado, quandoISO\)/.test(tocarE),
+     "    o funil do evento aceita quandoISO, e o `opts` inerte saiu (9G-3)");
+  ok(/instanteISO\(quandoISO\)/.test(tocarE), "    e o repassa ao relogio");
+  ok(/return iso;/.test(tocarE), "    e DEVOLVE o instante que subiu");
+  /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
+  /* Esta lista cresce a cada dominio conectado — prioridade (9B), meta (9C-2),
+     evento (9C-3) — e e atualizada de proposito a cada fase. O que ela guarda e
+     que NENHUM dominio entre online sem uma fase que o autorize: os proximos
+     (triagem, toefl, retomada, rotina, dispensa, item, estrutura_*) sao 9D. */
+  const online = ((fonte + regrasSrc).match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "12. os nove dominios online (9B, 9C, 9D e o progresso da 9E)", online);
+  ok(["estrutura_proj","estrutura_sub"]
+       .every(d => online.indexOf(d) < 0),
+     "    e nenhum dominio ainda nao autorizado foi antecipado", online);
+}
+
+console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  ok(typeof A.renderVistaRevisao === "function", "renderVistaRevisao existe");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok(/return \["renderHoje", "renderVistaRevisao"\]/.test(nucleo),
+     "2. e o aplicador remoto de prioridade a pede");
+  /* MENOR REPERCUSSAO CORRETA: renderSemana NAO entra. A auditoria dizia que a
+     revisao morava nele; nao mora — a linha estava no setView. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  /* O CORPO VAI ATE O PRIMEIRO `}` NA COLUNA 0, e nao ate o proximo `function`:
+     cortar no `function` seguinte atravessa para dentro do setView e captura
+     106 linhas em vez de 90 — foi o que fez esta assercao falhar por engano na
+     primeira escrita. */
+  const corpoDe = (fonte, nome) => fonte.split("function " + nome + "(")[1].split("\n}")[0];
+  const corpoSemana = corpoDe(render, "renderSemana");
+  ok(!/getPrio|getMetas|getEventos|renderRevisao/.test(corpoSemana),
+     "5. renderSemana nao depende de prioridade, meta nem evento — e por isso NAO foi acrescentado",
+     corpoSemana.match(/getPrio|getMetas|getEventos|renderRevisao/g));
+  ok(!/renderSemana/.test(corpoDe(nucleo, "aplicarPrioridadeOnline")),
+     "   nenhum render extra foi introduzido");
+
+  /* A view escondida nao e redesenhada; a visivel e. */
+  const vista = A.document.getElementById("view-revisao");
+  vista.hidden = true; vista.innerHTML = "";
+  A.renderVistaRevisao();
+  ok(vista.innerHTML === "", "com a aba escondida, nao redesenha (nada a atualizar)");
+  vista.hidden = false;
+  A.renderVistaRevisao();
+  ok(/Revis/.test(vista.innerHTML), "com a aba na frente, redesenha", vista.innerHTML.slice(0, 40));
+
+  /* O caminho inteiro: chega do Realtime e a vista muda. */
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  const vistaA = A.document.getElementById("view-revisao");
+  vistaA.hidden = false; vistaA.innerHTML = "";
+  B.__prompt = "prioridade vinda do celular";
+  B.addPrioridadeLivre();
+  await B.SYNC.drenarFila();
+  A.SYNC.descarregarRender(true);
+  ok(/prioridade vinda do celular/.test(vistaA.innerHTML),
+     "1+2. alteracao remota com a aba Revisao aberta atualiza a tela",
+     vistaA.innerHTML.slice(0, 80));
+  ok(A.SYNC.situacao().fila === 0,
+     "6. e continua sem escrever de volta: receber nao e tocar", A.SYNC.situacao().fila);
+}
+
+/* ================= FASE 9C-2 — AS METAS ONLINE ================= */
+const metas    = (ap, mes) => ap.getMetas(mes || ap.monthKey);
+const achaMeta = (ap, id, mes) => metas(ap, mes).filter(x => x.id === id)[0] || null;
+/* addMeta nasce sem texto e NAO emite toque nenhum; o primeiro editMeta e que
+   publica. Este atalho reproduz o gesto real da tela: criar e nomear. */
+function criarMeta(ap, texto) {
+  ap.addMeta();
+  const i = ap.getMetas().length - 1;
+  ap.editMeta(i, texto);
+  return ap.getMetas()[i].id;
+}
+
+console.log("\n=== 29. Criar, editar, concluir, desconcluir, excluir (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const id = criarMeta(A, "Submeter o artigo do patriotismo");
+  await A.SYNC.drenarFila();
+  const noCel = achaMeta(B, id);
+  ok(!!noCel, "1. criar no Mac chega ao celular", metas(B).map(m => m.t));
+  ok(noCel && noCel.t === "Submeter o artigo do patriotismo", "   com o texto certo", noCel && noCel.t);
+  ok(noCel && noCel.em === achaMeta(A, id).em, "   e com o MESMO instante da decisao");
+
+  const i = A.getMetas().findIndex(m => m.id === id);
+  A.editMeta(i, "Submeter o artigo ate sexta");
+  await A.SYNC.drenarFila();
+  ok(achaMeta(B, id).t === "Submeter o artigo ate sexta", "2. editar chega", achaMeta(B, id).t);
+
+  A.toggleMeta(i);
+  await A.SYNC.drenarFila();
+  ok(achaMeta(A, id).done === true, "3. o Mac concluiu");
+  ok(achaMeta(B, id).done === true, "   e o celular recebeu done=true");
+
+  A.toggleMeta(i);
+  await A.SYNC.drenarFila();
+  ok(achaMeta(A, id).done === false, "4. o Mac desconcluiu");
+  ok(achaMeta(B, id).done === false, "   e o celular recebeu done=false");
+
+  A.delMeta(i);
+  await A.SYNC.drenarFila();
+  ok(achaMeta(A, id) === null, "5. o Mac apagou");
+  ok(achaMeta(B, id) === null, "   e sumiu do celular");
+  const linha = srv.linhas.filter(l => l.dominio === "meta" && l.chave.indexOf(id) > 0)[0];
+  ok(!!linha && linha.del === true, "   e a exclusao e LAPIDE, nao ausencia de linha", linha && linha.del);
+  ok(!!linha && linha.chave === A.monthKey + "/" + id,
+     "   a chave e AAAA-MM/mid", linha && linha.chave);
+}
+
+console.log("\n=== 30. Duas metas do mesmo mes nao se atropelam (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  const idA = criarMeta(A, "Meta do Mac");
+  await A.SYNC.drenarFila();
+  const idB = criarMeta(B, "Meta do celular");
+  await B.SYNC.drenarFila();
+
+  ok(idA !== idB, "sao duas metas distintas");
+  ok(!!achaMeta(A, idB) && !!achaMeta(B, idA),
+     "6+7. cada aparelho recebeu a do outro sem perder a sua",
+     {mac: metas(A).filter(m => m.t).map(m => m.t), cel: metas(B).filter(m => m.t).map(m => m.t)});
+
+  const chaves = srv.linhas.filter(l => l.dominio === "meta").map(l => l.chave);
+  ok(chaves.length === 2, "   o servidor tem DUAS linhas, nao um retrato do mes", chaves);
+
+  A.editMeta(A.getMetas().findIndex(m => m.id === idA), "Meta do Mac, revisada");
+  await A.SYNC.drenarFila();
+  ok(achaMeta(B, idA).t === "Meta do Mac, revisada" && achaMeta(B, idB).t === "Meta do celular",
+     "   editar uma nao encosta na outra", metas(B).filter(m => m.t).map(m => m.t));
+}
+
+console.log("\n=== 31. A mesma meta, dois aparelhos: vence o relogio (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  const id = criarMeta(A, "disputada");
+  await A.SYNC.drenarFila();
+  await B.SYNC.reconectar(true);
+  ok(!!achaMeta(B, id), "os dois conhecem a meta");
+
+  B.editMeta(B.getMetas().findIndex(m => m.id === id), "versao do celular");
+  await B.SYNC.drenarFila();
+  ok(achaMeta(B, id).t === "versao do celular", "8. o celular escreveu por ultimo");
+
+  /* Uma linha ANTIGA nao pode desfazer o que ele acabou de escrever. */
+  const velha = {dono: "dono-1", dominio: "meta", chave: A.monthKey + "/" + id,
+                 valor: {t: "versao antiga do mac", done: false, de: null},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-06-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "9. a linha antiga e recusada", r);
+  ok(achaMeta(B, id).t === "versao do celular", "   e o texto mais novo permanece");
+
+  const lista = B.getMetas(A.monthKey);
+  ok(B.mesclarMeta(lista, id, {quando: "2020-01-01T00:00:00.000Z", t: "velha"}) === false,
+     "   e o mesclarMeta a recusa sozinho — a guarda do caminho legado");
+  ok(B.mesclarMeta(lista, id, {quando: "2099-01-01T00:00:00.000Z", t: "futura"}) === true,
+     "   mas aceita a mais nova");
+}
+
+console.log("\n=== 32. Receber nao gera eco nem toque (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const id = criarMeta(A, "vinda do Mac");
+  await A.SYNC.drenarFila();
+
+  ok(!!achaMeta(B, id), "a meta chegou ao celular");
+  ok(B.SYNC.situacao().fila === 0, "    nem enfileirou envio de volta");
+  ok(srv.escritas === 1, "    o servidor recebeu UMA escrita, nao um laco", srv.escritas);
+  const eco = A.SYNC.aplicarRemoto(srv.linhas[0]);
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "    e o eco proprio e recusado no Mac", eco);
+}
+
+console.log("\n=== 33. Offline, fila e reconexao cruzada (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O MAC NAO ASSINA O CANAL — e o que "offline" quer dizer aqui. Com ele
+     assinado, o Realtime do servidor de mentira entregaria a escrita do celular
+     na hora e o cenario deixaria de existir: nao haveria nada para o delta
+     recuperar, e o teste passaria provando outra coisa. */
+  srv.falhar = true;
+  const idA = criarMeta(A, "escrita do Mac, sem rede");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "11. sem rede, a alteracao fica na fila", A.SYNC.situacao().fila);
+  ok(!!achaMeta(A, idA), "    e existe na tela do Mac (otimista)");
+
+  srv.falhar = false;
+  const idB = criarMeta(B, "escrita do celular, com rede");
+  await B.SYNC.drenarFila();
+  ok(!achaMeta(A, idB), "    o Mac ainda nao sabe da meta do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(!!achaMeta(A, idB), "13. o delta trouxe o que se perdeu na desconexao", metas(A).filter(m=>m.t).map(m=>m.t));
+  ok(A.SYNC.situacao().fila === 0, "12. e so entao a fila subiu");
+  ok(!!achaMeta(B, idA), "    e o celular recebeu a do Mac");
+  ok(srv.linhas.filter(l => l.dominio === "meta").length === 2,
+     "    nenhum estado foi perdido: as duas estao no servidor");
+}
+
+console.log("\n=== 34. trazerMeta e trazerTodas (9C-2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv, {storage: {
+    "cron:metas:2026-07": JSON.stringify([
+      {id: "velha1", t: "pendente um",  done: false, em: "2026-07-01T00:00:00.000Z"},
+      {id: "velha2", t: "pendente dois", done: false, em: "2026-07-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  const B = criarAparelho("celular", srv, {storage: {
+    "cron:metas:2026-07": JSON.stringify([
+      {id: "velha1", t: "pendente um",  done: false, em: "2026-07-01T00:00:00.000Z"},
+      {id: "velha2", t: "pendente dois", done: false, em: "2026-07-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  A.trazerMeta(0);
+  await A.SYNC.drenarFila();
+  const linhas = srv.linhas.filter(l => l.dominio === "meta");
+  const criada = linhas.filter(l => !l.del)[0];
+  const lapide = linhas.filter(l => l.del)[0];
+  ok(!!criada && criada.chave.indexOf(A.monthKey + "/") === 0,
+     "14. trazerMeta CRIA no mes de destino", criada && criada.chave);
+  ok(!!lapide && lapide.chave === "2026-07/velha1",
+     "    e deixa LAPIDE no mes de origem", lapide && lapide.chave);
+  ok(B.getMetas("2026-07").filter(m => m.id === "velha1").length === 0,
+     "    o celular perdeu a da origem");
+  ok(B.getMetas(A.monthKey).filter(m => m.de === "2026-07").length === 1,
+     "    e ganhou a do destino", B.getMetas(A.monthKey).map(m => m.t));
+
+  /* 15. Falha ENTRE as duas: a fila para na primeira e nada se perde. */
+  const C = criarAparelho("ipad", srv, {storage: {
+    "cron:metas:2026-08": JSON.stringify([
+      {id: "v9", t: "outra pendente", done: false, em: "2026-08-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  C.trazerMeta(C.pendencias().findIndex(o => o.meta.id === "v9"));
+  ok(C.SYNC.situacao().fila === 2, "15. trazerMeta enfileira DUAS operacoes", C.SYNC.situacao().fila);
+  srv.falhar = true;
+  await C.SYNC.drenarFila();
+  ok(C.SYNC.situacao().fila === 2, "    sem rede, as duas ficam — nada se perde");
+  srv.falhar = false;
+  await C.SYNC.drenarFila();
+  ok(C.SYNC.situacao().fila === 0, "    e sobem juntas quando a rede volta");
+  const daC = srv.linhas.filter(l => l.chave.indexOf("v9") > 0 || l.valor.t === "outra pendente");
+  ok(daC.length === 2 && daC.some(l => l.del) && daC.some(l => !l.del),
+     "    criacao e lapide, na ordem", daC.map(l => ({c: l.chave, del: l.del})));
+
+  /* 16. trazerTodas com varias. */
+  /* MES ANTERIOR AO CORRENTE, e nao o corrente: pendencias() varre k < monthKey.
+     Metas do mes de hoje nao sao pendencias — sao as metas do mes. E o mes tem
+     as suas proprias sementes (ROTEIRO/METAS_DEFAULT), entao a contagem e feita
+     sobre AS TRES, e nao sobre o total de linhas do servidor. */
+  const MESPEND = "2026-08";
+  const D = criarAparelho("outro", srv, {storage: {
+    ["cron:metas:" + MESPEND]: JSON.stringify([
+      {id: "t1", t: "tres",   done: false, em: "2026-08-01T00:00:00.000Z"},
+      {id: "t2", t: "quatro", done: false, em: "2026-08-01T00:00:00.000Z"},
+      {id: "t3", t: "cinco",  done: false, em: "2026-08-01T00:00:00.000Z"}
+    ])
+  }}).__conectar();
+  ok(D.pendencias().filter(o => ["t1","t2","t3"].indexOf(o.meta.id) >= 0).length === 3,
+     "as tres estao pendentes antes de trazer");
+  D.trazerTodas();
+  await D.SYNC.drenarFila();
+  const meus = ["tres", "quatro", "cinco"];
+  const lapides = srv.linhas.filter(l => l.del && l.chave.indexOf(MESPEND + "/t") === 0);
+  const criadas = srv.linhas.filter(l => !l.del && meus.indexOf(l.valor.t) >= 0
+                                      && l.chave.indexOf(D.monthKey + "/") === 0);
+  ok(lapides.length === 3 && criadas.length === 3,
+     "16. trazerTodas com 3 metas produz 3 criacoes + 3 lapides",
+     {lapides: lapides.length, criadas: criadas.length});
+  /* TRAZER TODAS TRAZ TODAS, e a semente do ROTEIRO daquele mes e uma pendencia
+     legitima como qualquer outra — metaEhSementeIntocada so vale para o acervo,
+     nao para pendencias(). Entao a assercao e sobre AS MINHAS tres, e a
+     propriedade do instante e verificada sobre o conjunto inteiro, que e onde
+     ela realmente importa. */
+  const trazidas = D.getMetas(D.monthKey).filter(m => m.de === MESPEND);
+  ok(meus.every(t => trazidas.some(m => m.t === t)),
+     "    as tres foram trazidas", trazidas.map(m => m.t));
+  ok(trazidas.length >= 3, "    junto com as demais pendencias do mes", trazidas.length);
+  const ems = trazidas.map(m => m.em);
+  ok(new Set(ems).size === trazidas.length,
+     "    e CADA UMA com o seu instante, sem repetir (a 9C-0 continua valendo)", ems);
+  ok(D.getMetas(MESPEND).filter(m => ["t1","t2","t3"].indexOf(m.id) >= 0).length === 0,
+     "    e sairam do mes de origem");
+}
+
+console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  /* 17. mes diferente nao mexe no mesAtivo. */
+  const antesMes = A.mesAtivo;
+  A.SYNC.aplicarRemoto({dono: "dono-1", dominio: "meta", chave: "2027-05/futura",
+    valor: {t: "meta de maio de 2027", done: false, de: null}, del: false,
+    em: "2027-01-01T00:00:00.000Z", aparelho: "celular", servidor_em: "2030-03-01T00:00:00.000Z"});
+  ok(A.mesAtivo === antesMes, "17. meta de outro mes nao mexe no mesAtivo", A.mesAtivo);
+  ok(A.getMetas("2027-05").filter(m => m.id === "futura").length === 1,
+     "    mas foi gravada no mes dela", A.getMetas("2027-05").length);
+
+  /* 18+19+20. Acervo, legado e online no mesmo ato. */
+  const B = criarAparelho("celular", srv).__conectar();
+  /* 9G-2: um caminho so. O ato produz UMA escrita online, e o instante dela e
+     o mesmo que ficou na meta no aparelho. */
+  const antesLinhas = srv.linhas.filter(l => l.dominio === "meta").length;
+  const id = criarMeta(B, "uma meta qualquer");
+  await B.SYNC.drenarFila();
+  ok(srv.linhas.filter(l => l.dominio === "meta").length === antesLinhas + 1,
+     "19+20. o ato produz UMA escrita online");
+  const online = srv.linhas.filter(l => l.chave.indexOf(id) > 0)[0];
+  const noAparelho = B.getMetas(B.monthKey).filter(m => m.id === id)[0];
+  ok(!!noAparelho && noAparelho.em === online.em,
+     "    com o MESMO instante no aparelho e online",
+     {aparelho: noAparelho && noAparelho.em, online: online.em});
+  ok(noAparelho.t === online.valor.t && !!noAparelho.done === !!online.valor.done,
+     "    e o mesmo conteudo", {aparelho: noAparelho, online: online.valor});
+
+  /* Eventos permanecem intocados. */
+  const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const dominiosOnline = ((fonte + regrasSrc).match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(dominiosOnline) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "13. os tres da 9C, os quatro da 9D e os dois da 9E", dominiosOnline);
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "    e os seis tem aplicador registrado", assinados);
+}
+
+console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"meta"/g) || []).length === 1,
+     "18. ha UM unico ponto que escreve meta online");
+  ok(/function tocarMeta[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"meta"/.test(render),
+     "    e ele e o tocarMeta, o funil por onde todas as operacoes passam");
+  ok((render.match(/salvarAlteracao\(\s*"meta"/g) || []).length === 1,
+     "    e continua havendo UM escrita online de meta (a 9C-0 nao regrediu)");
+  ok((nucleo.match(/function mesclarMeta/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(!/function aplicarMetasDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarMetaOnline[\s\S]*?mesclarMeta/.test(nucleo), "e o online a usa");
+  /* Os renders minimos. */
+  const corpo = nucleo.split("function aplicarMetaOnline(")[1].split("\n}")[0];
+  ok(/renderMetas/.test(corpo) && /renderVistaRevisao/.test(corpo),
+     "os renders da meta sao renderMetas e renderVistaRevisao");
+  ok(!/renderSemana/.test(corpo), "e NAO renderSemana — ele nao le getMetas");
+  ok(/todayIdx === 0/.test(corpo),
+     "renderHoje so no domingo, o unico dia em que a revisao mora dentro dele");
+}
+
+/* ================= FASE 9C-3 — OS EVENTOS ONLINE ================= */
+const eventos  = (ap) => ap.getEventos();
+const achaEv   = (ap, id) => eventos(ap).filter(x => x.id === id)[0] || null;
+/* addEv nasce sem nome e NAO emite toque; o primeiro editEv ou dateEv publica.
+   Este atalho reproduz o gesto real da tela: criar e nomear. */
+function criarEvento(ap, texto, data) {
+  ap.addEv();
+  const id = eventos(ap)[eventos(ap).length - 1].id;
+  if (data) ap.dateEv(id, data);
+  ap.editEv(id, texto);
+  return id;
+}
+
+console.log("\n=== 37. Criar, editar, mover e excluir (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const id = criarEvento(A, "Defesa do pos-doc", "2027-03-10");
+  await A.SYNC.drenarFila();
+  const noCel = achaEv(B, id);
+  ok(!!noCel, "A. criar no Mac chega ao celular", eventos(B).map(e => e.t));
+  ok(noCel && noCel.t === "Defesa do pos-doc", "   com o titulo", noCel && noCel.t);
+  ok(noCel && noCel.data === "2027-03-10", "   e com a data", noCel && noCel.data);
+  ok(noCel && noCel.em === achaEv(A, id).em, "L. e com o MESMO instante da decisao");
+  const linha = srv.linhas.filter(l => l.dominio === "evento")[0];
+  ok(!!linha && linha.chave === id, "   a chave e o proprio id do evento", linha && linha.chave);
+
+  A.editEv(id, "Defesa do pos-doc na UFRJ");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).t === "Defesa do pos-doc na UFRJ", "B. editar chega", achaEv(B, id).t);
+
+  /* J. MOVER = editar a data. O id e estavel; nao ha criacao no destino nem
+     lapide na origem, porque nao ha origem — e o mesmo evento, noutro dia. */
+  A.dateEv(id, "2027-04-22");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).data === "2027-04-22", "J. mover a data chega", achaEv(B, id).data);
+  ok(achaEv(B, id).id === id, "   e o evento continua sendo O MESMO (id estavel)");
+  ok(srv.linhas.filter(l => l.dominio === "evento").length === 1,
+     "   uma linha so: mover e edicao, nao criar+lapide",
+     srv.linhas.filter(l => l.dominio === "evento").length);
+  ok(achaEv(B, id).t === "Defesa do pos-doc na UFRJ", "   e o titulo sobreviveu a mudanca de data");
+
+  A.delEv(id);
+  await A.SYNC.drenarFila();
+  ok(achaEv(A, id) === null, "E. o Mac apagou");
+  ok(achaEv(B, id) === null, "   e sumiu do celular");
+  const lap = srv.linhas.filter(l => l.dominio === "evento" && l.chave === id)[0];
+  ok(!!lap && lap.del === true, "K. a exclusao e LAPIDE, nao ausencia de linha", lap && lap.del);
+}
+
+console.log("\n=== 38. Varios eventos, conflito e eco (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  const idA = criarEvento(A, "Banca de qualificacao", "2027-05-01");
+  await A.SYNC.drenarFila();
+  const idB = criarEvento(B, "Congresso da ANPOF", "2027-06-15");
+  await B.SYNC.drenarFila();
+
+  ok(idA !== idB, "F. sao dois eventos distintos");
+  ok(!!achaEv(A, idB) && !!achaEv(B, idA),
+     "   cada aparelho recebeu o do outro sem perder o seu",
+     {mac: eventos(A).filter(e => e.t).map(e => e.t), cel: eventos(B).filter(e => e.t).map(e => e.t)});
+  ok(srv.linhas.filter(l => l.dominio === "evento").length === 2,
+     "   duas linhas no servidor, uma por evento");
+
+  /* G. conflito: linha antiga nao vence a mais nova. */
+  B.editEv(idA, "Banca de qualificacao — remarcada");
+  await B.SYNC.drenarFila();
+  const velha = {dono: "dono-1", dominio: "evento", chave: idA,
+                 valor: {t: "Banca de qualificacao", data: "2027-05-01", priv: false},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-06-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "G. a linha antiga e recusada", r);
+  ok(achaEv(B, idA).t === "Banca de qualificacao — remarcada", "   e o texto mais novo permanece");
+  const lista = B.getEventos();
+  ok(B.mesclarEvento(lista, idA, {quando: "2020-01-01T00:00:00.000Z", data: "2020-01-01"}) === false,
+     "   e o mesclarEvento a recusa sozinho — a guarda do caminho legado");
+  ok(B.mesclarEvento(lista, idA, {quando: "2099-01-01T00:00:00.000Z", data: "2099-01-01"}) === true,
+     "   mas aceita a mais nova");
+
+  /* H. RECEBER NAO E TOCAR. A medicao cerca SO a recepcao, e sobre um evento
+     NOVO que so o Mac tocou.
+
+     POR QUE NAO SOBRE O `idA`, que os dois ja editaram: os relogios monotonicos
+     sao POR APARELHO, e num teste as escritas caem todas no mesmo
+     milissegundo. Medido: o `em` do celular e o da escrita seguinte do Mac
+     saem IDENTICOS — e a regra e "empate fica como esta", entao a escrita do
+     Mac perde. Isso e o LWW funcionando como desenhado, nao um defeito; mas
+     amarrar a medicao do no-echo a essa corrida seria medir o relogio em vez de
+     medir o eco. */
+  const filaB = B.SYNC.situacao().fila;
+  const idNovo = criarEvento(A, "Aula inaugural", "2027-08-01");
+  await A.SYNC.drenarFila();
+  ok(!!achaEv(B, idNovo), "   um evento novo do Mac chega ao celular", eventos(B).map(e => e.t));
+  ok(B.SYNC.situacao().fila === filaB, "   nem enfileirou envio de volta");
+  const eco = A.SYNC.aplicarRemoto(srv.linhas.filter(l => l.chave === idNovo)[0]);
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "   e o eco proprio e recusado no Mac", eco);
+}
+
+console.log("\n=== 39. Offline e reconexao (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O Mac nao assina: e o que "desconectado" quer dizer aqui. */
+
+  srv.falhar = true;
+  const idA = criarEvento(A, "Prova do TOEFL remarcada", "2027-02-08");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila > 0, "I. sem rede, a alteracao fica na fila", A.SYNC.situacao().fila);
+  ok(!!achaEv(A, idA), "   e existe na tela do Mac (otimista)");
+
+  srv.falhar = false;
+  const idB = criarEvento(B, "Entrevista em Northwestern", "2027-02-20");
+  await B.SYNC.drenarFila();
+  ok(!achaEv(A, idB), "   o Mac ainda nao sabe do evento do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(!!achaEv(A, idB), "I. o delta trouxe o que se perdeu", eventos(A).filter(e => e.t).map(e => e.t));
+  ok(A.SYNC.situacao().fila === 0, "   e so entao a fila subiu");
+  ok(!!achaEv(B, idA), "   e o celular recebeu o do Mac");
+}
+
+console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  const id = criarEvento(A, "Consulta medica", "2027-01-20");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).t === "Consulta medica", "publico: o titulo viaja, como sempre");
+
+  A.privEv(id);                       /* o confirm() do harness devolve true */
+  await A.SYNC.drenarFila();
+  ok(achaEv(A, id).priv === true, "O. o Mac marcou como privado");
+  const linha = srv.linhas.filter(l => l.chave === id)[0];
+  ok(linha.valor.priv === true, "   a MARCA sobe", linha.valor);
+  /* ESTA ASSERCAO INVERTEU NA 9C-4, de proposito. Ate a 9C-3 o titulo privado
+     nao subia a lugar nenhum; agora ele sobe para o registro ONLINE, que e
+     privado por RLS, e continua fora do caminho legado. O que a secao guarda
+     passou a ser a fronteira nova, e ela e verificada nos dois lados. */
+  ok(Object.prototype.hasOwnProperty.call(linha.valor, "t"),
+     "O. o titulo sobe para o registro ONLINE (9C-4)", Object.keys(linha.valor));
+  /* 9G-2: nao ha mais payload legado. O que continua valendo — e e o que se
+     verifica — e que o `d` montado pelo funil nao tem `t` quando priv. */
+  ok(!("t" in A.dadosDoEvento({id:id, t:"x", data:"2027-01-01", priv:true}, false)),
+     "O. e o payload de um privado continua sem montar o `t`");
+  ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
+
+  /* O titulo que o celular JA tinha nao pode ser apagado pela descida. */
+  ok(achaEv(B, id).t === "Consulta medica",
+     "O. e o titulo que o celular ja tinha NAO foi apagado", achaEv(B, id).t);
+
+  /* Renomear um privado que ja subiu nao publica nada de novo. */
+  const antes = srv.linhas.filter(l => l.chave === id)[0].em;
+  const linhasAntes = srv.linhas.filter(l => l.dominio === "evento").length;
+  /* Ate a 9G-3 era preciso plantar aqui a fotografia do cron:la-fora, para que
+     o editEv soubesse que o evento "ja subiu". A fotografia saiu com o acervo:
+     renomear escreve online sempre, privado ou nao. */
+  A.editEv(id, "Consulta com o cardiologista");
+  await A.SYNC.drenarFila();
+  const depois = srv.linhas.filter(l => l.chave === id)[0];
+  /* TAMBEM INVERTEU NA 9C-4: renomear um privado ja publicado passou a gerar
+     escrita ONLINE (era a lacuna que a 9C-3 deixou), e continua NAO gerando
+     toque legado — que e o que protege o repositorio publico. */
+  ok(depois.em !== antes, "   renomear um privado ja publicado ATUALIZA o online (9C-4)", depois.em);
+  ok(depois.valor.t === "Consulta com o cardiologista",
+     "   com o nome novo", depois.valor.t);
+  ok(srv.linhas.filter(l => l.dominio === "evento").length === linhasAntes,
+     "   e nao cria linha nova: e a MESMA, atualizada");
+  ok(achaEv(A, id).t === "Consulta com o cardiologista", "   e o nome novo fica no aparelho");
+
+  /* A garantia estrutural: o payload nem monta o campo. */
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  ok(/if\(!ev\.priv\) d\.t = ev\.t \|\| "";/.test(regras),
+     "   dadosDoEvento nao MONTA o `t` quando priv — nao ha segundo filtro a esquecer");
+}
+
+console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const id = criarEvento(A, "Prazo da FAPERJ", "2026-12-15");
+  await A.SYNC.drenarFila();
+
+  /* 9G-2: um caminho so. O instante do evento no aparelho e o da linha. */
+  const online = srv.linhas.filter(l => l.chave === id)[0];
+  ok(!!online, "M. o ato produz a escrita online", online && online.chave);
+  const noAparelho = achaEv(A, id);
+  ok(noAparelho.em === online.em, "M. com o MESMO ISO no aparelho e online",
+     {aparelho: noAparelho.em, online: online.em});
+  ok(noAparelho.data === online.valor.data && noAparelho.t === online.valor.t,
+     "   e o mesmo conteudo", {aparelho: noAparelho, online: online.valor});
+  ok(typeof A.aplicarEventosDoEstado === "undefined",
+     "   e a descida pelo estado.json nao existe mais (9G-3)");
+
+  /* O evento NAO tem `done`: nao existe concluir/desconcluir neste dominio. */
+  ok(!("done" in (A.getEventos()[0] || {})),
+     "C/D. o modelo de evento nao tem `done` — nao ha o que concluir",
+     Object.keys(A.getEventos()[0] || {}));
+  ok(typeof A.toggleEv === "undefined" && typeof A.concluirEv === "undefined",
+     "     e nao existe handler de conclusao");
+
+  /* Os tres dominios online, e so eles. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const dominios = ((render + regrasSrc).match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(dominios) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "os nove dominios de estado escrevem online", dominios);
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "   e os nove tem aplicador registrado", assinados);
+}
+
+console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"evento"/g) || []).length === 1,
+     "ha UM unico ponto que escreve evento online");
+  ok((render.match(/salvarAlteracao\(\s*"evento"/g) || []).length === 1,
+     "e UM unico escrita online de evento (a 9C-0 nao regrediu)");
+  ok(/function tocarEvento[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"evento"/.test(render),
+     "e ele e o tocarEvento, o funil por onde todas as operacoes passam");
+  ok((nucleo.match(/function mesclarEvento/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(!/function aplicarEventosDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarEventoOnline[\s\S]*?mesclarEvento/.test(nucleo), "e o online a usa");
+
+  const corpo = nucleo.split("function aplicarEventoOnline(")[1].split("\n}")[0];
+  ok(/renderEventos/.test(corpo) && /renderVistaRevisao/.test(corpo),
+     "N. os renders sao renderEventos e renderVistaRevisao");
+  ok(!/renderSemana/.test(corpo), "   e NAO renderSemana — ele nao le getEventos");
+  ok(/todayIdx === 0/.test(corpo), "   renderHoje so no domingo");
+  /* A clausula que protege o titulo local nao pode ser simplificada. */
+  const merge = nucleo.split("function mesclarEvento(")[1].split("\n}")[0];
+  ok(/typeof r\.t === "string"/.test(merge),
+     "   e o merge distingue `t` vazio de `t` ausente — apagar um titulo e um ato");
+  ok(/if\(!r\.data\) return false;/.test(merge), "   evento sem data continua sendo ignorado");
+}
+
+console.log("\n=== 43. O titulo privado no caminho online (9C-4) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* 9G-2: o payload legado saiu, e com ele o repositorio publico onde um titulo
+     privado poderia vazar. O que resta guardar e o `d` que o funil monta. */
+  const payload = (ev) => A.dadosDoEvento(ev, false);
+  const linhaDe = (id) => srv.linhas.filter(l => l.dominio === "evento" && l.chave === id)[0];
+
+  /* A. publico: o titulo viaja pelos DOIS caminhos, como sempre. */
+  const id = criarEvento(A, "Retiro de casais", "2027-07-10");
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, id).t === "Retiro de casais", "A. publico: o titulo chega ao outro aparelho");
+  ok(payload({id:id, t:"Retiro de casais", data:"2027-07-10"}).t === "Retiro de casais",
+     "   e o payload de um publico carrega o titulo");
+  ok(linhaDe(id).valor.t === "Retiro de casais", "   e no online");
+
+  /* B + D. marcar privado: a marca viaja pelos dois; o titulo, so pelo online. */
+  A.privEv(id);
+  await A.SYNC.drenarFila();
+  const dPriv = payload({id:id, t:"Retiro de casais", data:"2027-07-10", priv:true});
+  ok(dPriv.priv === true, "B. marcar privado leva a MARCA", dPriv);
+  ok(!("t" in dPriv),
+     "C. e SEM o titulo — o campo nem e montado quando priv", Object.keys(dPriv));
+  ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
+  ok(linhaDe(id).valor.priv === true && linhaDe(id).valor.t === "Retiro de casais",
+     "D. e o titulo esta no registro ONLINE", linhaDe(id).valor);
+
+  /* E. editar o titulo enquanto privado: sincroniza online, nao vaza no legado. */
+  A.editEv(id, "Retiro de casais — Igreja de Nova Iguacu");
+  await A.SYNC.drenarFila();
+  ok(linhaDe(id).valor.t === "Retiro de casais — Igreja de Nova Iguacu",
+     "E. mas ATUALIZA o registro online", linhaDe(id).valor.t);
+  ok(achaEv(B, id).t === "Retiro de casais — Igreja de Nova Iguacu",
+     "D. e o nome novo chega ao outro aparelho autorizado", achaEv(B, id).t);
+  ok(achaEv(B, id).priv === true, "   ainda marcado como privado la");
+
+  /* K. o payload de um privado nunca monta o titulo, qualquer que seja o nome. */
+  ok(!("t" in payload({id:"x", t:"qualquer coisa", data:"2027-01-01", priv:true})),
+     "K. nenhum payload de evento privado carrega titulo");
+
+  /* F. reconectar recupera o titulo privado. */
+  const C = criarAparelho("ipad", srv).__conectar();
+  ok(!achaEv(C, id) || !achaEv(C, id).t, "um aparelho novo comeca sem o titulo");
+  await C.SYNC.reconectar(true);
+  ok(achaEv(C, id) && achaEv(C, id).t === "Retiro de casais — Igreja de Nova Iguacu",
+     "F. reconectar recupera o titulo privado pelo delta", achaEv(C, id) && achaEv(C, id).t);
+  ok(achaEv(C, id).priv === true, "   com a marca de privado junto");
+
+  /* G. tornar publico de novo: o titulo volta a poder ser publicado. */
+  A.privEv(id);
+  await A.SYNC.drenarFila();
+  const dPub = payload({id:id, t:"Retiro de casais — Igreja de Nova Iguacu",
+                        data:"2027-07-10", priv:false});
+  ok(dPub.priv === false, "G. tornar publico devolve priv=false");
+  ok(dPub.t === "Retiro de casais — Igreja de Nova Iguacu",
+     "G. e o titulo volta a ser montado no payload", dPub.t);
+  ok(achaEv(B, id).priv === false && achaEv(B, id).t === "Retiro de casais — Igreja de Nova Iguacu",
+     "   e os dois aparelhos convergem", achaEv(B, id));
+
+  /* H. exclusao: lapide, e sem deixar o titulo na tabela. */
+  A.delEv(id);
+  await A.SYNC.drenarFila();
+  ok(achaEv(A, id) === null && achaEv(B, id) === null, "H. apagar remove nos dois aparelhos");
+  ok(linhaDe(id).del === true, "   a lapide fica");
+  ok(!("t" in linhaDe(id).valor),
+     "H. e a lapide NAO carrega o titulo — o conteudo privado sai da tabela",
+     linhaDe(id).valor);
+}
+
+console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const id = criarEvento(A, "Consulta", "2027-09-09");
+  A.privEv(id);
+  await A.SYNC.drenarFila();
+
+  /* I. o relogio continua decidindo, tambem para o titulo privado. */
+  const velha = {dono: "dono-1", dominio: "evento", chave: id,
+                 valor: {t: "titulo antigo", data: "2027-09-09", priv: true},
+                 del: false, em: "2020-01-01T00:00:00.000Z", aparelho: "mac",
+                 servidor_em: "2030-07-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "I. linha antiga com titulo privado e recusada", r);
+  ok(achaEv(B, id).t === "Consulta", "   e o titulo mais novo permanece", achaEv(B, id).t);
+
+  /* J. no-echo. */
+  const idNovo = criarEvento(A, "Outra consulta", "2027-10-10");
+  A.privEv(idNovo);
+  await A.SYNC.drenarFila();
+  ok(achaEv(B, idNovo).t === "Outra consulta", "   um privado novo chega ao celular");
+  ok(B.SYNC.situacao().fila === 0, "   nem enfileirou envio de volta");
+
+  /* AUSENCIA vs VAZIO continua distinguida: apagar um titulo e um ato. */
+  const lista = B.getEventos();
+  ok(B.mesclarEvento(lista, id, {quando: "2099-01-01T00:00:00.000Z", data: "2027-09-09", priv: true}) === true,
+     "sem `t` no registro, a data desce e o titulo local fica");
+  ok(lista.filter(e => e.id === id)[0].t === "Consulta", "   o titulo local sobreviveu");
+  ok(B.mesclarEvento(lista, id, {quando: "2099-02-01T00:00:00.000Z", data: "2027-09-09", priv: true, t: ""}) === true,
+     "com `t` vazio, apagar o titulo E um ato");
+  ok(lista.filter(e => e.id === id)[0].t === "", "   e ele e apagado", lista.filter(e => e.id === id)[0].t);
+
+  /* L. nenhum dominio da 9D foi antecipado. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const online = ((render + regrasSrc).match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "L. nove dominios online — a 9E acrescentou item e toefl", online);
+}
+
+console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ===");
+{
+  /* As perguntas de privacidade da 9C-4, respondidas contra o codigo e nao
+     contra a intencao. */
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const dobra  = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  const sql    = fs.readFileSync(path.join(RAIZ, "sql", "cron_estado.sql"), "utf8");
+
+  ok(/if\(!ev\.priv\) d\.t = ev\.t \|\| "";/.test(regras),
+     "1/4. dadosDoEvento (payload legado) nao MONTA o titulo quando priv");
+  ok(/if not d\.get\("priv"\) and isinstance\(d\.get\("t"\), str\):/.test(dobra),
+     "1. e a dobra tambem o recusa — dois guardas independentes no cano publico");
+  /* O cron:la-fora guardava do titulo so um booleano, nunca o texto. A chave
+     saiu inteira na 9G-3 junto com o acervo, entao a garantia deixou de ser
+     "guarda so um booleano" e passou a ser "nao existe": nao ha mais nenhum
+     lugar no aparelho onde o titulo de um evento privado seja copiado para
+     fora do cron:eventos. */
+  /* MENCIONAR NAO E USAR: os comentarios que contam por que a chave saiu ficam,
+     e nao podem reprovar o corte. O que se le e o CODIGO, sem comentario. */
+  const semComent = s => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const codigoApp = ["00-config.js", "10-nucleo.js", "15-sync.js", "20-regras.js",
+                     "30-render.js", "40-app.js"]
+    .map(f => semComent(fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f), "utf8"))).join("\n");
+  ok(!/la-fora|ACERVO_LA_FORA_KEY|ACERVO_EM/.test(codigoApp),
+     "3. o cron:la-fora nao existe mais no codigo do aparelho (9G-3)");
+  ok(!/eventoJaSubiu|jaEstaLaFora|pisoJaGasto|marcarLaForaLocal/.test(codigoApp),
+     "   nem os quatro leitores que dependiam dela");
+  /* O titulo privado so entra no payload ONLINE, e a partir de ev.t. */
+  const tocar = render.split("function tocarEvento(")[1].split("\n}")[0];
+  ok(/if\(!apagado\) valor\.t = ev\.t \|\| "";/.test(tocar),
+     "5. o titulo entra no registro online — e so ali");
+  ok(!/valor\.t = d\.t/.test(tocar),
+     "   lido de ev.t e nao de d.t: `d` e o payload publico e nele o campo nao existe");
+  /* 6. Quem pode ler cron_estado. */
+  ok(/using \(dono = auth\.uid\(\) and cron_e_dono\(\)\)/.test(sql),
+     "6. a leitura de cron_estado exige dono = auth.uid() E a allowlist");
+  ok(!/create policy[^;]*cron_estado[^;]*to anon/.test(sql),
+     "   e nao ha politica nenhuma para o papel anon");
+  ok(/revoke all on public\.cron_estado\s+from anon;/.test(sql),
+     "   com revoke explicito");
+}
+
+/* ================= FASE 9D (1 de 5) — A TRIAGEM DAS VAGAS ================= */
+const triagem  = (ap) => ap.vgTriagem();
+const stDe     = (ap, vid) => ap.vgEstado(vid);
+const linhaTri = (srv, vid) => srv.linhas.filter(l => l.dominio === "triagem" && l.chave === vid)[0];
+
+console.log("\n=== 46. Registrar, mudar e propagar a decisao (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const VAGA = "philjobs-31649";
+
+  ok(stDe(B, VAGA) === A.VG_ST.NOVO, "o celular comeca sem decisao sobre a vaga");
+
+  A.vgMarcar(VAGA, A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, VAGA) === A.VG_ST.SIM, "A. o Mac decidiu 'vou me candidatar'");
+  ok(stDe(B, VAGA) === A.VG_ST.SIM, "C. e a decisao chegou ao celular", stDe(B, VAGA));
+  ok(triagem(B)[VAGA].em === triagem(A)[VAGA].em,
+     "L. com o MESMO instante da decisao", triagem(B)[VAGA]);
+
+  const l = linhaTri(srv, VAGA);
+  ok(!!l && l.chave === VAGA, "M. a chave online e o ID DA VAGA", l && l.chave);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["st"]),
+     "N. e o valor leva SO a decisao — nada de veredicto", Object.keys(l.valor));
+
+  A.vgMarcar(VAGA, A.VG_ST.NAO);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, VAGA) === A.VG_ST.NAO && stDe(B, VAGA) === A.VG_ST.NAO,
+     "B. mudar a decisao propaga", stDe(B, VAGA));
+
+  /* Tocar de novo desmarca: st 0 e um VALOR, nao uma exclusao. */
+  A.vgMarcar(VAGA, A.VG_ST.NAO);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, VAGA) === A.VG_ST.NOVO, "   tocar de novo desmarca, como sempre");
+  ok(stDe(B, VAGA) === A.VG_ST.NOVO, "   e o desmarcar tambem viaja", stDe(B, VAGA));
+  ok(linhaTri(srv, VAGA).del === false,
+     "   sem lapide: descartar uma vaga nao a apaga do lote", linhaTri(srv, VAGA).del);
+}
+
+console.log("\n=== 47. Varias vagas, conflito, empate e eco (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  A.vgMarcar("vaga-1", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  B.vgMarcar("vaga-2", B.VG_ST.NAO);
+  await B.SYNC.drenarFila();
+  ok(stDe(A, "vaga-1") === 1 && stDe(A, "vaga-2") === 2,
+     "D. o Mac tem as duas decisoes", [stDe(A, "vaga-1"), stDe(A, "vaga-2")]);
+  ok(stDe(B, "vaga-1") === 1 && stDe(B, "vaga-2") === 2, "   e o celular tambem");
+  ok(srv.linhas.filter(l => l.dominio === "triagem").length === 2,
+     "   duas linhas no servidor, uma por vaga");
+
+  /* E/G. relogio: linha antiga recusada. */
+  const velha = {dono: "dono-1", dominio: "triagem", chave: "vaga-1",
+                 valor: {st: 2}, del: false, em: "2020-01-01T00:00:00.000Z",
+                 aparelho: "mac", servidor_em: "2030-08-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "G. a linha antiga e recusada", r);
+  ok(stDe(B, "vaga-1") === 1, "   e a decisao mais nova permanece");
+
+  /* F. empate fica como esta. */
+  const emAtual = triagem(B)["vaga-1"].em;
+  const lista = B.vgTriagem();
+  ok(B.mesclarTriagem(lista, "vaga-1", {quando: emAtual, st: 3}) === false,
+     "F. empate exato nao muda nada");
+  ok(B.mesclarTriagem(lista, "vaga-1", {quando: "2099-01-01T00:00:00.000Z", st: 3}) === true,
+     "E. mas o mais novo vence");
+
+  /* J+K. no-echo, e receber nao e tocar. */
+  const filaB = B.SYNC.situacao().fila;
+  A.vgMarcar("vaga-3", A.VG_ST.ARQ);
+  await A.SYNC.drenarFila();
+  ok(stDe(B, "vaga-3") === 3, "   a terceira decisao chegou ao celular");
+  ok(B.SYNC.situacao().fila === filaB, "   nem enfileirou envio de volta");
+  const eco = A.SYNC.aplicarRemoto(linhaTri(srv, "vaga-3"));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "J. e o eco proprio e recusado", eco);
+}
+
+console.log("\n=== 48. Offline, fila e delta antes da fila (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O Mac NAO assina: e o que "desconectado" quer dizer aqui. */
+
+  srv.falhar = true;
+  A.vgMarcar("vaga-X", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  ok(stDe(A, "vaga-X") === 1, "H. sem rede, a decisao aparece na tela do Mac (otimista)");
+  ok(A.SYNC.situacao().fila === 1, "   e fica na fila", A.SYNC.situacao().fila);
+
+  srv.falhar = false;
+  B.vgMarcar("vaga-Y", B.VG_ST.NAO);
+  await B.SYNC.drenarFila();
+  ok(stDe(A, "vaga-Y") === 0, "   o Mac ainda nao sabe da decisao do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(stDe(A, "vaga-Y") === 2, "I. o delta de Y chegou ANTES de a fila de X subir",
+     stDe(A, "vaga-Y"));
+  ok(A.SYNC.situacao().fila === 0, "H. e so entao a fila subiu");
+  ok(stDe(B, "vaga-X") === 1, "   e o celular recebeu a do Mac");
+  ok(srv.linhas.filter(l => l.dominio === "triagem").length === 2,
+     "   nenhuma decisao foi perdida");
+}
+
+console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+
+  /* N. veredicto e triagem sao eixos separados: o veredicto vem do coletor,
+     em dados/vagas.json, e nao passa por aqui. */
+  A.vgMarcar("vaga-Z", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  const l = linhaTri(srv, "vaga-Z");
+  ["veredicto", "t", "titulo", "prazo", "url", "novo", "urgente"].forEach(function (campo) {
+    ok(!(campo in l.valor), "N. `" + campo + "` nao viaja na triagem", Object.keys(l.valor));
+  });
+
+  /* 9G-2: um caminho so. O instante que ficou na triagem e o da linha. */
+  const noAp = A.vgTriagem()[l.chave];
+  ok(!!noAp && noAp.em === l.em, "L. o aparelho e o online com o MESMO ISO",
+     {aparelho: noAp && noAp.em, online: l.em});
+  ok(noAp.st === l.valor.st, "   e o mesmo st", {aparelho: noAp.st, online: l.valor.st});
+  ok(typeof A.aplicarTriagemDoEstado === "undefined",
+     "   e a descida pelo estado.json nao existe mais (9G-3)");
+
+  /* O. nenhum dominio posterior da 9D/9E foi antecipado. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const online = ((render + regrasSrc).match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "O. nove dominios online: 9C, 9D e o progresso da 9E", online);
+  ok(["estrutura_proj", "estrutura_sub"]
+       .every(d => online.indexOf(d) < 0),
+     "O. e a ESTRUTURA nao foi antecipada: ela espera o merge de tres vias", online);
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "   e os nove tem aplicador registrado", assinados);
+}
+
+console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"triagem"/g) || []).length === 1,
+     "ha UM unico ponto que escreve triagem online");
+  /* Ate a 9D havia DOIS escrita online de triagem: o vgMarcar e a migracao. */
+  const toquesRender = (render.match(/salvarAlteracao\(\s*"triagem"/g) || []).length;
+  const toquesNucleo = (nucleo.match(/salvarAlteracao\(\s*"triagem"/g) || []).length;
+  ok(toquesRender + toquesNucleo === 1,
+     "e UM unico escrita online de triagem (a migracao passou a usar o funil)",
+     {render: toquesRender, nucleo: toquesNucleo});
+  ok(/migrarTriagemUmaVez[\s\S]*?tocarTriagem\(vid, r\.st, em\)/.test(nucleo),
+     "e a migracao das marcacoes antigas passa pelo funil");
+  ok(/function tocarTriagem[\s\S]{0,1400}SYNC\.salvarAlteracao\(\s*"triagem"/.test(render),
+     "o escritor e o tocarTriagem, e o vgMarcar passa por ele");
+  const vg = render.split("function vgMarcar(")[1].split("\n}")[0];
+  ok(/var iso = tocarTriagem\(id, st\)/.test(vg), "   o vgMarcar chama o funil");
+  ok(!/new Date\(\)\.toISOString\(\)/.test(vg.split("iso ? new Date(iso)")[0]),
+     "   e nao carimba um `em` proprio antes dele");
+  ok((nucleo.match(/function mesclarTriagem/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(!/function aplicarTriagemDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarTriagemOnline[\s\S]*?mesclarTriagem/.test(nucleo), "e o online a usa");
+
+  /* Os renders, todos comprovados por leitura de vgEstado(). */
+  const corpo = nucleo.split("function aplicarTriagemOnline(")[1].split("\n}")[0];
+  ["renderVistaVagas", "renderHoje", "renderSemana", "renderVistaRevisao"].forEach(function (r) {
+    ok(corpo.indexOf(r) > -1, "o aplicador pede " + r);
+  });
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const corpoDe = (fonte, nome) => fonte.split("function " + nome + "(")[1].split("\n}")[0];
+  ok(/vgEstado/.test(corpoDe(render, "renderSemana")),
+     "   e renderSemana ENTRA por prova: ele le vgEstado (ao contrario de meta e evento)");
+  ok(/vgEstado/.test(corpoDe(regras, "revisaoDaSemana")), "   a revisao tambem le vgEstado");
+  ok(/vgEstado/.test(corpoDe(regras, "contagemDeVagas")),
+     "   e o indicador do Hoje passa pelo contagemDeVagas");
+}
+
+/* ================= FASE 9D (2 de 5) — AS RETOMADAS SILENCIADAS ================= */
+const silencio  = (ap, pid, projId) => ap.retomadasAdiadas()[pid + "/" + projId] || null;
+const linhaRet  = (srv, chave) => srv.linhas.filter(l => l.dominio === "retomada" && l.chave === chave)[0];
+
+console.log("\n=== 51. Silenciar propaga entre aparelhos (9D.2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const CHAVE = "pipeline/a01";
+
+  ok(silencio(B, "pipeline", "a01") === null, "o celular comeca sem silencio sobre o a01");
+
+  A.adiarRetomada("pipeline", "a01");
+  await A.SYNC.drenarFila();
+  const noMac = silencio(A, "pipeline", "a01");
+  const noCel = silencio(B, "pipeline", "a01");
+  ok(!!noMac && /^\d{4}-\d{2}-\d{2}$/.test(noMac.ate), "o Mac silenciou ate uma data", noMac);
+  ok(!!noCel, "e o silencio chegou ao celular", noCel);
+  ok(noCel.ate === noMac.ate, "com a MESMA data absoluta", {mac: noMac.ate, cel: noCel.ate});
+  ok(noCel.em === noMac.em, "e o MESMO instante da decisao");
+
+  const l = linhaRet(srv, CHAVE);
+  ok(!!l && l.chave === CHAVE, "a chave online e painel/projeto", l && l.chave);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["ate"]),
+     "e o valor leva SO o `ate` — nem titulo nem estagio", Object.keys(l.valor));
+  ok(l.del === false, "sem lapide: nao existe operacao de dessilenciar", l.del);
+}
+
+console.log("\n=== 52. Relogio, eco e ausencia de toque ao receber (9D.2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await A.SYNC.assinarMudancas();
+  await B.SYNC.assinarMudancas();
+
+  A.adiarRetomada("pipeline", "a01");
+  await A.SYNC.drenarFila();
+  B.adiarRetomada("leituras", "l1");
+  await B.SYNC.drenarFila();
+  ok(!!silencio(A, "leituras", "l1") && !!silencio(B, "pipeline", "a01"),
+     "dois silencios independentes convivem nos dois aparelhos");
+  ok(srv.linhas.filter(l => l.dominio === "retomada").length === 2,
+     "duas linhas no servidor, uma por projeto");
+
+  /* Linha antiga nao vence a mais nova. */
+  const emAtual = silencio(B, "pipeline", "a01").em;
+  const velha = {dono: "dono-1", dominio: "retomada", chave: "pipeline/a01",
+                 valor: {ate: "2020-01-01"}, del: false, em: "2020-01-01T00:00:00.000Z",
+                 aparelho: "mac", servidor_em: "2030-09-01T00:00:00.000Z"};
+  const r = B.SYNC.aplicarRemoto(velha);
+  ok(r.aplicou === false, "a linha antiga e recusada", r);
+  ok(silencio(B, "pipeline", "a01").em === emAtual, "e o silencio mais novo permanece");
+
+  /* Empate e mais-novo, direto no merge. */
+  const m = B.retomadasAdiadas();
+  ok(B.mesclarRetomada(m, "pipeline/a01", {quando: emAtual, ate: "2099-01-01"}) === false,
+     "empate exato nao muda nada");
+  ok(B.mesclarRetomada(m, "pipeline/a01", {quando: "2099-01-01T00:00:00.000Z", ate: "2099-01-01"}) === true,
+     "mas o mais novo vence");
+  ok(B.mesclarRetomada(m, "pipeline/a01", {quando: "2099-02-01T00:00:00.000Z"}) === false,
+     "e sem `ate` nao ha silencio a aplicar");
+
+  /* A FORMA ANTIGA (string) continua sendo lida — a clausula que nao pode ser
+     simplificada. Uma entrada string vale como "sem instante", entao qualquer
+     coisa com `quando` vence. */
+  const m2 = {"tecnico/p1": "2027-01-01"};
+  ok(B.mesclarRetomada(m2, "tecnico/p1", {quando: "2026-01-01T00:00:00.000Z", ate: "2026-06-01"}) === true,
+     "a entrada em forma ANTIGA (string) e tratada como sem instante");
+  ok(m2["tecnico/p1"].em === "2026-01-01T00:00:00.000Z", "e vira a forma nova", m2["tecnico/p1"]);
+
+  /* Receber nao e tocar; eco proprio recusado. */
+  const filaB = B.SYNC.situacao().fila;
+  A.adiarRetomada("posdoc", "pd1");
+  await A.SYNC.drenarFila();
+  ok(!!silencio(B, "posdoc", "pd1"), "o terceiro silencio chegou ao celular");
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou envio de volta");
+  const eco = A.SYNC.aplicarRemoto(linhaRet(srv, "posdoc/pd1"));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
+}
+
+console.log("\n=== 53. Offline, fila e delta antes da fila (9D.2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  /* O Mac NAO assina: e o que "desconectado" quer dizer aqui. */
+
+  srv.falhar = true;
+  A.adiarRetomada("pipeline", "a01");
+  await A.SYNC.drenarFila();
+  ok(!!silencio(A, "pipeline", "a01"), "sem rede, o silencio vale na hora no Mac");
+  ok(A.SYNC.situacao().fila === 1, "e fica na fila", A.SYNC.situacao().fila);
+
+  srv.falhar = false;
+  B.adiarRetomada("leituras", "l1");
+  await B.SYNC.drenarFila();
+  ok(silencio(A, "leituras", "l1") === null, "o Mac ainda nao sabe do silencio do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(!!silencio(A, "leituras", "l1"), "o delta chegou ANTES de a fila subir");
+  ok(A.SYNC.situacao().fila === 0, "e so entao a fila subiu");
+  ok(!!silencio(B, "pipeline", "a01"), "e o celular recebeu o do Mac");
+  ok(srv.linhas.filter(l => l.dominio === "retomada").length === 2, "nada se perdeu");
+}
+
+console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
+{
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"retomada"/g) || []).length === 1,
+     "ha UM unico ponto que escreve retomada online");
+  const tr = (render.match(/salvarAlteracao\(\s*"retomada"/g) || []).length;
+  const tn = (nucleo.match(/salvarAlteracao\(\s*"retomada"/g) || []).length;
+  ok(tr + tn === 1, "e UMA unica escrita online (a migracao passou a usar o funil)",
+     {render: tr, nucleo: tn});
+  ok(/migrarRetomadas[\s\S]*?tocarRetomada\(chave\.slice\(0, corte\)/.test(nucleo),
+     "e a migracao das entradas antigas passa pelo funil");
+  ok(/var iso = tocarRetomada\(pid, projId, ate\)/.test(corpoDe(render, "adiarRetomada")),
+     "o adiarRetomada chama o funil");
+  ok((nucleo.match(/function mesclarRetomada/g) || []).length === 1, "ha UMA implementacao de merge");
+  ok(!/function aplicarRetomadasDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarRetomadaOnline[\s\S]*?mesclarRetomada/.test(nucleo), "e o online a usa");
+  /* A clausula que le as DUAS formas nao pode ser simplificada. */
+  ok(/typeof loc === "object"/.test(corpoDe(nucleo, "mesclarRetomada")),
+     "o merge le a entrada local nas duas formas (string antiga e objeto)");
+
+  /* Os renders: dois, e ambos comprovados. */
+  const corpo = corpoDe(nucleo, "aplicarRetomadaOnline");
+  ok(/renderHoje/.test(corpo) && /renderVistaRevisao/.test(corpo),
+     "os renders sao renderHoje e renderVistaRevisao");
+  ok(!/renderSemana/.test(corpo),
+     "e NAO renderSemana — ele nao le retomada (ao contrario da triagem da 9D.1)");
+  ok(!/renderSemana/.test(corpo) &&
+     !/retomadasAdiadas|renderRetomadas/.test(corpoDe(render, "renderSemana")),
+     "   verificado: renderSemana nao le retomada nenhuma");
+  ok(/renderRetomadas/.test(corpoDe(render, "renderHoje")), "   renderHoje desenha as retomadas");
+  ok(/retomadas\(\)/.test(corpoDe(regras, "revisaoDaSemana")), "   e a revisao le retomadas()");
+  ok(/retomadasAdiadas/.test(corpoDe(regras, "motorDePrioridades")),
+     "   e o motor de prioridades le o que esta silenciado");
+
+  /* Seis dominios online, e nenhum a mais. */
+  const online = ((render + regrasSrc).match(/SYNC\.salvarAlteracao\(\s*"(\w+)"/g) || [])
+    .map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(online) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "nove dominios online: 9B, 9C, 9D e o progresso da 9E", online);
+  ok(["estrutura_proj", "estrutura_sub"]
+       .every(d => online.indexOf(d) < 0),
+     "e nenhum dominio ainda nao autorizado foi antecipado", online);
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "e os nove tem aplicador registrado", assinados);
+
+  /* Legado e online no mesmo ato, com o mesmo ISO. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  A.adiarRetomada("concursos", "c1");
+  await A.SYNC.drenarFila();
+  const l = linhaRet(srv, "concursos/c1");
+  const noAp = (A.LS("cron:retomadas-adiadas", {}) || {})["concursos/c1"];
+  ok(!!noAp && noAp.em === l.em, "o aparelho e o online com o MESMO ISO",
+     {aparelho: noAp && noAp.em, online: l.em});
+  ok(noAp.ate === l.valor.ate, "e a mesma data absoluta");
+  ok(!("t" in l.valor) && !("projT" in l.valor),
+     "e nem titulo nem estagio viajam (regra da Fase 6B)", Object.keys(l.valor));
+}
+
+console.log("\n=== 55. Um ato, tres consumidores, um id so (9D.3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const PROJ = {id: "a01", t: "Artigo sobre Lutero"};
+  const SUB  = {id: "s1", t: "Levantamento", vida: "ativo", motivo: "parei na Dieta de Worms"};
+
+  const antes = A.getReg().length;
+  A.logar("pipeline", PROJ, SUB, 0, 2);
+  await A.SYNC.drenarFila();
+
+  ok(A.getReg().length === antes + 1, "a linha entrou em cron:registro na hora");
+  ok(srv.registros.length === 1, "e UMA linha subiu para cron_registro", srv.registros.length);
+
+  const l = srv.registros[0];
+  /* 9G-2: nao ha mais toque, mas a CHAVE continua sendo a do toque —
+     `idDoToque(iso)` = ISO com os dois-pontos trocados + o aparelho. E por ela
+     que a descida pelo estado.json (que fica ate a 9G-3) e o --registrar do
+     pipeline reconhecem a mesma linha e nao a duplicam. */
+  ok(/^\d{4}-\d{2}-\d{2}T[\d-]+Z-mac$/.test(l.id),
+     "com a chave no formato do id do toque: ISO + aparelho", l.id);
+  ok(l.pid === "pipeline" && l.proj_id === "a01" && l.sub_id === "s1",
+     "o endereco viaja em colunas, nao num blob", {pid: l.pid, proj: l.proj_id, sub: l.sub_id});
+  ok(l.de === 0 && l.para === 2, "o de/para viaja inteiro", {de: l.de, para: l.para});
+  ok(l.proj_t === PROJ.t && l.sub_t === SUB.t, "e os titulos fotografados no momento");
+  ok(l.aparelho === "mac", "carimbado com o aparelho que escreveu", l.aparelho);
+
+  /* O MOTIVO viaja. O corte que o semMotivo() fazia era do caminho publico, e
+     esse caminho saiu na 9G-2 — junto com o unico lugar onde o motivo nao
+     podia aparecer. */
+  ok(l.motivo === SUB.motivo, "o motivo VIAJA no caminho online — a base e privada", l.motivo);
+
+  /* Nao ha relogio nem lapide: historico nao tem versao. */
+  ok(!("em" in l) && !("del" in l), "sem `em` e sem lapide: historico nao tem versao",
+     Object.keys(l));
+  ok(srv.linhas.length === 0, "e nada disso foi parar em cron_estado", srv.linhas.length);
+}
+
+console.log("\n=== 56. O registro chega ao outro aparelho, e no lugar certo (9D.3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  ok(B.getReg().length === 0, "o celular comeca sem registro");
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento", motivo: "com razao"}, 0, 2);
+  await A.SYNC.drenarFila();
+
+  const noCel = B.getReg();
+  ok(noCel.length === 1, "a linha do Mac chegou ao celular pelo Realtime", noCel.length);
+  ok(noCel[0].projId === "a01" && noCel[0].subId === "s1", "com o endereco certo", noCel[0]);
+  ok(noCel[0].para === 2 && noCel[0].de === 0, "e o de/para inteiro");
+  ok(noCel[0].motivo === "com razao", "e com o motivo, e nao com um rotulo", noCel[0].motivo);
+  ok(!!noCel[0].tid, "a linha recebida guarda o tid — e por ele que ela nao repete");
+
+  /* APPEND-ONLY: fechar de novo nao substitui, acrescenta. */
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento"}, 2, 1);
+  await A.SYNC.drenarFila();
+  ok(srv.registros.length === 2, "o recuo virou OUTRA linha, e nao uma correcao da primeira",
+     srv.registros.length);
+  ok(B.getReg().length === 2, "e as duas estao no celular");
+  ok(B.getReg().filter(o => o.para === 1).length === 1, "inclusive o recuo");
+
+  /* ORDEM POR DATA DE ORIGEM, e nao por ordem de chegada. */
+  const antiga = {id: "2020-01-01T00-00-00-000Z-tablet", dono: "dono-1", d: "2020-01-01",
+                  pid: "leituras", proj_id: "l1", sub_id: "x1", proj_t: "Spinoza", sub_t: "Etica",
+                  de: null, para: 2, vida: "ativo", motivo: "", aparelho: "tablet",
+                  servidor_em: "2030-09-01T00:00:00.000Z"};
+  const renders = B.aplicarRegistroOnline(antiga);
+  const reg = B.getReg();
+  ok(reg.length === 3 && reg[0].subId === "x1",
+     "uma linha de 2020 entra NA FRENTE, e nao no fim da lista", reg.map(o => o.d));
+  ok(JSON.stringify(renders) === JSON.stringify(["renderRegistro", "renderSemana", "renderVistaRevisao"]),
+     "e pede os tres renders que leem o registro", renders);
+}
+
+console.log("\n=== 57. Nao duplica: por id, por aparelho, e entre os dois caminhos (9D.3) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento"}, 0, 2);
+  await A.SYNC.drenarFila();
+  const linha = JSON.parse(JSON.stringify(srv.registros[0]));
+  ok(B.getReg().length === 1, "chegou uma vez");
+
+  /* 1. Reler a mesma linha (delta com sobreposicao) nao repete. */
+  ok(B.aplicarRegistroOnline(linha).length === 0, "reaplicar a MESMA linha nao devolve render");
+  ok(B.getReg().length === 1, "e nao cria segunda copia");
+  await B.SYNC.buscarDeltaRegistro();
+  ok(B.getReg().length === 1, "nem o delta com sobreposicao de 30s");
+
+  /* 2. Eco proprio: quem escreveu ja tem a linha. */
+  const eco = A.SYNC.aplicarRegistroRemoto(linha);
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "toque meu nao desce nunca", eco);
+  ok(A.getReg().length === 1, "e o Mac continua com uma linha so");
+
+  /* 3. A PONTE ENTRE OS DOIS CAMINHOS. O mesmo toque, agora chegando pelo
+        estado.json: o tid ja esta visto, entao a descida legada o ignora. */
+  const vistos = {};
+  B.getReg().forEach(o => { if (o && o.tid) vistos[o.tid] = true; });
+  /* A descida legada, que fica ate a 9G-3, nao repete o que ja desceu por aqui. */
+  ok(srv.registros.every(r => vistos[r.id] === true),
+     "toda linha do Supabase ja esta vista pelo criterio do estado.json",
+     Object.keys(vistos));
+
+  /* 4. Receber nao e tocar. */
+  const filaB = B.SYNC.situacao().fila;
+  A.logar("leituras", {id: "l1", t: "Spinoza"}, {id: "s9", t: "Etica II"}, 1, 2);
+  await A.SYNC.drenarFila();
+  ok(B.getReg().length === 2, "a segunda linha chegou ao celular");
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
+
+  /* 5. Reenviar o mesmo item, depois de uma drenagem que caiu no meio, e
+        silencio — e nao erro que trava a fila. */
+  const item = A.SYNC.registrar(
+    {d: "2026-09-09", pid: "pipeline", projId: "a01", subId: "s1", para: 2},
+    {id: srv.registros[0].id});
+  const r = await A.SYNC.drenarFila();
+  ok(!r.falha, "reenviar id ja gravado nao e falha", r.falha);
+  ok(srv.repetidos === 1, "o servidor o descartou pela chave primaria", srv.repetidos);
+  ok(A.SYNC.situacao().fila === 0, "e a fila nao travou", A.SYNC.situacao().fila);
+}
+
+console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  /* A fila e a MESMA, e a garantia de offline tambem. */
+  srv.falhar = true;
+  A.logar("pipeline", {id: "a01", t: "Artigo"}, {id: "s1", t: "Levantamento"}, 0, 2);
+  ok(A.getReg().length === 1, "sem rede, a linha vale na hora no Mac");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "e espera na fila", A.SYNC.situacao().fila);
+
+  srv.falhar = false;
+  B.logar("leituras", {id: "l1", t: "Spinoza"}, {id: "s9", t: "Etica"}, 1, 2);
+  await B.SYNC.drenarFila();
+  ok(A.getReg().length === 1, "o Mac ainda nao sabe da linha do celular");
+
+  await A.SYNC.reconectar(true);
+  ok(A.getReg().length === 2, "o delta do registro trouxe a linha do celular");
+  ok(A.SYNC.situacao().fila === 0, "e a fila do Mac subiu depois", A.SYNC.situacao().fila);
+  ok(B.getReg().length === 2, "e o celular recebeu a do Mac");
+  ok(srv.registros.length === 2, "duas linhas no servidor, nenhuma perdida");
+
+  /* MARCA PROPRIA: uma marca so faria a entrega de uma tabela adiantar o
+     ponto de partida da outra. */
+  const est = A.__armazem[A.SYNC_MARCA_KEY], reg = A.__armazem[A.SYNC_MARCA_REG_KEY];
+  ok(A.SYNC_MARCA_REG_KEY === "cron:sync-marca-reg", "o registro tem marca propria",
+     A.SYNC_MARCA_REG_KEY);
+  ok(!!reg, "e ela avancou com a entrega do registro", reg);
+  ok(est !== reg, "as duas marcas sao independentes", {estado: est, registro: reg});
+
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const sync = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "15-sync.js"), "utf8");
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  /* UM ESCRITOR. */
+  ok((nucleo.match(/SYNC\.registrar\(/g) || []).length === 1,
+     "ha UM unico ponto que escreve registro online");
+  ok((nucleo.match(/SYNC\.registrar\(/g) || []).length === 1,
+     "e ele e o unico — o registro nao tem `salvarAlteracao`, tem tabela propria");
+  ok(/instanteISO\(\)[\s\S]{0,600}?SYNC\.registrar\(/.test(corpoDe(nucleo, "logar")),
+     "o instante e a subida no MESMO ato, dentro do logar()");
+  ok((render.match(/SYNC\.registrar\(/g) || []).length === 0,
+     "e nada no 30-render.js escreve registro por fora");
+
+  /* UMA FORMULA PARA O ID, que e o que faz a ponte funcionar. */
+  ok((nucleo.match(/replace\(\/\[:\.\]\/g,"-"\) \+ "-" \+ aparelhoId\(\)/g) || []).length === 1,
+     "ha UMA formula do id do toque, e nao duas");
+  ok(/idDoToque\(iso\)/.test(corpoDe(nucleo, "logar")),
+     "o logar a usa para a chave do registro online");
+  ok(/idDoToque\(iso\)/.test(corpoDe(nucleo, "logar")), "e o registro online tambem");
+
+  /* NAO E DOMINIO DO cron_estado: o CHECK do Postgres nao o conhece. */
+  const dominios = A.SINCRONIA.DOMINIOS;
+  ok(dominios.indexOf("registro") < 0,
+     "`registro` NAO entrou na lista de dominios do cron_estado", dominios);
+  ok(/assinarRegistro\(aplicarRegistroOnline\)/.test(app),
+     "ele tem caminho proprio, registrado pelo assinarRegistro");
+  const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+     "e os dominios de estado agora sao nove", assinados);
+
+  /* SEM MERGE, SEM RELOGIO, SEM LAPIDE — e a ausencia e o desenho. */
+  const corpo = corpoDe(nucleo, "aplicarRegistroOnline");
+  ok(!/venceRemoto|mesclar|\bdel\b/.test(corpo),
+     "o aplicador do registro nao tem relogio, merge nem lapide");
+  ok(/tid === linha\.id/.test(corpo), "a unica pergunta e se o id ja esta aqui");
+  ok(/REG_TETO/.test(corpo) && /registro-arquivo/.test(corpo),
+     "e o teto e o arquivo do excedente sao os mesmos do logar()");
+
+  /* OS RENDERS, cada um comprovado no arquivo que o justifica. */
+  ok(/renderRegistro/.test(corpoDe(render, "renderTrilhos")),
+     "   renderRegistro desenha o painel");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  ok(/getReg\(\)/.test(corpoDe(regras, "ritmoDoRegistro")) &&
+     /ritmoDoRegistro/.test(corpoDe(render, "renderSemana")),
+     "   renderSemana le o registro pelo ritmoDoRegistro");
+  ok(/getReg\(\)/.test(corpoDe(regras, "revisaoDaSemana")),
+     "   e a revisao da semana tambem le");
+
+  /* O CAMINHO LEGADO SAIU INTEIRO (9G-3). A descida do registro pelo
+     `est.historico` era a metade que o Supabase ja tinha absorvido na 9D.3: as
+     duas conviviam pela chave `tid`, e sobrou a online. */
+  ok(!/est\.historico/.test(nucleo) && !/t\.tipo !== "registro"/.test(nucleo),
+     "a descida do registro pelo estado.json saiu na 9G-3");
+  ok(/function aplicarRegistroOnline/.test(nucleo) && /\btid\b/.test(nucleo),
+     "   e a descida online, com o mesmo criterio de `tid`, continua");
+  /* 9G-2: o semMotivo saiu com o caminho publico — nao ha mais onde cortar. */
+  ok(!/function semMotivo/.test(nucleo),
+     "e o semMotivo saiu: o caminho publico que o exigia nao existe mais");
+  ok((sync.match(/TABELA_REGISTRO/g) || []).length >= 4,
+     "a camada fala com cron_registro em leitura, delta, Realtime e escrita");
+  ok(/ignoreDuplicates:true/.test(sync.replace(/\s/g, "")),
+     "e escreve com ON CONFLICT DO NOTHING — a tabela nao da UPDATE ao app");
+}
+
+console.log("\n=== 59. Marcar e DESMARCAR rotina atravessa aparelhos (9D.4) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const ID = "seg-min", DIA = A.dateKey;
+  const linhaRot = (k) => srv.linhas.find(l => l.dominio === "rotina" && l.chave === k);
+  const marcado = (X, dia, id) => !!(X.LS("cron:checks:" + dia, {}) || {})[id];
+
+  ok(marcado(B, DIA, ID) === false, "o celular comeca sem a rotina marcada");
+  A.toggleCheck(ID);
+  await A.SYNC.drenarFila();
+
+  ok(marcado(A, DIA, ID) === true, "o Mac marcou");
+  ok(marcado(B, DIA, ID) === true, "e a marca chegou ao celular");
+  const l = linhaRot(DIA + "/" + ID);
+  ok(!!l && l.chave === DIA + "/" + ID, "a chave online e AAAA-MM-DD/idDaRotina", l && l.chave);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["feito"]),
+     "e o valor leva SO o `feito`", Object.keys(l.valor));
+  ok(l.valor.feito === true, "com o valor certo");
+  ok(l.del === false, "sem lapide: `feito:false` e um estado, nao uma ausencia", l.del);
+
+  /* EXPIRA DE VELHA: a marca do dia nao e decisao, e cron_podar() a leva. */
+  ok(!!l.expira_em, "a linha carrega expira_em", l.expira_em);
+  const vida = (new Date(l.expira_em) - new Date(DIA + "T00:00:00.000Z")) / 86400000;
+  ok(vida === 90, "de 90 dias contados a partir do DIA da marca, nao do envio", vida);
+
+  /* DESMARCAR e o caso que so um estado resolve. */
+  A.toggleCheck(ID);
+  await A.SYNC.drenarFila();
+  ok(marcado(A, DIA, ID) === false, "desmarcar no Mac desmarca ali");
+  ok(marcado(B, DIA, ID) === false, "e desmarca tambem no celular");
+  ok(linhaRot(DIA + "/" + ID).valor.feito === false,
+     "porque `feito:false` viajou como estado", linhaRot(DIA + "/" + ID).valor);
+  ok(srv.linhas.filter(l2 => l2.dominio === "rotina").length === 1,
+     "e continua UMA linha: e a mesma chave", srv.linhas.filter(l2 => l2.dominio === "rotina").length);
+
+  /* A COPIA EM MEMORIA. Sem atualiza-la, o renderHoje repinta o valor velho. */
+  A.toggleCheck(ID);
+  await A.SYNC.drenarFila();
+  ok(B.__checks()[ID] === true, "o `checks` em memoria do celular acompanha o que desceu", B.__checks()[ID]);
+  ok(A.__checks()[ID] === true, "e o do Mac, o que ele mesmo escreveu");
+}
+
+console.log("\n=== 60. Um funil, tres escritores, e o que a 9D.4 NAO tem (9D.4) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const linhaRot = (k) => srv.linhas.find(l => l.dominio === "rotina" && l.chave === k);
+  const marcado = (X, dia, id) => !!(X.LS("cron:checks:" + dia, {}) || {})[id];
+  const DIA = A.dateKey, ONTEM = "2026-09-08";
+
+  /* marcarAtrasada grava na DATA DE ORIGEM, e e ela que viaja. */
+  A.marcarAtrasada(ONTEM, "ter-art");
+  await A.SYNC.drenarFila();
+  ok(marcado(B, ONTEM, "ter-art") === true, "a marca de um dia passado chegou ao celular");
+  ok(!!linhaRot(ONTEM + "/ter-art"), "na chave do dia de ORIGEM", ONTEM + "/ter-art");
+  ok(!linhaRot(DIA + "/ter-art"), "e nao na de hoje");
+
+  /* limparHoje desmarca uma a uma, e o outro aparelho fica sabendo. */
+  A.toggleCheck("seg-min");
+  A.toggleCheck("seg-esc");
+  await A.SYNC.drenarFila();
+  ok(marcado(B, DIA, "seg-min") && marcado(B, DIA, "seg-esc"), "duas marcas de hoje no celular");
+  A.limparHoje();
+  await A.SYNC.drenarFila();
+  ok(!marcado(A, DIA, "seg-min") && !marcado(A, DIA, "seg-esc"), "limpar desmarcou as duas no Mac");
+  ok(!marcado(B, DIA, "seg-min") && !marcado(B, DIA, "seg-esc"),
+     "e o celular soube — limpar nao e esvaziar a gaveta em silencio");
+  ok(marcado(B, ONTEM, "ter-art") === true, "e limpar HOJE nao encostou em ontem");
+
+  /* Receber nao e tocar. */
+  const filaB = B.SYNC.situacao().fila;
+  A.toggleCheck("seg-acad");
+  await A.SYNC.drenarFila();
+  ok(marcado(B, DIA, "seg-acad"), "a marca seguinte chegou");
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
+  const eco = A.SYNC.aplicarRemoto(linhaRot(DIA + "/seg-acad"));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
+
+  /* Aplicar duas vezes o mesmo valor nao pede render a toa. */
+  ok(B.aplicarRotinaOnline({chave: DIA + "/seg-acad", valor: {feito: true}}).length === 0,
+     "reaplicar o mesmo valor nao pede render");
+  const renders = B.aplicarRotinaOnline({chave: DIA + "/seg-acad", valor: {feito: false}});
+  ok(JSON.stringify(renders) === JSON.stringify(["renderHoje", "renderVistaRevisao"]),
+     "e a mudanca pede os dois renders que leem cron:checks", renders);
+
+  /* ESTRUTURA: um funil, e nenhum caminho legado a preservar. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"rotina"/g) || []).length === 1,
+     "ha UM unico ponto que escreve rotina online");
+  const grava = (render.match(/save\("cron:checks:"/g) || []).length +
+                (nucleo.match(/save\("cron:checks:"/g) || []).length;
+  ok(grava === 2, "e so DOIS lugares gravam cron:checks: o funil e a descida", grava);
+  ok(/save\("cron:checks:"/.test(corpoDe(render, "tocarRotina")), "   o funil");
+  ok(/save\("cron:checks:"/.test(corpoDe(nucleo, "aplicarRotinaOnline")), "   e o aplicador");
+  ["toggleCheck", "marcarAtrasada", "limparHoje"].forEach(f => {
+    ok(/tocarRotina\(/.test(corpoDe(render, f)), "   " + f + " passa pelo funil");
+  });
+
+  /* NAO HA CAMINHO LEGADO PARA ESTE DOMINIO, e nao se inventou um. */
+  ok((render.match(/salvarAlteracao\(\s*"rotina"/g) || []).length === 1 &&
+     (nucleo.match(/salvarAlteracao\(\s*"rotina"/g) || []).length === 0,
+     "rotina tem UM escritor, e ele mora no funil — nenhum segundo apareceu");
+  ok(typeof A.enfileirarToque === "undefined",
+     "e nao ha mais toque nenhum a emitir: a subida legada saiu na 9G-2");
+  /* A assercao media isto contra o corpo do buscarEstado, que saiu na 9G-3 —
+     e contra uma funcao que nao existe ela passaria sozinha, provando nada.
+     O sujeito, agora, e o ARTEFATO: a dobra continua sem secao de rotina, e e
+     por isso que nao ha caminho legado a preservar neste dominio. */
+  const dobraSrc = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  const secoes = (dobraSrc.match(/^\s{8}"(\w+)": \{\},$/gm) || []).map(l => l.match(/"(\w+)"/)[1]);
+  ok(secoes.indexOf("rotina") < 0 && secoes.indexOf("rotinas") < 0,
+     "e o estado.json do pipeline nunca ganhou secao de rotina", secoes);
+
+  /* Os leitores, cada um comprovado onde mora. */
+  ok(/cron:checks:/.test(corpoDe(regras, "atrasadas")), "   atrasadas() le cron:checks");
+  ok(/cron:checks:/.test(corpoDe(regras, "revisaoDaSemana")), "   e a revisao da semana tambem");
+  ok(!/cron:checks/.test(corpoDe(render, "renderSemana")),
+     "   e renderSemana NAO le — por isso ele nao entra nos renders");
+}
+
+console.log("\n=== 61. Dispensar uma rotina atrasada atravessa aparelhos (9D.5) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const DIA = "2026-09-08", ID = "ter-art";
+  const K = DIA + "|" + ID, ONLINE = "rotina/" + DIA + "/" + ID;
+  const dispensada = (X, k) => !!(X.LS("cron:hoje-dispensados", {}) || {})[k];
+  const linhaDisp = (k) => srv.linhas.find(l => l.dominio === "dispensa" && l.chave === k);
+
+  ok(dispensada(B, K) === false, "o celular comeca sem a dispensa");
+  A.dispensarAtrasada(DIA, ID);
+  await A.SYNC.drenarFila();
+
+  ok(dispensada(A, K) === true, "o Mac dispensou");
+  ok(dispensada(B, K) === true, "e a dispensa chegou ao celular");
+
+  /* AS DUAS FORMAS DA CHAVE: `|` no aparelho, `rotina/.../...` no estado. */
+  const l = linhaDisp(ONLINE);
+  ok(!!l, "a chave online e rotina/AAAA-MM-DD/id", srv.linhas.filter(x => x.dominio === "dispensa").map(x => x.chave));
+  ok(Object.keys(B.LS("cron:hoje-dispensados", {})).indexOf(K) >= 0,
+     "e no aparelho ela continua sendo AAAA-MM-DD|id", Object.keys(B.LS("cron:hoje-dispensados", {})));
+  ok(JSON.stringify(l.valor) === "{}", "o valor e vazio: a chave ja diz tudo", l.valor);
+  ok(l.del === false, "sem lapide: nao existe desdispensar", l.del);
+
+  /* Expira de velha, com a mesma vida da marca de rotina. */
+  ok(!!l.expira_em, "a linha carrega expira_em", l.expira_em);
+  const vida = (new Date(l.expira_em) - new Date(DIA + "T00:00:00.000Z")) / 86400000;
+  ok(vida === 90, "de 90 dias a partir do DIA dispensado, nao do envio", vida);
+
+  /* O efeito de verdade: a rotina para de aparecer no bloco do celular. */
+  ok(B.atrasadas().every(o => !(o.dia === DIA && o.id === ID)),
+     "e o `ficou para tras` do celular deixou de listar aquela rotina");
+
+  /* Chave de outra forma e IGNORADA, e nao adivinhada. */
+  const antes = JSON.stringify(B.LS("cron:hoje-dispensados", {}));
+  ok(B.aplicarDispensaOnline({chave: "meta-aviso/2026-09"}).length === 0,
+     "a forma meta-aviso (prevista no esquema, sem escritor) e ignorada");
+  ok(B.aplicarDispensaOnline({chave: "rotina/so-duas-partes"}).length === 0,
+     "e uma chave malformada tambem");
+  /* O caso que so o PREFIXO pega: tres partes, forma errada. */
+  ok(B.aplicarDispensaOnline({chave: "meta-aviso/2026-09/x"}).length === 0,
+     "e uma de tres partes com o prefixo errado — quem recusa aqui e o prefixo");
+  ok(JSON.stringify(B.LS("cron:hoje-dispensados", {})) === antes,
+     "nenhuma das duas sujou a gaveta");
+}
+
+console.log("\n=== 62. Um funil, sem caminho legado, e a 9D fechada (9D.5) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const DIA = "2026-09-07", ID = "seg-esc";
+  const dispensada = (X, k) => !!(X.LS("cron:hoje-dispensados", {}) || {})[k];
+
+  /* Receber nao e tocar. */
+  const filaB = B.SYNC.situacao().fila;
+  A.dispensarAtrasada(DIA, ID);
+  await A.SYNC.drenarFila();
+  ok(dispensada(B, DIA + "|" + ID), "a dispensa chegou");
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
+  const eco = A.SYNC.aplicarRemoto(
+    srv.linhas.find(l => l.dominio === "dispensa" && l.chave === "rotina/" + DIA + "/" + ID));
+  ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
+  ok(B.aplicarDispensaOnline({chave: "rotina/" + DIA + "/" + ID}).length === 0,
+     "reaplicar a mesma dispensa nao pede render");
+
+  /* Offline: a decisao vale na hora e espera na fila. */
+  srv.falhar = true;
+  A.dispensarAtrasada("2026-09-06", "dom-rev");
+  ok(dispensada(A, "2026-09-06|dom-rev"), "sem rede, a dispensa vale na hora no Mac");
+  await A.SYNC.drenarFila();
+  ok(A.SYNC.situacao().fila === 1, "e fica na fila", A.SYNC.situacao().fila);
+  srv.falhar = false;
+  await A.SYNC.reconectar(true);
+  ok(A.SYNC.situacao().fila === 0, "que sobe na reconexao");
+  ok(dispensada(B, "2026-09-06|dom-rev"), "e chega ao celular");
+
+  /* ESTRUTURA. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"dispensa"/g) || []).length === 1,
+     "ha UM unico ponto que escreve dispensa online");
+  const grava = (render.match(/save\(ATRASO_KEY/g) || []).length +
+                (nucleo.match(/save\(ATRASO_KEY/g) || []).length +
+                (regras.match(/save\(ATRASO_KEY/g) || []).length;
+  ok(grava === 2, "e so DOIS lugares gravam a chave: o funil e a descida", grava);
+  ok(/save\(ATRASO_KEY/.test(corpoDe(render, "tocarDispensa")), "   o funil");
+  ok(/save\(ATRASO_KEY/.test(corpoDe(nucleo, "aplicarDispensaOnline")), "   e o aplicador");
+  ok(/tocarDispensa\(/.test(corpoDe(render, "dispensarAtrasada")),
+     "   e dispensarAtrasada passa por ele");
+  ok(/podarDispensados\(\)/.test(corpoDe(render, "tocarDispensa")),
+     "a poda local dos sete dias continua acontecendo na escrita");
+
+  /* Sem caminho legado — nao havia, e nao se inventou um. */
+  ok((render.match(/salvarAlteracao\(\s*"dispensa"/g) || []).length === 1 &&
+     (nucleo.match(/salvarAlteracao\(\s*"dispensa"/g) || []).length === 0,
+     "dispensa tem UM escritor, e ele mora no funil — nenhum segundo apareceu");
+  ok(typeof A.enfileirarToque === "undefined",
+     "e nao ha mais toque nenhum a emitir: a subida legada saiu na 9G-2");
+
+  /* Um render, e so um. */
+  const corpo = corpoDe(nucleo, "aplicarDispensaOnline");
+  ok(/renderHoje/.test(corpo) && !/renderVistaRevisao|renderSemana/.test(corpo),
+     "o unico render e renderHoje", corpo.match(/render\w+/g));
+  ok(/ATRASO_KEY/.test(corpoDe(regras, "atrasadas")),
+     "   porque atrasadas() e o unico leitor, e ele desenha no Hoje");
+
+  /* A 9D esta fechada: os onze dominios do esquema, sete conectados. */
+  const dominios = A.SINCRONIA.DOMINIOS;
+  ok(dominios.length === 11, "o esquema segue com onze dominios", dominios.length);
+  ["triagem", "retomada", "rotina", "dispensa"].forEach(d => {
+    ok(dominios.indexOf(d) >= 0, "   " + d + " esta no esquema desde a 9A");
+  });
+  ok(["estrutura_proj", "estrutura_sub"]
+       .every(d => !new RegExp('salvarAlteracao\\(\\s*"' + d + '"').test(render + regrasSrc)),
+     "e a estrutura, que sobra da 9E, nao foi antecipada");
+}
+
+console.log("\n=== 63. Progresso do trilho online, e o `em` que era do relogio errado (9E) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const sub = (X, pid, projId, subId) => {
+    let achado = null;
+    (X.getProjs(pid) || []).forEach(pr => { if (pr.id === projId)
+      (pr.subs || []).forEach(x => { if (x.id === subId) achado = x; }); });
+    return achado;
+  };
+  const alvo = (() => {
+    const pr = (A.getProjs("pipeline") || [])[0];
+    return pr && pr.subs && pr.subs[0] ? {projId: pr.id, subId: pr.subs[0].id} : null;
+  })();
+  ok(!!alvo, "ha um subitem de trilho para exercitar", alvo);
+
+  const antes = sub(B, "pipeline", alvo.projId, alvo.subId).st;
+  const r = A.marcarSub("pipeline", alvo.projId, alvo.subId, (antes + 1) % 3);
+  await A.SYNC.drenarFila();
+  ok(!!r, "o Mac marcou o subitem", r);
+
+  const noMac = sub(A, "pipeline", alvo.projId, alvo.subId);
+  const noCel = sub(B, "pipeline", alvo.projId, alvo.subId);
+  ok(noCel.st === noMac.st, "e o progresso chegou ao celular", {mac: noMac.st, cel: noCel.st});
+  ok(noCel.em === noMac.em, "com o MESMO instante da decisao", {mac: noMac.em, cel: noCel.em});
+
+  /* O `em` VEM DO RELOGIO MONOTONICO, e nao de um new Date() proprio. */
+  const l = srv.linhas.find(x => x.dominio === "item" &&
+                            x.chave === "pipeline/" + alvo.projId + "/" + alvo.subId);
+  ok(!!l && l.em === noMac.em,
+     "o `em` do subitem e o MESMO ISO que subiu na linha online",
+     {sub: noMac.em, online: l && l.em});
+  const reg = srv.registros[srv.registros.length - 1];
+  ok(!!reg && reg.id.indexOf(noMac.em.replace(/[:.]/g, "-")) === 0,
+     "e a linha do registro carrega esse mesmo instante na chave", reg && reg.id);
+  ok(l.valor.st === noMac.st, "com o st", l.valor);
+  ok("vida" in l.valor && "voltar_em" in l.valor && "vidaDesde" in l.valor,
+     "e a vida inteira, como o esquema declara", Object.keys(l.valor));
+
+  /* O MONOTONICO DESEMPATA. Duas marcacoes seguidas no mesmo milissegundo
+     recebiam o mesmo `em` quando ele vinha do relogio de parede. */
+  A.__congelar(Date.UTC(2026, 8, 9, 12, 0, 0));
+  const e1 = A.marcarSub("pipeline", alvo.projId, alvo.subId, (noMac.st + 1) % 3);
+  const em1 = sub(A, "pipeline", alvo.projId, alvo.subId).em;
+  A.marcarSub("pipeline", alvo.projId, alvo.subId, (noMac.st + 2) % 3);
+  const em2 = sub(A, "pipeline", alvo.projId, alvo.subId).em;
+  A.__descongelar();
+  ok(!!e1 && em1 !== em2, "duas marcacoes no MESMO milissegundo recebem instantes distintos",
+     {primeira: em1, segunda: em2});
+  ok(em2 > em1, "e a segunda e mais nova — o desempate funciona", {em1, em2});
+}
+
+console.log("\n=== 64. Dois escritores: voce e o pipeline (9E) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const sub = (X, pid, projId, subId) => {
+    let achado = null;
+    (X.getProjs(pid) || []).forEach(pr => { if (pr.id === projId)
+      (pr.subs || []).forEach(x => { if (x.id === subId) achado = x; }); });
+    return achado;
+  };
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const projId = pr.id, subId = pr.subs[0].id;
+
+  /* O pipeline escreve pelo caminho legado, como "mais um aparelho": um toque
+     `registro` com aparelho "cowork", dobrado em est.itens. E por ali que ele
+     desce — a 9E NAO o transformou num escritor do Supabase. */
+  A.marcarSub("pipeline", projId, subId, 1);
+  await A.SYNC.drenarFila();
+  const meuEm = sub(A, "pipeline", projId, subId).em;
+
+  /* 1. O pipeline mais NOVO vence: progresso e fato verificavel. */
+  const doPipeline = {quando: "2099-01-01T00:00:00.000Z", st: 2, vida: "ativo", motivo: ""};
+  const x = sub(A, "pipeline", projId, subId);
+  ok(A.mesclarItem(x, doPipeline) === true, "o pipeline mais novo entra");
+  ok(x.st === 2 && x.em === doPipeline.quando, "e o progresso dele manda", {st: x.st, em: x.em});
+
+  /* 2. O pipeline mais VELHO nao desfaz a sua decisao. */
+  const velho = {quando: "2020-01-01T00:00:00.000Z", st: 0, vida: "ativo", motivo: ""};
+  ok(A.mesclarItem(x, velho) === false, "o pipeline mais velho NAO desfaz o que voce fez");
+  ok(x.st === 2, "e o st fica onde estava", x.st);
+  ok(A.mesclarItem(x, {quando: x.em, st: 0}) === false, "empate exato tambem fica como esta");
+
+  /* 3. A FRONTEIRA NAO E O DESEMPATE, e ela esta no dado: o --registrar RECUSA
+        subitem de prova "estrela". Isso e do pipeline, e a 9E nao o move. */
+  const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  ok(/prova == "estrela" and not forcar/.test(pipe),
+     "o --registrar recusa subitem de prova `estrela`");
+  ok(/RECUSADO/.test(pipe), "e diz por que recusou");
+  ok(/aparelho": "cowork"/.test(pipe) || /"aparelho": "cowork"/.test(pipe),
+     "e escreve como um aparelho a mais, e nao como autoridade");
+  /* SUPERADO PELA 9G-0, que deu ao pipeline o caminho online que faltava. O que
+     a 9E guardava aqui continua guardado, e com mais precisao: ele publica o
+     MESMO toque, num dominio so, e nao vira espelho de estado. */
+  ok(/def publicar_online/.test(pipe),
+     "o pipeline publica o proprio toque online desde a 9G-0");
+  ok(/"dominio": "item"/.test(pipe) && !/"dominio": "(?!item)/.test(pipe),
+     "e so no dominio `item`: continua afirmando um fato seu, nao espelhando estado");
+
+  /* 4. Receber nao e tocar: aplicar um item remoto nao gera toque nem fila. */
+  const B = criarAparelho("celular", srv).__conectar();
+  const filaB = B.SYNC.situacao().fila;
+  const linha = srv.linhas.find(l => l.dominio === "item");
+  const renders = B.aplicarItemOnline(linha);
+  ok(renders.length === 4, "o item aplicado pede os quatro renders do progresso", renders);
+  ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
+  ok(B.aplicarItemOnline(linha).length === 0, "e reaplicar a mesma linha nao repinta");
+
+  /* 5. Progresso NAO cria estrutura. */
+  ok(B.aplicarItemOnline({chave: "pipeline/nao-existe/x1", em: "2099-01-01T00:00:00.000Z",
+                          valor: {st: 2}}).length === 0,
+     "progresso de peca que este aparelho nao conhece nao pousa em lugar nenhum");
+  ok(!(B.getProjs("pipeline") || []).some(p => p.id === "nao-existe"),
+     "e nao inventa o projeto: estrutura e outro dominio");
+}
+
+console.log("\n=== 65. O guia do TOEFL online, e a estrutura que a 9E NAO fez (9E) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const IID = Object.keys(A.guiaStore()).length ? Object.keys(A.guiaStore())[0]
+            : A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id;
+
+  A.marcarGuia(IID, true);
+  await A.SYNC.drenarFila();
+  ok(A.guiaStore()[IID].feito === true, "o Mac marcou o item do guia");
+  ok(!!B.guiaStore()[IID] && B.guiaStore()[IID].feito === true, "e chegou ao celular",
+     B.guiaStore()[IID]);
+  ok(B.guiaStore()[IID].em === A.guiaStore()[IID].em, "com o mesmo instante");
+
+  const l = srv.linhas.find(x => x.dominio === "toefl" && x.chave === IID);
+  ok(!!l && l.chave === IID, "a chave online e o id do item do guia", l && l.chave);
+  ok(JSON.stringify(Object.keys(l.valor)) === JSON.stringify(["feito"]),
+     "e o valor leva SO o `feito`", Object.keys(l.valor));
+
+  /* DESMARCAR viaja; ausencia nao e false. */
+  A.marcarGuia(IID, false);
+  await A.SYNC.drenarFila();
+  ok(B.guiaStore()[IID].feito === false, "desmarcar tambem atravessa");
+  ok(A.mesclarToefl({}, "x9", {quando: "", feito: true}) === false,
+     "e sem instante nada entra — ausencia e `nunca decidido`, nao false");
+
+  /* Um merge, duas descidas. */
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
+
+  ok((nucleo.match(/function mesclarToefl/g) || []).length === 1, "ha UMA implementacao de merge do guia");
+  ok(!/function aplicarToeflDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarToeflOnline[\s\S]*?mesclarToefl/.test(nucleo), "e o online a usa");
+  ok((nucleo.match(/function mesclarItem/g) || []).length === 1, "ha UMA implementacao de merge do item");
+  ok(/mesclarItem/.test(corpoDe(nucleo, "aplicarItemOnline")), "o online a usa");
+  ok(!/mesclarItem\(x, r &&/.test(nucleo),
+     "e a descida do estado.json, que era a outra consumidora, saiu na 9G-3");
+
+  /* UM FUNIL POR ESCRITOR HUMANO. */
+  ok((regrasSrc.match(/SYNC\.salvarAlteracao\(\s*"toefl"/g) || []).length === 1,
+     "ha UM unico ponto que escreve toefl online");
+  ok((nucleo.match(/salvarAlteracao\(\s*"toefl"/g) || []).length +
+     (regrasSrc.match(/salvarAlteracao\(\s*"toefl"/g) || []).length === 1,
+     "e UMA unica escrita online de toefl — a migracao passou a usar o funil");
+  ok(/marcarGuia\(it\.id, true, TOEFL_EM\)/.test(nucleo),
+     "a migracao do guia passa pelo funil, com o piso fixo no passado");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"item"/g) || []).length === 1,
+     "ha UM unico ponto que escreve item online");
+  ok((render.match(/x\.em\s*=\s*new Date\(\)/g) || []).length === 0,
+     "e NENHUM subitem carimba mais o proprio new Date()");
+  ["marcarSub", "ciclarVida"].forEach(f => {
+    ok(/tocarItem\(/.test(corpoDe(render, f)), "   " + f + " passa pelo funil");
+  });
+
+  /* A ESTRUTURA NAO ENTROU, e a ausencia e deliberada. */
+  ok(!/salvarAlteracao\(\s*"estrutura_/.test(render + regrasSrc + nucleo),
+     "estrutura_proj e estrutura_sub NAO foram conectadas");
+  const SQL = fs.readFileSync(path.join(RAIZ, "sql", "cron_estado.sql"), "utf8");
+  ok(/cron_estrutura_base/.test(SQL), "a cron_estrutura_base continua no esquema, intacta");
+  ok(/grant select\s+on public\.cron_estrutura_base/.test(SQL),
+     "e o app segue com SELECT e mais nada: quem escreve a base e o pipeline");
+  /* SUPERADO PELA 9G-0 B1: o pipeline passou a escrever a base, e e justamente
+     isso que destrava o merge de tres vias. O que a 9E guardava aqui — que a
+     base nao fosse forjada — continua guardado na secao 67, com mais precisao.
+     A ESTRUTURA em si segue sem escritor no aplicativo, que e o outro metade
+     do bloqueio. */
+  const PIPE_CODIGO = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8")
+    .split("\n").filter(l => !/^\s*#/.test(l)).join("\n");
+  ok(/cron_estrutura_base/.test(PIPE_CODIGO),
+     "e a base passou a ser escrita pelo publicador da estrutura (9G-0 B1)");
+}
+
+console.log("\n=== 66. O merge de tres vias da estrutura (9G-0 B1) ===");
+{
+  const A = criarAparelho("mac", criarServidor());
+  const M = (local, entrada, base, temBase) => A.mesclarEstrutura(local, entrada, base, temBase);
+
+  /* (a) MUDANCA APENAS LOCAL. O pipeline publicou "Artigo", voce renomeou para
+         "Artigo sobre Lutero", e a publicacao seguinte traz "Artigo" de novo —
+         porque o pipeline nao mexeu nisso. E o defeito que a base corrige. */
+  let r = M("Artigo sobre Lutero", "Artigo", "Artigo", true);
+  ok(r.escreve === false, "(a) so voce mexeu: o pipeline NAO desfaz o seu rename", r);
+  ok(r.conflito === false, "    e nao ha conflito a registrar");
+
+  /* (b) MUDANCA APENAS REMOTA. Voce nao tocou; o pipeline renomeou. Entra. */
+  r = M("Artigo", "Artigo revisado", "Artigo", true);
+  ok(r.escreve === true, "(b) so o pipeline mexeu: e atualizacao legitima, e entra", r);
+  ok(r.conflito === false, "    e tambem nao ha conflito");
+
+  /* (c) MUDANCA CONCORRENTE. Os dois mexeram no MESMO campo, a partir da mesma
+         base. Ai sim ha conflito — e ele nao pode ser silencioso. */
+  r = M("Artigo do Jonathan", "Artigo revisado", "Artigo", true);
+  ok(r.escreve === true && r.conflito === true,
+     "(c) os dois mexeram no mesmo campo: conflito real, e fica registrado", r);
+
+  /* Nada mudou em lugar nenhum: nao escreve e nao inventa conflito. */
+  r = M("Artigo", "Artigo", "Artigo", true);
+  ok(r.escreve === false && r.conflito === false, "ninguem mexeu: nada acontece", r);
+
+  /* SEM BASE, DUAS VIAS — e e o certo. Uma peca publicada pela primeira vez nao
+     tem terceira via, e tem de entrar. E tambem o motivo de a regra ainda nao
+     estar ligada: contra uma base VAZIA, "o pipeline nunca mudou nada" e
+     verdade sobre tudo, e nenhuma atualizacao legitima passaria. */
+  r = M("", "Artigo novo", null, false);
+  ok(r.escreve === true, "sem base, uma peca nova entra (duas vias, como hoje)", r);
+  r = M("Artigo", "Artigo", null, false);
+  ok(r.escreve === false, "e sem base, o que ja e igual continua nao escrevendo", r);
+
+  /* Vale para qualquer campo, e nao so texto: `medida` e `ordem` sao objetos e
+     numeros, e a comparacao e por valor. */
+  ok(M({n: 3}, {n: 3}, {n: 3}, true).escreve === false, "compara objetos por valor");
+  ok(M({n: 3}, {n: 4}, {n: 3}, true).escreve === true, "e ve a mudanca dentro deles");
+
+  /* A REGRA ESTA LIGADA desde a primeira publicacao real. */
+  const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const corpoEntrada = nucleo.split("function mesclarEntrada(")[1].split("\n}")[0];
+  ok(/entradaPodeEscrever\(/.test(corpoEntrada),
+     "o mesclarEntrada consulta a terceira via, campo a campo");
+  ok(/estruturaBase\(\)/.test(corpoEntrada),
+     "e a baseline vem da copia local da cron_estrutura_base");
+  ok((nucleo.match(/function mesclarEstrutura/g) || []).length === 1,
+     "e ha UMA implementacao da regra");
+  ok(/mesclarEstrutura\(/.test(nucleo.split("function entradaPodeEscrever(")[1].split("\n}")[0]),
+     "usada por um ponto so");
+}
+
+console.log("\n=== 68. A baseline real no merge de entrada (9G-0 B1) ===");
+{
+  const srv = criarServidor();
+  /* A baseline como ela existe em producao: o projeto sem `t` (o entrada.json
+     so traz `id` no nivel do projeto) e o subitem com `t`. */
+  const A = criarAparelho("mac", srv, {storage: {
+    "cron:estrutura-base": JSON.stringify({
+      "pipeline/a01":        {tipo:"projeto", valor:{}, gerado_em:"2026-08-26T14:05:00Z"},
+      "pipeline/a01/a01-1":  {tipo:"subitem", valor:{t:"Levantamento"}, gerado_em:"2026-08-26T14:05:00Z"}
+    })
+  }});
+
+  ok(Object.keys(A.estruturaBase()).length === 2, "a copia local da baseline e lida",
+     Object.keys(A.estruturaBase()));
+
+  const sub = () => {
+    let x = null;
+    (A.getProjs("pipeline") || []).forEach(p => { if (p.id === "a01")
+      (p.subs || []).forEach(s => { if (s.id === "a01-1") x = s; }); });
+    return x;
+  };
+  const publicar = (tSub) => {
+    A.save("cron:entrada", {_gerado_em: "2026-09-10T10:00:00Z", paineis: {pipeline: [
+      {id: "a01", subs: [{id: "a01-1", t: tSub}]}]}});
+    A.mesclarEntrada();
+  };
+
+  /* (1) SO VOCE MEXEU. A baseline diz "Levantamento", voce renomeou, e a
+         publicacao repete "Levantamento": o pipeline nao mexeu, e o seu
+         rename SOBREVIVE. E o defeito que a terceira via corrige. */
+  const projs = A.getProjs("pipeline");
+  projs.forEach(p => { if (p.id === "a01") (p.subs||[]).forEach(x => {
+    if (x.id === "a01-1") x.t = "Levantamento do Jonathan"; }); });
+  A.setProjs("pipeline", projs);
+  publicar("Levantamento");
+  ok(sub().t === "Levantamento do Jonathan",
+     "(1) so voce mexeu: a publicacao NAO desfaz o seu rename", sub().t);
+
+  /* (2) SO O PIPELINE MEXEU. Volta o local ao valor da baseline; a publicacao
+         traz outro. Entra. */
+  const p2 = A.getProjs("pipeline");
+  p2.forEach(p => { if (p.id === "a01") (p.subs||[]).forEach(x => {
+    if (x.id === "a01-1") x.t = "Levantamento"; }); });
+  A.setProjs("pipeline", p2);
+  publicar("Levantamento revisado");
+  ok(sub().t === "Levantamento revisado",
+     "(2) so o pipeline mexeu: atualizacao legitima entra", sub().t);
+
+  /* (3) OS DOIS MEXERAM. Vence o relogio da publicacao, e o conflito FICA
+         REGISTRADO — escrever em silencio e o que esta fase acaba. */
+  const p3 = A.getProjs("pipeline");
+  p3.forEach(p => { if (p.id === "a01") (p.subs||[]).forEach(x => {
+    if (x.id === "a01-1") x.t = "Levantamento do Jonathan"; }); });
+  A.setProjs("pipeline", p3);
+  const antes = (A.LS("cron:estrutura-conflitos", []) || []).length;
+  publicar("Levantamento auditado");
+  ok(sub().t === "Levantamento auditado", "(3) conflito real: vence a publicacao", sub().t);
+  const conf = A.LS("cron:estrutura-conflitos", []) || [];
+  ok(conf.length === antes + 1, "e o conflito ficou registrado", conf.length - antes);
+  ok(conf[conf.length-1].seu === "Levantamento do Jonathan" &&
+     conf[conf.length-1].campo === "t" &&
+     conf[conf.length-1].chave === "pipeline/a01/a01-1",
+     "com o que era seu, o campo e a peca", conf[conf.length-1]);
+
+  /* (4) SEM BASELINE PARA O CAMPO: duas vias, como antes. O projeto tem linha
+         na base, mas o `valor` nao conhece `t` — e o caso real da producao. */
+  A.save("cron:entrada", {_gerado_em: "2026-09-10T11:00:00Z", paineis: {pipeline: [
+    {id: "a01", t: "Titulo vindo do pipeline"}]}});
+  A.mesclarEntrada();
+  const proj = (A.getProjs("pipeline") || []).find(p => p.id === "a01");
+  ok(proj.t === "Titulo vindo do pipeline",
+     "(4) baseline sem o campo: duas vias, e a publicacao entra", proj.t);
+
+  /* (5) SEM BASELINE NENHUMA: idem — e o estado de um aparelho que nunca ligou
+         a sincronia. */
+  const B = criarAparelho("celular", srv);
+  ok(Object.keys(B.estruturaBase()).length === 0, "o celular nao tem baseline");
+  B.save("cron:entrada", {_gerado_em: "2026-09-10T12:00:00Z", paineis: {pipeline: [
+    {id: "a01", subs: [{id: "a01-1", t: "Do pipeline, sem baseline"}]}]}});
+  B.mesclarEntrada();
+  let sb = null;
+  (B.getProjs("pipeline") || []).forEach(p => { if (p.id === "a01")
+    (p.subs || []).forEach(x => { if (x.id === "a01-1") sb = x; }); });
+  ok(sb.t === "Do pipeline, sem baseline",
+     "(5) sem baseline, o merge continua de duas vias", sb.t);
+
+  /* (6) PROGRESSO CONTINUA SEPARADO. O merge de entrada nao encosta em st nem
+         em vida, e a baseline nao carrega progresso. */
+  const nucleo68 = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const corpoEntrada68 = nucleo68.split("function mesclarEntrada(")[1].split("\n}")[0];
+  ok(!/\bst\b|\bvida\b/.test(corpoEntrada68),
+     "o mesclarEntrada nao escreve st nem vida");
+  const stAntes = sub().st, vidaAntes = sub().vida;
+  publicar("Mais um titulo");
+  ok(sub().st === stAntes && sub().vida === vidaAntes,
+     "e uma publicacao de estrutura nao mexe no progresso",
+     {st: sub().st, vida: sub().vida});
+  const base = A.estruturaBase();
+  ok(Object.keys(base).every(k => !("st" in (base[k].valor || {})) &&
+                                  !("vida" in (base[k].valor || {}))),
+     "nem a baseline carrega progresso");
+
+  /* A leitura da base e SO leitura, e de um lugar so. */
+  const sync = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "15-sync.js"), "utf8");
+  ok((sync.match(/TABELA_BASE/g) || []).length === 1 &&
+     /from\(SINCRONIA\.TABELA_BASE\)\.select/.test(sync),
+     "o aplicativo so LE a cron_estrutura_base, num ponto so");
+  ok(!/TABELA_BASE[\s\S]{0,200}(upsert|insert|delete|rpc)/.test(sync),
+     "e nao escreve nela por caminho nenhum");
+}
+
+console.log("\n=== 67. Quem escreve a cron_estrutura_base, e quem so le (9G-0 B1) ===");
+{
+  const SQL = fs.readFileSync(path.join(RAIZ, "sql", "cron_estado.sql"), "utf8");
+  const CODIGO = SQL.split("\n").filter(l => !/^\s*--/.test(l)).join("\n");
+
+  /* O NAVEGADOR SO LE, e a ausencia de politica de escrita e o ponto: se o app
+     pudesse reescrever a base, poderia forjar "o pipeline nunca mudou isso" e o
+     merge de tres vias viraria de duas outra vez. */
+  ok(/create policy cron_estrutura_base_ler[\s\S]{0,200}for select/.test(CODIGO),
+     "o app tem politica de SELECT na cron_estrutura_base");
+  ok(!/create policy[^;]*on public\.cron_estrutura_base[^;]*for (insert|update|delete)/i.test(CODIGO),
+     "e NENHUMA de escrita: ele nao pode forjar a base");
+  ok(/grant select\s+on public\.cron_estrutura_base\s+to authenticated/.test(CODIGO),
+     "o grant tambem e so de leitura");
+  ok(/revoke all on public\.cron_estrutura_base\s+from anon/.test(CODIGO),
+     "e o anon nao alcanca nada");
+
+  /* Nada no aplicativo escreve a base — nem por acidente. */
+  const app = ["00-config", "10-nucleo", "15-sync", "20-regras", "30-render", "40-app"]
+    .map(f => fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f + ".js"), "utf8")).join("\n");
+  ok(!/TABELA_BASE[\s\S]{0,120}(upsert|insert|delete)/.test(app),
+     "e nenhum arquivo do aplicativo escreve nela");
+
+  /* QUEM ESCREVE E O PUBLICADOR DA ESTRUTURA, e so ele. */
+  const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  ok((pipe.match(/"\/rpc\/cron_publicar_estrutura"/g) || []).length === 1,
+     "ha UM unico ponto que escreve a base, e ele e a RPC transacional");
+  ok(!/"\/cron_estrutura_base/.test(pipe),
+     "e nenhuma escrita direta na tabela: gravar e retirar sao um ato so");
+  const corpo = pipe.split("def publicar_estrutura")[1].split("\ndef ")[0];
+  ok(/linhas_da_base\(entrada\)/.test(corpo),
+     "e ele registra a estrutura que RECEBEU, e nao outra reconstruida");
+  ok(!/ARQ_ENTRADA[^)]*\)\s*as f:\s*\n\s*entrada = json\.load/.test(corpo),
+     "nao le o entrada.json do disco para semear a base");
+  /* MEDE A CHAMADA, e nao a mencao: a docstring da funcao fala da
+     cron_estrutura_base logo na primeira linha, e comparar posicoes de texto
+     media o comentario. O que importa e onde esta a RPC. */
+  const iRpc = corpo.indexOf('"/rpc/cron_publicar_estrutura"');
+  ok(/os\.replace\(temporario, ARQ_ENTRADA\)/.test(corpo) &&
+     iRpc > 0 && iRpc < corpo.indexOf("os.replace"),
+     "a base e registrada ANTES de o arquivo tomar o lugar do anterior",
+     {rpc: iRpc, replace: corpo.indexOf("os.replace")});
+
+  /* A GARANTIA MORA NO SQL. Chamada unica no cliente e metade da historia: a
+     outra metade e a funcao substituir a base inteira dentro de uma transacao. */
+  const fn = SQL.split("create or replace function public.cron_publicar_estrutura")[1] || "";
+  const corpoFn = fn.split("$$;")[0];
+  ok(/insert into public\.cron_estrutura_base/.test(corpoFn) &&
+     /delete from public\.cron_estrutura_base/.test(corpoFn),
+     "gravar e retirar acontecem dentro da MESMA funcao");
+  ok(/jsonb_array_length\(p_linhas\) = 0/.test(corpoFn),
+     "e estrutura vazia e recusada: publicar nada nao e apagar tudo");
+  ok(!/create policy[^;]*cron_publicar_estrutura/i.test(CODIGO) &&
+     /revoke all on function public\.cron_publicar_estrutura/.test(SQL),
+     "a funcao nao e alcancavel pelo navegador");
+  ok(/RECUSADO: faltam/.test(corpo),
+     "e sem credenciais o comando recusa a publicacao inteira");
+}
+
+console.log("\n=== 69. Arquivar virou `vida`, e a posicao foi aposentada (9G-0 B2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const acha = (X, projId, subId) => {
+    let x = null;
+    (X.getProjs("pipeline") || []).forEach(p => { if (p.id === projId)
+      (p.subs || []).forEach(s => { if (s.id === subId) x = s; }); });
+    return x;
+  };
+  const proj = (X, projId) => (X.getProjs("pipeline") || []).find(p => p.id === projId);
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const subId = pr.subs[0].id;
+
+  /* ARQUIVAR SUBITEM: a peca FICA no armazenamento, com vida trocada. */
+  A.delSub("pipeline", pr.id, subId);
+  await A.SYNC.drenarFila();
+  ok(!!acha(A, pr.id, subId), "a peca continua no armazenamento — nada de splice");
+  ok(acha(A, pr.id, subId).vida === "arquivado", "com vida='arquivado'",
+     acha(A, pr.id, subId).vida);
+  ok(A.vivos(proj(A, pr.id).subs).every(x => x.id !== subId),
+     "e some da lista de vivos, que e o que a tela desenha");
+
+  /* ATRAVESSA: vida ja e campo do dominio `item`. */
+  const l = srv.linhas.find(x => x.dominio === "item" &&
+                            x.chave === "pipeline/" + pr.id + "/" + subId);
+  ok(!!l && l.valor.vida === "arquivado", "e subiu pelo dominio `item`", l && l.valor);
+  ok(acha(B, pr.id, subId).vida === "arquivado",
+     "chegando ao celular: arquivar atravessa aparelhos", acha(B, pr.id, subId).vida);
+  const reg = srv.registros[srv.registros.length - 1];
+  ok(!!reg && reg.vida === "arquivado",
+     "e a linha do registro carrega a mesma vida", reg && reg.vida);
+  ok(reg.id.indexOf(l.em.replace(/[:.]/g, "-")) === 0,
+     "com o mesmo instante nas duas linhas", {registro: reg.id, item: l.em});
+
+  /* RESTAURAR: so o campo de volta, sem posicao nenhuma. */
+  A.restaurarSub("pipeline", pr.id, subId);
+  await A.SYNC.drenarFila();
+  ok(acha(A, pr.id, subId).vida === "ativo", "restaurar devolve vida='ativo'");
+  ok(acha(B, pr.id, subId).vida === "ativo", "e isso tambem atravessa");
+  ok(A.vivos(proj(A, pr.id).subs).some(x => x.id === subId), "a peca volta aos vivos");
+
+  /* PROJETO: arquiva local, e nao viaja — estrutura_proj nao tem `vida`. */
+  const linhasAntes = srv.linhas.length;
+  A.delProj("pipeline", pr.id);
+  await A.SYNC.drenarFila();
+  ok(proj(A, pr.id).vida === "arquivado", "o projeto arquiva por vida tambem",
+     proj(A, pr.id).vida);
+  ok(A.vivos(A.getProjs("pipeline")).every(p => p.id !== pr.id), "e sai dos vivos");
+  ok(srv.linhas.length === linhasAntes,
+     "e NAO viaja: nao ha dominio online para estrutura", srv.linhas.length - linhasAntes);
+  A.restaurarProj("pipeline", pr.id);
+  ok(proj(A, pr.id).vida === "ativo", "e restaurar o projeto e o mesmo campo de volta");
+}
+
+console.log("\n=== 70. O que a peca arquivada NAO faz mais (9G-0 B2) ===");
+{
+  const A = criarAparelho("mac", criarServidor());
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const subId = pr.subs[0].id;
+
+  const antesEtapa = A.estagioDoTrilho("pipeline", pr.id);
+  const antesPeca  = A.pecaDoMes();
+  A.delSub("pipeline", pr.id, subId);
+
+  /* O motor, a revisao e a esteira deixam de ve-la. */
+  const et = A.estagioDoTrilho("pipeline", pr.id);
+  ok(!et || et.subId !== subId, "a etapa arquivada nao e mais a proxima do trilho",
+     et && et.subId);
+  const mot = A.motorDePrioridades([]);
+  ok((mot || []).every(o => o.subId !== subId),
+     "nem e sugerida pelo motor de prioridades");
+  const rev = A.revisaoDaSemana();
+  ok(!!rev && !!rev.concluido, "a revisao da semana continua funcionando", Object.keys(rev));
+
+  /* A TELA. Sem isto o teste media so o motor — e o painel e justamente onde
+     uma peca arquivada nao pode reaparecer. O document falso devolve [] em
+     querySelectorAll, entao aqui ele ganha um alvo para o render escrever. */
+  const alvo = {innerHTML: ""};
+  A.document.querySelectorAll = (sel) =>
+    (String(sel).indexOf('data-painel="pipeline"') >= 0 ? [alvo] : []);
+  A.renderPainel("pipeline");
+  ok(alvo.innerHTML.length > 0, "o painel desenhou", alvo.innerHTML.length);
+  ok(alvo.innerHTML.indexOf("'" + subId + "'") < 0,
+     "e a etapa arquivada NAO aparece no painel", subId);
+  ok(alvo.innerHTML.indexOf("'" + pr.subs[1].id + "'") > 0,
+     "enquanto as vivas continuam la", pr.subs[1].id);
+  /* E os handlers que ele emite enderecam por id. */
+  ok(/delSub\('pipeline','[^']+','[^']+'\)/.test(alvo.innerHTML),
+     "com delSub por painel/projeto/subitem, sem posicao");
+  ok(!/delSub\('pipeline',\d/.test(alvo.innerHTML), "e nunca por indice");
+
+  /* E o contador do painel nao a conta. RELE do armazenamento: o `pr` de cima
+     e uma copia anterior ao arquivamento, e mediria a si mesma. */
+  const prAgora = (A.getProjs("pipeline") || []).find(p => p.id === pr.id);
+  const contam = A.vivos(prAgora.subs).filter(x => x.vida !== "inaplicavel");
+  ok(contam.every(x => x.id !== subId), "e o contador do painel nao a conta",
+     contam.map(x => x.id));
+
+  /* PROJETO arquivado sai da esteira. */
+  A.delProj("pipeline", pr.id);
+  ok((A.projetosAtivos("pipeline") || []).every(p => p.id !== pr.id),
+     "projeto arquivado sai dos projetos ativos");
+  const pc = A.pecaDoMes();
+  ok(!pc || pc.projId !== pr.id, "e deixa de ser a peca do mes", pc && pc.projId);
+  ok(!!antesEtapa || antesEtapa === null, "(controle: havia etapa antes)", !!antesEtapa);
+  ok(antesPeca !== undefined, "(controle: pecaDoMes respondia antes)");
+}
+
+console.log("\n=== 71. A gaveta `cron:arquivo` foi aposentada (9G-0 B2) ===");
+{
+  /* MIGRACAO: a gaveta antiga vira vida='arquivado' no painel, uma vez. */
+  const antiga = [
+    {quando:"2026-09-01T10:00:00Z", d:"2026-09-01", pid:"pipeline", tipo:"subtarefa",
+     ondeEstava:{projId:"a01", projT:"Artigo", indice:2},
+     item:{id:"a01-9", t:"Etapa arquivada faz tempo", st:1, vida:"ativo"}},
+    {quando:"2026-09-02T10:00:00Z", d:"2026-09-02", pid:"pipeline", tipo:"projeto",
+     ondeEstava:{indice:5},
+     item:{id:"aZZ", t:"Projeto arquivado faz tempo", subs:[{id:"aZZ-1", t:"uma etapa"}]}}
+  ];
+  const A = criarAparelho("mac", criarServidor(),
+                          {storage:{"cron:arquivo": JSON.stringify(antiga)}});
+  ok(A.LS("cron:arquivo", null) === null || A.__armazem["cron:arquivo"] === undefined,
+     "a gaveta some do armazenamento depois da migracao no boot",
+     A.__armazem["cron:arquivo"]);
+
+  const projs = A.getProjs("pipeline") || [];
+  const sub = (projs.find(p => p.id === "a01") || {subs:[]}).subs.find(x => x.id === "a01-9");
+  ok(!!sub && sub.vida === "arquivado", "o subitem voltou ao painel, arquivado", sub && sub.vida);
+  ok(sub.t === "Etapa arquivada faz tempo" && sub.st === 1,
+     "com o que ele era: nada foi inventado nem perdido", {t: sub.t, st: sub.st});
+  const pz = projs.find(p => p.id === "aZZ");
+  ok(!!pz && pz.vida === "arquivado", "e o projeto tambem", pz && pz.vida);
+  ok((pz.subs || []).length === 1, "com os subitens que tinha", pz && pz.subs.length);
+  ok(A.arquivados().length === 2, "e os dois aparecem na aba Arquivo", A.arquivados().length);
+
+  /* NAO PUBLICA TOQUE: o arquivamento antigo nunca atravessou aparelho. */
+
+  /* TRAVA EM VEZ DE MIGRAR PELA METADE. */
+  const orfa = [{quando:"2026-09-01T10:00:00Z", d:"2026-09-01", pid:"pipeline",
+                 tipo:"subtarefa", ondeEstava:{projId:"nao-existe", projT:"sumiu"},
+                 item:{id:"x-1", t:"orfa"}}];
+  const B = criarAparelho("celular", criarServidor(),
+                          {storage:{"cron:arquivo": JSON.stringify(orfa)}});
+  ok(!!B.__armazem["cron:arquivo"],
+     "com uma entrada sem projeto-pai, a gaveta fica INTACTA");
+  const r = B.migrarArquivo();
+  ok(r.migrados === 0 && r.travados.length === 1,
+     "e a migracao devolve o que travou, sem migrar nada", r);
+
+  /* NENHUM CONSUMIDOR DE `cron:arquivo` SOBROU. */
+  const app = ["00-config", "10-nucleo", "15-sync", "20-regras", "30-render", "40-app"]
+    .map(f => fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f + ".js"), "utf8"));
+  const codigo = app.join("\n").split("\n")
+    .filter(l => !/^\s*(\/\*|\*|\/\/)/.test(l)).join("\n");
+  const usos = (codigo.match(/["']cron:arquivo["']/g) || []).length;
+  ok(usos === 3, "so a migracao fala em cron:arquivo (ler, apagar, marcar)", usos);
+  ok(/function migrarArquivo/.test(codigo), "e ela e a migracao");
+  ok(!/getArquivo|restaurarArquivo|function arquivar\(/.test(codigo),
+     "getArquivo, arquivar e restaurarArquivo nao existem mais");
+  /* `ondeEstava` so pode aparecer DENTRO da migracao: e a forma da gaveta
+     antiga, e ninguem mais deve conhece-la. */
+  const semMigracao = codigo.split("function migrarArquivo")[0] +
+                      (codigo.split("function migrarArquivo")[1] || "").split("\n}").slice(1).join("\n}");
+  ok(!/ondeEstava/.test(semMigracao),
+     "e `ondeEstava` so existe dentro da migracao");
+
+  /* E NENHUM HANDLER ENDERECA POR POSICAO. */
+  const render = app[4];
+  ["editProj", "editSub", "delProj", "delSub", "cycleSub", "ciclarVida", "addSub"]
+    .forEach(f => {
+      const corpo = render.split("function " + f + "(")[1] || "";
+      const assinatura = corpo.split(")")[0];
+      ok(!/\bpi\b|\bsi\b|\bi\b(?!d)/.test(assinatura),
+         "   " + f + " endereca por id, e nao por posicao", assinatura);
+    });
+  ok(!/restaurarArquivo\(/.test(render) && /restaurarProj\(|restaurarSub\(/.test(render),
+     "e restaurar e por id, sem posicao");
 }
 
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");
@@ -915,4 +3349,13 @@ console.log(falhas.length ? "FALHAS: " + falhas.length : "TUDO PASSA");
 falhas.forEach(f => console.log("  - " + f));
 process.exit(falhas.length ? 1 : 0);
 }
-principal().catch(e => { console.error(e); process.exit(1); });
+/* A PROVA DA 9F REUSA ESTE HARNESS, e nao uma copia dele. Um segundo Supabase
+   de mentira seria um segundo servidor a manter de acordo com o Postgres — e o
+   dia em que os dois divergissem, a prova estaria medindo o falso. Rodar
+   `node scripts/teste_sync.js` continua exatamente igual; `require()` daqui nao
+   executa os testes. */
+module.exports = {criarServidor, criarCliente, criarAparelho, RAIZ, FONTE};
+
+if (require.main === module) {
+  principal().catch(e => { console.error(e); process.exit(1); });
+}

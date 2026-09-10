@@ -68,11 +68,21 @@ function guiaFeito(iid){ var r = guiaStore()[iid]; return !!(r && r.feito); }
 
    Desmarcar viaja (feito:false com instante proprio). Ausencia nao viaja, e
    nao e false: e "nunca decidido". */
-function marcarGuia(iid, feito){
+/* O FUNIL DO GUIA (Fase 9E), e o unico escritor. O `quandoISO` existe para a
+   migracao, que publica marcacao antiga com um piso fixo no passado — sem ele
+   uma marca de meses atras subiria com a data de hoje e venceria uma decisao
+   recente do outro aparelho. */
+function marcarGuia(iid, feito, quandoISO){
   var st = guiaStore();
-  var iso = enfileirarToque("toefl", {iid:iid, feito:!!feito});
+  var iso = instanteISO(quandoISO);
   st[iid] = {feito:!!feito, em:iso};
   save(TOEFL_GUIA_KEY, st);
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("toefl", String(iid), {feito: !!feito}, {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: toefl nao subiu:", e); }catch(e2){} }
+  return iso;
 }
 /* MESMA ASSINATURA DE SEMPRE: devolve {indice:true} da fase pedida. Quem chama
    (guiaItens) continua sem precisar saber que a identidade virou `id`. */
@@ -181,7 +191,7 @@ function resumoDoTrilho(pid, pr){
   (pr.subs || []).forEach(function(sx){
     var x = normSub(sx);
     if(x.em && x.em > ultimo) ultimo = x.em;
-    if(x.vida === "inaplicavel") return;
+    if(x.vida === "inaplicavel" || estaArquivado(x)) return;
     total++;
     if(x.st === 2){ feito++; return; }
     /* A POSICAO DA ETAPA ATUAL NAO SE DEDUZ DA CONTAGEM. `feito + 1` so acerta
@@ -255,7 +265,7 @@ function processoDeTrilho(pid, pr){
 function processosVisiveis(){
   var out = PROCESSOS.slice();
   PAINEIS.forEach(function(P){
-    (getProjs(P.id) || []).forEach(function(pr){
+    vivos(getProjs(P.id)).forEach(function(pr){
       if(projConcluido(pr)) return;
       if(!projetoComecou(pr)) return;
       out.push(processoDeTrilho(P.id, pr));
@@ -321,7 +331,7 @@ function revisaoDaSemana(){
     var o = ultimoNaSemana[k];
     if(o.para !== 2) return;                                  /* condicao 2 */
     var partes = k.split("/");
-    var pr = (getProjs(partes[0]) || []).filter(function(x){ return x.id===partes[1]; })[0];
+    var pr = vivos(getProjs(partes[0])).filter(function(x){ return x.id===partes[1]; })[0];
     var sx = pr && (pr.subs||[]).filter(function(x){ return x.id===partes[2]; })[0];
     if(!sx || sx.st !== 2) return;                            /* condicao 3 */
     etapas.push({pid:partes[0], projId:partes[1], subId:partes[2],
@@ -450,115 +460,6 @@ function pendencias(){
   }
   return out;
 }
-function pisoJaGasto(base){
-  var fora = LS(ACERVO_LA_FORA_KEY, null);
-  if(!fora) return 0;
-  /* `piso` vem do HISTORICO, e nao so das secoes. Faz diferenca num caso: uma
-     meta publicada pelo botao e editada depois carrega na secao o instante da
-     EDICAO, e o instante do piso sobrevive so no historico. Olhando apenas as
-     secoes, o relogio poderia reemitir aquele instante — e a dobra descartaria
-     o toque novo como ja visto. */
-  if(base === new Date(ACERVO_EM).getTime() && fora.piso) return fora.piso;
-  var maior = 0;
-  ["metas","eventos"].forEach(function(s){
-    var m = fora[s] || {};
-    Object.keys(m).forEach(function(k){
-      /* metas guardam a string do instante; eventos guardam um objeto */
-      var q = (typeof m[k] === "string") ? m[k] : (m[k] && m[k].q);
-      var ms = new Date(q).getTime();
-      if(isFinite(ms) && ms >= base && ms < base + 86400000 && ms > maior) maior = ms;
-    });
-  });
-  return maior;
-}
-
-/* Anota na fotografia local o que acabou de entrar na fila, para que apertar o
-   botao duas vezes antes de o estado.json voltar nao republique o mesmo. Se o
-   envio falhar, a proxima leitura desfaz esta anotacao sozinha: a fotografia e
-   sempre reescrita pelo que o servidor realmente tem. */
-
-function jaEstaLaFora(secao, chave, temInstante){
-  var fora = LS(ACERVO_LA_FORA_KEY, null);
-  /* Ainda nao lemos o estado publicado — primeira carga sem rede, tipicamente.
-     Sem a fotografia, a regra conservadora e o instante: quem tem instante ou
-     ja publicou ou ja recebeu. Nao republica por engano, e volta a acertar
-     assim que a primeira leitura chegar. */
-  if(!fora || !fora[secao]) return !!temInstante;
-  return Object.prototype.hasOwnProperty.call(fora[secao], chave);
-}
-
-/* A semente e identica nos dois aparelhos: METAS_SEED reconstroi as metas
-   art-* em qualquer navegador que carregue esta pagina, e o mes de inicio
-   nasce com METAS_DEFAULT. Publicar uma que ninguem tocou so engordaria o
-   estado.json com o que o outro lado ja tem igual. Feita ou trazida de outro
-   mes, ja nao e semente intocada: viaja. */
-function metaEhSementeIntocada(mes, m){
-  if(m.done || m.de) return false;
-  var r = (typeof ROTEIRO !== "undefined" && ROTEIRO[mes]) || [];
-  for(var i=0;i<r.length;i++){ if(m.id === "art-"+mes+"-"+i) return m.t === r[i]; }
-  if(mes === MES_INICIO){
-    for(var j=0;j<METAS_DEFAULT.length;j++){
-      if(m.id === METAS_DEFAULT[j].id) return m.t === METAS_DEFAULT[j].t;
-    }
-  }
-  return false;
-}
-
-function metasParaPublicar(){
-  var fora = [];
-  listaMeses().forEach(function(mes){
-    (getMetas(mes)||[]).forEach(function(m){
-      if(!m || !m.id) return;
-      if(!String(m.t||"").trim()) return;        /* meta em branco nao e meta */
-      if(metaEhSementeIntocada(mes, m)) return;
-      /* Nao ha mais trava de "uma vez por aparelho": ela impedia o conserto
-         acima de acontecer. Quem decide, meta a meta, e se ela ja esta la fora
-         — e isso ja impede o aparelho que RECEBEU de republicar o que recebeu,
-         que era a unica coisa que a trava protegia. */
-      if(jaEstaLaFora("metas", mes + "/" + m.id, m.em)) return;
-      fora.push({mes:mes, m:m});
-    });
-  });
-  return fora;
-}
-
-/* A semente de eventos tambem e identica nos dois aparelhos: EVENTOS_DEFAULT
-   nasce igual em qualquer navegador. Data mudada ja nao e semente intocada. */
-function eventoEhSementeIntocado(ev){
-  for(var i=0;i<EVENTOS_DEFAULT.length;i++){
-    if(ev.id === EVENTOS_DEFAULT[i].id) return ev.data === EVENTOS_DEFAULT[i].data;
-  }
-  return false;
-}
-
-function eventosParaPublicar(){
-  var snap = LS(ACERVO_LA_FORA_KEY, null);
-  var conhece = !!(snap && snap.eventos);
-  var fora = [];
-  (getEventos()||[]).forEach(function(ev){
-    if(!ev || !ev.id || !ev.data) return;
-    if(eventoEhSementeIntocado(ev)) return;
-    if(!jaEstaLaFora("eventos", ev.id, ev.em)){ fora.push({ev:ev, novo:true}); return; }
-    if(!conhece) return;
-    var la = snap.eventos[ev.id];
-    if(!la || typeof la !== "object") return;
-    /* Ja esta la fora, mas o que esta la nao corresponde mais. Dois casos, e os
-       dois nascem de 29/08, quando os eventos subiram sem titulo nenhum:
-         · o titulo devia estar publicado e nao esta  -> publica para completar
-         · o titulo esta publicado e agora e privado  -> publica para retirar
-       Nos dois a condicao para de casar assim que o toque e dobrado e a
-       fotografia e relida, o que faz isto acontecer uma vez e nao virar laco. */
-    var falta   = !ev.priv && String(ev.t||"").trim() && !la.t;
-    var retirar =  ev.priv && la.t;
-    /* A MARCA TAMBEM PRECISA ATRAVESSAR, mesmo quando nao ha titulo a retirar.
-       Sem esta terceira condicao, um evento ja publicado sem titulo e marcado
-       como privado aqui nunca contaria ao outro aparelho que e privado — e o
-       outro publicaria o titulo na primeira edicao. */
-    var marca   = (!!ev.priv) !== (!!la.p);
-    if(falta || retirar || marca) fora.push({ev:ev, novo:false});
-  });
-  return fora;
-}
 function diasAte(iso){const [y,m,dd]=iso.split("-").map(Number);
   const t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   return Math.round((new Date(y,m-1,dd)-t0)/86400000);}
@@ -576,13 +477,6 @@ function fmtData(iso){const [y,m,dd]=iso.split("-").map(Number);
    cinco, o indice da tela deixaria de ser o indice da lista: o botao da sexta
    data editaria e APAGARIA a data errada. O id do evento e estavel e nao
    depende de quantos estao na tela. */
-/* Este evento ja consta do estado.json publicado, segundo a ultima leitura. */
-function eventoJaSubiu(eid){
-  var fora = LS(ACERVO_LA_FORA_KEY, null);
-  if(!fora || !fora.eventos) return false;
-  return Object.prototype.hasOwnProperty.call(fora.eventos, eid);
-}
-
 /* UMA fonte para o que o toque de evento carrega. O botao do acervo montava o
    proprio payload e ficou para tras quando o titulo passou a viajar: publicava
    sem `t` e sem `priv`, justamente na hora em que existia para republicar os
@@ -596,14 +490,14 @@ function dadosDoEvento(ev, apagado){
   return d;
 }
 function estagioDoTrilho(pid, projId){
-  var projs = getProjs(pid) || [];
+  var projs = vivos(getProjs(pid));
   for(var i=0;i<projs.length;i++){
     var pr = projs[i];
     if(projId){ if(pr.id !== projId) continue; }
     else if(projConcluido(pr)) continue;
     for(var j=0;j<(pr.subs||[]).length;j++){
       var x = normSub(pr.subs[j]);
-      if(x.vida === "inaplicavel") continue;
+      if(x.vida === "inaplicavel" || estaArquivado(x)) continue;
       if(x.st === 2) continue;
       return {pid:pid, projId:pr.id, projT:pr.t, subId:x.id, subT:x.t, st:x.st,
               vida:x.vida, motivo:x.motivo, prova:x.prova||"", em:x.em||""};
@@ -624,7 +518,7 @@ function proximaDoTrilho(pid){ return estagioDoTrilho(pid, null); }
    Prioridades. A regra le o dado, entao ela se corrige sozinha conforme os
    paineis enchem e esvaziam; nao ha lista de excecao para manter. */
 function projetosAtivos(pid){
-  return (getProjs(pid) || []).filter(function(pr){ return !projConcluido(pr); });
+  return vivos(getProjs(pid)).filter(function(pr){ return !projConcluido(pr); });
 }
 function trilhoSemEscolha(pid){
   var ativos = projetosAtivos(pid);
@@ -706,7 +600,7 @@ function candidatoDoMotor(P, pr){
     if(x.em){ comecou = true; if(x.em > ultimo) ultimo = x.em; }
     if(x.st > 0) comecou = true;
     if(x.st === 2) return;
-    if(x.vida === "inaplicavel" || x.vida === "abandonado") return;
+    if(x.vida === "inaplicavel" || x.vida === "abandonado" || estaArquivado(x)) return;
     if(x.vida === "adiado"){
       if(x.voltar_em && x.voltar_em > adiadoAte) adiadoAte = x.voltar_em;
       return;
@@ -794,7 +688,7 @@ function motorDePrioridades(manuais){
 
   var candidatos = [];
   PAINEIS.forEach(function(P){
-    (getProjs(P.id) || []).forEach(function(pr){
+    vivos(getProjs(P.id)).forEach(function(pr){
       var chave = P.id + "/" + pr.id;
       if(jaManual[chave]) return;                       /* voce ja escolheu */
       if(retomadaSilenciada(silenciadas, chave, hojeStr)) return;
@@ -946,7 +840,7 @@ function retomadas(limite){
   limite = (typeof limite === "number") ? limite : RETOMADA_DIAS;
   var adiadas = retomadasAdiadas(), hojeStr = ymd(now), out = [];
   PAINEIS.forEach(function(P){
-    (getProjs(P.id) || []).forEach(function(pr){
+    vivos(getProjs(P.id)).forEach(function(pr){
       if(projConcluido(pr)) return;
       var chave = P.id + "/" + pr.id;
       if(retomadaSilenciada(adiadas, chave, hojeStr)) return;  /* silenciada */
@@ -956,7 +850,7 @@ function retomadas(limite){
         if(x.em){ comecou = true; if(x.em > ultimo) ultimo = x.em; }
         if(x.st > 0) comecou = true;
         if(x.st === 2) return;
-        if(x.vida === "inaplicavel" || x.vida === "abandonado") return;
+        if(x.vida === "inaplicavel" || x.vida === "abandonado" || estaArquivado(x)) return;
         if(x.vida === "adiado"){
           /* Adiada COM data no futuro nao conta; adiada sem data nenhuma
              tambem nao, porque continua sendo uma decisao sua. */
@@ -1007,7 +901,7 @@ function contagemDeVagas(){
   return {novas:novas, revisar:revisar, marcadas:marcadas, total:itens.length};
 }
 function projConcluido(p){
-  var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel"; });
+  var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel" && !estaArquivado(x); });
   return conta.length > 0 && conta.every(function(x){ return x.st === 2; });
 }
 /* A PECA CORRENTE DA ESTEIRA — e por que ela deixou de ser "a peca do mes".
@@ -1029,12 +923,12 @@ function mesesEntre(a, b){
   return (Number(pb[0])-Number(pa[0]))*12 + (Number(pb[1])-Number(pa[1]));
 }
 function pecaDoMes(){
-  var projs=getProjs("pipeline"), p=null;
+  var projs=vivos(getProjs("pipeline")), p=null;
   for(var i=0;i<projs.length;i++){ if(!projConcluido(projs[i])){ p=projs[i]; break; } }
   if(!p) return null;
   var etapa=null;
   for(var j=0;j<p.subs.length;j++){
-    if(p.subs[j].vida==="inaplicavel") continue;
+    if(p.subs[j].vida==="inaplicavel" || estaArquivado(p.subs[j])) continue;
     if(p.subs[j].st!==2){etapa=p.subs[j].t;break;}
   }
   var atraso = (p.mes && p.mes < monthKey) ? mesesEntre(p.mes, monthKey) : 0;
@@ -1070,7 +964,7 @@ function ritmoDoRegistro(){
    regra do pecaDoMes, e nao uma segunda contagem paralela que um dia
    discordaria dela. */
 function entregaDosArtigos(){
-  var projs = (getProjs("pipeline") || []).filter(function(p){ return p.mes; });
+  var projs = vivos(getProjs("pipeline")).filter(function(p){ return p.mes; });
   var previstos = projs.filter(function(p){ return p.mes <= monthKey; });
   return {previstos:previstos.length, entregues:previstos.filter(projConcluido).length,
           total:projs.length};

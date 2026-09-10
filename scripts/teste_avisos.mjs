@@ -7,6 +7,7 @@
  * por parâmetro, então dá para provar o tratamento de 404/410 sem servidor.
  */
 import * as N from '../avisos/enviar.mjs';
+import fsAvisos from 'node:fs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -169,6 +170,101 @@ ok(Object.keys(estadoNot).join(',') === 'enviados',
    '     estado_notificador.json guarda so `enviados`', Object.keys(estadoNot));
 ok(!/endpoint|p256dh|"auth"/.test(JSON.stringify(estadoNot)),
    '     e nenhum endpoint entra nele');
+
+/* ================= Fase 9G-1: a fonte dos eventos ================= */
+console.log('\n=== 9G-1. Os eventos vêm do cron_estado, e não do estado.json ===');
+
+/* A tradução da linha do banco para a forma que o `decidir` já consome. */
+const LINHAS = [
+  { chave: 'e1', valor: { t: 'Defesa na UFRJ', data: '2026-09-12', priv: false }, del: false },
+  { chave: 'e2', valor: { t: 'Retiro', data: '2026-09-13', priv: true },  del: false },
+  { chave: 'e3', valor: { t: 'Apagado',  data: '2026-09-14', priv: false }, del: true  },
+  { chave: 'e4', valor: { data: '2026-09-15' },                             del: false }
+];
+const conv = N.eventosDeLinhas(LINHAS);
+ok(Object.keys(conv).length === 4, '(9G-1) a chave da linha vira o id do evento', Object.keys(conv));
+ok(conv.e1.t === 'Defesa na UFRJ' && conv.e1.data === '2026-09-12',
+   '   com título e data do `valor`', conv.e1);
+ok(conv.e2.priv === true, '   `priv` atravessa', conv.e2);
+ok(conv.e3.del === true, '   e a LÁPIDE vem da coluna `del`', conv.e3);
+ok(conv.e4.t === '' && conv.e4.priv === false,
+   '   linha sem título nem priv não inventa nada', conv.e4);
+
+/* EQUIVALÊNCIA: o mesmo conjunto de eventos decide o mesmo aviso, venha da
+   forma do estado.json ou da forma do banco. É o que prova que a migração
+   trocou a FONTE e não a regra. */
+const COMO_ARQUIVO = {
+  e1: { t: 'Defesa na UFRJ', data: '2026-09-12', priv: false },
+  e2: { t: 'Retiro',         data: '2026-09-13', priv: true  },
+  e3: { t: 'Apagado',        data: '2026-09-14', del: true   },
+  e4: { t: '',               data: '2026-09-15' }
+};
+const HOJE_9G = '2026-09-11';
+const janelaArquivo = N.eventosNaJanela(COMO_ARQUIVO, HOJE_9G);
+const janelaBanco   = N.eventosNaJanela(conv,          HOJE_9G);
+ok(JSON.stringify(janelaBanco) === JSON.stringify(janelaArquivo),
+   '(9G-1) a janela é a MESMA pelas duas formas', { banco: janelaBanco, arquivo: janelaArquivo });
+ok(janelaBanco.length === 2 && janelaBanco.every((e) => e.id !== 'e2' && e.id !== 'e3'),
+   '   privado e apagado continuam fora', janelaBanco.map((e) => e.id));
+
+const avisoBanco   = N.decidir({ vagas: [], lote: null, eventos: conv },          { enviados: {} }, HOJE_9G);
+const avisoArquivo = N.decidir({ vagas: [], lote: null, eventos: COMO_ARQUIVO },  { enviados: {} }, HOJE_9G);
+ok(JSON.stringify(avisoBanco) === JSON.stringify(avisoArquivo),
+   '(9G-1) e o aviso montado é idêntico', avisoBanco);
+
+/* DEDUPLICAÇÃO preservada, agora sobre a fonte online. */
+const jaVisto = { enviados: {} };
+avisoBanco[0].ids.forEach((id) => { jaVisto.enviados[id] = true; });
+ok(N.decidir({ vagas: [], lote: null, eventos: conv }, jaVisto, HOJE_9G).length === 0,
+   '(9G-1) e o que já foi enviado não volta');
+
+/* A BUSCA: um dono, e a consulta é ao domínio `evento`. */
+const chamadas = [];
+const apiFalsa = async (caminho) => {
+  chamadas.push(caminho);
+  if (caminho.indexOf('/cron_dono') === 0) return [{ uid: 'dono-1' }];
+  return LINHAS;
+};
+const buscados = await N.buscarEventos(apiFalsa);
+ok(chamadas.some((c) => c.indexOf('dominio=eq.evento') > 0),
+   '(9G-1) a consulta filtra pelo domínio `evento`', chamadas);
+ok(chamadas.some((c) => c.indexOf('dono=eq.dono-1') > 0),
+   '   e pelo dono da allowlist', chamadas);
+ok(JSON.stringify(buscados) === JSON.stringify(conv), '   devolvendo a forma já traduzida');
+
+let parou = null;
+try { await N.buscarEventos(async (c) => (c.indexOf('/cron_dono') === 0 ? [{uid:'a'},{uid:'b'}] : [])); }
+catch (e) { parou = e.message; }
+ok(!!parou && /esperava exatamente 1/.test(parou),
+   '   com dois donos, o notificador PARA em vez de escolher', parou);
+
+/* O `estado.json` NÃO é mais consultado para eventos — nem como fallback. */
+const fonte = fsAvisos.readFileSync(new URL('../avisos/enviar.mjs', import.meta.url), 'utf8');
+/* Tira os comentários DE VERDADE: os blocos deste arquivo continuam em linhas
+   que não começam com `*`, então filtrar por linha deixaria passar a menção e
+   reprovaria o código correto. Mencionar não é usar. */
+const codigo = fonte.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+ok(codigo.indexOf('estado.json') < 0,
+   '(9G-1) `estado.json` não aparece no código do notificador');
+ok(!/lerDados[\s\S]{0,400}eventos:/.test(codigo),
+   '   e o lerDados não devolve mais `eventos`');
+let semEventos = null;
+try { N.decidir({ vagas: [], lote: null }, { enviados: {} }, HOJE_9G); }
+catch (e) { semEventos = e.message; }
+ok(!!semEventos && /faltam os eventos/.test(semEventos),
+   '   sem eventos o decidir LANÇA, em vez de emudecer', semEventos);
+
+/* E nada do corte 9G-2/9G-3 foi antecipado. */
+const nucleo = fsAvisos.readFileSync(new URL('../Cronograma/js/10-nucleo.js', import.meta.url), 'utf8');
+/* A 9G cortou o caminho do GitHub dos dois lados — subida na 9G-2, descida na
+   9G-3 — e o notificador não dependia de nenhum deles. É o que estas duas
+   asserções guardam: o corte aconteceu, e o notificador seguiu inteiro (as
+   asserções acima, sobre o cron_estado, é que provam de onde ele lê agora). */
+ok(!/function enviarToques/.test(nucleo) && !/function gravarNoGitHub/.test(nucleo) &&
+   !/function enfileirarToque/.test(nucleo),
+   '(9G-2) a subida para o GitHub saiu, sem levar o notificador junto');
+ok(!/function buscarEstado/.test(nucleo) && !/function aplicar\w+DoEstado/.test(nucleo),
+   '(9G-3) e a descida também: buscarEstado e os aplicar*DoEstado não existem mais');
 
 console.log('\n' + '='.repeat(62));
 console.log('FALHAS: ' + falhas.length);

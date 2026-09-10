@@ -3,7 +3,8 @@
    resolve para o papel service_role e ignora a RLS de propósito: é o único que
    pode ler as inscrições.
 
-   DUAS FONTES, E SÓ DUAS: vagas relevantes do lote novo, e eventos públicos
+   DUAS FONTES, E SÓ DUAS: vagas relevantes do lote novo (arquivo do coletor),
+   e eventos públicos do `cron_estado` (domínio `evento`) — eventos públicos
    que entraram na janela. Retomadas ficam de fora porque o servidor não tem o
    progresso dos subitens — quase todo ele é local por aparelho.
 
@@ -86,6 +87,41 @@ export function eventosNaJanela(eventos, hojeISO, janela) {
   return out;
 }
 
+/* A FONTE DOS EVENTOS É O `cron_estado`, e não o `estado.json` (Fase 9G-1).
+   Até aqui o notificador lia o arquivo que a dobra publica — o que amarrava o
+   aviso diário ao caminho do GitHub e era a única dependência que impedia
+   desligá-lo. Agora ele lê a mesma tabela que o aplicativo escreve, com a
+   `service_role` que este arquivo JÁ usa para as inscrições. Nenhuma chave
+   nova, nenhuma infraestrutura nova.
+
+   NÃO HÁ VOLTA AO ARQUIVO. Um fallback silencioso para o `estado.json` faria o
+   aviso continuar "funcionando" com dados congelados no dia em que a leitura
+   falhasse — que é pior do que falhar: o job ficaria verde avisando o passado.
+   O `api()` lança em qualquer resposta que não seja ok, e o job cai.
+
+   A LÁPIDE É A COLUNA `del`. Evento apagado num aparelho não pode voltar a
+   virar aviso, e é a coluna que diz isso — a mesma regra que o aplicativo usa. */
+export function eventosDeLinhas(linhas) {
+  const fora = {};
+  (linhas || []).forEach((l) => {
+    if (!l || !l.chave) return;
+    const v = l.valor || {};
+    fora[l.chave] = { t: v.t || '', data: v.data || '', priv: !!v.priv, del: !!l.del };
+  });
+  return fora;
+}
+
+/* Traz os eventos do dono do Cronograma. Dois donos seria ambiguidade, e o
+   notificador para em vez de escolher — mesma regra do publicador da estrutura. */
+export async function buscarEventos(api) {
+  const donos = await api('/cron_dono?select=uid&limit=2');
+  if (!Array.isArray(donos) || donos.length !== 1) {
+    throw new Error('cron_dono tem ' + ((donos || []).length) + ' linha(s); esperava exatamente 1');
+  }
+  const linhas = await api('/cron_estado?select=chave,valor,del&dominio=eq.evento&dono=eq.' + donos[0].uid);
+  return eventosDeLinhas(linhas);
+}
+
 export function montarAvisoEventos(eventos) {
   const n = eventos.length;
   if (n === 0) return null;
@@ -101,6 +137,13 @@ export function jaEnviado(estado, id) {
   return !!(estado && estado.enviados && estado.enviados[id]);
 }
 export function decidir(dados, estado, hojeISO) {
+  /* SEM EVENTOS NÃO É "NENHUM EVENTO". Antes eles vinham do `lerDados` e
+     estavam sempre presentes; agora vêm da rede, e a ausência da chave só pode
+     significar que alguém esqueceu de buscá-los. Emudecer aqui faria o aviso
+     de datas sumir sem ninguém notar. */
+  if (!dados || !dados.eventos || typeof dados.eventos !== 'object') {
+    throw new Error('decidir: faltam os eventos — use buscarEventos(api) antes.');
+  }
   const avisos = [];
   const av = montarAvisoVagas(vagasDoLote(dados.vagas, dados.lote), dados.lote);
   if (av && !jaEnviado(estado, av.id)) avisos.push({ ...av, ids: [av.id] });
@@ -161,14 +204,17 @@ export async function rodar(dados, estado, inscricoes, hojeISO, dep) {
 }
 
 /* ---------- leitura do repositório e execução ---------- */
+/* SÓ O QUE MORA EM ARQUIVO: as vagas e o lote, que são do coletor e não têm
+   nada com a sincronia. Os EVENTOS não vêm mais daqui — ver buscarEventos(). E
+   não são preenchidos com `{}` de consolo: quem monta os dados tem de ir
+   buscá-los, e esquecer disso quebra em vez de emudecer. */
 export function lerDados(raiz, hojeISO) {
   const j = (p, d) => { try { return JSON.parse(fs.readFileSync(path.join(raiz, p), 'utf8')); } catch (e) { return d; } };
   const vagasArq = j('dados/vagas.json', {});
   const itens = Array.isArray(vagasArq) ? vagasArq : (vagasArq.itens || []);
   let nomes = [];
   try { nomes = fs.readdirSync(path.join(raiz, 'eventos')); } catch (e) { nomes = []; }
-  const estadoArq = j('Cronograma/estado.json', {});
-  return { vagas: itens, lote: loteMaisRecente(nomes), eventos: estadoArq.eventos || {}, hoje: hojeISO };
+  return { vagas: itens, lote: loteMaisRecente(nomes), hoje: hojeISO };
 }
 
 async function principal() {
@@ -190,6 +236,7 @@ async function principal() {
   let estado = { enviados: {} };
   try { estado = JSON.parse(fs.readFileSync(ARQ_ESTADO, 'utf8')); } catch (e) {}
   const dados = lerDados(RAIZ, hojeISO);
+  dados.eventos = await buscarEventos(api);        /* Fase 9G-1: do cron_estado */
   const inscricoes = await api('/cron_push_inscricao?select=id,endpoint,p256dh,auth,falhas');
   console.log('hoje: ' + hojeISO + ' | lote de vagas: ' + (dados.lote || 'nenhum') +
               ' | aparelhos inscritos: ' + inscricoes.length);

@@ -57,9 +57,26 @@ USO:
     python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-4 --para 2
     python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-5 --para 1 --seco
 
-O --registrar escreve um toque com aparelho "cowork" e dobra em seguida. Não passa
-pela rede: grava o arquivo na pasta conectada e lê de volta no mesmo comando. É a
-metade que faltava do elo pipeline -> Cronograma.
+    # o Cowork publicando a estrutura que acabou de montar:
+    python3 scripts/dobrar_toques.py --publicar-estrutura /tmp/entrada-nova.json
+    python3 scripts/dobrar_toques.py --publicar-estrutura /tmp/entrada-nova.json --seco
+
+O --publicar-estrutura escreve Cronograma/entrada.json E registra na
+cron_estrutura_base exatamente a estrutura publicada, no mesmo ato. Ele RECEBE a
+estrutura pronta — não a reconstrói de outra fonte — e recusa a publicação inteira
+se não puder registrar a base: publicar só metade deixaria a base mentindo, e o
+merge de três vias viraria de duas em silêncio. Exige SUPABASE_URL e
+SUPABASE_SECRET_KEY no ambiente.
+
+O --registrar escreve um toque com aparelho "cowork" e dobra em seguida: grava o
+arquivo na pasta conectada e lê de volta no mesmo comando. É a metade que faltava
+do elo pipeline -> Cronograma.
+
+DESDE A FASE 9G-0 ele também publica o MESMO toque no estado compartilhado (uma
+linha `item` e uma linha de registro), quando SUPABASE_URL e SUPABASE_SECRET_KEY
+estiverem no ambiente. Sem elas, grava o toque, diz que não publicou e segue — o
+caminho do GitHub continua inteiro. O toque é o artefato durável; publicar é
+melhor esforço.
 
 REGRA DURA DO --registrar: ele RECUSA subitem de prova "estrela". O mapa_portal.json
 marca assim as etapas cuja conclusão é decisão do autor e não artefato — a escolha
@@ -351,6 +368,273 @@ def procurar_na_entrada(pid, proj_id, sub_id):
     return (None, None, None)
 
 
+# ===================== A PUBLICACAO DA ESTRUTURA (9G-0 B1) =====================
+# O entrada.json e escrito pelo Cowork a partir do que o pipeline produziu (ver o
+# `_escritor` dentro do proprio arquivo). Ate aqui isso era um `write` solto: o
+# arquivo ia para o repositorio e ninguem registrava O QUE tinha sido publicado.
+#
+# A cron_estrutura_base existe justamente para guardar isso, e e a TERCEIRA VIA
+# do merge: sem ela, discordancia entre o entrada.json e o aparelho so pode
+# significar "o aparelho esta desatualizado" — e renomear a mao vira coisa que a
+# proxima publicacao desfaz em silencio. Com ela, a pergunta passa a ser "o
+# pipeline mudou este campo desde a ultima publicacao?", que e outra pergunta.
+#
+# POR ISSO OS DOIS SAO UM ATO SO. Publicar o arquivo sem registrar a base
+# deixaria a base MENTINDO — dizendo "o pipeline nunca mexeu nisso" sobre um
+# campo que ele acabou de mexer —, e uma base que mente e pior do que base
+# nenhuma: o merge de tres vias viraria de duas sem ninguem perceber.
+#
+# A ORDEM E A GARANTIA. O arquivo novo e escrito num temporario, a base e
+# publicada, e so entao o temporario toma o lugar do entrada.json. Se a
+# publicacao falhar, o temporario e removido e NADA muda: o arquivo anterior e a
+# base anterior continuam de acordo um com o outro. E por isso que aqui, ao
+# contrario do --registrar, publicar NAO e melhor esforco — sem credenciais o
+# comando recusa, em vez de publicar so metade.
+#
+# A BASE NASCE DA PRIMEIRA PUBLICACAO REAL, e nao de uma semeadura: nada aqui le
+# o entrada.json que ja esta no disco para "preencher" a base. Semear seria
+# afirmar que o pipeline publicou algo que ele talvez nunca tenha publicado —
+# exatamente a mentira que o paragrafo acima descreve.
+CAMPOS_PROJETO = ("t", "n", "mes")
+CAMPOS_SUBITEM = ("t", "n", "onde", "prova", "medida", "ordem")
+
+
+def _so_campos(d, campos):
+    """O valor guardado e SO o que o esquema declara para aquele tipo. Guardar o
+    objeto inteiro faria a base carregar campos que nao sao estrutura (um `st`,
+    por exemplo) e o merge passaria a comparar progresso como se fosse titulo."""
+    return {c: d[c] for c in campos if c in d}
+
+
+def linhas_da_base(entrada):
+    """Converte a estrutura PUBLICADA nas linhas da cron_estrutura_base. Recebe o
+    objeto que vai para o disco — nunca o que ja estava la, nunca o estado."""
+    fora = []
+    for pid, projetos in (entrada.get("paineis") or {}).items():
+        for pr in (projetos or []):
+            if not pr or not pr.get("id"):
+                continue
+            fora.append({"chave": "%s/%s" % (pid, pr["id"]), "tipo": "projeto",
+                         "valor": _so_campos(pr, CAMPOS_PROJETO)})
+            for sub in (pr.get("subs") or []):
+                if not sub or not sub.get("id"):
+                    continue
+                fora.append({"chave": "%s/%s/%s" % (pid, pr["id"], sub["id"]),
+                             "tipo": "subitem",
+                             "valor": _so_campos(sub, CAMPOS_SUBITEM)})
+    return fora
+
+
+def _conferir_entrada(entrada):
+    """Recusa cedo o que nao e uma estrutura publicavel. Um arquivo meio escrito
+    que chegasse a base seria pior do que um erro: viraria a versao `publicada`."""
+    if not isinstance(entrada, dict):
+        raise RuntimeError("a estrutura precisa ser um objeto JSON")
+    paineis = entrada.get("paineis")
+    if not isinstance(paineis, dict) or not paineis:
+        raise RuntimeError("a estrutura nao tem `paineis`")
+    if not entrada.get("_gerado_em"):
+        raise RuntimeError("a estrutura nao tem `_gerado_em`: sem ele a base nao "
+                           "sabe de que publicacao ela e")
+    vistas = set()
+    for pid, projetos in paineis.items():
+        if not isinstance(projetos, list):
+            raise RuntimeError("paineis['%s'] deveria ser uma lista" % pid)
+        for pr in projetos:
+            if not isinstance(pr, dict) or not pr.get("id"):
+                raise RuntimeError("projeto sem id em '%s'" % pid)
+            k = "%s/%s" % (pid, pr["id"])
+            if k in vistas:
+                raise RuntimeError("id de projeto repetido: %s" % k)
+            vistas.add(k)
+            for sub in (pr.get("subs") or []):
+                if not isinstance(sub, dict) or not sub.get("id"):
+                    raise RuntimeError("subitem sem id em %s" % k)
+                ks = "%s/%s" % (k, sub["id"])
+                if ks in vistas:
+                    raise RuntimeError("id de subitem repetido: %s" % ks)
+                vistas.add(ks)
+
+
+def publicar_estrutura(caminho_novo, seco):
+    """Publica a estrutura de `caminho_novo` como Cronograma/entrada.json e
+    registra na cron_estrutura_base EXATAMENTE o que foi publicado."""
+    with open(caminho_novo, "r", encoding="utf-8") as f:
+        entrada = json.load(f)
+    _conferir_entrada(entrada)
+    linhas = linhas_da_base(entrada)
+    gerado_em = entrada["_gerado_em"]
+
+    print("Estrutura a publicar (de %s):" % os.path.relpath(caminho_novo, RAIZ))
+    print("  %d projeto(s) e %d subitem(ns), gerada em %s"
+          % (sum(1 for l in linhas if l["tipo"] == "projeto"),
+             sum(1 for l in linhas if l["tipo"] == "subitem"), gerado_em))
+    if seco:
+        print("\n--seco: nada foi escrito, nem no disco nem na base.")
+        return 0
+
+    url, chave = _credenciais()
+    if not url or not chave:
+        print("\nRECUSADO: faltam %s e/ou %s no ambiente." % (API_URL, API_CHAVE))
+        print("Publicar o arquivo sem registrar a base deixaria a base mentindo, e")
+        print("o merge de tres vias viraria de duas em silencio. Nada foi escrito.")
+        return 1
+
+    # 1. o arquivo novo, ainda ao lado do definitivo
+    temporario = ARQ_ENTRADA + ".novo"
+    with open(temporario, "w", encoding="utf-8") as f:
+        json.dump(entrada, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+
+    # 2. a base, NUMA CHAMADA SO. Gravar num POST e retirar num DELETE seriam
+    #    duas operacoes independentes: uma falha entre elas deixaria a base pela
+    #    metade — afirmando que o pipeline publicou algo que ele nao publicou —
+    #    enquanto o entrada.json antigo continuaria no disco. Compensar depois
+    #    nao resolve, porque a compensacao tambem pode falhar.
+    #
+    #    O cron_publicar_estrutura() faz a substituicao inteira dentro de UMA
+    #    transacao (ver sql/cron_estado.sql): ou a base passa a ser exatamente a
+    #    estrutura publicada, ou continua sendo exatamente a anterior. E o que
+    #    torna verdadeira a garantia que este comando anuncia.
+    try:
+        dono = _dono(url, chave)
+        agora = _agora_iso()
+        r = _pedir(url, chave, "/rpc/cron_publicar_estrutura", "POST", {
+            "p_dono": dono, "p_gerado_em": gerado_em, "p_linhas": linhas,
+        })
+        conta = (r[0] if isinstance(r, list) and r else r) or {}
+        mortas = int(conta.get("retiradas") or 0)
+        gravadas = int(conta.get("gravadas") or len(linhas))
+    except Exception as e:
+        try:
+            os.remove(temporario)
+        except OSError:
+            pass
+        print("\nFALHOU ao registrar a base: %s" % e)
+        print("NADA foi publicado: o entrada.json anterior e a base anterior")
+        print("continuam de acordo um com o outro. Corrija e repita.")
+        return 1
+
+    # 3. so agora o arquivo toma o lugar do anterior
+    os.replace(temporario, ARQ_ENTRADA)
+    print("\nPublicado:")
+    print("  %s" % os.path.relpath(ARQ_ENTRADA, RAIZ))
+    print("  cron_estrutura_base: %d linha(s) registrada(s)%s"
+          % (gravadas, (", %d retirada(s)" % mortas) if mortas else ""))
+    print("  A base agora diz exatamente o que este arquivo publica (%s)." % agora)
+    return 0
+
+
+# ======================= O CAMINHO ONLINE DO --registrar =======================
+# Fase 9G-0. O pipeline sempre foi um segundo escritor REAL, e nao um espelho: ele
+# afirma um fato que so ele verifica (o artefato existe), e o afirma pela mesma
+# porta por onde o iPhone entra. Ate aqui essa porta era so o arquivo de toque.
+# Enquanto o caminho do GitHub existir isso basta; no dia em que ele sair, o
+# pipeline ficaria sem interlocutor. Esta e a metade que faltava, e ela e
+# preparada AGORA justamente para que a 9G nao precise inventar nada depois.
+#
+# O QUE ELE PUBLICA, e nada alem disso:
+#   · uma linha `item` em cron_estado — progresso e ciclo de vida;
+#   · uma linha em cron_registro, com o id DO TOQUE como chave primaria.
+# Nao publica estrutura. A separacao entre progresso e estrutura e do esquema, e
+# a base de tres vias (cron_estrutura_base) tem dono proprio e outro momento.
+#
+# O MESMO `em` NOS DOIS CAMINHOS: o `agora` que carimba o toque e o mesmo que
+# sobe na linha. Sem isso o LWW de um caminho decidiria diferente do outro, e a
+# prova da 9F nao teria o que comparar.
+#
+# A FRONTEIRA CONTINUA ANTES: a recusa de prova "estrela" acontece la em cima,
+# no registrar(), e nada aqui a alcanca. Publicar e o ultimo passo de um toque
+# que ja foi autorizado — nunca uma segunda chance para um que nao foi.
+#
+# O RELOGIO DO SERVIDOR RECUSA O ATRASADO: o gatilho cron_estado_relogio()
+# descarta upsert cujo `em` nao seja mais novo. O pipeline nao pode desfazer uma
+# decisao mais recente sua, nem que tente.
+#
+# O TOQUE E O ARTEFATO DURAVEL. Publicar e melhor esforco: se a rede cair ou as
+# credenciais faltarem, o arquivo de toque ja esta gravado e a dobra segue como
+# sempre. O comando diz o que deixou de fazer, em vez de fingir que fez.
+API_URL   = "SUPABASE_URL"
+API_CHAVE = "SUPABASE_SECRET_KEY"
+
+
+def _credenciais():
+    """Devolve (url, chave) ou (None, None). As duas ja existem no repositorio,
+    usadas pelo avisos/enviar.mjs: SUPABASE_URL e uma variable e
+    SUPABASE_SECRET_KEY um secret. NENHUMA delas mora no codigo, e nenhuma e
+    inventada aqui."""
+    url = (os.environ.get(API_URL) or "").rstrip("/")
+    chave = os.environ.get(API_CHAVE) or ""
+    return (url, chave) if (url and chave) else (None, None)
+
+
+def _pedir(url, chave, caminho, metodo="GET", corpo=None, prefer=None):
+    import urllib.request
+    import urllib.error
+    cabecalho = {"apikey": chave, "Authorization": "Bearer " + chave,
+                 "Content-Type": "application/json"}
+    if prefer:
+        cabecalho["Prefer"] = prefer
+    dados = json.dumps(corpo).encode("utf-8") if corpo is not None else None
+    req = urllib.request.Request(url + "/rest/v1" + caminho, data=dados,
+                                 headers=cabecalho, method=metodo)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        bruto = r.read().decode("utf-8") or "[]"
+    return json.loads(bruto) if bruto.strip() else []
+
+
+def _dono(url, chave):
+    """O uuid do dono vem da cron_dono, e nao de um segredo a mais. DOIS DONOS E
+    AMBIGUIDADE, nao um caso a resolver por escolha: o pipeline para e diz."""
+    linhas = _pedir(url, chave, "/cron_dono?select=uid&limit=2")
+    if len(linhas) != 1:
+        raise RuntimeError("cron_dono tem %d linha(s); esperava exatamente 1" % len(linhas))
+    return linhas[0]["uid"]
+
+
+def publicar_online(toque, seco):
+    """Sobe o MESMO toque para o estado compartilhado. Devolve um texto do que
+    aconteceu — quem chama imprime, e nunca deixa isto derrubar a gravacao."""
+    url, chave = _credenciais()
+    if not url or not chave:
+        return ("nao publicado online: faltam %s e/ou %s no ambiente.\n"
+                "  O caminho do GitHub segue inteiro. Para publicar tambem online,\n"
+                "  rode onde as duas existam (ver .github/workflows/dobrar-toques.yml)."
+                % (API_URL, API_CHAVE))
+    if seco:
+        return "--seco: nada publicado online."
+
+    d = toque["dados"]
+    dono = _dono(url, chave)
+    chave_item = "%s/%s/%s" % (d["pid"], d["projId"], d["subId"])
+
+    # `item`: progresso e ciclo de vida. Nem titulo, nem filhos — estrutura nao
+    # viaja por aqui. O `motivo` vai vazio de proposito: o pipeline nao tem
+    # motivo a dar, e temMotivo do toque ja e False.
+    _pedir(url, chave, "/cron_estado", "POST", [{
+        "dono": dono, "dominio": "item", "chave": chave_item,
+        "valor": {"st": d["para"], "vida": d.get("vida") or "ativo",
+                  "motivo": "", "voltar_em": "", "vidaDesde": ""},
+        "del": False, "em": toque["quando"], "aparelho": "cowork",
+        "expira_em": None,
+    }], prefer="resolution=merge-duplicates,return=minimal")
+
+    # `cron_registro`: a chave e o id DO TOQUE, a mesma que o caminho do GitHub
+    # grava em `tid`. E o que faz as duas descidas reconhecerem a mesma linha e
+    # nao duplica-la. ignore-duplicates porque reenviar tem de ser silencio.
+    _pedir(url, chave, "/cron_registro", "POST", [{
+        "id": toque["id"], "dono": dono, "d": d["d"],
+        "pid": d["pid"], "proj_id": d["projId"], "sub_id": d["subId"],
+        "proj_t": d.get("projT") or "", "sub_t": d.get("subT") or "",
+        "de": d.get("de"), "para": d["para"], "vida": d.get("vida") or "ativo",
+        "motivo": "", "aparelho": "cowork",
+    }], prefer="resolution=ignore-duplicates,return=minimal")
+
+    return ("publicado online: item %s e uma linha de registro (%s).\n"
+            "  O relogio do servidor descarta a linha se ja houver decisao mais nova."
+            % (chave_item, toque["id"]))
+
+
 def registrar(alvo, para, vida, forcar, seco):
     """Escreve UM toque, como se o Cowork fosse mais um aparelho."""
     partes = (alvo or "").split("/")
@@ -391,6 +675,7 @@ def registrar(alvo, para, vida, forcar, seco):
     print("  st %s -> %s   vida=%s   prova=%s" % (de, para, vida, prova or "?"))
     if seco:
         print("\n--seco: nada foi escrito.")
+        print("  " + publicar_online(toque, True))
         return 0
 
     os.makedirs(DIR_TOQUES, exist_ok=True)
@@ -401,6 +686,14 @@ def registrar(alvo, para, vida, forcar, seco):
                   f, ensure_ascii=False, indent=1)
         f.write("\n")
     print("\nEscrito em %s" % os.path.relpath(caminho, RAIZ))
+
+    # DEPOIS de gravado, e nunca antes: o arquivo e o artefato duravel, e uma
+    # rede fora nao pode custar o toque.
+    try:
+        print("  " + publicar_online(toque, seco))
+    except Exception as e:
+        print("  nao publicado online: %s" % e)
+        print("  O toque esta gravado. A dobra e o caminho do GitHub seguem inteiros.")
     return 0
 
 
@@ -414,6 +707,21 @@ def arg(nome, padrao=None):
 
 def main():
     seco = "--seco" in sys.argv
+
+    if "--publicar-estrutura" in sys.argv:
+        caminho = arg("--publicar-estrutura")
+        if not caminho:
+            print("Falta o arquivo: --publicar-estrutura caminho/para/entrada.json")
+            return 1
+        if not os.path.exists(caminho):
+            print("Nao existe: %s" % caminho)
+            return 1
+        try:
+            return publicar_estrutura(caminho, seco)
+        except Exception as e:
+            print("RECUSADO: %s" % e)
+            print("Nada foi escrito.")
+            return 1
 
     if "--registrar" in sys.argv:
         para = arg("--para")

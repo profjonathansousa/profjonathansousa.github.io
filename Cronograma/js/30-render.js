@@ -3,7 +3,50 @@
    apagar, trocar de aba). Nenhuma regra de dominio mora aqui: quem decide o
    que e verdade sao 20-regras.js e 10-nucleo.js; aqui so se desenha e se
    reage ao toque na tela. */
-function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,checks);renderHoje();}
+/* O FUNIL DAS ROTINAS (Fase 9D.4), e o UNICO lugar que escreve `cron:checks`.
+   Antes eram tres — toggleCheck, marcarAtrasada e limparHoje —, cada um
+   gravando por conta propria. Enquanto a marca era local isso nao custava
+   nada; a partir do momento em que ela viaja, tres escritores seriam tres
+   chances de uma marca ficar so aqui.
+
+   NAO HA CAMINHO LEGADO PARA ESTE DOMINIO, e a ausencia e da historia dele:
+   `cron:checks:` nunca atravessou aparelho. Nao havia toque `rotina` nem secao
+   no estado.json, e nao houve por que inventar um — o caminho do GitHub saiu
+   na 9G. A razao de ele ser local era "historico permanente em repositorio
+   publico por um valor que morre numa semana"; numa base privada e podavel a
+   razao nao sobrevive, e e por isso que a 9D.4 existe.
+
+   ELA MORRE DE VELHA, e por isso `expira_em`. atrasadas() le sete dias para
+   tras e a revisao le a semana corrente: marca de rotina com mais de 90 dias
+   nao e lida por ninguem. Sem lapide — "nao marcada" e um estado, e e assim
+   que DESMARCAR atravessa aparelhos. */
+function rotinaExpira(dia){
+  try{
+    var t = new Date(String(dia) + "T00:00:00.000Z").getTime();
+    if(!isFinite(t)) return null;
+    return new Date(t + ROTINA_VIDA_DIAS * 86400000).toISOString();
+  }catch(e){ return null; }
+}
+function tocarRotina(dia, id, feito){
+  if(!dia || !id) return null;
+  var ck = LS("cron:checks:"+dia, {}) || {};
+  ck[id] = !!feito;
+  save("cron:checks:"+dia, ck);
+  /* O `checks` do 10-nucleo.js e uma copia em memoria do dia de hoje, lida uma
+     vez no carregamento. Gravar sem atualiza-la faria o renderHoje repintar o
+     valor velho. */
+  if(dia === dateKey) checks = ck;
+  var iso = null;
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      var it = SYNC.salvarAlteracao("rotina", dia + "/" + id, {feito: !!feito},
+                                    {expira_em: rotinaExpira(dia)});
+      iso = it && it.em;
+    }
+  }catch(e){ try{ console.error("sync: rotina nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+function toggleCheck(id){ tocarRotina(dateKey, id, !checks[id]); renderHoje(); }
 
 /* ================== O QUE FICOU PARA TRAS ==================
    As marcacoes do dia sao por DATA (cron:checks:AAAA-MM-DD). Isso e certo — o
@@ -20,21 +63,48 @@ function toggleCheck(id){checks[id]=!checks[id];save("cron:checks:"+dateKey,chec
    e voce so lembrou no sabado, quem recebe a marca e a quarta. Marcar em hoje
    faria a semana mentir duas vezes: quarta vazia e sabado cheio.
 
-   ISTO NAO VIAJA, e nao e esquecimento: cron:checks: sempre foi por aparelho,
-   e nada aqui muda o que atravessa. O bloco le e escreve a mesma chave que a
-   aba Hoje ja usava.
+   ISTO VIAJA DESDE A FASE 9D.4. Ate ali `cron:checks:` era por aparelho, e o
+   bloco dizia isso. Agora marcar a quarta no Mac marca a quarta no celular —
+   e a gravacao continua sendo na DATA DE ORIGEM, entao o que viaja e a quarta,
+   e nao o sabado em que voce lembrou. O bloco le e escreve a mesma chave que a
+   aba Hoje ja usava, agora pelo mesmo funil.
    =========================================================== */
 function marcarAtrasada(dia, id){
-  var ck = LS("cron:checks:"+dia, {}) || {};
-  ck[id] = true;
-  save("cron:checks:"+dia, ck);
-  if(dia === dateKey) checks = ck;
+  tocarRotina(dia, id, true);
   renderHoje();
 }
-function dispensarAtrasada(dia, id){
+/* O FUNIL DAS DISPENSAS (Fase 9D.5), e o unico lugar que escreve
+   `cron:hoje-dispensados`. Mesma historia da 9D.4 e pela mesma razao: a chave
+   era local porque o repositorio e publico, nunca houve toque `dispensa` nem
+   secao no estado.json, e nao houve por que inventar um — o caminho do GitHub
+   saiu na 9G.
+
+   AS DUAS FORMAS DA CHAVE. No aparelho a entrada e `AAAA-MM-DD|id`, com barra
+   vertical; no estado online e `rotina/AAAA-MM-DD/id`, o formato que o esquema
+   declara desde a 9A (ha uma segunda forma prevista la, `meta-aviso/AAAA-MM`,
+   que nada ainda escreve). O prefixo existe porque a tabela guarda os dois
+   tipos de dispensa na mesma chave composta.
+
+   NAO HA LAPIDE, e a ausencia e do dominio: nao existe "desdispensar". A
+   entrada some sozinha quando o dia sai da janela de sete dias — e do servidor,
+   pelo `expira_em`, com a mesma vida da marca de rotina. */
+function tocarDispensa(dia, id){
+  if(!dia || !id) return null;
   var disp = podarDispensados();
   disp[dia+"|"+id] = true;
   save(ATRASO_KEY, disp);
+  var iso = null;
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      var it = SYNC.salvarAlteracao("dispensa", "rotina/" + dia + "/" + id, {},
+                                    {expira_em: rotinaExpira(dia)});
+      iso = it && it.em;
+    }
+  }catch(e){ try{ console.error("sync: dispensa nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+function dispensarAtrasada(dia, id){
+  tocarDispensa(dia, id);
   renderHoje();
 }
 function renderAtrasadas(){
@@ -391,10 +461,12 @@ function renderRevisao(){
     });
     C.metas.forEach(function(m){ h += _revLinha('<b>Meta</b> \u00b7 '+escapeHtml(m.t), ""); });
     if(C.rotinas){
-      /* O rotulo nao e enfeite: cron:checks: e por aparelho, e o numero seria
-         outro no celular. */
+      /* O rotulo "neste aparelho" saiu na Fase 9D.4, e nao por enxugar texto:
+         a marca de rotina passou a viajar, entao o numero deixou de ser local.
+         Manter a ressalva seria dizer ao leitor uma coisa que o programa nao
+         faz mais. */
       h += '<div class="rev-local">'+C.rotinas+' rotina'+(C.rotinas===1?'':'s')+
-           ' conclu\u00edda'+(C.rotinas===1?'':'s')+' \u00b7 <i>neste aparelho</i></div>';
+           ' conclu\u00edda'+(C.rotinas===1?'':'s')+'</div>';
     }
   }
   h += '</div>';
@@ -578,7 +650,8 @@ function renderHoje(){
   html+=renderRetomadas();
   /* O PAINEL DE ROTINAS NAO MARCADAS SAIU DA TELA, e so da tela: renderAtrasadas,
      atrasadas, marcarAtrasada, dispensarAtrasada e podarDispensados continuam
-     inteiros logo acima, e cron:hoje-dispensados nao foi tocada. Basta
+     inteiros logo acima, e cron:hoje-dispensados continua sendo a mesma chave
+     (desde a 9D.5 ela tambem viaja, pelo funil). Basta
      descomentar esta linha para o painel voltar.
 
      A implementacao fica porque atrasadas() NAO e so deste painel: a revisao
@@ -646,8 +719,13 @@ function trazerMeta(i){
   const origem=getMetas(o.mes).filter(function(m){return m.id!==o.meta.id;});
   setMetas(origem,o.mes);
   /* Trazer e mover: nasce uma no mes atual e morre a do mes de origem. Os
-     dois toques saem juntos, senao o outro aparelho ficaria com as duas. */
-  tocarMeta(monthKey,nova,false);
+     dois toques saem juntos, senao o outro aparelho ficaria com as duas.
+     A ORDEM E CRIAR ANTES DE APAGAR, e continua sendo: se so a primeira subir,
+     o outro aparelho ve a meta duas vezes — visivel e corrigivel — em vez de
+     nenhuma vez. A lapide da origem nao precisa de `em`: o item deixou de
+     existir aqui. */
+  nova.em=tocarMeta(monthKey,nova,false)||nova.em;
+  setMetas(destino,monthKey);
   tocarMeta(o.mes,o.meta,true);
   renderMetas();
 }
@@ -663,7 +741,13 @@ function trazerTodas(){
   Object.keys(porMes).forEach(function(k){
     setMetas(getMetas(k).filter(function(m){return porMes[k].indexOf(m.id)<0;}),k);
   });
-  novas.forEach(function(m){ tocarMeta(monthKey, m, false); });
+  /* UM `em` POR META, e nao o `agora` compartilhado acima. Este laco e o pior
+     caso da divergencia que a 9C-0 corrige: N metas nascendo no mesmo
+     milissegundo, todas com o mesmo `agora`, enquanto o relogio monotonico da
+     a cada toque um instante proprio. Da segunda em diante, o `em` local
+     ficava ATRAS do que subiu. */
+  novas.forEach(function(m){ m.em = tocarMeta(monthKey, m, false) || m.em; });
+  setMetas(destino,monthKey);
   p.forEach(function(o){ tocarMeta(o.mes, o.meta, true); });
   renderMetas();
 }
@@ -674,127 +758,70 @@ function trocarMes(k){mesAtivo=k;renderMetas();}
    ultima lista a chegar levaria a outra junto. E `del` e a lapide de uma meta
    removida — sem ela, quem apaga no celular veria a meta voltar do Mac no
    carregamento seguinte, porque ausencia nao se distingue de desconhecimento. */
-function tocarMeta(mes, m, apagada){
-  if(!m || !m.id) return;
-  enfileirarToque("meta", {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
-                           de:m.de||null, del:!!apagada});
+/* DEVOLVE O INSTANTE QUE SUBIU, e o `quandoISO` existe para o botao do acervo.
+   Ate a Fase 9C-0 esta funcao nao devolvia nada e cada caller carimbava o `em`
+   com `new Date()` por conta propria. Os dois relogios coincidem quase sempre —
+   e por isso o defeito era invisivel —, mas o instanteDoToque() e MONOTONICO:
+   quando duas acoes caem no mesmo milissegundo, ele desempata somando 1ms e o
+   `new Date()` do caller nao acompanha. Medido: a 1a acao de um milissegundo
+   coincide, a 2a diverge +1ms, a 3a +2ms. E o caso REAL, porque trazerTodas()
+   emite 2N toques num laco — e ali o codigo era pior ainda, com UM `agora`
+   compartilhado por todas as metas novas.
+
+   Enquanto so havia o caminho do GitHub isso era quase inocuo: a descida
+   reescrevia o item com o mesmo conteudo. A partir do momento em que o `em`
+   passa a decidir quem vence — que e o que a 9C fara —, um `em` local mais
+   ANTIGO do que o instante publicado faz o proprio ato voltar como se fosse
+   novidade de fora. E exatamente a razao pela qual o tocarPrioridade da 9B
+   devolve o iso desde o primeiro dia. */
+function tocarMeta(mes, m, apagada, quandoISO){
+  if(!m || !m.id) return null;
+  var d = {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
+           de:m.de||null, del:!!apagada};
+  var iso = instanteISO(quandoISO);
+  /* ============ Fase 9C-2: o mesmo ato, no estado online ============
+     O MESMO INSTANTE NOS DOIS CAMINHOS. E o `iso` que o toque acabou de usar,
+     e nao um segundo relogio — foi para isto que a 9C-0 fez esta funcao
+     devolve-lo. Sem essa igualdade, o mesmo ato poderia vencer por um caminho
+     e perder pelo outro enquanto os dois convivem.
+
+     O PAYLOAD SAI DO MESMO `d` que o toque leva, campo por campo. Montar um
+     segundo objeto aqui repetiria o defeito do `dadosDoEvento` de 29/08: no dia
+     em que um campo novo comecasse a viajar, um dos dois montadores ficaria
+     para tras.
+
+     `em` NAO ENTRA NO VALOR. Ele e coluna do cron_estado, e e por ela que o
+     gatilho do relogio decide; duplica-lo dentro do jsonb criaria duas fontes
+     para o mesmo fato. Mesma escolha da 9B.
+
+     SO ESCREVE COM A SINCRONIA LIGADA: sem a guarda, um aparelho que nunca
+     entrou acumularia fila para sempre, sem nada que a drenasse. */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("meta", d.mes + "/" + d.mid,
+        {t:d.t, done:d.done, de:d.de}, {em: iso, del: d.del});
+    }
+  }catch(e){ try{ console.error("sync: meta nao subiu:", e); }catch(e2){} }
+  return iso;
 }
-function toggleMeta(i){const k=mesAtivo;const m=getMetas();if(!m[i])return;m[i].done=!m[i].done;m[i].em=new Date().toISOString();setMetas(m);tocarMeta(k,m[i],false);renderMetas();}
+/* Grava duas vezes, como o togglePrioridadeFeita: o instante so existe depois
+   de enfileirar, e a primeira gravacao garante que a mudanca sobreviva mesmo se
+   o enfileiramento falhar. */
+function toggleMeta(i){const k=mesAtivo;const m=getMetas();if(!m[i])return;
+  m[i].done=!m[i].done;setMetas(m);
+  m[i].em=tocarMeta(k,m[i],false)||m[i].em;setMetas(m);renderMetas();}
 /* Sai do onblur do contenteditable: so enfileira se o texto mudou de verdade,
    senao cada clique fora do campo viraria um toque. */
-function editMeta(i,t){const k=mesAtivo;const m=getMetas();if(!m[i])return;const novo=t.trim()||m[i].t;if(novo===m[i].t)return;m[i].t=novo;m[i].em=new Date().toISOString();setMetas(m);tocarMeta(k,m[i],false);}
+function editMeta(i,t){const k=mesAtivo;const m=getMetas();if(!m[i])return;
+  const novo=t.trim()||m[i].t;if(novo===m[i].t)return;
+  m[i].t=novo;setMetas(m);
+  m[i].em=tocarMeta(k,m[i],false)||m[i].em;setMetas(m);}
 function delMeta(i){const k=mesAtivo;const m=getMetas();const fora=m[i];if(!fora)return;m.splice(i,1);setMetas(m);tocarMeta(k,fora,true);renderMetas();}
 /* Nasce sem texto, e por isso nao enfileira nada: o toque sai no primeiro
    editMeta, ja com o que voce escreveu. */
 function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:false, em:new Date().toISOString()});setMetas(m);renderMetas();
   const b=document.querySelectorAll("#metas-wrap .goal-text");if(b.length)b[b.length-1].focus();}
 
-/* ============ PUBLICAR O ACERVO QUE JA ESTAVA NO APARELHO ============
-   O toque so publica marcacao NOVA. A meta que voce escreveu antes de a
-   sincronia existir mora so no aparelho que a escreveu, e nao viajaria nunca.
-   A triagem teve o mesmo problema em 27/08 e ganhou o migrarTriagemUmaVez.
-
-   POR QUE UM BOTAO, E NAO UMA ROTINA. A triagem podia migrar sozinha porque
-   guardava o dia da marcacao: havia um instante verdadeiro a usar. A meta nao
-   guarda data nenhuma. Sem instante verdadeiro, os dois aparelhos publicariam
-   o proprio acervo com a mesma data inventada, e o empate seria decidido no
-   servidor pelo nome do arquivo — que nao e dado, e ordem de leitura de
-   diretorio. Com botao, quem decide qual aparelho e a fonte e voce.
-
-   POR QUE UMA DATA ANTIGA. 1o de janeiro de 2026 nao e um instante verdadeiro,
-   e ninguem finge que seja: e um piso. Publicar com a data de hoje faria este
-   acervo vencer qualquer edicao real ja feita no outro aparelho. Com um piso,
-   qualquer edicao feita depois — em qualquer aparelho — vence. E a licao do
-   Passo 8 do briefing de 27/08, aplicada de novo.
-
-   Cada meta recebe um instante distinto porque o relogio monotonico conta as
-   bases explicitas a parte; sem isso as N metas nasceriam com o mesmo id.
-   ==================================================================== */
-function marcarLaForaLocal(secao, chave, valor){
-  var fora = LS(ACERVO_LA_FORA_KEY, null) || {metas:{}, eventos:{}};
-  if(!fora[secao]) fora[secao] = {};
-  /* metas guardam a string do instante; eventos guardam {q, t, p} */
-  fora[secao][chave] = valor;
-  save(ACERVO_LA_FORA_KEY, fora);
-}
-
-function publicarAcervoUmaVez(){
-  /* SEM A FOTOGRAFIA, NAO PUBLICA.
-     O contador ate funciona sem ela, por uma regra de reserva; a publicacao,
-     nao. Ela precisa saber qual instante do piso ja foi gasto, senao os toques
-     nascem com ids que a dobra ja viu e sao descartados EM SILENCIO. E ela e
-     gravada pelo buscarEstado, que corre depois do boot: apertar o botao nos
-     primeiros instantes da pagina caia bem nessa janela. Recusar e visivel;
-     publicar no vazio nao seria. */
-  if(LS(ACERVO_LA_FORA_KEY, null) === null){
-    alert("Este aparelho ainda n\u00e3o leu o estado publicado.\n\n" +
-          "Sem isso n\u00e3o d\u00e1 para saber o que j\u00e1 est\u00e1 l\u00e1 fora, e a publica\u00e7\u00e3o poderia " +
-          "repetir instantes j\u00e1 usados \u2014 o que faria os toques sumirem em sil\u00eancio.\n\n" +
-          "Saia da aba e volte, ou recarregue, e tente de novo em alguns segundos.");
-    return;
-  }
-  var metas = metasParaPublicar(), eventos = eventosParaPublicar();
-  if(!metas.length && !eventos.length){
-    renderAcervoEstado();
-    alert("Nada a publicar: o que est\u00e1 neste aparelho ou j\u00e1 est\u00e1 l\u00e1 fora, ou \u00e9 o que a p\u00e1gina cria sozinha.");
-    return;
-  }
-  var partes = [];
-  if(metas.length)   partes.push(metas.length + " meta(s)");
-  if(eventos.length) partes.push(eventos.length + " data(s) importante(s)");
-  if(!confirm("Publicar " + partes.join(" e ") + " deste aparelho para os outros?\n\n" +
-      "Sobem com data de 1\u00ba de janeiro de 2026, de prop\u00f3sito: assim qualquer edi\u00e7\u00e3o feita depois disso, " +
-      "em qualquer aparelho, vence.\n\n" +
-      "Das datas sobem a data E o t\u00edtulo, exceto as que est\u00e3o com o cadeado fechado \u2014 " +
-      "dessas sobe s\u00f3 a data. O reposit\u00f3rio \u00e9 p\u00fablico.\n\n" +
-      "Fa\u00e7a a partir do aparelho que tem o acervo certo.")) return;
-  eventos.forEach(function(x){
-    var ev = x.ev;
-    /* O PISO SO VALE PARA O ACERVO DE VERDADE — o que nunca subiu e nao tem
-       instante proprio. Corrigir o titulo ou a marca de um evento que JA esta
-       la fora e um ato de agora: com o piso, o toque nasceria mais velho do que
-       o estado que ele quer corrigir, a dobra o descartaria como atrasado, e o
-       contador mostraria a mesma pendencia para sempre. Medido: a "Prova TOEFL",
-       cujo estado veio de uma edicao das 01:35, nao recebia o titulo. */
-    var iso = enfileirarToque("evento", dadosDoEvento(ev, false), x.novo ? ACERVO_EM : null);
-    marcarLaForaLocal("eventos", ev.id, {q:iso, t:(!ev.priv && !!String(ev.t||"").trim()), p:!!ev.priv});
-    if(!ev.em){
-      var lista = getEventos();
-      for(var i=0;i<lista.length;i++){ if(lista[i].id===ev.id){ lista[i].em = iso; break; } }
-      setEventos(lista);
-    }
-  });
-  metas.forEach(function(c){
-    var iso = enfileirarToque("meta", {mes:c.mes, mid:c.m.id, t:c.m.t||"", done:!!c.m.done,
-                                       de:c.m.de||null, del:false}, ACERVO_EM);
-    marcarLaForaLocal("metas", c.mes + "/" + c.m.id, iso);
-    /* Meta que nunca teve instante passa a ter o que subiu: assim ela deixa de
-       ser "tempo desconhecido" aqui dentro e a mesclagem seguinte nao a devolve
-       como se fosse novidade de fora. Meta que JA tinha instante fica como
-       estava — aquele instante e verdadeiro e mais novo, e rebaixa-lo seria
-       mentir sobre quando voce a editou. */
-    if(!c.m.em){
-      var lista = getMetas(c.mes);
-      for(var i=0;i<lista.length;i++){ if(lista[i].id===c.m.id){ lista[i].em = iso; break; } }
-      setMetas(lista, c.mes);
-    }
-  });
-  renderAcervoEstado();
-  try{ renderEventos(); }catch(e){}
-  alert(partes.join(" e ") + " entraram na fila. Sobem em alguns segundos, e o outro aparelho as mostra em um a tr\u00eas minutos.");
-}
-
-function renderAcervoEstado(){
-  var el = document.getElementById("acervo-estado"); if(!el) return;
-  var m, e;
-  try{ m = metasParaPublicar(); e = eventosParaPublicar(); }catch(err){ return; }
-  var partes = [];
-  if(m.length) partes.push(m.length + " meta(s)");
-  if(e.length) partes.push(e.length + " data(s)");
-  el.textContent = partes.length ? partes.join(" e ") + " daqui ainda sem publicar."
-                                 : "Nada a publicar: tudo daqui j\u00e1 est\u00e1 l\u00e1 fora.";
-  el.className = "backup-aviso" + (partes.length ? " velho" : "");
-}
 function renderEventos(){
   const box=document.getElementById("eventos"); if(!box)return;
   const evts=getEventos().slice().sort((a,b)=>a.data<b.data?-1:1);
@@ -861,9 +888,64 @@ function linhaDeEvento(e){
    Mac no carregamento seguinte, porque ausencia nao se distingue de
    desconhecimento. */
 
-function tocarEvento(ev, apagado){
-  if(!ev || !ev.id) return;
-  enfileirarToque("evento", dadosDoEvento(ev, apagado));
+/* Mesmo contrato do tocarMeta, e pela mesma razao — ver o comentario la. O
+   `quandoISO` nasceu para o botao do acervo, que saiu na 9G-3; continua no
+   contrato porque e por ele que as migracoes de uma vez por aparelho escrevem
+   com piso antigo, em vez de com o relogio de parede. */
+/* ============ O ESCRITOR DO EVENTO — Fase 9C-4 ============
+   O QUE MUDA: o titulo de um evento PRIVADO passa a viajar pelo caminho online.
+   O que NAO muda: ele continua fora do caminho legado, e a garantia continua
+   sendo estrutural — o `d` do dadosDoEvento nao MONTA o campo `t` quando priv.
+
+   POR QUE `cron_estado` E LUGAR SEGURO PARA ELE. Nao e "porque nao e o GitHub".
+   Sao duas propriedades verificadas:
+
+     1. Os dois canos sao DISJUNTOS. O estado.json e escrito pelo
+        dobrar_toques.py a partir dos toques; nada em cron_estado alcanca o
+        repositorio nem o entrada.json. O titulo privado nao entra no toque,
+        logo nao existe caminho por onde chegar la. Desde a 9G-3 o aplicativo
+        nem le mais o estado.json: so o pipeline o escreve, e ninguem o le de
+        volta para dentro da pagina.
+
+     2. A RLS de cron_estado exige `dono = auth.uid() AND cron_e_dono()`, e nao
+        ha politica nenhuma para o papel `anon` — a chave publishable, que e
+        publica e esta versionada, nao le uma linha. Provado contra o banco:
+        uma conta autenticada fora da allowlist enxerga zero linhas.
+
+   Portanto o titulo privado fica visivel para os aparelhos AUTENTICADOS COMO O
+   DONO, e para mais ninguem. E exatamente o modelo de acesso que a 9A definiu.
+
+   A LAPIDE NAO CARREGA CONTEUDO. Ao apagar, o valor sobe sem `t`: um evento
+   removido nao deve deixar o titulo — muito menos um privado — parado na
+   tabela. A lapide precisa dizer "isto foi apagado", e nada mais. */
+function tocarEvento(ev, apagado, quandoISO){
+  if(!ev || !ev.id) return null;
+  var d = dadosDoEvento(ev, apagado);
+
+  /* O INSTANTE VEM DO instanteDoToque(), e de mais lugar nenhum. Isso APOSENTA
+     a excecao que a 9C-0 precisou documentar: nao ha mais nenhum caminho de
+     escrita destes dominios carimbando o proprio `new Date()`.
+
+     O PARAMETRO `opts.soOnline` SAIU NA 9G-3. Ele existia para NAO gerar toque
+     quando so o titulo mudava — uma reconstrucao do Pages a toa. A subida
+     legada saiu na 9G-2 e os dois ramos viraram o mesmo instante; o unico
+     chamador que o passava decidia pelo eventoJaSubiu(), que lia a fotografia
+     do estado.json e saiu junto com ela. Ficaria um parametro sem efeito e sem
+     quem o produzisse. */
+  var iso = instanteISO(quandoISO);
+
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      var valor = {data: d.data, priv: d.priv};
+      /* O TITULO ENTRA AQUI MESMO QUANDO PRIVADO — e so aqui. Repare que ele e
+         lido de `ev.t`, e nao de `d.t`: o `d` e o payload PUBLICO, e nele o
+         campo nao existe quando priv. Sao dois payloads de proposito, e a
+         diferenca entre eles e exatamente um campo, neste unico lugar. */
+      if(!apagado) valor.t = ev.t || "";
+      SYNC.salvarAlteracao("evento", d.eid, valor, {em: iso, del: d.del});
+    }
+  }catch(e){ try{ console.error("sync: evento nao subiu:", e); }catch(e2){} }
+  return iso;
 }
 
 /* A marca de privado e do EVENTO e atravessa como tudo o mais: vai no toque,
@@ -888,9 +970,9 @@ function privEv(eid){
       "sempre \u2014 mesmo que voc\u00ea apague o evento ou marque como privada de novo depois.")) return;
   }
   e[j].priv = ligando;
-  e[j].em = new Date().toISOString();
   setEventos(e);
-  tocarEvento(e[j], false);
+  e[j].em = tocarEvento(e[j], false) || e[j].em;
+  setEventos(e);
   renderEventos();
 }
 /* Sai do onblur do contenteditable: so grava se o texto mudou de verdade,
@@ -898,16 +980,21 @@ function privEv(eid){
    guarda; o editEv nao fazia, e sem ela o tipo novo multiplicaria marcacao. */
 function editEv(eid,t){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0)return;const novo=t.trim();if(novo===e[j].t)return;
-  e[j].t=novo;e[j].em=new Date().toISOString();setEventos(e);
-  /* Num evento PRIVADO que ja subiu, renomear nao muda nada la fora — o toque
-     seria um commit e uma reconstrucao do Pages a troco de nada. Mas se ele
-     ainda nem subiu, o toque sai: nomear e o ato que o torna real, e a DATA
-     precisa viajar mesmo que o nome fique aqui. */
-  if(!e[j].priv || !eventoJaSubiu(e[j].id)) tocarEvento(e[j],false);
+  e[j].t=novo;setEventos(e);
+  /* RENOMEAR SEMPRE ESCREVE ONLINE, privado ou nao: o nome novo tem de chegar
+     aos outros aparelhos do dono. Era a lacuna da 9C-3, fechada na 9C-4.
+
+     Ate a 9G-3 havia aqui um ramo `soOnline`, que perguntava ao eventoJaSubiu()
+     se o evento ja constava do estado.json publicado para decidir se valia um
+     commit. Sem caminho do GitHub nao ha essa pergunta a fazer: toda escrita e
+     online, e o instante vem do mesmo relogio monotonico nos dois casos. */
+  e[j].em = tocarEvento(e[j], false) || e[j].em;
+  setEventos(e);
   renderEventos();}
 function dateEv(eid,v){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0||!v||e[j].data===v)return;
-  e[j].data=v;e[j].em=new Date().toISOString();setEventos(e);tocarEvento(e[j],false);renderEventos();}
+  e[j].data=v;setEventos(e);
+  e[j].em=tocarEvento(e[j],false)||e[j].em;setEventos(e);renderEventos();}
 function delEv(eid){const fora=getEventos().find(x=>x.id===eid);if(!fora)return;
   if(!confirm("Remover \u201c"+((fora.t||"").trim()||"esta data")+"\u201d?"))return;
   setEventos(getEventos().filter(x=>x.id!==eid));tocarEvento(fora,true);renderEventos();}
@@ -926,15 +1013,48 @@ function marcarSub(pid, projId, subId, novoSt){
   var x = normSub(p[pi].subs[si]), de = x.st;
   if(novoSt === de) return null;
   x.st = novoSt;
-  x.em = new Date().toISOString();
+  tocarItem(pid, p[pi], x, de);
   setProjs(pid, p);
-  logar(pid, p[pi], x, de, x.st);
   return {pid:pid, pi:pi, si:si, de:de, para:x.st};
 }
-function cycleSub(pid,pi,si){
-  var p=getProjs(pid), pr=p[pi], x=pr && pr.subs && normSub(pr.subs[si]);
+
+/* O FUNIL DO PROGRESSO (Fase 9E), e o unico ponto que carimba o `em` de um
+   subitem. Eram dois — marcarSub e ciclarVida —, cada um com o seu
+   `new Date().toISOString()`.
+
+   E ESSE new Date() ERA UM DEFEITO, nao so uma duplicacao: o toque nasce do
+   instanteDoToque(), o relogio monotonico, e o `x.em` nascia do relogio de
+   parede. Duas mudancas no mesmo milissegundo recebiam o MESMO `x.em`, e a
+   segunda perdia o desempate contra a primeira; pior, o aparelho e o toque
+   passavam a discordar sobre quando aquilo aconteceu. E a mesma divergencia
+   que a 9C-0 mediu em metas e eventos e a 9D.1 corrigiu no vgMarcar. Agora o
+   instante vem do logar(), que e quem fala com o relogio.
+
+   TRES CONSUMIDORES, UMA FONTE: o subitem no aparelho, o toque do caminho
+   legado (que o pipeline tambem le e escreve) e a linha do cron_estado. */
+function tocarItem(pid, proj, x, de){
+  var iso = logar(pid, proj, x, de, x.st);          /* legado: toque + registro */
+  x.em = iso;                                        /* o MESMO instante */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      SYNC.salvarAlteracao("item", pid + "/" + proj.id + "/" + x.id,
+                           {st: x.st, vida: x.vida || "ativo",
+                            /* O motivo VIAJA aqui, e nao no caminho do GitHub:
+                               a razao do semMotivo() e o repositorio ser
+                               publico, e esta base nao e. Mesma decisao da
+                               9D.3 para o registro. */
+                            motivo: x.motivo || "",
+                            voltar_em: x.voltar_em || "",
+                            vidaDesde: x.vidaDesde || ""},
+                           {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: item nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+function cycleSub(pid,projId,subId){
+  var x=acharSub(getProjs(pid), projId, subId);
   if(!x) return;
-  if(!marcarSub(pid, pr.id, x.id, (x.st+1)%3)) return;
+  if(!marcarSub(pid, projId, subId, (x.st+1)%3)) return;
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
 /* A caixa que a aba Hoje mostra. Marcar conclui; desmarcar volta para "a
@@ -972,7 +1092,7 @@ function marcarDoHoje(pid, projId, subId, concluir){
    a drenasse. E a 9A esta desligada por padrao de proposito. */
 function tocarPrioridade(p, sem, apagada){
   var d = dadosDaPrioridade(p, sem, apagada);
-  var iso = enfileirarToque("prioridade", d);          /* legado: intacto */
+  var iso = instanteISO();
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       SYNC.salvarAlteracao("prioridade", d.sem + "/" + d.prid,
@@ -987,7 +1107,7 @@ function addPrioridadeTrilho(valor){
   if(!valor) return;
   var corte = valor.indexOf("/");
   var painel = valor.slice(0, corte), projId = valor.slice(corte+1);
-  var pr = (getProjs(painel)||[]).filter(function(x){ return x.id === projId; })[0];
+  var pr = vivos(getProjs(painel)).filter(function(x){ return x.id === projId; })[0];
   var lista = getPrio();
   if(lista.some(function(x){ return x.painel===painel && x.projId===projId; })) return;
   var p = {id:"pr"+Date.now(), tipo:"trilho", painel:painel, projId:projId,
@@ -1047,9 +1167,9 @@ function editPrioridade(prid, texto){
 /* A ORDEM E A GARANTIA. `manuais` primeiro, sempre; `sugeridas` existe vazia
    de proposito, para que a Fase 3 preencha sem que ninguem precise lembrar da
    regra de precedencia — ela ja esta na forma do retorno. */
-/* A DESCIDA DAS PRIORIDADES. Isolada de proposito: o buscarEstado depende de
-   fetch, e esta parte precisa poder ser testada sem rede — e e ela que prova
-   que o computador e o celular veem a mesma prioridade.
+/* A DESCIDA DAS PRIORIDADES. Isolada de proposito: quem busca depende de rede,
+   e esta parte precisa poder ser testada sem ela — e e ela que prova que o
+   computador e o celular veem a mesma prioridade.
 
    Molde da meta, linha por linha: chave "periodo/id", lapide `del`, e o
    relogio decidindo item a item. Mais novo manda; empate fica como esta. */
@@ -1059,13 +1179,37 @@ function adotarSugestao(painel, projId){ addPrioridadeTrilho(painel + "/" + proj
 /* A ORDEM E A GARANTIA. `manuais` primeiro, sempre. O motor recebe as manuais
    para saber quantas vagas sobraram e o que NAO repetir — e nao tem como
    devolve-las diferentes, porque nao as toca. */
+/* ============ O UNICO ESCRITOR DA RETOMADA — Fase 9D.2 ============
+   Molde do tocarTriagem. O `quandoISO` existe para a migracao das entradas
+   antigas, que publica com o piso RETOMADA_EM.
+
+   O `em` JA VINHA CERTO AQUI, ao contrario do vgMarcar da 9D.1: o adiarRetomada
+   sempre gravou o instante devolvido pelo toque. Nao havia divergencia de
+   relogio a corrigir neste dominio — o que faltava era o caminho online e o
+   escritor unico.
+
+   NAO HA LAPIDE: nao existe operacao de dessilenciar. Ver mesclarRetomada. */
+function tocarRetomada(pid, projId, ate, quandoISO){
+  if(!pid || !projId || !ate) return null;
+  var chave = pid + "/" + projId;
+  var iso = instanteISO(quandoISO);                  /* legado: intacto */
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      /* SO O `ate` VIAJA. O titulo e o estagio do projeto sao lidos do trilho
+         no aparelho que desenha — regra da Fase 6B, que esta fase nao muda. */
+      SYNC.salvarAlteracao("retomada", chave, {ate: ate}, {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: retomada nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+
 function adiarRetomada(pid, projId){
   var m = retomadasAdiadas();
   var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
   var ate = ymd(d);
   /* O instante gravado e EXATAMENTE o que subiu no toque: guardar outro faria
      os dois lados discordarem sobre quando a decisao foi tomada. */
-  var iso = enfileirarToque("retomada", {pid:pid, projId:projId, ate:ate});
+  var iso = tocarRetomada(pid, projId, ate);
   m[pid + "/" + projId] = {ate:ate, em:iso};
   save(RETOMADA_KEY, m);
   renderHoje();
@@ -1101,16 +1245,17 @@ function renderVagasIndicador(){
 /* Ciclo de vida: ativo -> adiado -> abandonado -> ativo. Pede motivo, e
    no caso de adiar pergunta também para quando voltar. O progresso (st)
    não é tocado: uma peça 60% escrita e adiada continua 60% escrita. */
-function ciclarVida(pid,pi,si){
-  var p=getProjs(pid), x=normSub(p[pi].subs[si]);
+function ciclarVida(pid,projId,subId){
+  var p=getProjs(pid), pr=acharProj(p,projId), x=pr && acharSub(p,projId,subId);
+  if(!pr || !x) return;
   /* Sair de "nao se aplica" e decisao, nao passo do ciclo: sem esta pergunta,
      um toque no lugar errado transformaria em "ativa" uma etapa que o pipeline
      ja disse que nao cabe neste artigo. */
   if(x.vida==="inaplicavel"){
     if(!confirm("Esta etapa esta marcada como \u201cn\u00e3o se aplica\u201d"+(x.motivo?" ("+x.motivo+")":"")+".\n\nVoltar para ativa?")) return;
     x.vida="ativo"; x.motivo=""; x.voltar_em=""; x.vidaDesde=ymd(now);
-    x.em=new Date().toISOString();
-    setProjs(pid,p); logar(pid, p[pi], x, x.st, x.st);
+    tocarItem(pid, pr, x, x.st);
+    setProjs(pid,p);
     renderPainel(pid); renderRegistro(); sincronizarHoje(pid); return;
   }
   var prox=VIDA_ORDEM[(VIDA_ORDEM.indexOf(x.vida)+1)%VIDA_ORDEM.length];
@@ -1127,46 +1272,13 @@ function ciclarVida(pid,pi,si){
     } else { x.voltar_em=""; }
   }
   x.vidaDesde=ymd(now);
-  x.em=new Date().toISOString();
+  tocarItem(pid, pr, x, x.st);
   setProjs(pid,p);
-  logar(pid, p[pi], x, x.st, x.st);
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
-/* ================== TOQUES — fila de sincronização (Passo 5) ==================
-   Cada mudança de estado vira um TOQUE. O toque entra numa fila local e sobe
-   depois, como ARQUIVO NOVO em Cronograma/toques/. Nunca se edita um arquivo já
-   enviado: é isso, e só isso, que torna o desenho à prova de conflito quando o
-   mesmo item é tocado no celular e no Mac no mesmo dia.
 
-   A fila existe porque o toque não pode depender da rede. Você marca a etapa no
-   metrô, a fila guarda, e o envio acontece quando houver sinal.
 
-   ATENÇÃO ao nome. "Evento" já tem dois donos neste sistema: a pasta /eventos/
-   na raiz é dos snapshots do coletor, e cron:eventos são os compromissos com
-   data que alimentam o contador. Toque é o toque no painel, e só isso.
-   ============================================================================ */
-function renderToquesAviso(){
-  var el = document.getElementById("toques-aviso"); if(!el) return;
-  var n = getToques().length;
-  if(typeof ENVIANDO !== "undefined" && ENVIANDO){ el.textContent = "Enviando…"; el.className="backup-aviso"; return; }
-  el.textContent = n===0 ? "Nada esperando envio."
-                 : n===1 ? "1 toque esperando envio."
-                         : n + " toques esperando envio.";
-  el.className = "backup-aviso" + (n>0 ? " velho" : "");
-}
 
-/* ---- Token de sincronização: mora no aparelho, nunca no backup ----
-   A chave fica FORA do prefixo cron: de propósito. O exportarDados() varre
-   todas as chaves cron:, e o .gitignore já diz por que um backup do Cronograma
-   nunca entra no repositório: ele contém o estado inteiro. Um token dentro
-   dele viajaria junto em cada exportação. */
-function renderSyncEstado(){
-  var el = document.getElementById("sync-estado"); if(!el) return;
-  var t = getToken();
-  if(!t){ el.textContent = "Sem token neste aparelho. Os toques ficam na fila."; el.className = "backup-aviso velho"; return; }
-  el.textContent = "Token guardado neste aparelho, terminando em " + t.slice(-4) + ".";
-  el.className = "backup-aviso";
-}
 
 /* ============ A TELA DO ESTADO ONLINE — Fase 9B ============
    O 15-sync.js tinha SYNC.entrar() desde a Fase 9A e nada o chamava: a camada
@@ -1282,18 +1394,22 @@ function rotuloReg(o){
 /* ---- Aba Arquivo: o que foi removido, com bot\u00e3o de restaurar ---- */
 function renderArquivo(){
   var box=document.getElementById("arquivo"); if(!box) return;
-  var a=getArquivo();
+  /* UMA VISAO, e nao uma gaveta: a lista sai do proprio painel, filtrada por
+     vida='arquivado'. E o botao restaura POR ID — nao ha posicao a acertar. */
+  var a=arquivados();
   if(!a.length){ box.innerHTML='<div class="vazio">Nada arquivado. Quando voc\u00ea remover um item de um painel, ele vem parar aqui \u2014 e pode voltar.</div>'; return; }
   var h="";
-  a.slice().reverse().forEach(function(it, revIdx){
-    var k=a.length-1-revIdx;
+  a.slice().reverse().forEach(function(it){
     var P=painelDef(it.pid);
-    var titulo = it.item && it.item.t ? it.item.t : "(sem t\u00edtulo)";
-    var contexto = it.tipo==="subtarefa" && it.ondeEstava && it.ondeEstava.projT ? " \u00b7 de \u201c"+it.ondeEstava.projT+"\u201d" : "";
-    h+='<div class="reg-i"><span class="reg-d">'+Number(String(it.d||"").slice(8,10)||0)+'</span>'+
+    var titulo = it.t || "(sem t\u00edtulo)";
+    var contexto = it.tipo==="subtarefa" && it.de ? " \u00b7 de \u201c"+it.de+"\u201d" : "";
+    var volta = it.tipo==="projeto"
+      ? "restaurarProj('"+it.pid+"','"+it.projId+"')"
+      : "restaurarSub('"+it.pid+"','"+it.projId+"','"+it.subId+"')";
+    h+='<div class="reg-i"><span class="reg-d">'+Number(String(it.vidaDesde||"").slice(8,10)||0)+'</span>'+
        '<span class="reg-t">'+escapeHtml(titulo)+
        '<span>'+(it.tipo==="projeto"?"item":"subtarefa")+' \u00b7 '+escapeHtml(P?P.titulo:it.pid)+escapeHtml(contexto)+'</span></span>'+
-       '<button class="add-row" style="margin:0;padding:4px 10px" onclick="restaurarArquivo('+k+')">restaurar</button></div>';
+       '<button class="add-row" style="margin:0;padding:4px 10px" onclick="'+volta+'">restaurar</button></div>';
   });
   box.innerHTML=h;
 }
@@ -1311,20 +1427,54 @@ function irAoTrilho(pid, projId){
     setTimeout(function(){ alvo.classList.remove("realce"); }, 1700);
   }, 80);
 }
-function editProj(pid,i,t){var p=getProjs(pid);p[i].t=t.trim()||p[i].t;setProjs(pid,p);}
-function editSub(pid,pi,si,t){var p=getProjs(pid);p[pi].subs[si].t=t.trim()||p[pi].subs[si].t;setProjs(pid,p);}
+/* POR ID, E NAO POR POSICAO (Fase 9G-0 B2). Com as pecas arquivadas ficando no
+   array e saindo so da TELA, a posicao que o render emite deixou de ser a
+   posicao no armazenamento — editar pelo indice passaria a editar a peca
+   errada. O `acharProj`/`acharSub` sao o unico endereco daqui em diante. */
+function acharProj(p, projId){
+  for(var i=0;i<(p||[]).length;i++){ if(p[i].id === projId) return p[i]; }
+  return null;
+}
+function acharSub(p, projId, subId){
+  var pr = acharProj(p, projId); if(!pr) return null;
+  for(var j=0;j<(pr.subs||[]).length;j++){ if(pr.subs[j].id === subId) return normSub(pr.subs[j]); }
+  return null;
+}
+function editProj(pid,projId,t){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;pr.t=t.trim()||pr.t;setProjs(pid,p);}
+function editSub(pid,projId,subId,t){var p=getProjs(pid);var x=acharSub(p,projId,subId);if(!x)return;x.t=t.trim()||x.t;setProjs(pid,p);}
 /* Remover deixa de destruir: vai para a aba Arquivo e pode voltar. */
-function delProj(pid,i){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para a aba Arquivo e pode ser restaurado."))return;
-  var p=getProjs(pid);var removido=p.splice(i,1)[0];
-  arquivar(pid, removido, "projeto", {indice:i});
-  setProjs(pid,p);renderPainel(pid);renderArquivo();sincronizarHoje(pid);}
-function delSub(pid,pi,si){var p=getProjs(pid);var removido=p[pi].subs.splice(si,1)[0];
-  arquivar(pid, removido, "subtarefa", {projId:p[pi].id, projT:p[pi].t, indice:si});
-  setProjs(pid,p);renderPainel(pid);renderArquivo();sincronizarHoje(pid);}
+/* ARQUIVAR E RESTAURAR VIRARAM MUDANCA DE CAMPO. A peca fica onde esta; o que
+   muda e `vida`. Restaurar nao depende de posicao nenhuma — e o mesmo campo de
+   volta para 'ativo'.
+
+   PROJETO fica LOCAL: `estrutura_proj` e {t, n, mes} e a estrutura ainda nao e
+   dominio online, entao nao ha por onde isso viajar. SUBITEM ATRAVESSA, e de
+   graca: `vida` ja e campo do dominio `item`, e o tocarItem ja o publica. */
+function delProj(pid,projId){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para a aba Arquivo e pode ser restaurado."))return;
+  var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  pr.vida="arquivado";pr.vidaDesde=ymd(now);
+  setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
+function restaurarProj(pid,projId){
+  var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  pr.vida="ativo";pr.vidaDesde=ymd(now);
+  setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
+function delSub(pid,projId,subId){arquivarSub(pid,projId,subId,"arquivado");}
+function restaurarSub(pid,projId,subId){arquivarSub(pid,projId,subId,"ativo");}
+/* UM funil para os dois sentidos, e ele e o tocarItem — o mesmo que ja carrega
+   st e vida. Arquivar no Mac arquiva no celular; restaurar tambem. */
+function arquivarSub(pid,projId,subId,vida){
+  var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  var x=acharSub(p,projId,subId);if(!x)return;
+  if(x.vida===vida)return;
+  x.vida=vida;x.vidaDesde=ymd(now);
+  tocarItem(pid, pr, x, x.st);
+  setProjs(pid,p);
+  renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
 function addProj(pid){var p=getProjs(pid);p.push(normProj({id:"p"+Date.now(),t:"",subs:[],origem:"manual"}));setProjs(pid,p);renderPainel(pid);
   var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj-name');if(b.length)b[b.length-1].focus();}
-function addSub(pid,pi){var p=getProjs(pid);p[pi].subs.push(normSub({id:"s"+Date.now(),t:"",st:0,origem:"manual"}));setProjs(pid,p);renderPainel(pid);
-  var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-pi="'+pi+'"] .sub-text');if(b.length)b[b.length-1].focus();}
+function addSub(pid,projId){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  pr.subs.push(normSub({id:"s"+Date.now(),t:"",st:0,origem:"manual"}));setProjs(pid,p);renderPainel(pid);
+  var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-proj="'+pid+'/'+projId+'"] .sub-text');if(b.length)b[b.length-1].focus();}
 /* Antes so a esteira alimentava o Hoje, entao so ela precisava avisar. Agora
    qualquer trilho pode estar mostrando a proxima acao dele la, e um `if` por
    painel seria uma lista para alguem esquecer de atualizar. */
@@ -1332,20 +1482,23 @@ function sincronizarHoje(pid){ renderHoje(); }
 function renderPainel(pid){
   var alvos=document.querySelectorAll('[data-painel="'+pid+'"]');
   if(!alvos.length) return;
-  var projs=getProjs(pid), h="";
+  /* A TELA MOSTRA OS VIVOS. As arquivadas continuam no armazenamento — e por
+     isso o filtro e aqui, e nao no getProjs(). */
+  var projs=vivos(getProjs(pid)), h="";
   projs.forEach(function(p,pi){
-    var contam=p.subs.filter(function(x){return x.vida!=="inaplicavel";});
+    var subsVivos=vivos(p.subs);
+    var contam=subsVivos.filter(function(x){return x.vida!=="inaplicavel";});
     var total=contam.length, feitas=contam.filter(function(x){return x.st===2;}).length;
-    var emAnd=p.subs.some(function(x){return x.st===1;});
+    var emAnd=subsVivos.some(function(x){return x.st===1;});
     var ab=projAberto(pid,p.id,emAnd);
-    h+='<details class="proj'+(emAnd?" ativo":"")+'" data-pi="'+pi+'" data-proj="'+pid+'/'+p.id+'" '+(ab?"open":"")+
+    h+='<details class="proj'+(emAnd?" ativo":"")+'" data-proj="'+pid+'/'+p.id+'" '+(ab?"open":"")+
        ' ontoggle="setProjAberto(\''+pid+'\',\''+p.id+'\',this.open)">'+
        '<summary class="proj-head">'+
        '<div class="proj-name" contenteditable="true" onclick="event.stopPropagation()" '+
-       'onblur="editProj(\''+pid+'\','+pi+',this.innerText)">'+escapeHtml(p.t)+'</div>'+
+       'onblur="editProj(\''+pid+'\',\''+p.id+'\',this.innerText)">'+escapeHtml(p.t)+'</div>'+
        '<span class="proj-prog">'+feitas+'/'+total+'</span></summary><div class="proj-body">';
     if(p.n) h+='<div class="proj-note">'+escapeHtml(p.n)+'</div>';
-    p.subs.forEach(function(x,si){
+    subsVivos.forEach(function(x,si){
       normSub(x);
       var vClass = x.vida && x.vida!=="ativo" ? " vida-"+x.vida : "";
       var selo = "";
@@ -1356,14 +1509,14 @@ function renderPainel(pid){
               ? '<span class="sub-medida">'+(x.medida.feito||0)+'/'+x.medida.total+'</span>' : '';
       var ondeT = x.onde ? '<span class="sub-onde">'+escapeHtml(x.onde)+'</span>' : '';
       h+='<div class="sub st-'+x.st+vClass+'">'+
-         '<span class="st-dot" onclick="cycleSub(\''+pid+'\','+pi+','+si+')" title="'+ST_LBL[x.st]+'"></span>'+
-         '<div class="sub-text" contenteditable="true" onblur="editSub(\''+pid+'\','+pi+','+si+',this.innerText)">'+escapeHtml(x.t)+'</div>'+
+         '<span class="st-dot" onclick="cycleSub(\''+pid+'\',\''+p.id+'\',\''+x.id+'\')" title="'+ST_LBL[x.st]+'"></span>'+
+         '<div class="sub-text" contenteditable="true" onblur="editSub(\''+pid+'\',\''+p.id+'\',\''+x.id+'\',this.innerText)">'+escapeHtml(x.t)+'</div>'+
          selo+med+ondeT+
-         '<button class="vida-btn" onclick="ciclarVida(\''+pid+'\','+pi+','+si+')" title="adiar, abandonar ou reativar">&#8943;</button>'+
-         '<button class="del" onclick="delSub(\''+pid+'\','+pi+','+si+')" aria-label="Arquivar subtarefa">&times;</button></div>';
+         '<button class="vida-btn" onclick="ciclarVida(\''+pid+'\',\''+p.id+'\',\''+x.id+'\')" title="adiar, abandonar ou reativar">&#8943;</button>'+
+         '<button class="del" onclick="delSub(\''+pid+'\',\''+p.id+'\',\''+x.id+'\')" aria-label="Arquivar subtarefa">&times;</button></div>';
     });
-    h+='<button class="add-sub" onclick="addSub(\''+pid+'\','+pi+')">+ subtarefa</button>'+
-       '<button class="del-proj" onclick="delProj(\''+pid+'\','+pi+')">remover este item</button>'+
+    h+='<button class="add-sub" onclick="addSub(\''+pid+'\',\''+p.id+'\')">+ subtarefa</button>'+
+       '<button class="del-proj" onclick="delProj(\''+pid+'\',\''+p.id+'\')">remover este item</button>'+
        '</div></details>';
   });
   h+='<button class="add-row" onclick="addProj(\''+pid+'\')">+ Novo item</button>';
@@ -1393,7 +1546,7 @@ function renderTrilhos(){
      ' ontoggle="save(\'cron:painel-open:registro\', this.open)">'+
      '<summary><span class="tb-t">Registro</span><span class="tb-sub">o que voc\u00ea fechou, por data</span></summary>'+
      '<div class="tb-body"><div id="registro"></div></div></details>';
-  var nArq = getArquivo().length;
+  var nArq = arquivados().length;
   h+='<details class="tecbloco" id="painel-arquivo" '+(LS("cron:painel-open:arquivo",false)?"open":"")+
      ' ontoggle="save(\'cron:painel-open:arquivo\', this.open)">'+
      '<summary><span class="tb-t">Arquivo</span><span class="tb-sub">'+(nArq? nArq+' item'+(nArq===1?'':'s')+' \u00b7 nada foi apagado' : 'nada arquivado')+'</span></summary>'+
@@ -1507,6 +1660,41 @@ function renderSemana(){
     vgCarregar().then(function(){ try{ if(!alvo.hidden) renderSemana(); }catch(e){} });
   }
 }
+/* ============ A VISTA DAS VAGAS — Fase 9D ============
+   Mesmo molde do renderVistaRevisao, e pela mesma razao: so redesenha se a aba
+   estiver na frente. Escondida nao ha o que atualizar — e o vgRender le
+   VG_VAGAS/VG_CHAMADAS, que so estao carregados depois de a aba ter sido
+   aberta uma vez. E a regra que a descida pelo estado.json ja seguia; aqui ela
+   ganha nome para poder ser pedida pelo SYNC.pedirRender. */
+function renderVistaVagas(){
+  try{
+    var alvo = document.getElementById("view-vagas");
+    if(!alvo || alvo.hidden) return;
+    if(typeof vgRender === "function") vgRender();
+  }catch(e){}
+}
+
+/* ============ A VISTA DA REVISAO — Fase 9C-1 ============
+   O renderRevisao() DEVOLVE html; quem o pintava era o setView, e so ele. A
+   consequencia: com a aba Revisao aberta, uma prioridade marcada no outro
+   aparelho chegava, entrava no cron:prioridades e nao aparecia — a tela so
+   mudava ao sair e voltar da aba. O aplicador remoto da 9B pedia renderHoje,
+   e o renderHoje escreve em view-hoje, que naquele momento esta `hidden`.
+
+   POR QUE `renderSemana` NAO ENTRA NESTA CORRECAO. A auditoria da 9C dizia que
+   a revisao morava tambem no renderSemana; nao mora — a linha estava dentro do
+   setView. Verificado: renderSemana nao le getPrio, getMetas nem getEventos, e
+   nao tem o que atualizar quando um deles muda. Acrescenta-lo seria desenho a
+   toa, e a regra da 9C-1 e a MENOR repercussao correta.
+
+   SO REDESENHA SE ESTIVER NA FRENTE. Fora isso nao ha o que atualizar: o
+   setView repinta ao entrar, como sempre fez. */
+function renderVistaRevisao(forcar){
+  var alvo = document.getElementById("view-revisao");
+  if(!alvo) return;
+  if(!forcar && alvo.hidden) return;
+  alvo.innerHTML = '<p class="plate-eyebrow">Revis\u00e3o</p>' + renderRevisao();
+}
 function setView(v){
   /* A SEMANA CONTINUA NA LISTA, sem botao na barra. A guarda do `if(b)` e o
      que permite isso: uma view alcancavel so pelo rodape nao tem aba para
@@ -1518,16 +1706,22 @@ function setView(v){
     if(b) b.classList.toggle("active", k===v);
   });
   if(v==="processos") renderProcessos();
-  if(v==="revisao"){
-    var alvoRev = document.getElementById("view-revisao");
-    if(alvoRev) alvoRev.innerHTML =
-      '<p class="plate-eyebrow">Revis\u00e3o</p>' + renderRevisao();
-  }
+  if(v==="revisao") renderVistaRevisao(true);
   if(v==="trilhos") renderTrilhos();
   if(v==="semana") renderSemana();   /* os numeros mudam a cada marcacao */
   if(v==="vagas") vgAbrir();
   try{window.scrollTo(0,0);}catch(e){}}
-function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
+/* LIMPAR E DESMARCAR UMA A UMA, e nao esvaziar a gaveta. Zerar o objeto
+   apagava as marcas sem dizer a ninguem que elas cairam: o outro aparelho
+   continuaria mostrando o dia cheio, e a proxima descida traria tudo de volta.
+   Cada id vira `{feito:false}`, que e o estado que atravessa. Para quem le
+   (`if(ck[id])`) `false` e ausencia sao a mesma coisa — nada muda na tela. */
+function limparHoje(){
+  Object.keys(checks || {}).forEach(function(id){
+    if(checks[id]) tocarRotina(dateKey, id, false);
+  });
+  renderHoje();
+}
 
 /* ==================== PAINEL VAGAS — Passo 4 ====================
    O ARQUIVO DESCREVE, O APARELHO DECIDE. dados/vagas.json e dados/chamadas.json
@@ -1538,16 +1732,47 @@ function limparHoje(){checks={};save("cron:checks:"+dateKey,{});renderHoje();}
 
    ADITIVO: nao le nem escreve nenhuma chave que ja existia.
    =============================================================== */
+/* ============ O UNICO ESCRITOR DA TRIAGEM — Fase 9D ============
+   Molde do tocarMeta e do tocarEvento. O `quandoISO` existe para a migracao das
+   marcacoes antigas, que publica com o instante da marcacao original.
+
+   O MESMO INSTANTE NOS DOIS CAMINHOS. Antes da 9D o vgMarcar carimbava o `em`
+   com `new Date()` e o toque usava o instanteDoToque() — a mesma divergencia
+   que a 9C-0 mediu e corrigiu em meta e evento, e que aqui ainda existia. No
+   caminho feliz os dois coincidem; na segunda marcacao dentro do mesmo
+   milissegundo o monotonico desempata e o relogio de parede nao acompanha.
+   Marcar varias vagas em sequencia e exatamente esse caso.
+
+   NAO HA LAPIDE: descartar uma vaga nao a apaga do lote. Ver mesclarTriagem. */
+function tocarTriagem(vid, st, quandoISO){
+  if(!vid) return null;
+  var d = {vid:vid, st:st};
+  var iso = instanteISO(quandoISO);
+  try{
+    if(typeof SYNC !== "undefined" && SYNC.ligado()){
+      /* SO A DECISAO VIAJA. O veredicto do coletor, o texto da vaga e tudo o
+         mais que dados/vagas.json carrega ficam de fora: aquilo e do pipeline
+         e e reescrito a cada coleta. Aqui vai `st`, e nada mais. */
+      SYNC.salvarAlteracao("triagem", d.vid, {st: d.st}, {em: iso});
+    }
+  }catch(e){ try{ console.error("sync: triagem nao subiu:", e); }catch(e2){} }
+  return iso;
+}
+
+/* A ORDEM AQUI E DIFERENTE DA DO tocarMeta, e de proposito: o payload da
+   triagem nao le o objeto guardado — leva `{vid, st}`, que ja estao em mao.
+   Entao o instante e obtido ANTES e a gravacao acontece uma vez so, com o
+   valor definitivo. Nao ha janela em que o `em` esteja provisorio. */
 function vgMarcar(id, st){
   var t = vgTriagem();
   if((t[id] && t[id].st) === st) st = VG_ST.NOVO;   /* tocar de novo desmarca */
-  /* `quando` continua sendo o dia, que e o que a tela mostra; `em` e o
-     instante, e existe porque sem ele nao ha como decidir quem venceu
-     quando o Mac e o celular marcam a mesma vaga no mesmo dia. */
-  var agora = new Date();
-  t[id] = {st:st, quando:ymd(agora), em:agora.toISOString()};
+  var iso = tocarTriagem(id, st);
+  /* `quando` continua sendo o dia, que e o que a tela mostra, e agora e o dia
+     DO INSTANTE que subiu — nao um segundo relogio. O `em` e quem decide quem
+     venceu quando o Mac e o celular marcam a mesma vaga no mesmo dia. */
+  var quando = iso ? new Date(iso) : new Date();
+  t[id] = {st:st, quando:ymd(quando), em: iso || quando.toISOString()};
   vgSalvarTriagem(t);
-  enfileirarToque("triagem", {vid:id, st:st});
   vgRender();
 }
 function vgEsc(s){ return String(s==null?"":s)

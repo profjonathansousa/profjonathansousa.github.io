@@ -584,7 +584,8 @@ Todo dado do Cronograma, com o seu escritor, o seu destino e a decisão da fase.
 
 **Não sincroniza porque é derivado ou cache** — sincronizar valor derivado é
 sincronizar consequência em vez de causa: `cron:toefl-recalibrado`,
-`cron:feed-cache`, `cron:la-fora`, `cron:entrada`, `cron:entrada-aplicada`.
+`cron:feed-cache`, `cron:entrada`, `cron:entrada-aplicada`. (`cron:la-fora`
+estava nesta lista até a 9G-3, que a aposentou junto com o acervo.)
 
 **Não sincroniza porque é estado de tela:** `cron:paineis-open`,
 `cron:painel-open:*`, `cron:processo-open:*`, `cron:toefl-guia-open`,
@@ -593,7 +594,8 @@ sincronizar consequência em vez de causa: `cron:toefl-recalibrado`,
 
 **Não sincroniza porque é maquinaria local:** `cron:schema-versao`, os
 `cron:*-migrado`, `cron:*-seed`, `cron:relogio`, `cron:relogio-bases`,
-`cron:toques`, `cron:ultimo-backup` e os arquivos de registro excedente.
+`cron:ultimo-backup` e os arquivos de registro excedente. (`cron:toques`, a fila
+de subida, saiu na 9G-2.)
 
 ### As quatro decisões
 
@@ -1097,6 +1099,1235 @@ chave publishable. Não havia vazamento — sem sessão ela devolve sempre `fals
 mas a intenção declarada era negar. Corrigido com `revoke ... from public`. O
 `cron_podar()` já revogava de `public` e por isso passou limpo.
 
+### 9C-0 e 9C-1 — o caminho legado corrigido antes de conectar
+
+Duas correções que **não conectam nada**: Metas e Eventos continuam viajando só
+pelo caminho de toques. Existem para que a 9C-2 não tenha de depurar dois
+sistemas ao mesmo tempo.
+
+#### O relógio de Metas e Eventos
+
+`tocarMeta()` e `tocarEvento()` não devolviam nada, e cada caller carimbava o
+`em` com o próprio `new Date()`. O `instanteDoToque()` é **monotônico**: quando
+duas ações caem no mesmo milissegundo ele desempata somando 1ms, e o relógio de
+parede do caller não acompanha.
+
+**Medido antes da correção**, com `new Date()` e `Date.now()` congelados juntos
+— congelar só um mediria a instrumentação, não o mecanismo:
+
+| Ação | `em` do caller | `quando` do toque |
+|---|---|---|
+| 1ª no milissegundo | `…000Z` | `…000Z` — coincidem |
+| 2ª no mesmo ms | `…000Z` | `…001Z` — **divergem** |
+| 3ª no mesmo ms | `…000Z` | `…002Z` — **divergem** |
+
+Prioridades: **zero divergências**, em qualquer posição — o `tocarPrioridade` da
+9B devolve o iso desde o primeiro dia.
+
+O pior caso era o `trazerTodas()`: N metas nascendo com **um `agora`
+compartilhado**, enquanto o relógio dava a cada toque um instante próprio.
+
+Enquanto só existe o caminho do GitHub isso é quase inócuo — a descida reescreve
+o item com o mesmo conteúdo. **A partir do momento em que o `em` decide quem
+vence**, um `em` local mais antigo do que o instante publicado faz o próprio ato
+voltar como se fosse novidade de fora. Por isso a correção vem antes.
+
+A regra passa a ser, nos três domínios: ação → funil → `enfileirarToque` →
+devolve o ISO → o caller grava esse ISO em `em`.
+
+Uma exceção documentada: renomear um evento **privado que já subiu** não emite
+toque — e aí o `em` avança com o relógio de parede mesmo, porque não há instante
+publicado a copiar. É o único caminho de escrita destes domínios que
+legitimamente carimba o próprio tempo.
+
+#### O segundo escritor
+
+`publicarAcervo` chamava `enfileirarToque` direto, contornando os funis:
+
+```
+antes:  meta 2 escritores · evento 2 escritores · prioridade 1
+depois: meta 1 escritor   · evento 1 escritor   · prioridade 1
+```
+
+Os funis ganharam um parâmetro `quandoISO` para que o piso `ACERVO_EM` coubesse
+neles. O payload não mudou um byte: o que `publicarAcervo` montava à mão era
+idêntico, campo por campo, ao que o funil monta.
+
+#### A vista da Revisão
+
+`renderRevisao()` **devolve** HTML; quem o pintava era o `setView`, e só ele.
+Com a aba Revisão aberta, uma prioridade marcada no outro aparelho chegava,
+entrava no `cron:prioridades` e não aparecia — a tela só mudava ao sair e voltar
+da aba. O aplicador remoto pedia `renderHoje`, que escreve em `view-hoje`, e
+naquele momento `view-hoje` está `hidden`.
+
+`renderVistaRevisao()` repinta `view-revisao`, e **só se ela estiver na frente**.
+
+> **`renderSemana` não entrou nesta correção**, e a auditoria da 9C estava errada
+> ao dizer que a revisão morava nele: a linha estava dentro do `setView`.
+> Verificado no corpo real da função — `renderSemana` não lê `getPrio`,
+> `getMetas` nem `getEventos`, e não tem o que atualizar. A regra da 9C-1 é a
+> **menor repercussão correta**.
+
+#### Testes
+
+`teste_sync.js`, seções 26 a 28. O harness ganhou um relógio congelável que
+substitui `new Date()` **e** `Date.now()` juntos. A seção 27 é arquitetural e
+quebra se um segundo escritor voltar, ou se metas/eventos passarem a escrever
+online antes da hora.
+
+### 9C-2 — Metas online
+
+O **segundo domínio** na camada. Eventos continuam legados.
+
+**A chave é `AAAA-MM/mid`**, e a unidade de sincronização é a meta, nunca o mês.
+Duas metas do mesmo mês, alteradas em dois aparelhos, não se atropelam: o
+servidor guarda duas linhas, não um retrato do mês.
+
+O mês entra na **chave** e não no valor por causa do `trazerMeta`: ele *move*
+uma meta de um mês para outro, e com o mês na chave mover é **criar + lápide** —
+duas linhas, semântica explícita. Se o mês fosse um campo do valor, mover seria
+um update ambíguo.
+
+| Verbo | O que viaja |
+|---|---|
+| criar / editar | `{t, done, de}` |
+| concluir / desconcluir | `done` — **`feito_em` não entrou nesta fase** |
+| excluir | `del: true` — lápide, nunca ausência de linha |
+| trazer | criação no destino **e** lápide na origem, nessa ordem |
+
+`em` **não entra no valor**: é coluna do `cron_estado`, e é por ela que o gatilho
+decide. Duplicá-lo no `jsonb` criaria duas fontes para o mesmo fato.
+
+#### Um merge, duas descidas
+
+`mesclarMeta(lista, mid, r)` foi extraído de dentro do `buscarEstado()` e é
+chamado por `aplicarMetasDoEstado` (legado) e `aplicarMetaOnline` (9C-2) — o
+mesmo movimento que a 9B fez com as prioridades.
+
+A regra foi copiada **letra por letra**, e a fidelidade importa mais do que a
+elegância: a meta *não* substitui o item inteiro como a prioridade faz. O `t` só
+é sobrescrito quando vem preenchido, o `de` só é escrito quando vem (nunca
+apagado), e o `done` é sempre sobrescrito porque `false` é um valor legítimo.
+Mudar isso seria mudar regra de negócio, e a 9C-2 não muda nenhuma.
+
+#### Os renders, mínimos
+
+| | |
+|---|---|
+| `renderMetas` | sempre — repinta o próprio `#metas-wrap` no lugar |
+| `renderVistaRevisao` | sempre — a revisão **lê `getMetas`** (conta as metas concluídas na semana), e a função devolve na primeira linha quando a aba não está visível |
+| `renderHoje` | **só no domingo** — o único dia em que a revisão é desenhada dentro do Hoje. Nos outros dias o Hoje não lê meta nenhuma: o aviso da esteira e as pendências moram dentro do `renderMetas` |
+| `renderSemana` | **nunca** — verificado que não lê `getMetas` |
+
+#### Offline, reconexão e `trazerMeta`
+
+Tudo pela 9A. O cenário testado é o cruzado: o Mac sem rede altera uma meta, o
+celular altera outra, o Mac reconecta — o delta traz a do celular **antes** de a
+fila subir, e nada se perde.
+
+`trazerMeta` enfileira **duas** operações. Sem rede, as duas ficam e sobem
+juntas. Se só a primeira subisse, o outro aparelho veria a meta **duas vezes** —
+visível e auto-corrigível na drenagem seguinte — em vez de nenhuma vez. A ordem
+criar-antes-de-apagar existe para isso.
+
+`trazerTodas` traz **todas** as pendências, inclusive a semente do `ROTEIRO`
+daquele mês: `metaEhSementeIntocada` vale só para o acervo, não para
+`pendencias()`. Cada meta trazida recebe o **seu** instante — a correção da
+9C-0 continua valendo aqui, que era o pior caso dela.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**. O domínio `meta`, a chave `AAAA-MM/id`
+e a coluna `del` já estavam desde a 9A. Nada foi aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 29 a 36 — os 20 casos, com dois aparelhos contra o mesmo
+servidor de mentira. A seção 36 é arquitetural: quebra se um segundo escritor de
+meta aparecer, se surgir uma segunda `mesclarMeta`, ou se `renderSemana` for
+acrescentado sem dependência.
+
+### 9C-3 — Eventos online
+
+O **terceiro domínio** na camada. A chave é o **próprio id do evento**, sem
+composição: diferente da meta, o evento não pertence a um período.
+
+**Mudar a data é uma edição, não um "mover".** O `id` é estável e `data` é um
+campo do valor — não há criação no destino nem lápide na origem, porque não há
+origem: é o mesmo evento, noutro dia. Uma linha só no servidor.
+
+| Verbo | O que viaja |
+|---|---|
+| criar / editar | `{data, priv}` **e `t` só quando o evento é público** |
+| mudar a data | o campo `data`, na mesma linha |
+| marcar privado | `priv` — a marca sempre viaja |
+| excluir | `del: true` — lápide, nunca ausência de linha |
+
+**Não há concluir/desconcluir**: o modelo do evento é `{id, t, data, em, priv}` —
+não existe `done`, e a 9C-3 não inventou um.
+
+#### A privacidade não foi ampliada, e a garantia é estrutural
+
+O payload online sai do **mesmo `d`** que o toque legado leva, e `dadosDoEvento`
+**não monta** o campo `t` quando o evento é privado. O título privado não chega
+ao Supabase pelo simples fato de não existir no payload — não há um segundo
+lugar onde alguém possa esquecer de filtrar.
+
+A **9C-4** move essa fronteira sem abrir a pública — ver abaixo.
+
+Duas cláusulas do merge protegem isso e **não podem ser "simplificadas"**:
+
+- `if(!r.data) return false` — evento sem data é ignorado; a data é o que faz o
+  evento existir.
+- `if(!r.priv && typeof r.t === "string")` — o título só é escrito quando
+  **viajou**. Num evento privado o nome local é a única cópia que existe. O
+  `typeof` importa: string vazia é um título legítimo (apagado de propósito),
+  **ausência** do campo é "não viajou". Trocar por `if(r.t)` transformaria
+  apagar um título em não-fazer-nada.
+
+#### Os renders, mínimos
+
+Os mesmos três da meta, pela mesma medição: `renderEventos` sempre (repinta o
+próprio `#eventos`, e o aviso de dias restantes se recalcula sozinho),
+`renderVistaRevisao` sempre (a `revisaoDaSemana` **lê `getEventos`** para a
+seção "próxima semana"), e `renderHoje` **só no domingo**. `renderSemana`
+nunca — verificado que não lê `getEventos`.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: o domínio `evento`, a chave textual e
+a coluna `del` já existiam desde a 9A. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 37 a 42. A seção 40 é inteira sobre a fronteira de
+privacidade: verifica que a marca sobe, que o título **não** sobe, que o título
+que o outro aparelho já tinha não é apagado pela descida, e que renomear um
+privado já publicado não gera escrita online.
+
+### 9C-4 — O título de evento privado, online
+
+**O título de um evento privado passa a sincronizar entre os aparelhos do dono,
+sem entrar no caminho público.** Havia dois títulos possíveis e agora há dois
+destinos, com uma diferença de exatamente um campo:
+
+| | payload legado (GitHub) | registro online (Supabase) |
+|---|---|---|
+| evento público | `data`, `priv`, **`t`** | `data`, `priv`, **`t`** |
+| evento privado | `data`, `priv` | `data`, `priv`, **`t`** |
+| lápide | `del` | `del`, **sem `t`** |
+
+#### Por que `cron_estado` é lugar seguro para ele
+
+Não é "porque não é o GitHub". São duas propriedades, e as duas foram
+verificadas:
+
+1. **Os dois canos são disjuntos.** O `estado.json` é escrito pelo
+   `dobrar_toques.py` a partir dos *toques*; nada em `cron_estado` alcança o
+   repositório, nem o `entrada.json`, nem o `cron:la-fora`. O título privado não
+   entra no toque, logo não existe caminho por onde chegar lá — e há **dois
+   guardas independentes** nesse cano: `dadosDoEvento` não monta o campo, e a
+   dobra o recusa outra vez.
+2. **A RLS de `cron_estado`** exige `dono = auth.uid() AND cron_e_dono()`, e não
+   há política nenhuma para o papel `anon`. Provado contra o banco em produção:
+   uma conta autenticada fora da allowlist enxerga **zero linhas**.
+
+O título privado fica visível para os aparelhos **autenticados como o dono**, e
+para mais ninguém. É o mesmo modelo de acesso que a 9A definiu.
+
+| Pergunta | Resposta |
+|---|---|
+| aparece em `estado.json`? | não — o toque não o carrega |
+| em `entrada.json`? | não — é escrito pelo pipeline, não pelo app |
+| em `cron:la-fora`? | não — ali há um **booleano**, nunca o texto |
+| no payload legado? | não — dois guardas independentes |
+| em `cron_estado`? | **sim**, e é o ponto: privado por RLS |
+| alguém não autorizado recebe? | não — sem política para `anon` |
+| um aparelho autorizado recupera ao reconectar? | sim, pelo delta |
+| voltar a público converge? | sim — `dadosDoEvento` volta a montar o `t` |
+
+#### As três mudanças de código
+
+- **`tocarEvento`** passa o título ao registro online lendo de `ev.t`, e **não**
+  de `d.t`: o `d` é o payload público, e nele o campo não existe quando privado.
+  São dois payloads de propósito, e a diferença entre eles está neste único
+  lugar.
+- **`mesclarEvento`** perdeu a cláusula `!r.priv`: o título entra **quando
+  viajou**, não quando "é público". Aquela cláusula era cinto sobre suspensório
+  — o `typeof r.t === "string"` já recusava sozinho, porque o payload legado não
+  monta o campo. Com o online passando a carregá-lo, ela deixaria de ser
+  redundante e viraria um **bloqueio**.
+- **`editEv`** ganhou o modo `soOnline`: renomear um privado que já subiu não
+  gera toque (seria uma reconstrução do Pages à toa) mas **atualiza o registro
+  online**. Era a lacuna que a 9C-3 deixou.
+
+Efeito colateral bem-vindo: esse modo pede o instante ao mesmo relógio
+monotônico, e com isso **desaparece a última exceção da 9C-0** — não há mais
+nenhum caminho de escrita destes domínios carimbando o próprio `new Date()`.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**. Nenhuma tabela nova, nenhuma coluna
+nova: o `valor jsonb` já comportava o campo, e a RLS que o protege já existia.
+
+### 9D (1 de 5) — Triagem das Vagas online
+
+O **quarto domínio** na camada, e o primeiro da Fase 9D. Retomadas, registro,
+rotinas e dispensas continuam legados.
+
+**A chave é o id da vaga** — `philjobs-31649` —, que é estável e sobrevive à
+coleta semanal: `dados/vagas.json` é reescrito inteiro toda segunda, e a decisão
+não se perde porque nunca morou lá. O valor leva **só `{st}`**.
+
+**Veredicto e triagem continuam sendo dois eixos.** O veredicto é do coletor e
+vem no arquivo; a triagem é a sua decisão. A 9D transporta **apenas a decisão** —
+nada de veredicto, título, prazo ou url. Há teste para cada um desses campos.
+
+**Não há lápide, e a ausência é do domínio.** Descartar uma vaga **não a apaga do
+lote**: ela continua em `dados/vagas.json`. "Não marcada" é um estado
+(`VG_ST.NOVO`, `st` 0) e viaja como qualquer outro — é assim que *desmarcar*
+atravessa aparelhos.
+
+#### Duas correções que vieram junto
+
+**O `vgMarcar` carimbava o próprio `em`** com `new Date()`, enquanto o toque
+usava o `instanteDoToque()`. É a mesma divergência que a 9C-0 mediu e corrigiu em
+metas e eventos, e que aqui ainda existia — marcar várias vagas em sequência é
+exatamente o caso em que o monotônico desempata e o relógio de parede não
+acompanha. Agora o instante vem do funil, e o `quando` (o dia que a tela mostra)
+é derivado dele.
+
+**Havia dois escritores**: o `vgMarcar` e a `migrarTriagemUmaVez`, que publicava
+as marcações anteriores à sincronia chamando `enfileirarToque` direto. A migração
+passou a usar o funil — e com isso aquelas marcações antigas entram **também** no
+estado online.
+
+#### Os renders, todos comprovados
+
+| | Por quê |
+|---|---|
+| `renderVistaVagas` | `vgRender` lê `vgEstado` — só redesenha com a aba na frente |
+| `renderHoje` | `renderVagasIndicador` → `contagemDeVagas` → `vgEstado` |
+| **`renderSemana`** | **lê `vgEstado`** — o primeiro domínio em que ele entra |
+| `renderVistaRevisao` | `revisaoDaSemana` lê `vgEstado` |
+
+`renderSemana` ficou de fora nas fases 9C-2 e 9C-3 porque não lia meta nem
+evento. Lê triagem, e por isso entra — por prova, não por segurança. E
+`renderHoje` entra **todo dia**, e não só no domingo como nas metas, porque o
+indicador de vagas do Hoje depende da triagem sempre.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: o domínio `triagem` e a chave por id da
+vaga já existiam desde a 9A. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 46 a 50 — os casos A a O. A seção 50 é arquitetural e
+quebra se um segundo escritor voltar, se surgir uma segunda `mesclarTriagem`, ou
+se um domínio ainda não autorizado passar a escrever online.
+
+### 9D (2 de 5) — Retomadas silenciadas online
+
+O **quinto domínio**. Registro, rotinas e dispensas continuam legados.
+
+**A chave é `painel/projeto`** e o valor leva **só o `ate`** — a data absoluta até
+a qual o projeto fica silenciado. O título e o estágio são lidos do trilho no
+aparelho que desenha, e nunca viajam: é a regra da Fase 6B, que esta fase não
+muda.
+
+**O `ate` é data absoluta, não duração.** Um toque que chega três dias depois
+carrega a data que foi decidida; se viajasse "+14 dias", a latência da rede
+mudaria o resultado.
+
+**Não há lápide, e a razão é própria do domínio:** não existe operação de
+*dessilenciar*. A entrada morre pela data que ela mesma carrega — vencida, some
+dos dois leitores sem toque nenhum.
+
+#### Uma cláusula que não pode ser simplificada
+
+```js
+var emLocal = (loc && typeof loc === "object") ? (loc.em || "") : "";
+```
+
+A entrada local pode ser uma **string** — a forma anterior à Fase 6B, que o
+`migrarRetomadas` converte. Entre o carregamento e a migração ela existe, e ler
+pelas duas formas evita que um aparelho que falhe na migração passe a ignorar
+silêncios que ele mesmo pôs. Trocar por `loc.em` daria `undefined`, o `>=` seria
+sempre falso, e qualquer linha remota venceria. Há teste para esse caso.
+
+#### O que já estava certo
+
+**O `em` não precisou de correção.** O `adiarRetomada` sempre gravou o instante
+devolvido pelo toque — ao contrário do `vgMarcar` da 9D.1, que carimbava o
+próprio. Não havia divergência de relógio neste domínio: faltava só o caminho
+online e o escritor único.
+
+**Havia dois escritores**: `adiarRetomada` e `migrarRetomadas`. A migração passou
+pelo funil, e com isso os silêncios anteriores à sincronia entram também no
+estado online.
+
+#### Os renders, ambos comprovados
+
+| | Por quê |
+|---|---|
+| `renderHoje` | `renderRetomadas()` lê `retomadas()`, **e** `renderPrioridades` → `motorDePrioridades()` lê `retomadasAdiadas()` |
+| `renderVistaRevisao` | `revisaoDaSemana` lê `retomadas()` **e** `motorDePrioridades()` |
+
+**`renderSemana` não entra** — verificado que não lê retomada nenhuma. É o
+inverso da 9D.1, onde ele entrou por ler `vgEstado`. E `renderHoje` entra **todo
+dia**, porque o bloco de retomadas está sempre no Hoje.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 51 a 54.
+
+### 9D (3 de 5) — Registro datado online
+
+O **sexto domínio** a sair do caminho legado, e o primeiro que **não é um
+domínio do `cron_estado`**. Rotinas e dispensas continuam legadas.
+
+#### Por que ele tem tabela própria
+
+O registro **não é estado corrente**. Não existe "vence o mais recente" para
+ele: cada linha vale por si e a lista só cresce. As três peças que governam
+todos os outros domínios — o relógio, o cache e a lápide — existem para decidir
+entre *versões do mesmo fato*, e aqui não há versões. Fechar uma etapa e depois
+recuá-la são **dois fatos**, e os dois ficam.
+
+Por isso a linha vai para `cron_registro`, que já existia desde a 9A, e por isso
+ela **não passa** pelo `salvarAlteracao`, pelo `aplicarRemoto` nem pelo
+`assinarDominio`. `registro` não está — e não deve estar — na lista de domínios
+do `SINCRONIA.DOMINIOS`: o `CHECK` do Postgres na `cron_estado` não o conhece.
+
+| | estado corrente | registro datado |
+|---|---|---|
+| tabela | `cron_estado` | `cron_registro` |
+| chave | `(dono, domínio, chave)` | `(dono, id do toque)` |
+| relógio | `em`, LWW por aparelho | não tem |
+| lápide | `del` | não tem |
+| escrita | `upsert` | `insert ... on conflict do nothing` |
+| assinatura | `SYNC.assinarDominio` | `SYNC.assinarRegistro` |
+
+#### A chave é o id do toque, e é isso que faz os dois caminhos conviverem
+
+A linha em `cron_registro` tem como chave primária **o mesmo id do toque** que o
+caminho do GitHub grava em `tid` ao receber pelo `historico`. Consequência: uma
+linha que desceu pelo Supabase **já está vista** quando o `estado.json` trouxer
+o mesmo toque, e vice-versa. Os dois caminhos convivem até a 9G sem duplicar
+linha, e sem precisarem saber um do outro — a chave basta.
+
+Para isso a fórmula do id saiu de dentro do `enfileirarToque` e virou
+`idDoToque(iso)`, usada pelos dois. Duas fórmulas iguais em dois lugares seriam
+uma divergência esperando acontecer.
+
+#### O motivo viaja — e só por aqui
+
+O `semMotivo()` corta o motivo do toque porque **aquele** repositório é público e
+nunca podado. A razão é do repositório, não do registro. Esta base é privada, a
+coluna `motivo` foi criada para isto na 9A, e não mandá-la custaria informação: o
+caminho legado ao menos avisa que *existe* um motivo do outro lado
+("motivo registrado no outro aparelho"), e o online, com a coluna vazia, avisaria
+**menos** do que o legado. O rótulo continua sendo do caminho do GitHub, onde ele
+é a única coisa que dá para dizer.
+
+#### Uma fila, duas marcas
+
+A subida do registro entra na **mesma fila** (`cron:sync-fila`), com a mesma
+drenagem, o mesmo corte por id e o mesmo teto. Duas filas seriam dois mecanismos
+de offline, e o segundo seria o que ninguém exercita. O ponto de entrada virou
+um só, `syncEnfileirar()`.
+
+A **marca de entrega**, ao contrário, é própria: `cron:sync-marca-reg`. O
+`servidor_em` de `cron_registro` e o de `cron_estado` são sequências
+independentes; uma marca só faria a entrega de uma tabela adiantar o ponto de
+partida da outra, e o catch-up da segunda pularia o que ficasse entre as duas
+leituras.
+
+O Realtime, esse sim, é **um canal só** com dois `.on`: um canal por tabela
+seriam dois WebSockets a manter de pé, dois a morrer no segundo plano do Safari
+e dois a reconectar, sem nada a ganhar.
+
+#### `on conflict do nothing`, e não um upsert
+
+O `grant` da `cron_registro` é `select, insert` — sem `update`, de propósito:
+linha de histórico não se reescreve. Um upsert de verdade seria negado pelo
+Postgres. E reenviar a mesma linha depois de uma drenagem que caiu no meio tem
+de ser **silêncio**, não erro: um erro ali travaria a fila para sempre no mesmo
+item.
+
+#### Os três renders
+
+| | Por quê |
+|---|---|
+| `renderRegistro` | é o painel do registro, dentro de Trilhos |
+| `renderSemana` | chama `ritmoDoRegistro()`, que lê `getReg()` |
+| `renderVistaRevisao` | `revisaoDaSemana` lê `getReg()` |
+
+São **três**, e não o `renderRegistro` sozinho que a descida legada chama. A
+assimetria do caminho legado é anterior a esta fase e não foi tocada.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: a `cron_registro`, suas políticas, seu
+`grant` e sua entrada na publicação do Realtime existem desde a 9A. Nada
+aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 55 a 58. O Supabase de mentira ganhou a segunda tabela,
+com a chave primária de verdade, e **recusa** um upsert em `cron_registro` que
+não peça `on conflict do nothing` — um servidor de teste mais permissivo do que
+o real não prova nada. O canal falso passou a guardar um callback por tabela:
+guardar só o último faria o teste do registro passar e o do estado sumir sem
+ninguém perceber.
+
+### 9D (4 de 5) — Rotinas do dia online
+
+O **sétimo domínio**, e o primeiro que **não tinha caminho legado nenhum**.
+Dispensas continuam legadas.
+
+#### A marca de rotina nunca atravessou aparelho
+
+Não havia toque `rotina` nem seção no `estado.json`: `cron:checks:AAAA-MM-DD`
+sempre foi local, e o código dizia isso em três lugares. A razão estava
+registrada e era boa — *"histórico permanente em repositório público por um
+valor que morre numa semana"*. Numa base privada e podável a razão não
+sobrevive, e o que sobra é a discordância: marcar uma rotina no Mac e o iPhone
+mostrar o dia incompleto é exatamente o tipo de coisa que faz alguém deixar de
+confiar no app.
+
+Logo: **não há caminho legado a preservar aqui, só um a estrear**. Nenhum toque
+`rotina` foi inventado — o caminho do GitHub sai na 9G, e não é hora de lhe
+acrescentar mecanismo. Há teste que verifica justamente isso.
+
+#### Um funil onde havia três escritores
+
+`toggleCheck`, `marcarAtrasada` e `limparHoje` gravavam `cron:checks` cada um
+por conta própria. Enquanto a marca era local isso não custava nada; a partir do
+momento em que ela viaja, três escritores seriam três chances de uma marca ficar
+só num aparelho. Os três passam agora por `tocarRotina(dia, id, feito)`.
+
+**`limparHoje` deixou de esvaziar a gaveta.** Zerar o objeto apagava as marcas
+sem dizer a ninguém que elas caíram: o outro aparelho continuaria mostrando o
+dia cheio, e a próxima descida traria tudo de volta. Agora cada id vira
+`{feito:false}` — e para quem lê (`if(ck[id])`) `false` e ausência são a mesma
+coisa, então nada muda na tela.
+
+#### Sem lápide, e a ausência é do domínio
+
+**"Não marcada" é um estado**, e é assim que *desmarcar* atravessa aparelhos —
+mesmo desenho da triagem da 9D.1. A lápide existe para dizer "isto foi apagado";
+aqui não se apaga nada, alterna-se um booleano.
+
+#### `expira_em`, porque a marca morre de velha
+
+É o único domínio, com `dispensa`, que preenche `expira_em`: **90 dias contados
+a partir do dia da marca**, não do envio. `atrasadas()` lê sete dias para trás e
+a revisão lê a semana corrente — marca de rotina com mais de 90 dias não é lida
+por ninguém, e o `cron_podar()` a leva. Isso não contraria *"nada se perde"*:
+aquilo vale para decisão, e a marca do dia não é uma.
+
+#### O relógio mora no cache, e é suficiente
+
+`cron:checks:` é `{id: booleano}` e **nunca guardou instante** — não há, e não
+deve haver, um `mesclar*` comparando `em` local. Quem decide é o cache da
+camada, no `aplicarRemoto`, que já recusou o que não é mais novo antes de o
+aplicador ser chamado. A regra não tem furo porque `cron:sync-cache` e
+`cron:checks:` moram no **mesmo** localStorage: somem juntos e voltam juntos —
+o mesmo argumento que sustenta "toque meu não desce nunca" no registro.
+
+#### A cópia em memória
+
+`checks` é uma cópia em memória do dia de hoje, lida uma vez no carregamento.
+Gravar em `cron:checks` sem atualizá-la faria o `renderHoje` repintar o valor
+velho e a marca recebida sumir da tela. O funil e o aplicador atualizam os dois.
+
+#### Os dois renders
+
+| | Por quê |
+|---|---|
+| `renderHoje` | as caixas do dia e o bloco "ficou para trás" (`atrasadas()`) |
+| `renderVistaRevisao` | `revisaoDaSemana` conta as rotinas concluídas |
+
+**`renderSemana` não entra** — verificado que não lê `cron:checks`.
+
+#### O rótulo "neste aparelho" saiu
+
+A revisão dominical dizia *"3 rotinas concluídas · neste aparelho"*. A ressalva
+existia porque o número era local; agora não é. Mantê-la seria dizer ao leitor
+uma coisa que o programa não faz mais.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: `rotina` está no `CHECK` de domínios,
+o contrato da chave (`AAAA-MM-DD/idDaRotina`) e do valor (`{feito}`) está escrito
+lá desde a 9A, e o `expira_em` e o `cron_podar()` foram feitos para este caso.
+Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 59 e 60.
+
+### 9D (5 de 5) — Dispensas online, e a Fase 9D fechada
+
+O **oitavo domínio**, e o par exato da 9D.4: `cron:hoje-dispensados` também
+nunca atravessou aparelho, pela mesma razão registrada no esquema, e também
+**estreia em vez de migrar**. Nenhum toque `dispensa` foi inventado.
+
+Com ela a **Fase 9D está completa**: vagas, retomadas, registro, rotinas e
+dispensas. Sete domínios de estado mais a tabela do registro.
+
+#### As duas formas da chave
+
+| | forma |
+|---|---|
+| no aparelho | `AAAA-MM-DD\|id` (barra vertical) |
+| no estado online | `rotina/AAAA-MM-DD/id` |
+
+O prefixo não é enfeite: a tabela guarda os dois tipos de dispensa na mesma
+chave composta. O esquema prevê desde a 9A uma segunda forma,
+`meta-aviso/AAAA-MM`, que **nada ainda escreve** — e o aplicador a **ignora**
+em vez de adivinhar. Gravar um formato que nenhum leitor entende sujaria a
+gaveta sem ninguém notar. Uma chave de três partes com o prefixo errado é o
+caso que só a checagem do prefixo pega, e há teste para ele.
+
+#### Sem lápide
+
+Não existe "desdispensar". A entrada some sozinha quando o dia sai da janela de
+sete dias, e do servidor pelo `expira_em` — **90 dias a partir do dia
+dispensado**, a mesma vida da marca de rotina, pelo mesmo `rotinaExpira()`.
+
+#### A poda local continua onde estava
+
+`podarDispensados()` corta as entradas com mais de sete dias, e continua sendo
+chamada **na escrita**, dentro do funil — nada mudou nisso. Ela e o `expira_em`
+do servidor fazem trabalhos diferentes: uma limpa a gaveta deste aparelho, o
+outro impede que a tabela guarde para sempre o rastro de uma rotina que morreu
+de velha.
+
+#### Um render
+
+`renderHoje`, e só. `atrasadas()` é o único leitor da chave, e ele desenha no
+bloco "ficou para trás" do Hoje.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: `dispensa` está no `CHECK` desde a 9A,
+com as duas formas da chave e o `expira_em` já escritos lá. Nada aplicado ao
+banco.
+
+#### Testes
+
+`teste_sync.js`, seções 61 e 62.
+
+### 9E — Trilhos: o progresso online, e a estrutura que ficou
+
+Dois domínios conectados — **`item`** (progresso) e **`toefl`** (o guia) — e
+dois **deliberadamente não conectados**: `estrutura_proj` e `estrutura_sub`.
+Nove domínios de estado no ar, mais a tabela do registro.
+
+#### Os dois escritores reais, e onde está a autoridade
+
+Este é o único domínio da Fase 9 em que dois escritores já são verdade **hoje**:
+você, no aparelho, e o pipeline, pelo `dobrar_toques.py --registrar`, que
+escreve um toque com aparelho `"cowork"` e entra pela mesma porta que o iPhone.
+
+A regra de desempate é o relógio — mas **a autoridade não é "quem chegou por
+último"**, e a distinção importa. O que impede o relógio de apagar uma decisão
+sua não é o desempate: é a **fronteira do que a máquina pode afirmar**, e ela
+está no dado, **antes de qualquer escrita**. O `--registrar` **recusa** subitem
+de prova `"estrela"` — as etapas cuja conclusão é decisão do autor. Sobre elas o
+pipeline não opina, então não há conflito a desempatar. Nas outras, progresso é
+fato verificável (o artefato existe ou não existe), e ali o mais recente manda
+mesmo.
+
+**A 9E não move essa fronteira para o desempate, e não torna o pipeline um
+escritor do Supabase.** Ele continua no caminho legado, como mais um aparelho —
+que é exatamente o que a dupla escrita preserva até a 9G. Há teste para cada uma
+dessas quatro afirmações.
+
+#### O `em` do subitem vinha do relógio errado
+
+`marcarSub` e `ciclarVida` carimbavam `x.em = new Date().toISOString()`, o
+relógio de parede, enquanto o toque nascia do `instanteDoToque()`, o monotônico.
+Duas consequências, ambas reais e ambas medidas:
+
+- duas mudanças no mesmo milissegundo recebiam o **mesmo** `x.em`, e a segunda
+  perdia o desempate contra a primeira;
+- o aparelho e o toque passavam a **discordar sobre quando aquilo aconteceu**.
+
+É a mesma divergência que a 9C-0 mediu em metas e eventos e a 9D.1 corrigiu no
+`vgMarcar`. O `tocarItem` agora toma o instante do `logar()`, que é quem fala
+com o relógio — uma fonte, três consumidores: o subitem, o toque legado e a
+linha do `cron_estado`.
+
+#### Progresso não cria estrutura
+
+O aplicador do `item` exige que o subitem **exista** neste aparelho. Progresso
+de peça que o aparelho não conhece não tem onde pousar, e inventá-la seria criar
+estrutura pelo caminho do progresso — exatamente a separação que o esquema
+mantém ao dar linhas distintas a `item` e `estrutura_sub`.
+
+#### O motivo viaja, e só por aqui
+
+Mesma decisão da 9D.3: o `semMotivo()` corta o motivo do caminho do GitHub
+porque **aquele** repositório é público. A base é privada, a coluna está no
+contrato, e o rótulo "motivo registrado no outro aparelho" continua sendo do
+caminho legado, onde ele é a única coisa que dá para dizer.
+
+#### O que a 9E NÃO fez, e por quê
+
+**`estrutura_proj` e `estrutura_sub` não foram conectadas.** Ligar a estrutura
+sem o merge de três vias seria ligá-la errado, e o pedido era explícito: não
+simplificar o merge. Faltam **dois pré-requisitos**, nenhum deles código deste
+branch:
+
+1. **A `cron_estrutura_base` precisa ser escrita**, e quem a escreve é o
+   pipeline, do Actions, com a chave `service_role`. O app tem `SELECT` e mais
+   nada — e essa ausência é o ponto: se ele pudesse reescrever a base, poderia
+   forjar "o pipeline nunca mudou isso" e o merge de três vias viraria de duas
+   outra vez. Isso exige um segredo novo no Actions, que é decisão sua.
+2. **O `cron:arquivo` precisa ser aposentado** em favor de `vida='arquivado'`,
+   como o próprio esquema declara. Hoje `delProj`/`delSub` fazem `splice` no
+   array e guardam numa gaveta paralela **indexada por posição** — que se
+   desloca. Apagar e restaurar não têm como atravessar aparelhos nessa forma.
+
+Enquanto isso não existe, o defeito conhecido continua sendo o de sempre e **não
+piorou**: renomear um projeto à mão é desfeito pela próxima publicação do
+pipeline, em silêncio. Isso é verdade desde a Fase 4 e não é consequência da
+Fase 9.
+
+#### Sem alteração no esquema
+
+`sql/cron_estado.sql` **não foi tocado**: `item` e `toefl` estão no `CHECK`
+desde a 9A, com chave e valor já escritos lá, e a `cron_estrutura_base` continua
+intacta, esperando a fase que a use. Nada aplicado ao banco.
+
+#### Testes
+
+`teste_sync.js`, seções 63 a 65. Os guardas de lista de domínios passaram a
+varrer também o `20-regras.js`: o funil do TOEFL mora lá, e um guarda que só
+lesse o `30-render.js` diria que o domínio não está conectado.
+
+### 9F — A prova da escrita dupla
+
+    node scripts/prova_dupla_escrita.js
+
+A Fase 9 mantém **dois caminhos vivos de propósito**: o de sempre (toque →
+GitHub → `estado.json`) e o novo (`cron_estado` no Supabase). Conviver não é
+concordar. Esta é a fase que cobra o preço de tê-los mantido: uma prova
+automatizada e determinística de que os dois dizem a **mesma coisa** sobre a
+mesma decisão.
+
+**Não é mais uma bateria de testes de unidade.** O `teste_sync.js` prova cada
+domínio por dentro; a prova da 9F olha para a **fronteira** entre os dois
+caminhos, e só para ela. Por isso mora num arquivo próprio, com um vocabulário
+próprio — `COERENTE` / `DIVERGE` — e um veredicto único no fim.
+
+**O harness é o mesmo, importado e não copiado.** O `teste_sync.js` passou a
+exportar o Supabase de mentira (`module.exports`, com a execução dos testes
+guardada por `require.main === module`). Um segundo servidor falso seria um
+segundo a manter de acordo com o Postgres, e no dia em que divergissem a prova
+mediria o falso.
+
+#### Os dez critérios
+
+| | O que prova |
+|---|---|
+| 1 | uma decisão humana produz o **mesmo `em`** nos dois caminhos, domínio a domínio |
+| 2 | o que desce do Supabase **não vira toque** |
+| 3 | o que desce do `estado.json` **não vira escrita online** |
+| 4 | o LWW é determinístico quando os dois caminhos discordam sobre o mesmo item |
+| 5 | a decisão de 9h, drenada às 18h, **não vence** a das 17h |
+| 6 | o `toefl` é booleano e não transporta estrutura nem texto |
+| 7 | o `item` é progresso, e **progresso não cria estrutura** |
+| 8 | o pipeline continua escrevendo pelo caminho legado, e **não fala com o Supabase** |
+| 9 | a fronteira do `prova: "estrela"` continua **antes da escrita**, e não no desempate |
+| 10 | o registro é append-only, e é provado **fora** do LWW |
+
+O critério 1 compara **três cópias** do instante — o aparelho, o toque e a linha
+online. As três, e não duas: a cópia do aparelho é a que decide o LWW local, e
+foi exatamente ela que divergia antes da correção da 9E.
+
+O critério 9 é o que a Fase 9E mais precisava por escrito: o merge do `item`
+**não conhece** `estrela`, `prova` nem `cowork` — e essa ignorância é o desenho.
+A decisão do autor não é protegida por uma regra de quem vence; é protegida pela
+recusa do `--registrar`, antes de qualquer escrita.
+
+O critério 10 existe porque o registro **não é LWW**: uma linha de 2020 que
+chega depois das de hoje não é recusada por ser velha, é aceita por ser outra.
+Provar append-only com o vocabulário do LWW seria provar a coisa errada.
+
+#### O que a prova não cobre, e por quê
+
+`estrutura_proj` e `estrutura_sub` **não entram**. Não foram conectados, e
+deliberadamente (ver 9E). Provar coerência de quem não escreve seria provar o
+vazio — e a prova diz isso explicitamente, em vez de silenciar.
+
+#### Como ela foi validada
+
+Três mutações, e cada uma faz a prova falhar com saída 1: fazer o `em` do
+aparelho divergir do toque; tirar a deduplicação por id do registro; e mandar o
+`toefl` carregar o texto do item. A primeira revelou uma lacuna na própria
+prova — ela comparava o toque e a linha online, mas não a cópia do aparelho —, e
+o critério 1 foi corrigido antes de a fase fechar.
+
+#### Sem alteração no esquema, e sem escritor novo
+
+`sql/` **não foi tocado**. Nenhum domínio novo, nenhum funil novo, nenhuma
+mudança no merge de três vias. A 9F **só mede**.
+
+### 9G-0 — Pré-requisitos para aposentar o GitHub
+
+Duas coisas bloqueavam a 9G. Esta etapa resolve **uma** e documenta por que a
+outra não pode ser resolvida por código.
+
+#### Parte A — o segundo escritor ganhou caminho online ✅
+
+O `--registrar` sempre foi um escritor **real**, e não um espelho: ele afirma um
+fato que só ele verifica (o artefato existe), pela mesma porta por onde o iPhone
+entra. Até aqui essa porta era só o arquivo de toque — o que faria dele um órfão
+no dia em que o caminho do GitHub saísse.
+
+Agora ele publica o **mesmo toque** também no estado compartilhado: uma linha
+`item` em `cron_estado` e uma linha em `cron_registro`, com o **id do toque**
+como chave primária — a mesma ponte da 9D.3, que faz as duas descidas
+reconhecerem a mesma linha sem duplicá-la.
+
+O que continua exatamente como era:
+
+| | |
+|---|---|
+| a fronteira `prova: "estrela"` | a recusa acontece **antes**, no `registrar()`, e nada no publicador a alcança |
+| o `em` | o mesmo instante nos dois caminhos — sem isso a prova da 9F não teria o que comparar |
+| a autoridade | assina como `cowork` também online: um aparelho, não uma autoridade |
+| a separação | publica `item`, e **um domínio só**. Nunca estrutura |
+| o LWW | o gatilho `cron_estado_relogio()` descarta o `em` atrasado: o pipeline não desfaz decisão mais recente sua |
+| terceiro escritor | nenhum — é a mesma função `registrar()` |
+
+**O toque é o artefato durável.** Publicar vem **depois** de gravar, e é melhor
+esforço: rede fora ou credenciais ausentes fazem o comando dizer o que não fez e
+seguir. O caminho do GitHub fica inteiro.
+
+**Nenhum segredo novo.** `SUPABASE_URL` (repository *variable*) e
+`SUPABASE_SECRET_KEY` (*secret*, papel `service_role`) **já existem** e já são
+usadas pelo `avisos/enviar.mjs`. O `dobrar-toques.yml` passou a recebê-las no
+ambiente do job. O uuid do dono vem da própria `cron_dono` — dois donos é
+ambiguidade, e o pipeline para e diz, em vez de escolher.
+
+#### Parte B — a estrutura continua bloqueada, por duas decisões suas ⛔
+
+Não improvisei. Os dois pontos abaixo não são de código:
+
+**B1 — não existe, neste repositório, quem publique o `entrada.json`.** O
+`dobrar_toques.py` apenas o **lê** (`procurar_na_entrada`); nada aqui o escreve.
+A `cron_estrutura_base` guarda *o que o pipeline publicou da última vez*, e essa
+é a informação inteira do merge de três vias. Preenchê-la a partir de um arquivo
+que o pipeline não publicou seria **forjar a base** — exatamente o que o
+`sql/cron_estado.sql` avisa: com uma base forjada, o merge de três vias vira de
+duas outra vez, e em silêncio. Enquanto o publicador do `entrada.json` não
+estiver neste repositório (ou não escrever a base ele mesmo), não há onde
+ancorar a terceira via.
+
+**B2 — aposentar o `cron:arquivo` exige decidir o que fazer com o que já está
+arquivado.** Hoje `delProj`/`delSub` fazem `splice` no array e guardam numa
+gaveta paralela indexada por **posição** — e as posições já se deslocaram desde
+que cada entrada foi guardada. Migrar para `vida='arquivado'` muda, aparelho por
+aparelho, o que cada um mostra, de forma irreversível; e essas entradas **nunca
+viajaram**, então cada aparelho tem as suas. É uma decisão sobre o seu arquivo
+real, não sobre o código. E fazer só a parte fácil seria aposentar o
+`cron:arquivo` **pela metade**, que é o que você proibiu.
+
+#### Testes
+
+A prova da 9F teve o **critério 8 reescrito**, e ficou mais forte: em vez de
+"o pipeline não fala com o Supabase" — afirmação que esta etapa supera —, ele
+agora verifica que, falando, o pipeline continua afirmando um fato seu: mesmo
+`em`, mesmo id, um domínio só, assinatura de aparelho, gravação antes da
+publicação e credenciais só do ambiente.
+
+### 9G-0 B1 — A publicação da estrutura, e a base que a registra
+
+    python3 scripts/dobrar_toques.py --publicar-estrutura /caminho/entrada-nova.json
+
+#### O elo que faltava tinha um nome
+
+O `entrada.json` **não é gerado por script nenhum** — o próprio arquivo diz quem
+o escreve: `"_escritor": "Cowork. Não editar à mão."`. A cadeia é
+`pipeline → mapa_portal.json → Cowork → entrada.json → commit`, e os dois
+primeiros elos vivem fora deste repositório. Foi por isso que a busca por um
+gerador não achou nada: o publicador **é o Cowork**, o mesmo agente que roda o
+`--registrar`.
+
+Com isso o bloqueio se dissolve, e a solução fica simétrica à da Parte A: assim
+como o `--registrar` grava o toque **e** publica o `item` no mesmo ato, o
+`--publicar-estrutura` grava o `entrada.json` **e** registra a
+`cron_estrutura_base` no mesmo ato.
+
+#### Por que os dois têm de ser um ato só
+
+A base guarda *o que o pipeline publicou da última vez* — é a **terceira via**.
+Publicar o arquivo sem registrar a base deixaria a base **mentindo**: dizendo
+"o pipeline nunca mexeu nisso" sobre um campo que ele acabou de mexer. E base
+que mente é pior do que base nenhuma, porque o merge de três vias voltaria a ser
+de duas **sem ninguém perceber**.
+
+Daí a ordem, que é a garantia:
+
+1. o arquivo novo é escrito num **temporário**, ao lado do definitivo;
+2. a base é substituída **inteira, numa transação só**;
+3. só então o temporário toma o lugar do `entrada.json`.
+
+Falhou a base → o temporário cai e **nada muda**: o arquivo anterior e a base
+anterior continuam de acordo um com o outro. Por isso, ao contrário do
+`--registrar`, aqui publicar **não é melhor esforço**: sem credenciais o comando
+**recusa**, em vez de publicar metade.
+
+**E o passo 2 é uma chamada só, de propósito.** A primeira versão gravava num
+`POST` e retirava numa sequência de `DELETE`s — operações independentes. Uma
+falha entre elas deixaria a base **pela metade** enquanto o `entrada.json` antigo
+continuava no disco: a base afirmando que o pipeline publicou uma coisa que ele
+não publicou, e o merge de três vias decidindo com base nisso, em silêncio.
+Compensar depois não resolve, porque a compensação também pode falhar.
+
+A substituição inteira mora agora numa função do banco,
+`cron_publicar_estrutura(dono, gerado_em, linhas)`, e o PostgREST executa cada
+chamada dentro de uma transação: **ou a base passa a ser exatamente a estrutura
+publicada, ou continua sendo exatamente a anterior**. Não há terceiro estado — é
+o que torna verdadeira a garantia que o comando anuncia.
+
+Duas defesas moram nela, e as duas são contra perda de dado:
+
+- **array vazio é recusado**, e não tratado como "publicar nada": uma publicação
+  vazia apagaria a base inteira, e quase sempre significa arquivo malformado a
+  montante;
+- a retirada usa `not exists`, e não `not in`: com `not in`, uma `chave` nula no
+  array faria a retirada devolver zero linhas e não acontecer — em silêncio.
+
+**Só a `service_role` pode chamá-la**, como o `cron_podar()`. Se o app pudesse,
+poderia reescrever a base e forjar "o pipeline nunca mudou isso" — a mesma razão
+pela qual a tabela não tem política de escrita.
+
+#### O que a base registra
+
+| | chave | valor |
+|---|---|---|
+| projeto | `painel/proj` | `t, n, mes` |
+| subitem | `painel/proj/sub` | `t, n, onde, prova, medida, ordem` |
+
+Só isso, e carimbado com o `_gerado_em` **da publicação**. Nem os filhos nem o
+id entram no valor — a chave já diz quem é. E **exatamente** a estrutura
+publicada: a peça que sai do arquivo sai da base, por `DELETE` explícito. Deixar
+a linha de uma peça que não é mais publicada faria a base afirmar que o pipeline
+ainda a publica.
+
+**A base nasce da primeira publicação real.** Nada lê o `entrada.json` do disco
+para "preencher" a base — semear seria afirmar que o pipeline publicou algo que
+talvez nunca tenha publicado.
+
+#### A regra de três vias existe, e ainda não está ligada
+
+`mesclarEstrutura(local, entrada, base, temBase)` implementa a regra, campo a
+campo, e tem teste para os três casos: **só você mexeu** (o rename sobrevive),
+**só o pipeline mexeu** (atualização legítima entra), **os dois mexeram** (conflito
+real, registrado). Sem base, ela cai em duas vias — que é o certo para uma peça
+publicada pela primeira vez.
+
+**Ligada desde a primeira publicação real** (91 linhas: 13 projetos + 78
+subitens, `_gerado_em` de 26/08). A terceira via é consultada **campo a campo**:
+onde a baseline não conhece o campo, o merge continua de duas vias — que é o
+certo para uma peça publicada pela primeira vez, e é o caso real dos 13 projetos,
+cujo `valor` está vazio porque o `entrada.json` só traz `id` nesse nível.
+
+A baseline chega ao aparelho por `SYNC.carregarBase()` e fica numa **cópia
+local** (`cron:estrutura-base`): o `mesclarEntrada()` roda no carregamento, antes
+de a sincronia conectar, então a base precisa já estar ali quando ele perguntar.
+A cópia só é gravada se a leitura trouxe alguma coisa — um mapa parcial diria "o
+pipeline nunca publicou isto" sobre o que faltou.
+
+**Conflito não é silencioso.** Quando os dois mexeram no mesmo campo, vence a
+publicação e o que era seu fica em `cron:estrutura-conflitos`, com a peça, o
+campo e o valor sobrescrito.
+
+#### O navegador continua só lendo
+
+A `cron_estrutura_base` dá ao app `SELECT` e mais nada, e a ausência de política
+de escrita é o ponto: se ele pudesse reescrevê-la, poderia forjar "o pipeline
+nunca mudou isso". Há teste para as duas metades — que o SQL não tem política de
+escrita, e que nenhum arquivo do aplicativo escreve nela.
+
+#### O que esta etapa NÃO fez
+
+**B2 continua aberto**: `cron:arquivo`, `delProj`, `delSub` e o arquivamento por
+índice estão exatamente como estavam. `estrutura_proj` e `estrutura_sub`
+continuam sem escritor no aplicativo.
+
+#### Testes
+
+`scripts/teste_publicar_estrutura.py` sobe um PostgREST de mentira em localhost e
+exercita o comando de verdade: a base nascendo vazia, a republicação que retira o
+que saiu, a falha **antes** e a recusa **dentro** da transação (nenhuma das duas
+publica metade), a ausência de credenciais e as estruturas inválidas. O servidor
+falso **emula a transação** e recusa qualquer escrita que não seja a RPC — um
+servidor que aplicasse pela metade provaria o contrário do que o teste afirma. `teste_sync.js`, seções 66 e 67, cobrem a regra de três
+vias e quem pode escrever a base.
+
+### 9G-0 B2 — O `cron:arquivo` aposentado
+
+Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta
+paralela indexada por **posição**. Agora é `vida = 'arquivado'` na própria peça
+— um valor que o esquema v2 já declarava e nunca usava.
+
+| | antes | agora |
+|---|---|---|
+| arquivar | `splice` + entrada em `cron:arquivo` | `vida = 'arquivado'` |
+| restaurar | `restaurarArquivo(k)`, `k` = posição na gaveta | `vida = 'ativo'`, por id |
+| aba Arquivo | a gaveta | um **filtro** sobre os painéis |
+| atravessa? | nunca | **subitem sim**, projeto não |
+
+#### Subitem atravessa, projeto não
+
+`vida` já é campo do domínio `item` e já sobe pelo `tocarItem` (9E) — então
+arquivar e restaurar subitem passaram a atravessar aparelhos **de graça**, pelo
+LWW de sempre, com o mesmo instante nos dois caminhos. Arquivar no Mac arquiva
+no celular.
+
+**Projeto continua local**, e é consequência conhecida: `estrutura_proj` é
+`{t, n, mes}`, sem `vida`, e a estrutura ainda não é domínio online. Não há
+regressão — arquivar projeto já era local.
+
+#### A posição saiu dos handlers, não só da gaveta
+
+Com as peças arquivadas ficando no array e saindo só da **tela**, a posição que
+o render emitia deixou de ser a posição no armazenamento: `editProj(pid, i, …)`
+passaria a editar a peça errada. Por isso `editProj`, `editSub`, `delProj`,
+`delSub`, `cycleSub`, `ciclarVida` e `addSub` passaram a endereçar **por id**, e
+`renderPainel` emite ids. O `data-pi` saiu do HTML.
+
+#### O filtro é nos leitores, nunca no `getProjs()`
+
+`getProjs()` continua devolvendo tudo. Quinze pontos fazem
+`setProjs(getProjs(...))`, e um `getProjs` filtrado apagaria as arquivadas do
+armazenamento na primeira volta. O `vivos()` entra nos **leitores**: o painel, o
+motor de prioridades, a revisão da semana, o estágio do trilho, os projetos
+ativos, a peça do mês, a entrega dos artigos, os processos visíveis e as
+retomadas.
+
+#### A migração, uma vez por aparelho, e nunca pela metade
+
+Cada entrada da gaveta volta ao painel com `vida='arquivado'` — a peça inteira,
+como estava. Se **alguma** entrada não puder voltar (um subitem cujo projeto-pai
+não existe mais), a migração **não acontece**, a gaveta fica intacta e o console
+diz o que travou. Meia migração seria pior do que nenhuma.
+
+**Não publica toque**: o arquivamento antigo nunca atravessou aparelho, e uma
+decisão que nunca viajou não passa a viajar retroativamente — mesma regra da
+migração das prioridades.
+
+#### Testes
+
+`teste_sync.js`, seções 69 a 71 — incluindo uma asserção sobre o **HTML do
+painel**: sem ela, remover o filtro do render não fazia teste nenhum falhar.
+
+### 9G-1 — O notificador deixa de depender do `estado.json`
+
+A auditoria de fronteira da 9G encontrou **uma** dependência bloqueante: o job
+diário de avisos push lia `Cronograma/estado.json` para saber os eventos. Não é
+sincronização entre aparelhos — é uma segunda função que se apoiou no mesmo
+arquivo. Enquanto ela existisse, desligar o caminho do GitHub faria os avisos
+pararem de conhecer datas novas **em silêncio**.
+
+Agora `buscarEventos(api)` lê o `cron_estado`, domínio `evento`, com a
+`service_role` que o próprio `enviar.mjs` **já usa** para as inscrições. Nenhuma
+chave nova, nenhuma infraestrutura da Fase 8 recriada.
+
+**Sem volta ao arquivo, nem como fallback.** Um fallback silencioso faria o job
+ficar verde avisando o passado no dia em que a leitura falhasse. O `api()` lança
+em qualquer resposta que não seja ok, e o job cai — que é o comportamento certo.
+
+Duas guardas a mais, pela mesma razão:
+
+- **`lerDados` deixou de devolver `eventos`**, em vez de devolver `{}` de
+  consolo: quem monta os dados tem de ir buscá-los;
+- **`decidir` lança** se os eventos não estiverem lá. Antes eles vinham sempre
+  do `lerDados`; agora vêm da rede, e a ausência da chave só pode significar que
+  alguém esqueceu de buscar. Emudecer faria o aviso de datas sumir sem ninguém
+  notar.
+
+A **lápide é a coluna `del`** — evento apagado num aparelho não volta a virar
+aviso. Privado continua saindo por inteiro, e a regra de janela, montagem e
+deduplicação **não mudou uma linha**: o que mudou foi a fonte.
+
+#### Testes
+
+`scripts/teste_avisos.mjs` ganhou a seção 9G-1, e o critério central é a
+**equivalência**: o mesmo conjunto de eventos, na forma do `estado.json` e na
+forma do banco, produz a **mesma janela e o mesmo aviso**. É o que prova que a
+migração trocou a fonte e não a regra.
+
+### 9G-2 — A subida legada cortada
+
+**Pré-condição, registrada e não verificável por código:** o corte pressupõe, em
+cada aparelho, `cron:toques` vazio e `cron:sync-ligado === "true"`. São chaves de
+`localStorage`, e nenhum teste as alcança.
+
+#### O que saiu
+
+`enfileirarToque` e os sete chamadores, `enviarToques`, `gravarNoGitHub`,
+`agendarEnvio`, a fila `cron:toques` (e o excedente), o token do GitHub
+(`getToken`, `salvarToken`, `removerToken`, `TOKEN_KEY`), a UI do token e o botão
+"Enviar agora", os quatro ouvintes de envio no boot, e o que só existia para a
+subida: `semMotivo`, `paraBase64`, `nomeDoLote`, `impressaoDeIds`,
+`explicarFalha`, `ENVIANDO`, `renderToquesAviso`, `renderSyncEstado`,
+`TOQUES_SCHEMA`, `TOQUES_TETO`, `ENVIO_ESPERA`, `GH_DONO/GH_REPO/GH_RAMO`.
+
+#### O que sobrou de `enfileirarToque`: o relógio
+
+`instanteISO(quandoISO)`. A fila saiu, mas o **relógio monotônico não podia
+sair** — os sete funis precisam do instante, e é o mesmo `em` que vai para o
+`cron_estado`. O `idDoToque(iso)` também fica: é a chave da linha em
+`cron_registro`, e é por ela que o registro publicado pelo `--registrar` do
+pipeline não vira uma segunda linha no aparelho.
+
+#### O que foi preservado, explicitamente, para a 9G-3
+
+(Da primeira metade desta lista, a 9G-3 tratou logo abaixo; a segunda continua
+inteira.) `buscarEstado()` e os sete `aplicar*DoEstado`, `estado.json`,
+`scripts/dobrar_toques.py` inteiro (`--registrar` e `--publicar-estrutura`),
+`Cronograma/toques/`, o `dobrar-toques.yml`, `entrada.json` e `mesclarEntrada`,
+todo o SYNC e o `cron:sync-fila`, o Web Push e o notificador, a estrutura online
+e o arquivamento por `vida`.
+
+#### O que a mudança custou aos testes
+
+Muito, e era previsível: metade das asserções media a **escrita dupla**, e um dos
+lados deixou de existir. A conversão seguiu uma regra só — **medir o efeito, não
+o artefato**:
+
+| antes | agora |
+|---|---|
+| "emitiu um toque X" | a própria decisão gravada, com o seu instante |
+| "não gerou toque" (receber não é tocar) | a fila do SYNC não cresceu |
+| "o mesmo ISO nos dois caminhos" | o mesmo ISO no aparelho e na linha online |
+| "um `enfileirarToque` por domínio" | uma `salvarAlteracao` por domínio |
+
+**`scripts/teste_sincronia.py` foi reduzido à seção 5** — o round-trip do
+*pipeline* (`--registrar` → dobra → `estado.json` → descida), o único que ainda
+tem sujeito. As outras seis seções provavam o round-trip da *página*, que deixou
+de existir; os mesmos domínios já são provados entre dois aparelhos pelo
+`teste_sync.js`. Não houve perda de cobertura, houve perda de objeto.
+
+**A prova da 9F mudou de veredicto**: de "os dois caminhos dizem o mesmo" para
+"aparelho, online e pipeline dizem o mesmo". Os critérios que comparavam os dois
+caminhos *do aplicativo* passaram a comparar o aparelho e o online; os que
+guardam a fronteira com o **pipeline** e o `prova: "estrela"` continuam
+exatamente como estavam — e são os que ainda têm dois lados.
+
+### 9G-3 — A descida legada cortada, e o acervo aposentado
+
+Fecha a Fase 9G. O aplicativo deixa de usar o GitHub como mecanismo de
+sincronização entre aparelhos: já não escrevia lá desde a 9G-2, e agora também
+não lê. O `estado.json` **continua existindo** — é o artefato que a dobra
+publica, e o pipeline continua o produzindo e o lendo. O que saiu é o aparelho
+como consumidor dele.
+
+**Pré-condição, registrada e não verificável por código:** além das duas da 9G-2
+(`cron:toques` vazio, `cron:sync-ligado === "true"`), esta exigiu uma terceira —
+**o acervo de cada aparelho já publicado**, sem metas nem datas pendentes. Um
+botão que não tem mais o que migrar é a única condição sob a qual ele pode sair.
+
+#### O que saiu
+
+`buscarEstado()`, o único `fetch("estado.json")` do aplicativo, os seis
+`aplicar*DoEstado` (prioridade, meta, evento, retomada, triagem, TOEFL), o merge
+de itens que rodava dentro do `buscarEstado`, a descida do registro pelo
+`est.historico` e a chamada de descida nos dois ouvintes do boot.
+
+E o **subsistema do acervo inteiro**: `cron:la-fora` e o `ACERVO_LA_FORA_KEY`,
+`ACERVO_EM`, `publicarAcervoUmaVez`, `marcarLaForaLocal`, `renderAcervoEstado`,
+`pisoJaGasto`, `jaEstaLaFora`, `metasParaPublicar`, `eventosParaPublicar`,
+`metaEhSementeIntocada`, `eventoEhSementeIntocado`, `eventoJaSubiu`, o botão e o
+`#acervo-estado` no `index.html`, e o parâmetro `opts.soOnline` do `tocarEvento`.
+
+#### Por que o acervo saiu junto, e não numa fase própria
+
+A auditoria de fronteira encontrou nele um **consumidor compartilhado**, e não um
+pedaço isolável. `cron:la-fora` era escrito por `buscarEstado` e lido por quatro
+funções que não pertencem à descida:
+
+| leitor | o que decidia |
+|---|---|
+| `pisoJaGasto` | o piso já gasto do **relógio monotônico** (`instanteDoToque`) |
+| `jaEstaLaFora` | o que o botão do acervo ainda tinha a publicar |
+| `eventosParaPublicar` | título faltando, título a retirar, marca de privado |
+| `eventoJaSubiu` | o `soOnline` de um evento privado renomeado |
+
+Cortar a descida sem decidir o acervo deixaria a fotografia **congelada**: o
+contador mostraria a mesma pendência para sempre, um aparelho novo veria o botão
+recusar-se a funcionar, e o relógio poderia reemitir um instante que a dobra já
+tinha visto. Por isso a implementação parou nessa fronteira e a decisão foi
+tomada fora do código — o acervo estava publicado, e o subsistema saiu inteiro.
+
+#### O que o relógio perdeu, e por que não precisa de substituto
+
+O ramo de base explícita do `instanteDoToque` era
+`Math.max(base, pisoJaGasto(base) + 1)` e passou a ser `base`. A segunda metade
+cobria o aparelho que publicara o acervo **antes** de o mapa `cron:relogio-bases`
+existir: a memória dele morava lá fora, no `estado.json`. As bases explícitas que
+restam — `TOEFL_EM`, `RETOMADA_EM`, `MIGRA_EM` — são migrações de uma vez por
+aparelho, com mapa próprio desde o primeiro uso. Não há memória externa a
+consultar porque não há publicação externa a repetir.
+
+#### O que foi preservado
+
+Todo o SYNC e o `cron:sync-fila`, os nove escritores online, o LWW pelo relógio
+do aparelho, os `mesclar*` (que agora têm um consumidor em vez de dois, e
+continuam separados dos aplicadores — é o que os mantém testáveis sem rede),
+`entrada.json` e `mesclarEntrada`, `estrutura_proj`/`estrutura_sub` e o
+`cron_estrutura_base`, `scripts/dobrar_toques.py` inteiro com `--registrar` e
+`--publicar-estrutura`, `Cronograma/toques/`, o `estado.json` como artefato,
+o `dobrar-toques.yml`, o Web Push e o `avisos/enviar.mjs`, o `checkUpdate` e o
+arquivamento por `vida`.
+
+Os dois ouvintes do boot **ficaram**, com sujeito novo: o de `online` rebusca o
+`entrada.json` (estrutura), e o de `visibilitychange` pede a versão pelo
+`checkUpdate`. O `ULTIMA_BUSCA`, a trava de 20s, ficou com eles — nasceu para a
+descida, mas guarda uma busca de rede que continua existindo.
+
+#### O que a mudança custou aos testes
+
+Menos do que a 9G-2, e por um motivo: a descida legada e a online sempre
+chamaram **o mesmo merge**. As provas de LWW, lápide, empate e "receber não é
+tocar" só trocaram o veículo — de um `est` inteiro para as linhas
+`{chave, valor, em, del}` que o SYNC entrega, uma por chave. Nenhuma regra
+mudou de forma para caber no teste.
+
+As asserções que provavam a *existência* da descida foram **invertidas**, não
+apagadas: onde se lia "o caminho legado continua existindo", lê-se agora que ele
+não existe mais, e as três inversões foram verificadas por mutação — reintroduzir
+um `fetch("estado.json")`, ressuscitar um `aplicar*DoEstado` e recriar o
+`ACERVO_LA_FORA_KEY` fazem falhar, cada um, entre uma e três suítes.
+
+Uma asserção perdeu o sujeito de um jeito perigoso e teve de ser refeita:
+`!/rotina/.test(corpoDe(nucleo, "buscarEstado"))` passaria **sozinha** contra uma
+função que não existe mais. O sujeito passou a ser o artefato — a dobra continua
+sem seção de rotina.
+
+#### A correção de segurança que veio junto
+
+`revoke insert, update, delete, truncate on public.cron_estrutura_base from
+authenticated`. A tabela nascera com os privilégios padrão do papel, que o
+`grant select` não revoga. A RLS já recusava toda escrita (`force row level
+security`, nenhuma política de escrita), então isto não fecha uma brecha aberta:
+tira a segunda linha de defesa da lista de coisas em que é preciso confiar.
+Aplicado em produção; `service_role` intocada.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -1289,6 +2520,8 @@ tocados.
 | `avisos/enviar.mjs` | o emissor dos avisos, roda só no Actions |
 | `sql/cron_push.sql` | a tabela das inscrições, com RLS |
 | `sql/cron_estado.sql` | Fase 9A: estado, registro e base da estrutura, com RLS |
+| `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
+| `scripts/teste_publicar_estrutura.py` | Fase 9G-0 B1: a publicação da estrutura e a base |
 | `scripts/estado_notificador.json` | o que já foi avisado |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
@@ -1328,6 +2561,8 @@ python3 scripts/teste_coletor.py     # pipeline de vagas
 node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
+node     scripts/prova_dupla_escrita.js  # Fase 9F/9G-2: a fronteira entre caminhos
+python3  scripts/teste_publicar_estrutura.py  # Fase 9G-0 B1: entrada.json + a base
 ```
 
 O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
@@ -1354,7 +2589,24 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 8 — Notificações (Web Push) | concluída |
 | 9A — Estado online: esquema e infraestrutura | concluída (desligada por padrão) |
 | 9B — Prioridades online (primeiro domínio na camada) | concluída |
-| 9C a 9G — demais domínios, escrita dupla, desativação do GitHub | não iniciadas |
+| 9C-0/9C-1 — relógio, escritor único e repercussão da Revisão | concluídas |
+| 9C-2 — Metas online (segundo domínio na camada) | concluída |
+| 9C-3 — Eventos online (terceiro domínio) | concluída |
+| 9C-4 — título de evento privado no caminho online | concluída |
+| 9D.1 — Triagem das Vagas online | concluída |
+| 9D.2 — Retomadas silenciadas online | concluída |
+| 9D.3 — Registro datado online (tabela própria) | concluída |
+| 9D.4 — Rotinas do dia online (primeira estreia sem caminho legado) | concluída |
+| 9D.5 — Dispensas online (fecha a Fase 9D) | concluída |
+| 9E — Trilhos: `item` e `toefl` online | concluída |
+| 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | concluída na 9G-0 B1 |
+| 9F — Prova da escrita dupla | concluída |
+| 9G-0 A — pipeline com caminho online | concluída |
+| 9G-0 B1 — publicação da estrutura, baseline e merge de três vias ligado | concluída |
+| 9G-0 B2 — `cron:arquivo` aposentado, arquivar por `vida` | concluída |
+| 9G-1 — notificador lê os eventos do `cron_estado` | concluída |
+| 9G-2 — subida legada cortada | concluída |
+| 9G-3 — cortar a descida (`buscarEstado`, `estado.json`) e aposentar o acervo | concluída |
 
 ### Previsto e ainda não implementado
 

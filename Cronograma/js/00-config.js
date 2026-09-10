@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-07-entrar";
+const APP_VERSION = "2026-09-10-so-online";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -427,6 +427,12 @@ const VIDA_LBL = {ativo:"", adiado:"adiada", abandonado:"abandonada", arquivada:
    tem o que fazer. Nao e "abandonada": ninguem abandonou nada, a etapa e que nao
    cabe. Um item inaplicavel sai da conta de progresso e nao vira "proxima etapa". */
 const ATRASO_DIAS = 7;
+/* VIDA DA MARCA DE ROTINA NO ESTADO ONLINE (Fase 9D.4), em dias. Espelha o
+   `expira_em` que o cron_podar() usa: atrasadas() le ATRASO_DIAS para tras e a
+   revisao le a semana corrente, entao marca com mais de 90 dias nao e lida por
+   ninguem. Podar o rastro de uma rotina que morreu de velha nao contraria
+   "nada se perde" — aquilo vale para decisao, e a marca do dia nao e uma. */
+const ROTINA_VIDA_DIAS = 90;
 const ATRASO_KEY = "cron:hoje-dispensados";
 /* A chave de dispensa so precisa viver os sete dias da janela: passado isso o
    item ja saiu por conta propria e a marca vira lixo. Podar na escrita evita
@@ -588,20 +594,16 @@ var TRILHO_PROVA = {estrela:"depende de voc\u00ea", maquina:"pelo pipeline"};
 var REVISAO_HORIZONTE = 14;   /* dias de "proxima semana" para datas e prazos */
 /* ---- Metas: navegação por mês, meses novos nascem vazios ---- */
 const MES_INICIO = "2026-07";
-const ACERVO_EM = "2026-01-01T00:00:00.000Z";
-
-/* FOTOGRAFIA DO QUE JA ESTA LA FORA.
-   Gravada pela mesclagem a cada leitura do estado.json. Existe para o contador
-   distinguir dois casos que o campo `em` sozinho nao separa:
-     · esta meta tem instante porque ja foi publicada ou recebida  -> nao conta
-     · esta meta tem instante mas nunca chegou ao estado.json      -> CONTA
-   O segundo caso e real: um toque destruido pelo defeito do 422 (achado 1,
-   corrigido em 29/08) deixava a meta com instante e sem nunca ter viajado. Sem
-   esta fotografia ela ficaria encalhada em silencio, para sempre. */
-const ACERVO_LA_FORA_KEY = "cron:la-fora";
-
-/* O maior instante ja publicado dentro do mesmo dia daquele piso. Serve para
-   o relogio nao reemitir um id que o estado.json ja conhece. */
+/* O ACERVO SAIU NA 9G-3. O ACERVO_EM (piso de 1o de janeiro de 2026) e o
+   ACERVO_LA_FORA_KEY ("cron:la-fora", a fotografia do que o estado.json ja
+   continha) moravam aqui. Os dois serviam ao botao "Publicar o acervo deste
+   aparelho", que existia para levar ao estado.json as metas e as datas
+   escritas ANTES de a sincronia existir — as que nao tem instante proprio e
+   por isso nao viajariam sozinhas. Com o acervo dos dois aparelhos publicado e
+   o caminho do GitHub aposentado, nao ha mais o que migrar nem onde ler a
+   fotografia: toda escrita nasce online, com instante do relogio monotonico.
+   O TOEFL_EM e o RETOMADA_EM, que citam o molde do ACERVO_EM, continuam — sao
+   migracoes de uma vez por aparelho e nao dependem de fotografia nenhuma. */
 const EVENTOS_NA_TELA = 5;
 const ST_LBL=["A fazer","Em andamento","Concluída"];
 var MOTOR_TETO_TOTAL = 3;      /* manuais + sugeridas, nunca mais que isto */
@@ -654,9 +656,6 @@ var RETOMADA_EM = "2026-01-01T00:00:00.000Z";
    aparelho nao pode passar a atravessar retroativamente. Ela so muda de
    gaveta, aqui dentro. */
 var PRIO_MIGRADO_KEY = "cron:prio-feito-migrado";
-const TOQUES_SCHEMA = 1;
-const TOQUES_TETO = 500;
-const ENVIO_ESPERA = 4000;
 const RELOGIO_KEY = "cron:relogio";
 /* Um relogio de aparelho errado, e depois corrigido, deixaria a marca gravada
    no futuro — e dali em diante todo toque daqui venceria todo toque do outro
@@ -669,14 +668,10 @@ const RELOGIO_FOLGA = 86400000;   /* 24h */
    metas gastou 2026-01-01T00:00:00.000Z ate .006Z; a publicacao dos eventos,
    depois de um recarregamento, saiu com .000Z e .001Z outra vez, e a dobra
    descartou os dois como "ja vistos". Os eventos nunca teriam viajado.
-   O mapa e pequeno por construcao: so ganha chave quem chama enfileirarToque
-   com instante explicito, e isso e a migracao da triagem (uma vez, uma base
-   por dia de marcacao) e o botao do acervo (uma base, o piso). */
+   O mapa e pequeno por construcao: so ganha chave quem pede instante EXPLICITO
+   ao relogio, e isso e a migracao da triagem (uma vez, uma base por dia de
+   marcacao) e o botao do acervo (uma base, o piso). */
 const RELOGIO_BASES_KEY = "cron:relogio-bases";
-const TOKEN_KEY = "sync:token";
-const GH_DONO  = "profjonathansousa";
-const GH_REPO  = "profjonathansousa.github.io";
-const GH_RAMO  = "main";
 const GH_PASTA = "Cronograma/toques";
 const TOQUES_POR_ARQUIVO = "lote";   /* "lote" | "um" */
 
@@ -721,9 +716,11 @@ const ROTEIRO = {
 };
 
 /* ================== SINCRONIA ONLINE — Fase 9A ==================
-   A infraestrutura do estado compartilhado. NADA aqui liga coisa nenhuma: até
-   a Fase 9B nenhum domínio está conectado, e o caminho toques -> GitHub ->
-   estado.json continua sendo a verdade operacional. Ver README, "Fase 9".
+   A infraestrutura do estado compartilhado. Quando este bloco nasceu nenhum
+   domínio estava conectado e o caminho toques -> GitHub -> estado.json era a
+   verdade operacional; desde a 9G-3 ele é a única sincronia do aplicativo, e o
+   estado.json ficou sendo só o artefato que o pipeline publica. Ver README,
+   "Fase 9".
 
    O PROJETO SUPABASE É COMPARTILHADO com o CONTAS_CASA. A URL e a chave são as
    mesmas dos avisos — é o mesmo projeto —, e o isolamento NÃO vem de separar
@@ -779,6 +776,21 @@ const SINCRONIA = {
 const SYNC_FILA_KEY   = "cron:sync-fila";
 const SYNC_CACHE_KEY  = "cron:sync-cache";
 const SYNC_MARCA_KEY  = "cron:sync-marca";
+/* MARCA PROPRIA DO REGISTRO (Fase 9D.3). Duas tabelas, dois relogios de
+   entrega: o servidor_em de cron_registro e o de cron_estado sao sequencias
+   independentes. Uma marca so faria a entrega de uma tabela adiantar o
+   ponto de partida da outra, e o catch-up da segunda pularia o que ficou
+   entre as duas leituras. */
+const SYNC_MARCA_REG_KEY = "cron:sync-marca-reg";
+/* A BASELINE DA ESTRUTURA, em copia local (Fase 9G-0 B1). A cron_estrutura_base
+   e a terceira via do merge de entrada, e o merge roda no carregamento — antes
+   de a sincronia ter sequer conectado. Sem uma copia local ela chegaria tarde
+   demais para servir. Chave -> {tipo, valor, gerado_em}. */
+const BASE_ESTRUTURA_KEY = "cron:estrutura-base";
+/* Conflito real entre a sua edicao e a publicacao do pipeline. Nao pode ser
+   silencioso: o merge escreve, e aqui fica o que foi sobrescrito. */
+const BASE_CONFLITOS_KEY = "cron:estrutura-conflitos";
+const BASE_CONFLITOS_TETO = 200;
 const SYNC_LIGADO_KEY = "cron:sync-ligado";
 /* FORA DO PREFIXO cron:, de proposito — ver o comentario no 15-sync.js. O
    backup exportado varre tudo que comeca com "cron:", e a sessao nao pode ir
