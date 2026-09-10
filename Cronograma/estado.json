@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:03:50.577Z",
+ "_dobrado_em": "2026-09-10T12:04:12.061Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -48,6 +48,15 @@
    "subT": "Revisar cronograma",
    "quando": "2026-09-05T12:26:15.607Z",
    "aparelho": "s41hky"
+  },
+  "pipeline/a00/a00-2": {
+   "st": 1,
+   "vida": "ativo",
+   "temMotivo": false,
+   "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+   "subT": "Janela 0 · planilha de corpus",
+   "quando": "2026-09-10T12:04:12.061Z",
+   "aparelho": "ipkt72"
   }
  },
  "historico": [
@@ -3480,6 +3489,66 @@
     "iid": "f1-anki",
     "feito": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-04-03-947Z-ipkt72",
+   "quando": "2026-09-10T12:04:03.947Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-10",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-2",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · planilha de corpus",
+    "de": 1,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-04-11-244Z-ipkt72",
+   "quando": "2026-09-10T12:04:11.244Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-10",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-2",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · planilha de corpus",
+    "de": 2,
+    "para": 0,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-04-12-061Z-ipkt72",
+   "quando": "2026-09-10T12:04:12.061Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-10",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-2",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · planilha de corpus",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3716,7 +3785,10 @@
   "2026-09-10T12-03-47-358Z-ipkt72",
   "2026-09-10T12-03-47-759Z-ipkt72",
   "2026-09-10T12-03-50-209Z-ipkt72",
-  "2026-09-10T12-03-50-577Z-ipkt72"
+  "2026-09-10T12-03-50-577Z-ipkt72",
+  "2026-09-10T12-04-03-947Z-ipkt72",
+  "2026-09-10T12-04-11-244Z-ipkt72",
+  "2026-09-10T12-04-12-061Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
