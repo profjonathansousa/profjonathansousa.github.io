@@ -202,7 +202,8 @@ SYNC.salvarAlteracao = function(dominio, chave, valor, opts){
 function syncEnfileirar(item){
   var fila = syncFila();
   fila.push(item);
-  /* Mesmo desenho do TOQUES_TETO: o que passa do teto não é descartado. */
+  /* O que passa do teto não é descartado — mesmo desenho do teto que a fila
+     de toques tinha, antes de ela sair na 9G-2. */
   if(fila.length > SINCRONIA.FILA_TETO){
     var sobra = fila.slice(0, fila.length - SINCRONIA.FILA_TETO);
     fila = fila.slice(-SINCRONIA.FILA_TETO);
@@ -237,7 +238,7 @@ SYNC.agendarDrenagem = function(){
    subiu continua na fila, na ordem em que aconteceu.
 
    CORTA POR ID, NUNCA POR POSIÇÃO. É a lição que a fila de toques já aprendeu
-   (ver enviarToques no 10-nucleo.js): cortar os N primeiros supõe que a fila
+   (era a licao do enviarToques, que saiu na 9G-2): cortar os N primeiros supõe que a fila
    não mudou durante o envio, e ela muda — outra aba, um toque novo no meio.
 
    RECUSA DO RELÓGIO NÃO É FALHA. Se o servidor já tem valor mais novo, o
@@ -752,7 +753,8 @@ SYNC.conectar = function(){
        sessao guardada em "cron:sync-sessao" — como esta ate a Fase 9B — seria
        varrida junto: o JWT e o refresh token iriam para um arquivo .json que
        se baixa, se guarda e as vezes se manda por e-mail.
-       E exatamente a razao pela qual o TOKEN_KEY do GitHub e "sync:token" e
+       E era exatamente a razao pela qual o token do GitHub ficava fora do
+       prefixo cron: — ele saiu na 9G-2, e
        nao "cron:token". A sessao segue a mesma regra. */
     SYNC_CLI = sdk.createClient(SINCRONIA.URL, SINCRONIA.CHAVE, {
       auth: {persistSession:true, autoRefreshToken:true, storageKey:SYNC_SESSAO_KEY}
@@ -821,8 +823,8 @@ SYNC.retomarSessao = function(){
    de toques, exatamente como antes, até alguém entrar de propósito.
 
    E NADA AQUI DESLIGA O GITHUB. Os ouvintes de online e visibilitychange do
-   40-app.js continuam intactos e continuam chamando enviarToques e
-   buscarEstado. Os dois caminhos convivem — é o que a Fase 9F vai medir. */
+   40-app.js continuam chamando buscarEstado — a DESCIDA, que sai na 9G-3.
+   A subida legada saiu na 9G-2. */
 SYNC.iniciar = function(){
   if(!SYNC.configurado()) return Promise.resolve({ligado:false, motivo:"não configurado"});
   if(!SYNC.ligado())      return Promise.resolve({ligado:false, motivo:"desligado neste aparelho"});

@@ -2169,6 +2169,63 @@ deduplicação **não mudou uma linha**: o que mudou foi a fonte.
 forma do banco, produz a **mesma janela e o mesmo aviso**. É o que prova que a
 migração trocou a fonte e não a regra.
 
+### 9G-2 — A subida legada cortada
+
+**Pré-condição, registrada e não verificável por código:** o corte pressupõe, em
+cada aparelho, `cron:toques` vazio e `cron:sync-ligado === "true"`. São chaves de
+`localStorage`, e nenhum teste as alcança.
+
+#### O que saiu
+
+`enfileirarToque` e os sete chamadores, `enviarToques`, `gravarNoGitHub`,
+`agendarEnvio`, a fila `cron:toques` (e o excedente), o token do GitHub
+(`getToken`, `salvarToken`, `removerToken`, `TOKEN_KEY`), a UI do token e o botão
+"Enviar agora", os quatro ouvintes de envio no boot, e o que só existia para a
+subida: `semMotivo`, `paraBase64`, `nomeDoLote`, `impressaoDeIds`,
+`explicarFalha`, `ENVIANDO`, `renderToquesAviso`, `renderSyncEstado`,
+`TOQUES_SCHEMA`, `TOQUES_TETO`, `ENVIO_ESPERA`, `GH_DONO/GH_REPO/GH_RAMO`.
+
+#### O que sobrou de `enfileirarToque`: o relógio
+
+`instanteISO(quandoISO)`. A fila saiu, mas o **relógio monotônico não podia
+sair** — os sete funis precisam do instante, e é o mesmo `em` que vai para o
+`cron_estado`. O `idDoToque(iso)` também fica: é a chave da linha em
+`cron_registro`, e é por ela que a descida (que ainda existe) reconhece o que já
+desceu pelo Supabase.
+
+#### O que foi preservado, explicitamente, para a 9G-3
+
+`buscarEstado()` e os sete `aplicar*DoEstado`, `estado.json`,
+`scripts/dobrar_toques.py` inteiro (`--registrar` e `--publicar-estrutura`),
+`Cronograma/toques/`, o `dobrar-toques.yml`, `entrada.json` e `mesclarEntrada`,
+todo o SYNC e o `cron:sync-fila`, o Web Push e o notificador, a estrutura online
+e o arquivamento por `vida`.
+
+#### O que a mudança custou aos testes
+
+Muito, e era previsível: metade das asserções media a **escrita dupla**, e um dos
+lados deixou de existir. A conversão seguiu uma regra só — **medir o efeito, não
+o artefato**:
+
+| antes | agora |
+|---|---|
+| "emitiu um toque X" | a própria decisão gravada, com o seu instante |
+| "não gerou toque" (receber não é tocar) | a fila do SYNC não cresceu |
+| "o mesmo ISO nos dois caminhos" | o mesmo ISO no aparelho e na linha online |
+| "um `enfileirarToque` por domínio" | uma `salvarAlteracao` por domínio |
+
+**`scripts/teste_sincronia.py` foi reduzido à seção 5** — o round-trip do
+*pipeline* (`--registrar` → dobra → `estado.json` → descida), o único que ainda
+tem sujeito. As outras seis seções provavam o round-trip da *página*, que deixou
+de existir; os mesmos domínios já são provados entre dois aparelhos pelo
+`teste_sync.js`. Não houve perda de cobertura, houve perda de objeto.
+
+**A prova da 9F mudou de veredicto**: de "os dois caminhos dizem o mesmo" para
+"aparelho, online e pipeline dizem o mesmo". Os critérios que comparavam os dois
+caminhos *do aplicativo* passaram a comparar o aparelho e o online; os que
+guardam a fronteira com o **pipeline** e o `prova: "estrela"` continuam
+exatamente como estavam — e são os que ainda têm dois lados.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -2402,7 +2459,7 @@ python3 scripts/teste_coletor.py     # pipeline de vagas
 node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
-node     scripts/prova_dupla_escrita.js  # Fase 9F: os dois caminhos dizem o mesmo?
+node     scripts/prova_dupla_escrita.js  # Fase 9F/9G-2: a fronteira entre caminhos
 python3  scripts/teste_publicar_estrutura.py  # Fase 9G-0 B1: entrada.json + a base
 ```
 
@@ -2446,7 +2503,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9G-0 B1 — publicação da estrutura, baseline e merge de três vias ligado | concluída |
 | 9G-0 B2 — `cron:arquivo` aposentado, arquivar por `vida` | concluída |
 | 9G-1 — notificador lê os eventos do `cron_estado` | concluída |
-| 9G-2 e 9G-3 — cortar a subida e a descida do GitHub | não iniciadas |
+| 9G-2 — subida legada cortada | concluída |
+| 9G-3 — cortar a descida (`buscarEstado`, `estado.json`) | não iniciada |
 
 ### Previsto e ainda não implementado
 

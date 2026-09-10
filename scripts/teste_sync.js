@@ -269,10 +269,12 @@ console.log("\n=== 1. Carrega, e nao liga nada por conta propria ===");
      "e iniciar() devolve na primeira linha", r);
   ok(srv.escritas === 0 && srv.linhas.length === 0,
      "nada foi escrito no servidor por carregar a pagina");
-  ok(typeof A.enviarToques === "function" && typeof A.buscarEstado === "function",
-     "13. o caminho antigo do GitHub continua inteiro");
-  ok(typeof A.enfileirarToque === "function" && typeof A.gravarNoGitHub === "function",
-     "    e a fila de toques tambem");
+  /* 9G-2: a SUBIDA saiu; a DESCIDA fica ate a 9G-3. */
+  ok(typeof A.buscarEstado === "function",
+     "13. a descida pelo estado.json continua inteira — sai na 9G-3");
+  ok(typeof A.enviarToques === "undefined" && typeof A.gravarNoGitHub === "undefined" &&
+     typeof A.enfileirarToque === "undefined" && typeof A.getToques === "undefined",
+     "    e a subida para o GitHub nao existe mais");
 }
 
 console.log("\n=== 2. O relogio: quem vence, quem nao vence, e o empate ===");
@@ -307,8 +309,10 @@ console.log("\n=== 3. Eco proprio e ausencia de toque ===");
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
   const S = A.SYNC;
-  const antesToques = A.getToques().length;
   const it = S.salvarAlteracao("meta", "2026-09/m1", {done: true});
+  /* Medido DEPOIS da escrita propria: prova-se que RECEBER nao acrescenta a
+     fila, e nao que a fila esteja vazia. */
+  const antesToques = A.SYNC.situacao().fila;
   const eco = S.aplicarRemoto({dono: "dono-1", dominio: "meta", chave: "2026-09/m1",
     valor: {done: true}, em: it.em, aparelho: "mac", servidor_em: "2030-01-01T00:00:30.000Z"});
   ok(eco.aplicou === false && /eco/.test(eco.motivo),
@@ -317,8 +321,8 @@ console.log("\n=== 3. Eco proprio e ausencia de toque ===");
     valor: {done: true}, em: "2027-01-01T00:00:00.000Z", aparelho: "celular",
     servidor_em: "2030-01-01T00:00:40.000Z"});
   ok(deOutro.aplicou === true, "   evento de outro aparelho e aplicado");
-  ok(A.getToques().length === antesToques,
-     "4. NENHUM toque foi gerado — receber nao e tocar", A.getToques().length);
+  ok(A.SYNC.situacao().fila === antesToques,
+     "4. NADA foi enfileirado — receber nao e tocar", A.SYNC.situacao().fila);
   ok(S.aplicarRemoto({dono: "dono-2", dominio: "meta", chave: "x",
      valor: {}, em: "2027-01-01T00:00:00.000Z", aparelho: "estranho"}).aplicou === false,
      "   linha de outro dono e recusada antes de tocar o cache");
@@ -413,7 +417,6 @@ console.log("\n=== 7. Realtime: chega no outro aparelho, sem toque e sem volta =
   const MAC = criarAparelho("mac", srv).__conectar();
   const CEL = criarAparelho("celular", srv).__conectar();
   await CEL.SYNC.assinarMudancas();
-  const toquesAntes = CEL.getToques().length;
 
   MAC.SYNC.salvarAlteracao("item", "pipeline/a01/a01-4", {st: 2});
   await MAC.SYNC.drenarFila();
@@ -422,10 +425,9 @@ console.log("\n=== 7. Realtime: chega no outro aparelho, sem toque e sem volta =
   ok(!!cache["item␟pipeline/a01/a01-4"], "o evento chegou ao celular pelo Realtime",
      Object.keys(cache));
   ok(cache["item␟pipeline/a01/a01-4"].valor.st === 2, "com o valor certo");
-  ok(CEL.getToques().length === toquesAntes,
-     "4. e nao gerou toque nenhum no celular", CEL.getToques().length);
   ok(CEL.SYNC.situacao().fila === 0,
-     "   nem reenviou a alteracao de volta", CEL.SYNC.situacao().fila);
+     "4. e nao enfileirou nada no celular — receber nao e tocar",
+     CEL.SYNC.situacao().fila);
   ok(srv.escritas === 1, "   o servidor recebeu UMA escrita, nao um laco", srv.escritas);
 }
 
@@ -567,7 +569,6 @@ console.log("\n=== 13. Dominios AINDA nao conectados nao tocam o estado local ==
      "e a chave sem periodo nao vira prioridade (o aplicador exige AAAA-Wnn/id)");
   ok(Object.keys(JSON.parse(A.__armazem["cron:sync-cache"])).length === 11,
      "as onze linhas ficaram no cache, esperando 9B");
-  ok(A.getToques().length === 0, "e nenhum toque foi gerado por nada disso");
 }
 
 /* ================= FASE 9B — AS PRIORIDADES ONLINE =================
@@ -738,7 +739,6 @@ console.log("\n=== 20. Receber nao gera envio, nem eco, nem toque (9B) ===");
   const srv = criarServidor();
   const [A, B] = parOnline(srv);
   await B.SYNC.assinarMudancas();
-  const toquesB = B.getToques().length;
 
   A.__prompt = "Fechar o capitulo 3";
   A.addPrioridadeLivre();
@@ -746,9 +746,8 @@ console.log("\n=== 20. Receber nao gera envio, nem eco, nem toque (9B) ===");
   await A.SYNC.drenarFila();
 
   ok(!!acharPrio(B, id), "a prioridade chegou ao celular");
-  ok(B.getToques().length === toquesB,
-     "10. e NAO gerou toque no celular — receber nao e tocar", B.getToques().length);
-  ok(B.SYNC.situacao().fila === 0, "    nem enfileirou envio de volta");
+  ok(B.SYNC.situacao().fila === 0,
+     "10. e NAO enfileirou no celular — receber nao e tocar", B.SYNC.situacao().fila);
   ok(srv.escritas === 1, "    o servidor recebeu UMA escrita, nao um laco", srv.escritas);
 
   /* O proprio evento voltando: nao pode ser reaplicado. */
@@ -831,12 +830,12 @@ console.log("\n=== 22. O que a 9B NAO mudou ===");
   ok(dominios.every(d => d === "prioridade" || d === "rotina"),
      "    e nenhum outro dominio foi conectado por tabela", dominios);
 
-  /* O caminho legado continua inteiro e continua recebendo o mesmo ato. */
-  const tiposDeToque = A.getToques().map(x => x.tipo);
-  /* DOIS, e nao tres: o segundo addPrioridadeTrilho e recusado por duplicata
-     antes de tocar em nada — que e a semantica de sempre, verificada acima. */
-  ok(tiposDeToque.filter(x => x === "prioridade").length === 2,
-     "    e o toque legado continua sendo emitido por toda operacao", tiposDeToque);
+  /* 9G-2: a subida legada saiu. O ato continua produzindo UMA escrita online
+     por operacao — DUAS, e nao tres: o segundo addPrioridadeTrilho e recusado
+     por duplicata antes de tocar em nada, que e a semantica de sempre. */
+  ok(srv.linhas.filter(l => l.dominio === "prioridade").length === 2,
+     "    e cada operacao continua produzindo a sua escrita online",
+     srv.linhas.filter(l => l.dominio === "prioridade").length);
   ok(typeof A.aplicarPrioridadesDoEstado === "function",
      "    a descida pelo estado.json continua existindo");
 }
@@ -859,8 +858,8 @@ console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ==="
   ok(/aplicarPrioridadeOnline[\s\S]*?mesclarPrioridade/.test(nucleo),
      "e o caminho online tambem — nao ha logica de relogio paralela");
   /* O mesmo instante nos dois caminhos. */
-  ok(/var iso = enfileirarToque\("prioridade", d\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
-     "e os dois caminhos carregam o MESMO instante da decisao");
+  ok(/var iso = instanteISO\(\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
+     "e o instante da decisao vem do relogio, e e o que sobe");
 }
 
 console.log("\n=== 24. A tela do estado online (9B) ===");
@@ -880,8 +879,8 @@ console.log("\n=== 24. A tela do estado online (9B) ===");
   ok(/onclick="entrarSincronia\(\)"/.test(html) && /onclick="sairSincronia\(\)"/.test(html),
      "com os dois botoes ligados aos handlers");
   ok(/type="password"[^>]*id="sync-senha"/.test(html), "a senha e campo de senha");
-  ok(/id="sync-token"/.test(html) && /onclick="salvarToken\(\)"/.test(html),
-     "e o bloco do token do GitHub continua inteiro — os dois convivem");
+  ok(!/id="sync-token"/.test(html) && !/onclick="salvarToken\(\)"/.test(html),
+     "e o bloco do token do GitHub SAIU na 9G-2");
 
   /* A frase muda com a situacao, e a diferenca entre "nao entrei" e "entrei com
      a conta errada" e o caso que a allowlist cron_dono cria. */
@@ -940,15 +939,20 @@ console.log("\n=== 26. O relogio de Metas e Eventos (9C-0) ===");
      Medido no codigo de antes: 1a acao coincide, 2a diverge +1ms, 3a +2ms.
      Este bloco existe para que nao volte. */
   const srv = criarServidor();
-  const A = criarAparelho("mac", srv, {ligado: false});
-  const ultimoToque = () => { const t = A.getToques(); return t[t.length - 1]; };
+  /* 9G-2: LIGADO. Este bloco media o `em` do dominio contra o `quando` do
+     toque; o toque saiu, e o que resta para comparar e o item da fila do SYNC —
+     que carrega o MESMO instante. A propriedade medida nao mudou. */
+  const A = criarAparelho("mac", srv).__conectar();
+  const ultimoToque = () => {
+    const f = A.LS("cron:sync-fila", []) || []; return {quando: (f[f.length - 1] || {}).em};
+  };
 
   const casos = [];
   function medir(nome, acao, lerEm) {
-    const antes = A.getToques().length;
+    const antes = A.SYNC.situacao().fila;
     acao();
     const t = ultimoToque();
-    casos.push({nome, em: lerEm(), quando: t.quando, novos: A.getToques().length - antes});
+    casos.push({nome, em: lerEm(), quando: t.quando, novos: A.SYNC.situacao().fila - antes});
     return casos[casos.length - 1];
   }
 
@@ -960,14 +964,14 @@ console.log("\n=== 26. O relogio de Metas e Eventos (9C-0) ===");
   const m3 = medir("toggleMeta 3a no ms",() => A.toggleMeta(mi),            () => A.getMetas()[mi].em);
   A.__descongelar();
 
-  ok(m1.em === m1.quando, "4. o `em` da meta e o ISO do toque (1a no milissegundo)", m1);
+  ok(m1.em === m1.quando, "4. o `em` da meta e o ISO que sobe online (1a no milissegundo)", m1);
   ok(m2.em === m2.quando, "   e continua sendo na 2a — onde o monotonico desempata", m2);
   ok(m3.em === m3.quando, "   e na 3a", m3);
   ok(m2.quando > m1.quando && m3.quando > m2.quando,
      "   os instantes avancam de verdade (o desempate aconteceu)",
      [m1.quando, m2.quando, m3.quando]);
   ok([m1, m2, m3].every(c => c.novos === 1),
-     "11. cada operacao de meta gera EXATAMENTE um toque", casos.map(c => c.novos));
+     "11. cada operacao de meta gera EXATAMENTE uma escrita online", casos.map(c => c.novos));
 
   A.addEv();
   const eid = A.getEventos()[A.getEventos().length - 1].id;
@@ -977,7 +981,7 @@ console.log("\n=== 26. O relogio de Metas e Eventos (9C-0) ===");
   const e2 = medir("dateEv 2a no ms", () => A.dateEv(eid, "2027-04-01"),    () => achaEv().em);
   A.__descongelar();
 
-  ok(e1.em === e1.quando, "9. o `em` do evento e o ISO do toque (1a no milissegundo)", e1);
+  ok(e1.em === e1.quando, "9. o `em` do evento e o ISO que sobe online (1a no milissegundo)", e1);
   ok(e2.em === e2.quando, "   e continua sendo na 2a", e2);
   ok(e2.quando > e1.quando, "   com os instantes avancando", [e1.quando, e2.quando]);
   ok(e1.novos === 1 && e2.novos === 1,
@@ -994,12 +998,13 @@ console.log("\n=== 26. O relogio de Metas e Eventos (9C-0) ===");
   B.__descongelar();
   const trazidas = B.getMetas(B.monthKey).filter(m => m.de === "2026-07");
   ok(trazidas.length === 2, "trazerTodas trouxe as duas", trazidas.length);
-  const toquesT = B.getToques().filter(t => t.tipo === "meta");
-  const porId = {};
-  toquesT.forEach(t => { if (!t.dados.del) porId[t.dados.mid] = t.quando; });
-  ok(trazidas.every(m => m.em === porId[m.id]),
+  /* 9G-2: sem fila de toques, o que prova o ponto e o proprio instante de cada
+     meta — DISTINTOS entre si, que e a definicao de "nao um `agora`
+     compartilhado". O relogio monotonico e quem os separa. */
+  const instantes = trazidas.map(m => m.em);
+  ok(instantes.every(e => !!e) && new Set(instantes).size === instantes.length,
      "e cada meta trazida ficou com o SEU instante, nao um `agora` compartilhado",
-     trazidas.map(m => ({id: m.id, em: m.em, toque: porId[m.id]})));
+     trazidas.map(m => ({id: m.id, em: m.em})));
   ok(new Set(trazidas.map(m => m.em)).size === 2,
      "os dois `em` sao distintos — era aqui que o defeito mordia");
 }
@@ -1008,8 +1013,8 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
 {
   const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   ["meta", "evento", "prioridade"].forEach(function (d) {
-    const n = (fonte.match(new RegExp('enfileirarToque\\("' + d + '"', "g")) || []).length;
-    ok(n === 1, "10. ha UM unico enfileirarToque(\"" + d + "\") no codigo", n);
+    const n = (fonte.match(new RegExp('salvarAlteracao\\(\\s*"' + d + '"', "g")) || []).length;
+    ok(n === 1, "10. ha UMA unica escrita online de \"" + d + "\" no codigo", n);
   });
   ok(/var iso = tocarEvento\(ev, false, x\.novo \? ACERVO_EM : null\)/.test(fonte),
      "    e o botao do acervo publica evento PELO FUNIL");
@@ -1017,17 +1022,17 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
      "    e meta tambem");
   /* O corpo do tocarMeta cresceu na 9C-2 (ganhou a escrita online), entao a
      verificacao passou a ser sobre o CONTRATO e nao sobre a proximidade das
-     linhas: aceita quandoISO, repassa-o ao toque, e devolve o iso. */
+     linhas: aceita quandoISO, repassa-o ao relogio, e devolve o iso. */
   const tocarM = fonte.split("function tocarMeta(")[1].split("\n}")[0];
   ok(/^mes, m, apagada, quandoISO\)/.test(tocarM), "    o funil da meta aceita quandoISO");
-  ok(/enfileirarToque\("meta", d, quandoISO\)/.test(tocarM), "    e o repassa ao toque");
+  ok(/instanteISO\(quandoISO\)/.test(tocarM), "    e o repassa ao relogio");
   ok(/return iso;/.test(tocarM), "    e DEVOLVE o instante que subiu");
   /* Mesmo motivo do tocarMeta acima: o corpo cresceu na 9C-3 (ganhou a escrita
      online), entao verifica-se o CONTRATO e nao a proximidade das linhas. */
   const tocarE = fonte.split("function tocarEvento(")[1].split("\n}")[0];
   ok(/^ev, apagado, quandoISO, opts\)/.test(tocarE),
      "    o funil do evento aceita quandoISO e opts (9C-4)");
-  ok(/enfileirarToque\("evento", d, quandoISO\)/.test(tocarE), "    e o repassa ao toque");
+  ok(/instanteISO\(quandoISO\)/.test(tocarE), "    e o repassa ao relogio");
   ok(/return iso;/.test(tocarE), "    e DEVOLVE o instante que subiu");
   /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
   /* Esta lista cresce a cada dominio conectado — prioridade (9B), meta (9C-2),
@@ -1088,8 +1093,8 @@ console.log("\n=== 28. A vista da Revisao volta a se atualizar (9C-1) ===");
   ok(/prioridade vinda do celular/.test(vistaA.innerHTML),
      "1+2. alteracao remota com a aba Revisao aberta atualiza a tela",
      vistaA.innerHTML.slice(0, 80));
-  ok(A.getToques().filter(t => t.tipo === "prioridade").length === 0,
-     "6. e continua sem gerar toque: nenhuma regra de negocio mudou");
+  ok(A.SYNC.situacao().fila === 0,
+     "6. e continua sem escrever de volta: receber nao e tocar", A.SYNC.situacao().fila);
 }
 
 /* ================= FASE 9C-2 — AS METAS ONLINE ================= */
@@ -1206,12 +1211,10 @@ console.log("\n=== 32. Receber nao gera eco nem toque (9C-2) ===");
   const A = criarAparelho("mac", srv).__conectar();
   const B = criarAparelho("celular", srv).__conectar();
   await B.SYNC.assinarMudancas();
-  const toquesB = B.getToques().length;
   const id = criarMeta(A, "vinda do Mac");
   await A.SYNC.drenarFila();
 
   ok(!!achaMeta(B, id), "a meta chegou ao celular");
-  ok(B.getToques().length === toquesB, "10. e NAO gerou toque no celular", B.getToques().length);
   ok(B.SYNC.situacao().fila === 0, "    nem enfileirou envio de volta");
   ok(srv.escritas === 1, "    o servidor recebeu UMA escrita, nao um laco", srv.escritas);
   const eco = A.SYNC.aplicarRemoto(srv.linhas[0]);
@@ -1352,20 +1355,20 @@ console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
 
   /* 18+19+20. Acervo, legado e online no mesmo ato. */
   const B = criarAparelho("celular", srv).__conectar();
-  const antesToques = B.getToques().filter(t => t.tipo === "meta").length;
+  /* 9G-2: um caminho so. O ato produz UMA escrita online, e o instante dela e
+     o mesmo que ficou na meta no aparelho. */
   const antesLinhas = srv.linhas.filter(l => l.dominio === "meta").length;
   const id = criarMeta(B, "uma meta qualquer");
   await B.SYNC.drenarFila();
-  ok(B.getToques().filter(t => t.tipo === "meta").length === antesToques + 1,
-     "19. o toque legado continua sendo emitido", B.getToques().filter(t => t.tipo === "meta").length);
   ok(srv.linhas.filter(l => l.dominio === "meta").length === antesLinhas + 1,
-     "20. e o online tambem, no mesmo ato");
-  const toque = B.getToques().filter(t => t.tipo === "meta").pop();
+     "19+20. o ato produz UMA escrita online");
   const online = srv.linhas.filter(l => l.chave.indexOf(id) > 0)[0];
-  ok(toque.quando === online.em, "    com o MESMO instante nos dois caminhos",
-     {toque: toque.quando, online: online.em});
-  ok(toque.dados.t === online.valor.t && toque.dados.done === online.valor.done,
-     "    e o mesmo payload", {legado: toque.dados, online: online.valor});
+  const noAparelho = B.getMetas(B.monthKey).filter(m => m.id === id)[0];
+  ok(!!noAparelho && noAparelho.em === online.em,
+     "    com o MESMO instante no aparelho e online",
+     {aparelho: noAparelho && noAparelho.em, online: online.em});
+  ok(noAparelho.t === online.valor.t && !!noAparelho.done === !!online.valor.done,
+     "    e o mesmo conteudo", {aparelho: noAparelho, online: online.valor});
 
   /* Eventos permanecem intocados. */
   const fonte = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
@@ -1387,8 +1390,8 @@ console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
      "18. ha UM unico ponto que escreve meta online");
   ok(/function tocarMeta[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"meta"/.test(render),
      "    e ele e o tocarMeta, o mesmo funil do caminho legado");
-  ok((render.match(/enfileirarToque\("meta"/g) || []).length === 1,
-     "    e continua havendo UM enfileirarToque de meta (a 9C-0 nao regrediu)");
+  ok((render.match(/salvarAlteracao\(\s*"meta"/g) || []).length === 1,
+     "    e continua havendo UM escrita online de meta (a 9C-0 nao regrediu)");
   ok((nucleo.match(/function mesclarMeta/g) || []).length === 1, "ha UMA implementacao de merge");
   ok(/aplicarMetasDoEstado[\s\S]*?mesclarMeta/.test(nucleo), "o caminho legado a usa");
   ok(/aplicarMetaOnline[\s\S]*?mesclarMeta/.test(nucleo), "e o online tambem");
@@ -1502,13 +1505,10 @@ console.log("\n=== 38. Varios eventos, conflito e eco (9C-3) ===");
      Mac perde. Isso e o LWW funcionando como desenhado, nao um defeito; mas
      amarrar a medicao do no-echo a essa corrida seria medir o relogio em vez de
      medir o eco. */
-  const toquesB = B.getToques().length;
   const filaB = B.SYNC.situacao().fila;
   const idNovo = criarEvento(A, "Aula inaugural", "2027-08-01");
   await A.SYNC.drenarFila();
   ok(!!achaEv(B, idNovo), "   um evento novo do Mac chega ao celular", eventos(B).map(e => e.t));
-  ok(B.getToques().length === toquesB,
-     "H. e receber NAO gerou toque nenhum no celular", B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "   nem enfileirou envio de volta");
   const eco = A.SYNC.aplicarRemoto(srv.linhas.filter(l => l.chave === idNovo)[0]);
   ok(eco.aplicou === false && /eco/.test(eco.motivo), "   e o eco proprio e recusado no Mac", eco);
@@ -1561,9 +1561,10 @@ console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
      passou a ser a fronteira nova, e ela e verificada nos dois lados. */
   ok(Object.prototype.hasOwnProperty.call(linha.valor, "t"),
      "O. o titulo sobe para o registro ONLINE (9C-4)", Object.keys(linha.valor));
-  const toquePriv = A.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id).pop();
-  ok(!("t" in toquePriv.dados),
-     "O. e NAO sobe no payload legado — a fronteira publica nao mudou", Object.keys(toquePriv.dados));
+  /* 9G-2: nao ha mais payload legado. O que continua valendo — e e o que se
+     verifica — e que o `d` montado pelo funil nao tem `t` quando priv. */
+  ok(!("t" in A.dadosDoEvento({id:id, t:"x", data:"2027-01-01", priv:true}, false)),
+     "O. e o payload de um privado continua sem montar o `t`");
   ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
 
   /* O titulo que o celular JA tinha nao pode ser apagado pela descida. */
@@ -1572,7 +1573,7 @@ console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
 
   /* Renomear um privado que ja subiu nao publica nada de novo. */
   const antes = srv.linhas.filter(l => l.chave === id)[0].em;
-  const toquesAntes = A.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id).length;
+  const linhasAntes = srv.linhas.filter(l => l.dominio === "evento").length;
   A.__armazem["cron:la-fora"] = JSON.stringify({metas:{}, eventos:{[id]:{q:antes,t:false,p:true}}, piso:0});
   A.editEv(id, "Consulta com o cardiologista");
   await A.SYNC.drenarFila();
@@ -1583,8 +1584,8 @@ console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
   ok(depois.em !== antes, "   renomear um privado ja publicado ATUALIZA o online (9C-4)", depois.em);
   ok(depois.valor.t === "Consulta com o cardiologista",
      "   com o nome novo", depois.valor.t);
-  ok(A.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id).length === toquesAntes,
-     "   e NAO gera toque legado — o repositorio publico nao ve nada");
+  ok(srv.linhas.filter(l => l.dominio === "evento").length === linhasAntes,
+     "   e nao cria linha nova: e a MESMA, atualizada");
   ok(achaEv(A, id).t === "Consulta com o cardiologista", "   e o nome novo fica no aparelho");
 
   /* A garantia estrutural: o payload nem monta o campo. */
@@ -1597,18 +1598,17 @@ console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ==
 {
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  const antesToques = A.getToques().filter(t => t.tipo === "evento").length;
   const id = criarEvento(A, "Prazo da FAPERJ", "2026-12-15");
   await A.SYNC.drenarFila();
 
-  const toques = A.getToques().filter(t => t.tipo === "evento");
-  ok(toques.length > antesToques, "M. o toque legado continua sendo emitido", toques.length);
+  /* 9G-2: um caminho so. O instante do evento no aparelho e o da linha. */
   const online = srv.linhas.filter(l => l.chave === id)[0];
-  const ultimo = toques[toques.length - 1];
-  ok(ultimo.quando === online.em, "M. com o MESMO ISO nos dois caminhos",
-     {legado: ultimo.quando, online: online.em});
-  ok(ultimo.dados.data === online.valor.data && ultimo.dados.t === online.valor.t,
-     "   e o mesmo payload", {legado: ultimo.dados, online: online.valor});
+  ok(!!online, "M. o ato produz a escrita online", online && online.chave);
+  const noAparelho = achaEv(A, id);
+  ok(noAparelho.em === online.em, "M. com o MESMO ISO no aparelho e online",
+     {aparelho: noAparelho.em, online: online.em});
+  ok(noAparelho.data === online.valor.data && noAparelho.t === online.valor.t,
+     "   e o mesmo conteudo", {aparelho: noAparelho, online: online.valor});
   ok(typeof A.aplicarEventosDoEstado === "function", "   a descida pelo estado.json continua existindo");
 
   /* O evento NAO tem `done`: nao existe concluir/desconcluir neste dominio. */
@@ -1636,8 +1636,8 @@ console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
   const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
   ok((render.match(/SYNC\.salvarAlteracao\(\s*"evento"/g) || []).length === 1,
      "ha UM unico ponto que escreve evento online");
-  ok((render.match(/enfileirarToque\("evento"/g) || []).length === 1,
-     "e UM unico enfileirarToque de evento (a 9C-0 nao regrediu)");
+  ok((render.match(/salvarAlteracao\(\s*"evento"/g) || []).length === 1,
+     "e UM unico escrita online de evento (a 9C-0 nao regrediu)");
   ok(/function tocarEvento[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"evento"/.test(render),
      "e ele e o tocarEvento, o mesmo funil do caminho legado");
   ok((nucleo.match(/function mesclarEvento/g) || []).length === 1, "ha UMA implementacao de merge");
@@ -1664,26 +1664,26 @@ console.log("\n=== 43. O titulo privado no caminho online (9C-4) ===");
   const A = criarAparelho("mac", srv).__conectar();
   const B = criarAparelho("celular", srv).__conectar();
   await B.SYNC.assinarMudancas();
-  const toqueDe = (ap, id) => ap.getToques().filter(t => t.tipo === "evento" && t.dados.eid === id);
+  /* 9G-2: o payload legado saiu, e com ele o repositorio publico onde um titulo
+     privado poderia vazar. O que resta guardar e o `d` que o funil monta. */
+  const payload = (ev) => A.dadosDoEvento(ev, false);
   const linhaDe = (id) => srv.linhas.filter(l => l.dominio === "evento" && l.chave === id)[0];
 
   /* A. publico: o titulo viaja pelos DOIS caminhos, como sempre. */
   const id = criarEvento(A, "Retiro de casais", "2027-07-10");
   await A.SYNC.drenarFila();
   ok(achaEv(B, id).t === "Retiro de casais", "A. publico: o titulo chega ao outro aparelho");
-  ok(toqueDe(A, id).some(t => t.dados.t === "Retiro de casais"),
-     "   e viaja tambem no payload legado");
+  ok(payload({id:id, t:"Retiro de casais", data:"2027-07-10"}).t === "Retiro de casais",
+     "   e o payload de um publico carrega o titulo");
   ok(linhaDe(id).valor.t === "Retiro de casais", "   e no online");
 
   /* B + D. marcar privado: a marca viaja pelos dois; o titulo, so pelo online. */
-  const antesToques = toqueDe(A, id).length;
   A.privEv(id);
   await A.SYNC.drenarFila();
-  const toquePriv = toqueDe(A, id)[toqueDe(A, id).length - 1];
-  ok(toqueDe(A, id).length === antesToques + 1, "B. marcar privado gera um toque legado");
-  ok(toquePriv.dados.priv === true, "   com a MARCA", toquePriv.dados);
-  ok(!("t" in toquePriv.dados),
-     "C. e SEM o titulo — o campo nem existe no payload legado", Object.keys(toquePriv.dados));
+  const dPriv = payload({id:id, t:"Retiro de casais", data:"2027-07-10", priv:true});
+  ok(dPriv.priv === true, "B. marcar privado leva a MARCA", dPriv);
+  ok(!("t" in dPriv),
+     "C. e SEM o titulo — o campo nem e montado quando priv", Object.keys(dPriv));
   ok(achaEv(B, id).priv === true, "   o celular recebeu a marca");
   ok(linhaDe(id).valor.priv === true && linhaDe(id).valor.t === "Retiro de casais",
      "D. e o titulo esta no registro ONLINE", linhaDe(id).valor);
@@ -1691,20 +1691,17 @@ console.log("\n=== 43. O titulo privado no caminho online (9C-4) ===");
   /* E. editar o titulo enquanto privado: sincroniza online, nao vaza no legado. */
   A.__armazem["cron:la-fora"] = JSON.stringify(
     {metas:{}, eventos:{[id]:{q:linhaDe(id).em, t:false, p:true}}, piso:0});
-  const antes2 = toqueDe(A, id).length;
   A.editEv(id, "Retiro de casais — Igreja de Nova Iguacu");
   await A.SYNC.drenarFila();
-  ok(toqueDe(A, id).length === antes2,
-     "E/C. renomear um privado ja publicado NAO gera toque legado", toqueDe(A, id).length - antes2);
   ok(linhaDe(id).valor.t === "Retiro de casais — Igreja de Nova Iguacu",
      "E. mas ATUALIZA o registro online", linhaDe(id).valor.t);
   ok(achaEv(B, id).t === "Retiro de casais — Igreja de Nova Iguacu",
      "D. e o nome novo chega ao outro aparelho autorizado", achaEv(B, id).t);
   ok(achaEv(B, id).priv === true, "   ainda marcado como privado la");
 
-  /* K. em NENHUM toque de evento deste aparelho ha titulo de evento privado. */
-  const vazando = A.getToques().filter(t => t.tipo === "evento" && t.dados.priv && "t" in t.dados);
-  ok(vazando.length === 0, "K. nenhum toque legado carrega titulo de evento privado", vazando);
+  /* K. o payload de um privado nunca monta o titulo, qualquer que seja o nome. */
+  ok(!("t" in payload({id:"x", t:"qualquer coisa", data:"2027-01-01", priv:true})),
+     "K. nenhum payload de evento privado carrega titulo");
 
   /* F. reconectar recupera o titulo privado. */
   const C = criarAparelho("ipad", srv).__conectar();
@@ -1715,14 +1712,13 @@ console.log("\n=== 43. O titulo privado no caminho online (9C-4) ===");
   ok(achaEv(C, id).priv === true, "   com a marca de privado junto");
 
   /* G. tornar publico de novo: o titulo volta a poder ser publicado. */
-  const antes3 = toqueDe(A, id).length;
   A.privEv(id);
   await A.SYNC.drenarFila();
-  const toquePub = toqueDe(A, id)[toqueDe(A, id).length - 1];
-  ok(toqueDe(A, id).length === antes3 + 1, "G. tornar publico gera toque legado");
-  ok(toquePub.dados.priv === false, "   com priv=false");
-  ok(toquePub.dados.t === "Retiro de casais — Igreja de Nova Iguacu",
-     "G. e agora o titulo VIAJA no payload legado", toquePub.dados.t);
+  const dPub = payload({id:id, t:"Retiro de casais — Igreja de Nova Iguacu",
+                        data:"2027-07-10", priv:false});
+  ok(dPub.priv === false, "G. tornar publico devolve priv=false");
+  ok(dPub.t === "Retiro de casais — Igreja de Nova Iguacu",
+     "G. e o titulo volta a ser montado no payload", dPub.t);
   ok(achaEv(B, id).priv === false && achaEv(B, id).t === "Retiro de casais — Igreja de Nova Iguacu",
      "   e os dois aparelhos convergem", achaEv(B, id));
 
@@ -1745,7 +1741,6 @@ console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
   const id = criarEvento(A, "Consulta", "2027-09-09");
   A.privEv(id);
   await A.SYNC.drenarFila();
-  const toquesB = B.getToques().length;
 
   /* I. o relogio continua decidindo, tambem para o titulo privado. */
   const velha = {dono: "dono-1", dominio: "evento", chave: id,
@@ -1761,8 +1756,6 @@ console.log("\n=== 44. Conflito, eco e limites da 9C-4 ===");
   A.privEv(idNovo);
   await A.SYNC.drenarFila();
   ok(achaEv(B, idNovo).t === "Outra consulta", "   um privado novo chega ao celular");
-  ok(B.getToques().length === toquesB, "J. e receber nao gerou toque no celular",
-     B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === 0, "   nem enfileirou envio de volta");
 
   /* AUSENCIA vs VAZIO continua distinguida: apagar um titulo e um ato. */
@@ -1890,13 +1883,10 @@ console.log("\n=== 47. Varias vagas, conflito, empate e eco (9D) ===");
      "E. mas o mais novo vence");
 
   /* J+K. no-echo, e receber nao e tocar. */
-  const toquesB = B.getToques().length;
   const filaB = B.SYNC.situacao().fila;
   A.vgMarcar("vaga-3", A.VG_ST.ARQ);
   await A.SYNC.drenarFila();
   ok(stDe(B, "vaga-3") === 3, "   a terceira decisao chegou ao celular");
-  ok(B.getToques().length === toquesB, "K. e NAO gerou toque no celular",
-     B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "   nem enfileirou envio de volta");
   const eco = A.SYNC.aplicarRemoto(linhaTri(srv, "vaga-3"));
   ok(eco.aplicou === false && /eco/.test(eco.motivo), "J. e o eco proprio e recusado", eco);
@@ -1944,12 +1934,11 @@ console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
     ok(!(campo in l.valor), "N. `" + campo + "` nao viaja na triagem", Object.keys(l.valor));
   });
 
-  /* O toque legado e o online carregam o mesmo instante e o mesmo payload. */
-  const toque = A.getToques().filter(t => t.tipo === "triagem").pop();
-  ok(toque.quando === l.em, "L. legado e online com o MESMO ISO",
-     {legado: toque.quando, online: l.em});
-  ok(toque.dados.vid === l.chave && toque.dados.st === l.valor.st,
-     "   e o mesmo payload", {legado: toque.dados, online: l.valor});
+  /* 9G-2: um caminho so. O instante que ficou na triagem e o da linha. */
+  const noAp = A.vgTriagem()[l.chave];
+  ok(!!noAp && noAp.em === l.em, "L. o aparelho e o online com o MESMO ISO",
+     {aparelho: noAp && noAp.em, online: l.em});
+  ok(noAp.st === l.valor.st, "   e o mesmo st", {aparelho: noAp.st, online: l.valor.st});
   ok(typeof A.aplicarTriagemDoEstado === "function",
      "   a descida pelo estado.json continua existindo");
 
@@ -1974,11 +1963,11 @@ console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
   const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
   ok((render.match(/SYNC\.salvarAlteracao\(\s*"triagem"/g) || []).length === 1,
      "ha UM unico ponto que escreve triagem online");
-  /* Ate a 9D havia DOIS enfileirarToque de triagem: o vgMarcar e a migracao. */
-  const toquesRender = (render.match(/enfileirarToque\("triagem"/g) || []).length;
-  const toquesNucleo = (nucleo.match(/enfileirarToque\("triagem"/g) || []).length;
+  /* Ate a 9D havia DOIS escrita online de triagem: o vgMarcar e a migracao. */
+  const toquesRender = (render.match(/salvarAlteracao\(\s*"triagem"/g) || []).length;
+  const toquesNucleo = (nucleo.match(/salvarAlteracao\(\s*"triagem"/g) || []).length;
   ok(toquesRender + toquesNucleo === 1,
-     "e UM unico enfileirarToque de triagem (a migracao passou a usar o funil)",
+     "e UM unico escrita online de triagem (a migracao passou a usar o funil)",
      {render: toquesRender, nucleo: toquesNucleo});
   ok(/migrarTriagemUmaVez[\s\S]*?tocarTriagem\(vid, r\.st, em\)/.test(nucleo),
      "e a migracao das marcacoes antigas passa pelo funil");
@@ -2080,12 +2069,10 @@ console.log("\n=== 52. Relogio, eco e ausencia de toque ao receber (9D.2) ===");
   ok(m2["tecnico/p1"].em === "2026-01-01T00:00:00.000Z", "e vira a forma nova", m2["tecnico/p1"]);
 
   /* Receber nao e tocar; eco proprio recusado. */
-  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  const filaB = B.SYNC.situacao().fila;
   A.adiarRetomada("posdoc", "pd1");
   await A.SYNC.drenarFila();
   ok(!!silencio(B, "posdoc", "pd1"), "o terceiro silencio chegou ao celular");
-  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
-     B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "nem enfileirou envio de volta");
   const eco = A.SYNC.aplicarRemoto(linhaRet(srv, "posdoc/pd1"));
   ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
@@ -2127,9 +2114,9 @@ console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
 
   ok((render.match(/SYNC\.salvarAlteracao\(\s*"retomada"/g) || []).length === 1,
      "ha UM unico ponto que escreve retomada online");
-  const tr = (render.match(/enfileirarToque\("retomada"/g) || []).length;
-  const tn = (nucleo.match(/enfileirarToque\("retomada"/g) || []).length;
-  ok(tr + tn === 1, "e UM unico enfileirarToque (a migracao passou a usar o funil)",
+  const tr = (render.match(/salvarAlteracao\(\s*"retomada"/g) || []).length;
+  const tn = (nucleo.match(/salvarAlteracao\(\s*"retomada"/g) || []).length;
+  ok(tr + tn === 1, "e UMA unica escrita online (a migracao passou a usar o funil)",
      {render: tr, nucleo: tn});
   ok(/migrarRetomadas[\s\S]*?tocarRetomada\(chave\.slice\(0, corte\)/.test(nucleo),
      "e a migracao das entradas antigas passa pelo funil");
@@ -2173,11 +2160,11 @@ console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
   const A = criarAparelho("mac", srv).__conectar();
   A.adiarRetomada("concursos", "c1");
   await A.SYNC.drenarFila();
-  const toque = A.getToques().filter(t => t.tipo === "retomada").pop();
   const l = linhaRet(srv, "concursos/c1");
-  ok(toque.quando === l.em, "legado e online com o MESMO ISO",
-     {legado: toque.quando, online: l.em});
-  ok(toque.dados.ate === l.valor.ate, "e a mesma data absoluta");
+  const noAp = (A.LS("cron:retomadas-adiadas", {}) || {})["concursos/c1"];
+  ok(!!noAp && noAp.em === l.em, "o aparelho e o online com o MESMO ISO",
+     {aparelho: noAp && noAp.em, online: l.em});
+  ok(noAp.ate === l.valor.ate, "e a mesma data absoluta");
   ok(!("t" in l.valor) && !("projT" in l.valor),
      "e nem titulo nem estagio viajam (regra da Fase 6B)", Object.keys(l.valor));
 }
@@ -2194,23 +2181,25 @@ console.log("\n=== 55. Um ato, tres consumidores, um id so (9D.3) ===");
   await A.SYNC.drenarFila();
 
   ok(A.getReg().length === antes + 1, "a linha entrou em cron:registro na hora");
-  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
-  ok(!!toque, "e o toque legado foi enfileirado do mesmo jeito");
   ok(srv.registros.length === 1, "e UMA linha subiu para cron_registro", srv.registros.length);
 
   const l = srv.registros[0];
-  ok(l.id === toque.id, "com o MESMO id do toque — a chave que une os dois caminhos",
-     {toque: toque.id, online: l.id});
+  /* 9G-2: nao ha mais toque, mas a CHAVE continua sendo a do toque —
+     `idDoToque(iso)` = ISO com os dois-pontos trocados + o aparelho. E por ela
+     que a descida pelo estado.json (que fica ate a 9G-3) e o --registrar do
+     pipeline reconhecem a mesma linha e nao a duplicam. */
+  ok(/^\d{4}-\d{2}-\d{2}T[\d-]+Z-mac$/.test(l.id),
+     "com a chave no formato do id do toque: ISO + aparelho", l.id);
   ok(l.pid === "pipeline" && l.proj_id === "a01" && l.sub_id === "s1",
      "o endereco viaja em colunas, nao num blob", {pid: l.pid, proj: l.proj_id, sub: l.sub_id});
   ok(l.de === 0 && l.para === 2, "o de/para viaja inteiro", {de: l.de, para: l.para});
   ok(l.proj_t === PROJ.t && l.sub_t === SUB.t, "e os titulos fotografados no momento");
   ok(l.aparelho === "mac", "carimbado com o aparelho que escreveu", l.aparelho);
 
-  /* O MOTIVO. O caminho do GitHub o corta (repositorio publico); este nao. */
+  /* O MOTIVO viaja. O corte que o semMotivo() fazia era do caminho publico, e
+     esse caminho saiu na 9G-2 — junto com o unico lugar onde o motivo nao
+     podia aparecer. */
   ok(l.motivo === SUB.motivo, "o motivo VIAJA no caminho online — a base e privada", l.motivo);
-  ok(!("motivo" in toque.dados) && toque.dados.temMotivo === true,
-     "e continua NAO viajando no caminho do GitHub", toque.dados);
 
   /* Nao ha relogio nem lapide: historico nao tem versao. */
   ok(!("em" in l) && !("del" in l), "sem `em` e sem lapide: historico nao tem versao",
@@ -2282,19 +2271,18 @@ console.log("\n=== 57. Nao duplica: por id, por aparelho, e entre os dois caminh
 
   /* 3. A PONTE ENTRE OS DOIS CAMINHOS. O mesmo toque, agora chegando pelo
         estado.json: o tid ja esta visto, entao a descida legada o ignora. */
-  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
   const vistos = {};
   B.getReg().forEach(o => { if (o && o.tid) vistos[o.tid] = true; });
-  ok(vistos[toque.id] === true,
-     "a linha que desceu pelo Supabase ja esta vista pelo criterio do estado.json");
+  /* A descida legada, que fica ate a 9G-3, nao repete o que ja desceu por aqui. */
+  ok(srv.registros.every(r => vistos[r.id] === true),
+     "toda linha do Supabase ja esta vista pelo criterio do estado.json",
+     Object.keys(vistos));
 
   /* 4. Receber nao e tocar. */
-  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  const filaB = B.SYNC.situacao().fila;
   A.logar("leituras", {id: "l1", t: "Spinoza"}, {id: "s9", t: "Etica II"}, 1, 2);
   await A.SYNC.drenarFila();
   ok(B.getReg().length === 2, "a segunda linha chegou ao celular");
-  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
-     B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
 
   /* 5. Reenviar o mesmo item, depois de uma drenagem que caiu no meio, e
@@ -2350,18 +2338,18 @@ console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
   /* UM ESCRITOR. */
   ok((nucleo.match(/SYNC\.registrar\(/g) || []).length === 1,
      "ha UM unico ponto que escreve registro online");
-  ok((nucleo.match(/enfileirarToque\("registro"/g) || []).length === 1,
-     "e UM unico enfileirarToque de registro");
-  ok(/enfileirarToque\("registro"[\s\S]{0,600}?SYNC\.registrar\(/.test(corpoDe(nucleo, "logar")),
-     "os dois no MESMO ato, dentro do logar()");
+  ok((nucleo.match(/SYNC\.registrar\(/g) || []).length === 1,
+     "e ele e o unico — o registro nao tem `salvarAlteracao`, tem tabela propria");
+  ok(/instanteISO\(\)[\s\S]{0,600}?SYNC\.registrar\(/.test(corpoDe(nucleo, "logar")),
+     "o instante e a subida no MESMO ato, dentro do logar()");
   ok((render.match(/SYNC\.registrar\(/g) || []).length === 0,
      "e nada no 30-render.js escreve registro por fora");
 
   /* UMA FORMULA PARA O ID, que e o que faz a ponte funcionar. */
   ok((nucleo.match(/replace\(\/\[:\.\]\/g,"-"\) \+ "-" \+ aparelhoId\(\)/g) || []).length === 1,
      "ha UMA formula do id do toque, e nao duas");
-  ok(/id: idDoToque\(iso\)/.test(corpoDe(nucleo, "enfileirarToque")),
-     "o enfileirarToque a usa");
+  ok(/idDoToque\(iso\)/.test(corpoDe(nucleo, "logar")),
+     "o logar a usa para a chave do registro online");
   ok(/idDoToque\(iso\)/.test(corpoDe(nucleo, "logar")), "e o registro online tambem");
 
   /* NAO E DOMINIO DO cron_estado: o CHECK do Postgres nao o conhece. */
@@ -2395,8 +2383,9 @@ console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
   /* O CAMINHO LEGADO CONTINUA INTEIRO. */
   ok(/est\.historico/.test(nucleo) && /t\.tipo !== "registro"/.test(nucleo),
      "a descida pelo estado.json continua onde estava");
-  ok(/function semMotivo/.test(nucleo) && /semMotivo\(linha\)/.test(nucleo),
-     "e o semMotivo continua cortando o motivo do caminho publico");
+  /* 9G-2: o semMotivo saiu com o caminho publico — nao ha mais onde cortar. */
+  ok(!/function semMotivo/.test(nucleo),
+     "e o semMotivo saiu: o caminho publico que o exigia nao existe mais");
   ok((sync.match(/TABELA_REGISTRO/g) || []).length >= 4,
      "a camada fala com cron_registro em leitura, delta, Realtime e escrita");
   ok(/ignoreDuplicates:true/.test(sync.replace(/\s/g, "")),
@@ -2478,12 +2467,10 @@ console.log("\n=== 60. Um funil, tres escritores, e o que a 9D.4 NAO tem (9D.4) 
   ok(marcado(B, ONTEM, "ter-art") === true, "e limpar HOJE nao encostou em ontem");
 
   /* Receber nao e tocar. */
-  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  const filaB = B.SYNC.situacao().fila;
   A.toggleCheck("seg-acad");
   await A.SYNC.drenarFila();
   ok(marcado(B, DIA, "seg-acad"), "a marca seguinte chegou");
-  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
-     B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
   const eco = A.SYNC.aplicarRemoto(linhaRot(DIA + "/seg-acad"));
   ok(eco.aplicou === false && /eco/.test(eco.motivo), "e o eco proprio e recusado", eco);
@@ -2513,11 +2500,11 @@ console.log("\n=== 60. Um funil, tres escritores, e o que a 9D.4 NAO tem (9D.4) 
   });
 
   /* NAO HA CAMINHO LEGADO PARA ESTE DOMINIO, e nao se inventou um. */
-  ok((render.match(/enfileirarToque\("rotina"/g) || []).length === 0 &&
-     (nucleo.match(/enfileirarToque\("rotina"/g) || []).length === 0,
-     "nao existe toque `rotina` — cron:checks nunca atravessou pelo GitHub");
-  ok(A.getToques().every(t => t.tipo !== "rotina"),
-     "e marcar rotina nao passou a emitir um", A.getToques().map(t => t.tipo));
+  ok((render.match(/salvarAlteracao\(\s*"rotina"/g) || []).length === 1 &&
+     (nucleo.match(/salvarAlteracao\(\s*"rotina"/g) || []).length === 0,
+     "rotina tem UM escritor, e ele mora no funil — nenhum segundo apareceu");
+  ok(typeof A.enfileirarToque === "undefined",
+     "e nao ha mais toque nenhum a emitir: a subida legada saiu na 9G-2");
   ok(!/rotina/.test(corpoDe(nucleo, "buscarEstado") || ""),
      "e a descida do estado.json nao ganhou secao de rotina");
 
@@ -2586,12 +2573,10 @@ console.log("\n=== 62. Um funil, sem caminho legado, e a 9D fechada (9D.5) ===")
   const dispensada = (X, k) => !!(X.LS("cron:hoje-dispensados", {}) || {})[k];
 
   /* Receber nao e tocar. */
-  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  const filaB = B.SYNC.situacao().fila;
   A.dispensarAtrasada(DIA, ID);
   await A.SYNC.drenarFila();
   ok(dispensada(B, DIA + "|" + ID), "a dispensa chegou");
-  ok(B.getToques().length === toquesB, "e NAO gerou toque no celular",
-     B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
   const eco = A.SYNC.aplicarRemoto(
     srv.linhas.find(l => l.dominio === "dispensa" && l.chave === "rotina/" + DIA + "/" + ID));
@@ -2630,11 +2615,11 @@ console.log("\n=== 62. Um funil, sem caminho legado, e a 9D fechada (9D.5) ===")
      "a poda local dos sete dias continua acontecendo na escrita");
 
   /* Sem caminho legado — nao havia, e nao se inventou um. */
-  ok((render.match(/enfileirarToque\("dispensa"/g) || []).length === 0 &&
-     (nucleo.match(/enfileirarToque\("dispensa"/g) || []).length === 0,
-     "nao existe toque `dispensa`: a chave nunca atravessou pelo GitHub");
-  ok(A.getToques().every(t => t.tipo !== "dispensa"),
-     "e dispensar nao passou a emitir um", A.getToques().map(t => t.tipo));
+  ok((render.match(/salvarAlteracao\(\s*"dispensa"/g) || []).length === 1 &&
+     (nucleo.match(/salvarAlteracao\(\s*"dispensa"/g) || []).length === 0,
+     "dispensa tem UM escritor, e ele mora no funil — nenhum segundo apareceu");
+  ok(typeof A.enfileirarToque === "undefined",
+     "e nao ha mais toque nenhum a emitir: a subida legada saiu na 9G-2");
 
   /* Um render, e so um. */
   const corpo = corpoDe(nucleo, "aplicarDispensaOnline");
@@ -2682,13 +2667,15 @@ console.log("\n=== 63. Progresso do trilho online, e o `em` que era do relogio e
   ok(noCel.st === noMac.st, "e o progresso chegou ao celular", {mac: noMac.st, cel: noCel.st});
   ok(noCel.em === noMac.em, "com o MESMO instante da decisao", {mac: noMac.em, cel: noCel.em});
 
-  /* O `em` VEM DO RELOGIO DO TOQUE, e nao de um new Date() proprio. */
-  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
-  ok(noMac.em === toque.quando, "o `em` do subitem e o MESMO ISO do toque legado",
-     {sub: noMac.em, toque: toque.quando});
+  /* O `em` VEM DO RELOGIO MONOTONICO, e nao de um new Date() proprio. */
   const l = srv.linhas.find(x => x.dominio === "item" &&
                             x.chave === "pipeline/" + alvo.projId + "/" + alvo.subId);
-  ok(!!l && l.em === toque.quando, "e a linha online carrega esse mesmo ISO", l && l.em);
+  ok(!!l && l.em === noMac.em,
+     "o `em` do subitem e o MESMO ISO que subiu na linha online",
+     {sub: noMac.em, online: l && l.em});
+  const reg = srv.registros[srv.registros.length - 1];
+  ok(!!reg && reg.id.indexOf(noMac.em.replace(/[:.]/g, "-")) === 0,
+     "e a linha do registro carrega esse mesmo instante na chave", reg && reg.id);
   ok(l.valor.st === noMac.st, "com o st", l.valor);
   ok("vida" in l.valor && "voltar_em" in l.valor && "vidaDesde" in l.valor,
      "e a vida inteira, como o esquema declara", Object.keys(l.valor));
@@ -2756,11 +2743,10 @@ console.log("\n=== 64. Dois escritores: voce e o pipeline (9E) ===");
 
   /* 4. Receber nao e tocar: aplicar um item remoto nao gera toque nem fila. */
   const B = criarAparelho("celular", srv).__conectar();
-  const toquesB = B.getToques().length, filaB = B.SYNC.situacao().fila;
+  const filaB = B.SYNC.situacao().fila;
   const linha = srv.linhas.find(l => l.dominio === "item");
   const renders = B.aplicarItemOnline(linha);
   ok(renders.length === 4, "o item aplicado pede os quatro renders do progresso", renders);
-  ok(B.getToques().length === toquesB, "e NAO gerou toque", B.getToques().length - toquesB);
   ok(B.SYNC.situacao().fila === filaB, "nem enfileirou subida de volta");
   ok(B.aplicarItemOnline(linha).length === 0, "e reaplicar a mesma linha nao repinta");
 
@@ -2815,9 +2801,9 @@ console.log("\n=== 65. O guia do TOEFL online, e a estrutura que a 9E NAO fez (9
   /* UM FUNIL POR ESCRITOR HUMANO. */
   ok((regrasSrc.match(/SYNC\.salvarAlteracao\(\s*"toefl"/g) || []).length === 1,
      "ha UM unico ponto que escreve toefl online");
-  ok((nucleo.match(/enfileirarToque\("toefl"/g) || []).length +
-     (regrasSrc.match(/enfileirarToque\("toefl"/g) || []).length === 1,
-     "e UM unico enfileirarToque de toefl — a migracao passou a usar o funil");
+  ok((nucleo.match(/salvarAlteracao\(\s*"toefl"/g) || []).length +
+     (regrasSrc.match(/salvarAlteracao\(\s*"toefl"/g) || []).length === 1,
+     "e UMA unica escrita online de toefl — a migracao passou a usar o funil");
   ok(/marcarGuia\(it\.id, true, TOEFL_EM\)/.test(nucleo),
      "a migracao do guia passa pelo funil, com o piso fixo no passado");
   ok((render.match(/SYNC\.salvarAlteracao\(\s*"item"/g) || []).length === 1,
@@ -3101,10 +3087,11 @@ console.log("\n=== 69. Arquivar virou `vida`, e a posicao foi aposentada (9G-0 B
   ok(!!l && l.valor.vida === "arquivado", "e subiu pelo dominio `item`", l && l.valor);
   ok(acha(B, pr.id, subId).vida === "arquivado",
      "chegando ao celular: arquivar atravessa aparelhos", acha(B, pr.id, subId).vida);
-  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
-  ok(toque && toque.dados.vida === "arquivado",
-     "e o toque legado carrega a mesma vida", toque && toque.dados.vida);
-  ok(l.em === toque.quando, "com o mesmo instante nos dois caminhos");
+  const reg = srv.registros[srv.registros.length - 1];
+  ok(!!reg && reg.vida === "arquivado",
+     "e a linha do registro carrega a mesma vida", reg && reg.vida);
+  ok(reg.id.indexOf(l.em.replace(/[:.]/g, "-")) === 0,
+     "com o mesmo instante nas duas linhas", {registro: reg.id, item: l.em});
 
   /* RESTAURAR: so o campo de volta, sem posicao nenhuma. */
   A.restaurarSub("pipeline", pr.id, subId);
@@ -3208,7 +3195,6 @@ console.log("\n=== 71. A gaveta `cron:arquivo` foi aposentada (9G-0 B2) ===");
   ok(A.arquivados().length === 2, "e os dois aparecem na aba Arquivo", A.arquivados().length);
 
   /* NAO PUBLICA TOQUE: o arquivamento antigo nunca atravessou aparelho. */
-  ok(A.getToques().length === 0, "a migracao nao publica toque", A.getToques().map(t => t.tipo));
 
   /* TRAVA EM VEZ DE MIGRAR PELA METADE. */
   const orfa = [{quando:"2026-09-01T10:00:00Z", d:"2026-09-01", pid:"pipeline",

@@ -256,9 +256,13 @@ ok(!!semEventos && /faltam os eventos/.test(semEventos),
 
 /* E nada do corte 9G-2/9G-3 foi antecipado. */
 const nucleo = fsAvisos.readFileSync(new URL('../Cronograma/js/10-nucleo.js', import.meta.url), 'utf8');
-ok(/function enviarToques/.test(nucleo) && /function buscarEstado/.test(nucleo) &&
-   /function gravarNoGitHub/.test(nucleo) && /function enfileirarToque/.test(nucleo),
-   '(9G-1) o caminho legado do aplicativo continua INTEIRO: 9G-2/3 não foi antecipada');
+/* 9G-2 cortou a SUBIDA; a DESCIDA fica até a 9G-3, e o notificador não depende
+   de nenhuma das duas — é o que esta asserção guarda. */
+ok(/function buscarEstado/.test(nucleo),
+   '(9G-1) a descida pelo estado.json continua inteira — sai na 9G-3');
+ok(!/function enviarToques/.test(nucleo) && !/function gravarNoGitHub/.test(nucleo) &&
+   !/function enfileirarToque/.test(nucleo),
+   '   e a subida saiu na 9G-2, sem levar o notificador junto');
 
 console.log('\n' + '='.repeat(62));
 console.log('FALHAS: ' + falhas.length);

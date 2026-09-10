@@ -74,7 +74,7 @@ function guiaFeito(iid){ var r = guiaStore()[iid]; return !!(r && r.feito); }
    recente do outro aparelho. */
 function marcarGuia(iid, feito, quandoISO){
   var st = guiaStore();
-  var iso = enfileirarToque("toefl", {iid:iid, feito:!!feito}, quandoISO); /* legado: intacto */
+  var iso = instanteISO(quandoISO);
   st[iid] = {feito:!!feito, em:iso};
   save(TOEFL_GUIA_KEY, st);
   try{

@@ -2,10 +2,19 @@
  *
  *     node scripts/prova_dupla_escrita.js
  *
- * A Fase 9 mantém DOIS caminhos vivos de propósito: o de sempre (toque ->
- * GitHub -> estado.json) e o novo (cron_estado no Supabase). Conviver não é
- * concordar. Esta prova mede, domínio a domínio, se os dois dizem a MESMA
- * coisa sobre a mesma decisão — e é ela que justifica ter mantido os dois.
+ * A Fase 9 manteve DOIS caminhos vivos de propósito, e esta prova media se os
+ * dois diziam a mesma coisa. A Fase 9G-2 cortou a SUBIDA legada: o aplicativo
+ * já não publica toque nenhum, então metade do que ela comparava deixou de ter
+ * o outro lado.
+ *
+ * O QUE ELA MEDE AGORA, e continua sendo a fronteira entre caminhos:
+ *   · o instante de uma decisão é UM só — o do aparelho e o da linha online;
+ *   · receber do Supabase não escreve de volta (o laço que não pode existir);
+ *   · receber do `estado.json` — a DESCIDA, que fica até a 9G-3 — não escreve
+ *     online: é a fronteira que ainda tem dois lados;
+ *   · o pipeline continua sendo o segundo escritor real, e a fronteira do
+ *     `prova: "estrela"` continua antes da escrita;
+ *   · o registro continua append-only, e a chave continua unindo as descidas.
  *
  * O QUE ELA NÃO É. Não é mais uma bateria de testes de unidade: o
  * `teste_sync.js` prova cada domínio por dentro. Esta prova olha para a
@@ -67,18 +76,20 @@ function pecaDeTrilho(X) {
 /* ---- Localizadores: onde cada caminho guarda a mesma decisão ---- */
 const linhaDe = (srv, dominio, chave) =>
   srv.linhas.find(l => l.dominio === dominio && l.chave === chave);
-const ultimoToque = (X, tipo) => X.getToques().filter(t => t.tipo === tipo).pop();
-
 async function principal() {
 
 /* ============================================================
-   1. MESMA DECISÃO, MESMA IDENTIDADE LÓGICA NOS DOIS CAMINHOS.
+   1. UMA DECISÃO, UM INSTANTE — NO APARELHO E ONLINE.
    ============================================================
-   O critério é o `em`: os dois caminhos têm de carimbar o MESMO instante, ou o
-   LWW de um decide diferente do LWW do outro e a Fase 9F não teria como
-   comparar nada. Cada domínio é dirigido pela ação de verdade — a que a tela
-   chama —, e não pelo funil por dentro. */
-titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
+   Até a 9G-2 o critério comparava os dois caminhos do aplicativo. Cortada a
+   subida legada, o outro lado passou a ser a CÓPIA DO APARELHO — que é a que
+   decide o LWW local. Se ela discordar da linha online, o aparelho e o servidor
+   passam a ter opiniões diferentes sobre quando aquilo aconteceu, que é
+   exatamente o defeito que a 9E mediu e corrigiu.
+
+   Cada domínio é dirigido pela ação de verdade — a que a tela chama —, e não
+   pelo funil por dentro. */
+titulo("=== 1. Uma decisão humana, um instante só ===");
 {
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
@@ -90,35 +101,25 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   const chaveItem = "pipeline/" + pr.id + "/" + pr.subs[0].id;
   const lItem = contraparte(linhaDe(srv, "item", chaveItem),
                             "item        · há linha online para a decisão", chaveItem);
-  const tItem = contraparte(ultimoToque(A, "registro"),
-                            "item        · e há toque legado para ela");
-  ok(lItem.em === tItem.quando,
-     "item        · o `em` online é o mesmo ISO do toque legado",
-     {online: lItem.em, legado: tItem.quando});
-  ok(lItem.valor.st === tItem.dados.para,
-     "item        · e o mesmo st", {online: lItem.valor.st, legado: tItem.dados.para});
-  /* TRÊS CÓPIAS, UM INSTANTE. O subitem no aparelho é a terceira, e é a que
-     decide o LWW local — se ela discordar das outras duas, o aparelho e os dois
-     caminhos passam a ter opiniões diferentes sobre quando aquilo aconteceu, e
-     é o defeito que a 9E corrigiu no `tocarItem`. */
   let noAparelho = null;
   (A.getProjs("pipeline") || []).forEach(p => { if (p.id === pr.id)
     (p.subs || []).forEach(x => { if (x.id === pr.subs[0].id) noAparelho = x; }); });
   noAparelho = contraparte(noAparelho, "item        · o subitem existe no aparelho");
-  ok(noAparelho.em === tItem.quando && noAparelho.em === lItem.em,
-     "item        · e o subitem no aparelho guarda esse MESMO instante",
-     {aparelho: noAparelho.em, legado: tItem.quando, online: lItem.em});
+  ok(noAparelho.em === lItem.em, "item        · o mesmo ISO no aparelho e online",
+     {aparelho: noAparelho.em, online: lItem.em});
+  ok(lItem.valor.st === noAparelho.st, "item        · e o mesmo st",
+     {aparelho: noAparelho.st, online: lItem.valor.st});
 
   /* --- triagem --- */
   A.vgMarcar("philjobs-9f", A.VG_ST.SIM);
   await A.SYNC.drenarFila();
   const lTri = contraparte(linhaDe(srv, "triagem", "philjobs-9f"),
                            "triagem     · há linha online para a decisão");
-  const tTri = contraparte(ultimoToque(A, "triagem"),
-                           "triagem     · e há toque legado para ela");
-  ok(lTri.em === tTri.quando, "triagem     · mesmo ISO nos dois caminhos",
-     {online: lTri.em, legado: tTri.quando});
-  ok(lTri.valor.st === tTri.dados.st, "triagem     · e o mesmo st");
+  const tTri = contraparte(A.vgTriagem()["philjobs-9f"],
+                           "triagem     · e a vaga está marcada no aparelho");
+  ok(lTri.em === tTri.em, "triagem     · o mesmo ISO no aparelho e online",
+     {aparelho: tTri.em, online: lTri.em});
+  ok(lTri.valor.st === tTri.st, "triagem     · e o mesmo st");
 
   /* --- meta --- */
   A.addMeta();
@@ -127,19 +128,11 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   await A.SYNC.drenarFila();
   const meta = contraparte(A.getMetas()[A.getMetas().length - 1],
                            "meta        · a meta existe no aparelho");
-  /* `mesAtivo` e `semanaAtual` são `let` de topo e não viram propriedade do
-     contexto do vm. A linha é procurada pelo domínio — há uma só — e a FORMA
-     da chave é conferida logo abaixo, que é o que interessa provar. */
   const lMeta = contraparte(srv.linhas.find(l => l.dominio === "meta"),
                             "meta        · há linha online para a decisão");
-  const tMeta = contraparte(ultimoToque(A, "meta"),
-                            "meta        · e há toque legado para ela");
-  ok(lMeta.em === tMeta.quando, "meta        · mesmo ISO nos dois caminhos",
-     {online: lMeta.em, legado: tMeta.quando});
-  ok(lMeta.em === meta.em, "meta        · e o aparelho guardou esse mesmo instante",
-     {linha: lMeta.em, aparelho: meta.em});
-  ok(lMeta.chave === lMeta.chave.slice(0, 7) + "/" + meta.id &&
-     /^\d{4}-\d{2}\/.+/.test(lMeta.chave),
+  ok(lMeta.em === meta.em, "meta        · o mesmo ISO no aparelho e online",
+     {aparelho: meta.em, online: lMeta.em});
+  ok(/^\d{4}-\d{2}\/.+/.test(lMeta.chave) && lMeta.chave.indexOf(meta.id) > 0,
      "meta        · e a chave é AAAA-MM/id", lMeta.chave);
 
   /* --- evento --- */
@@ -150,23 +143,21 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   await A.SYNC.drenarFila();
   const lEv = contraparte(linhaDe(srv, "evento", eid),
                           "evento      · há linha online para a decisão", eid);
-  const tEv = contraparte(ultimoToque(A, "evento"),
-                          "evento      · e há toque legado para ela");
-  ok(lEv.em === tEv.quando, "evento      · mesmo ISO nos dois caminhos",
-     {online: lEv.em, legado: tEv.quando});
+  const evAp = contraparte(A.getEventos().filter(e => e.id === eid)[0],
+                           "evento      · e ele continua no aparelho");
+  ok(lEv.em === evAp.em, "evento      · o mesmo ISO no aparelho e online",
+     {aparelho: evAp.em, online: lEv.em});
 
   /* --- prioridade --- */
-  A.__prompt = "Reler a Ética II";           /* addPrioridadeLivre pergunta o texto */
+  A.__prompt = "Reler a Ética II";
   A.addPrioridadeLivre();
   await A.SYNC.drenarFila();
   const p = contraparte(A.getPrio()[A.getPrio().length - 1],
                         "prioridade  · a prioridade existe no aparelho");
   const lPrio = contraparte(srv.linhas.find(l => l.dominio === "prioridade"),
                             "prioridade  · há linha online para a decisão");
-  const tPrio = contraparte(ultimoToque(A, "prioridade"),
-                            "prioridade  · e há toque legado para ela");
-  ok(lPrio.em === tPrio.quando, "prioridade  · mesmo ISO nos dois caminhos",
-     {online: lPrio.em, legado: tPrio.quando});
+  ok(lPrio.em === p.em, "prioridade  · o mesmo ISO no aparelho e online",
+     {aparelho: p.em, online: lPrio.em});
   ok(/^\d{4}-W\d{2}\/.+/.test(lPrio.chave) && lPrio.chave.indexOf(p.id) > 0,
      "prioridade  · e a chave é AAAA-Wnn/id", lPrio.chave);
 
@@ -175,11 +166,11 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   await A.SYNC.drenarFila();
   const lRet = contraparte(linhaDe(srv, "retomada", "pipeline/" + pr.id),
                            "retomada    · há linha online para a decisão");
-  const tRet = contraparte(ultimoToque(A, "retomada"),
-                           "retomada    · e há toque legado para ela");
-  ok(lRet.em === tRet.quando, "retomada    · mesmo ISO nos dois caminhos",
-     {online: lRet.em, legado: tRet.quando});
-  ok(lRet.valor.ate === tRet.dados.ate, "retomada    · e a mesma data absoluta");
+  const retAp = contraparte((A.LS("cron:retomadas-adiadas", {}) || {})["pipeline/" + pr.id],
+                            "retomada    · e o silêncio está no aparelho");
+  ok(lRet.em === retAp.em, "retomada    · o mesmo ISO no aparelho e online",
+     {aparelho: retAp.em, online: lRet.em});
+  ok(lRet.valor.ate === retAp.ate, "retomada    · e a mesma data absoluta");
 
   /* --- toefl --- */
   const iid = A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id;
@@ -187,28 +178,24 @@ titulo("=== 1. Uma decisão humana, uma identidade nos dois caminhos ===");
   await A.SYNC.drenarFila();
   const lTo = contraparte(linhaDe(srv, "toefl", iid),
                           "toefl       · há linha online para a decisão", iid);
-  const tTo = contraparte(ultimoToque(A, "toefl"),
-                          "toefl       · e há toque legado para ela");
-  ok(lTo.em === tTo.quando, "toefl       · mesmo ISO nos dois caminhos",
-     {online: lTo.em, legado: tTo.quando});
+  const toAp = contraparte((A.LS("cron:toefl-guia", {}) || {})[iid],
+                           "toefl       · e a marca está no aparelho");
+  ok(lTo.em === toAp.em, "toefl       · o mesmo ISO no aparelho e online",
+     {aparelho: toAp.em, online: lTo.em});
 
   /* --- registro: a tabela própria, chaveada pelo id do toque --- */
   const reg = contraparte(srv.registros.find(r => r.sub_id === pr.subs[0].id),
                           "registro    · há linha no cron_registro para a decisão");
-  ok(reg.id === tItem.id,
-     "registro    · a chave da linha é o próprio id do toque legado",
-     {online: reg.id, legado: tItem.id});
+  ok(reg.id.indexOf(noAparelho.em.replace(/[:.]/g, "-")) === 0,
+     "registro    · e a chave dela carrega o MESMO instante da decisão",
+     {chave: reg.id, em: noAparelho.em});
 
-  /* --- rotina e dispensa: SEM caminho legado, e a ausência é a coerência --- */
+  /* --- rotina e dispensa: sobem, e nunca tiveram outro caminho --- */
   A.toggleCheck("seg-min");
   A.dispensarAtrasada("2026-09-08", "ter-art");
   await A.SYNC.drenarFila();
   ok(!!linhaDe(srv, "rotina", A.dateKey + "/seg-min"), "rotina      · sobe online");
-  ok(A.getToques().every(t => t.tipo !== "rotina"),
-     "rotina      · e NÃO tem par legado: cron:checks nunca atravessou o GitHub");
   ok(!!linhaDe(srv, "dispensa", "rotina/2026-09-08/ter-art"), "dispensa    · sobe online");
-  ok(A.getToques().every(t => t.tipo !== "dispensa"),
-     "dispensa    · e também não tem par legado");
 }
 
 /* ============================================================
@@ -230,15 +217,13 @@ titulo("=== 2. O que desce do Supabase não vira toque ===");
   A.adiarRetomada("pipeline", pr.id);
   A.toggleCheck("seg-min");
   A.marcarGuia(A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id, true);
-  const antesToques = B.getToques().length, antesFila = B.SYNC.situacao().fila;
+  const antesFila = B.SYNC.situacao().fila;
   const antesEscritas = srv.escritas;
   await A.SYNC.drenarFila();
 
-  ok(B.getToques().length === antesToques,
-     "cinco domínios desceram e o celular NÃO enfileirou um toque sequer",
-     B.getToques().length - antesToques);
   ok(B.SYNC.situacao().fila === antesFila,
-     "nem enfileirou subida de volta", B.SYNC.situacao().fila - antesFila);
+     "cinco domínios desceram e o celular NÃO enfileirou nada de volta",
+     B.SYNC.situacao().fila - antesFila);
   const escritasDoMac = srv.escritas - antesEscritas;
   await B.SYNC.drenarFila();
   ok(srv.escritas - antesEscritas === escritasDoMac,
@@ -272,7 +257,7 @@ titulo("=== 3. O que desce do estado.json não vira escrita online ===");
      srv.escritas - antesEscritas);
   ok(A.SYNC.situacao().fila === antesFila,
      "nem entrou na fila para subir depois", A.SYNC.situacao().fila - antesFila);
-  ok(A.getToques().length === 0, "e nenhum toque foi gerado");
+  ok(A.SYNC.situacao().fila === 0, "e nenhum toque foi gerado");
 }
 
 /* ============================================================
@@ -393,10 +378,9 @@ titulo("=== 6. O toefl é booleano, e não transporta estrutura nem texto ===");
      "o valor online tem UM campo: `feito`", Object.keys(l.valor));
   ok(typeof l.valor.feito === "boolean", "e ele é booleano", typeof l.valor.feito);
   const texto = JSON.stringify(l.valor) + "|" +
-                JSON.stringify(contraparte(ultimoToque(A, "toefl"),
-                                           "e há toque legado para ele").dados);
+                JSON.stringify((A.LS("cron:toefl-guia", {}) || {})[it.id] || {});
   ok(it.t === undefined || texto.indexOf(it.t) < 0,
-     "o texto do item do guia NÃO viaja por nenhum dos dois caminhos", texto);
+     "o texto do item do guia NÃO viaja, e nem fica guardado com a marca", texto);
   ok(l.chave === it.id, "a chave é o id do item, e a estrutura do guia é do código",
      l.chave);
 
@@ -498,9 +482,11 @@ titulo("=== 8. O pipeline escreve nos dois caminhos, e não vira espelho ===");
      dupla escrita: se ele saísse agora, o pipeline ficaria sem interlocutor. */
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  ok(typeof A.buscarEstado === "function" && typeof A.enviarToques === "function",
-     "e o aplicativo continua lendo e escrevendo o caminho do GitHub");
-  ok(typeof A.gravarNoGitHub === "function", "inclusive a gravação dos toques");
+  /* 9G-2: o aplicativo já não ESCREVE no GitHub; a leitura fica até a 9G-3. */
+  ok(typeof A.buscarEstado === "function",
+     "e o aplicativo continua LENDO o estado.json — a descida sai na 9G-3");
+  ok(typeof A.enviarToques === "undefined" && typeof A.gravarNoGitHub === "undefined",
+     "mas não escreve mais nada lá: a subida saiu na 9G-2");
 }
 
 titulo("=== 9. A fronteira do pipeline: prova `estrela` continua dele ===");
@@ -553,13 +539,12 @@ titulo("=== 10. O registro é append-only, e a chave une os dois caminhos ===");
 
   /* A ponte com o caminho legado: o id da linha É o id do toque, então o
      estado.json não a duplica quando trouxer o mesmo toque. */
-  const toques = A.getToques().filter(t => t.tipo === "registro");
   const ids = srv.registros.map(r => r.id).sort();
-  ok(JSON.stringify(ids) === JSON.stringify(toques.map(t => t.id).sort()),
-     "os ids online são exatamente os ids dos toques legados", ids);
+  ok(ids.every(id => /^\d{4}-\d{2}-\d{2}T[\d-]+Z-mac$/.test(id)),
+     "os ids online continuam no formato do id do toque (ISO + aparelho)", ids);
   const vistos = {};
   B.getReg().forEach(o => { if (o && o.tid) vistos[o.tid] = true; });
-  ok(toques.every(t => vistos[t.id] === true),
+  ok(ids.every(id => vistos[id] === true),
      "e o critério de deduplicação do estado.json já as reconhece");
 
   /* Reler não duplica — que é o que substitui o LWW aqui. */
@@ -583,8 +568,8 @@ titulo("=== 10. O registro é append-only, e a chave une os dois caminhos ===");
 
 console.log("\n==============================================================");
 console.log(falhas.length
-  ? "A ESCRITA DUPLA DIVERGE EM " + falhas.length + " PONTO(S)"
-  : "ESCRITA DUPLA COERENTE — os dois caminhos dizem o mesmo");
+  ? "A FRONTEIRA DIVERGE EM " + falhas.length + " PONTO(S)"
+  : "FRONTEIRA COERENTE — aparelho, online e pipeline dizem o mesmo");
 falhas.forEach(f => console.log("  - " + f));
 process.exit(falhas.length ? 1 : 0);
 }

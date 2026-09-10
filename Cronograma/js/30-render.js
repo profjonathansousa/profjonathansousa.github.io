@@ -778,7 +778,7 @@ function tocarMeta(mes, m, apagada, quandoISO){
   if(!m || !m.id) return null;
   var d = {mes:mes, mid:m.id, t:m.t||"", done:!!m.done,
            de:m.de||null, del:!!apagada};
-  var iso = enfileirarToque("meta", d, quandoISO);        /* legado: intacto */
+  var iso = instanteISO(quandoISO);
   /* ============ Fase 9C-2: o mesmo ato, no estado online ============
      O MESMO INSTANTE NOS DOIS CAMINHOS. E o `iso` que o toque acabou de usar,
      e nao um segundo relogio — foi para isto que a 9C-0 fez esta funcao
@@ -1037,9 +1037,11 @@ function tocarEvento(ev, apagado, quandoISO, opts){
      nao e um segundo relogio, e o mesmo. Isso APOSENTA a excecao que a 9C-0
      precisou documentar: nao ha mais nenhum caminho de escrita destes dominios
      carimbando o proprio `new Date()`. */
-  var iso = opts.soOnline
-    ? new Date(instanteDoToque(quandoISO)).toISOString()
-    : enfileirarToque("evento", d, quandoISO);        /* legado: intacto */
+  /* O `soOnline` existia para NAO gerar toque quando so o titulo mudava — uma
+     reconstrucao do Pages a toa. Com a subida legada cortada (9G-2) nao ha
+     mais toque nenhum, entao os dois ramos viraram o mesmo instante. A opcao
+     continua no contrato de quem chama, e deixou de ter efeito aqui. */
+  var iso = instanteISO(quandoISO);
 
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
@@ -1210,7 +1212,7 @@ function marcarDoHoje(pid, projId, subId, concluir){
    a drenasse. E a 9A esta desligada por padrao de proposito. */
 function tocarPrioridade(p, sem, apagada){
   var d = dadosDaPrioridade(p, sem, apagada);
-  var iso = enfileirarToque("prioridade", d);          /* legado: intacto */
+  var iso = instanteISO();
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       SYNC.salvarAlteracao("prioridade", d.sem + "/" + d.prid,
@@ -1310,8 +1312,7 @@ function adotarSugestao(painel, projId){ addPrioridadeTrilho(painel + "/" + proj
 function tocarRetomada(pid, projId, ate, quandoISO){
   if(!pid || !projId || !ate) return null;
   var chave = pid + "/" + projId;
-  var iso = enfileirarToque("retomada", {pid:pid, projId:projId, ate:ate},
-                            quandoISO);                  /* legado: intacto */
+  var iso = instanteISO(quandoISO);                  /* legado: intacto */
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       /* SO O `ate` VIAJA. O titulo e o estagio do projeto sao lidos do trilho
@@ -1395,41 +1396,9 @@ function ciclarVida(pid,projId,subId){
   setProjs(pid,p);
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
-/* ================== TOQUES — fila de sincronização (Passo 5) ==================
-   Cada mudança de estado vira um TOQUE. O toque entra numa fila local e sobe
-   depois, como ARQUIVO NOVO em Cronograma/toques/. Nunca se edita um arquivo já
-   enviado: é isso, e só isso, que torna o desenho à prova de conflito quando o
-   mesmo item é tocado no celular e no Mac no mesmo dia.
 
-   A fila existe porque o toque não pode depender da rede. Você marca a etapa no
-   metrô, a fila guarda, e o envio acontece quando houver sinal.
 
-   ATENÇÃO ao nome. "Evento" já tem dois donos neste sistema: a pasta /eventos/
-   na raiz é dos snapshots do coletor, e cron:eventos são os compromissos com
-   data que alimentam o contador. Toque é o toque no painel, e só isso.
-   ============================================================================ */
-function renderToquesAviso(){
-  var el = document.getElementById("toques-aviso"); if(!el) return;
-  var n = getToques().length;
-  if(typeof ENVIANDO !== "undefined" && ENVIANDO){ el.textContent = "Enviando…"; el.className="backup-aviso"; return; }
-  el.textContent = n===0 ? "Nada esperando envio."
-                 : n===1 ? "1 toque esperando envio."
-                         : n + " toques esperando envio.";
-  el.className = "backup-aviso" + (n>0 ? " velho" : "");
-}
 
-/* ---- Token de sincronização: mora no aparelho, nunca no backup ----
-   A chave fica FORA do prefixo cron: de propósito. O exportarDados() varre
-   todas as chaves cron:, e o .gitignore já diz por que um backup do Cronograma
-   nunca entra no repositório: ele contém o estado inteiro. Um token dentro
-   dele viajaria junto em cada exportação. */
-function renderSyncEstado(){
-  var el = document.getElementById("sync-estado"); if(!el) return;
-  var t = getToken();
-  if(!t){ el.textContent = "Sem token neste aparelho. Os toques ficam na fila."; el.className = "backup-aviso velho"; return; }
-  el.textContent = "Token guardado neste aparelho, terminando em " + t.slice(-4) + ".";
-  el.className = "backup-aviso";
-}
 
 /* ============ A TELA DO ESTADO ONLINE — Fase 9B ============
    O 15-sync.js tinha SYNC.entrar() desde a Fase 9A e nada o chamava: a camada
@@ -1898,7 +1867,7 @@ function limparHoje(){
 function tocarTriagem(vid, st, quandoISO){
   if(!vid) return null;
   var d = {vid:vid, st:st};
-  var iso = enfileirarToque("triagem", d, quandoISO);   /* legado: intacto */
+  var iso = instanteISO(quandoISO);
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       /* SO A DECISAO VIAJA. O veredicto do coletor, o texto da vaga e tudo o

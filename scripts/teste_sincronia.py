@@ -136,160 +136,23 @@ def gravar_toques(tmp, toques, nome):
         json.dump({"v": 1, "lote": nome, "toques": toques}, f, ensure_ascii=False)
 
 
-print("\n=== 1. computador -> dobra -> celular ===")
-TMP = montar_repo_falso()
-saida = node("""
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, "Pos-doc Notre Dame");
-mac.addPrioridadeLivre();
-mac.addPrioridadeTrilho("pipeline/a00");
-console.log(JSON.stringify({toques: mac.getToques(), prio: mac.getPrio()}));
-""", RAIZ)
-gravar_toques(TMP, saida["toques"], "lote-mac.json")
-estado = dobrar_em(TMP)
-
-ok("prioridades" in estado, "o estado.json ganhou a secao 'prioridades'",
-   list(estado.keys()))
-ok(len(estado["prioridades"]) == 2, "com as duas prioridades do computador",
-   estado["prioridades"])
-chaves = list(estado["prioridades"])
-ok(all("/" in k and k.split("/")[0].startswith("20") and "-W" in k for k in chaves),
-   "chaveadas por semana/id, como as metas sao por mes/id", chaves)
-valores = list(estado["prioridades"].values())
-ok(all(v.get("quando") and v.get("aparelho") == "mac" for v in valores),
-   "com quando e aparelho, como todo toque", valores[0])
-trilho = [v for v in valores if v["tipo"] == "trilho"]
-ok(len(trilho) == 1 and trilho[0]["painel"] == "pipeline" and trilho[0]["projId"] == "a00",
-   "a de trilho guardou o ENDERECO", trilho and trilho[0])
-ok(all("Janela" not in json.dumps(v, ensure_ascii=False) for v in valores),
-   "e nenhuma guardou o texto da etapa", valores)
-
-celular = node("""
-const est = %s;
-const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
-const antes = cel.getPrio().length;
-cel.aplicarPrioridadesDoEstado(est);
-const p = cel.getPrio();
-const t = p.filter(x=>x.tipo==="trilho")[0];
-const et = t ? cel.estagioDoTrilho(t.painel, t.projId) : null;
-console.log(JSON.stringify({antes, prio:p, estagio: et && et.subT}));
-""" % json.dumps(estado), RAIZ)
-ok(celular["antes"] == 0, "o celular comeca sem nada")
-ok(len(celular["prio"]) == 2, "e recebe as duas", celular["prio"])
-ok(any(p["t"] == "Pos-doc Notre Dame" for p in celular["prio"]),
-   "a livre chegou com o texto")
-ok(bool(celular["estagio"]) and len(celular["estagio"]) > 5,
-   "e a de trilho virou o ESTAGIO REAL, lido no celular", celular["estagio"])
-print("      estagio lido no celular: %r" % celular["estagio"])
-
-print("\n=== 2. celular -> dobra -> computador ===")
-saida2 = node("""
-const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, "Revisar TOEFL");
-cel.addPrioridadeLivre();
-console.log(JSON.stringify({toques: cel.getToques()}));
-""", RAIZ)
-gravar_toques(TMP, saida2["toques"], "lote-celular.json")
-estado2 = dobrar_em(TMP)
-ok(len(estado2["prioridades"]) == 3, "o estado agora tem as tres",
-   len(estado2["prioridades"]))
-mac2 = node("""
-const est = %s;
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
-mac.aplicarPrioridadesDoEstado(est);
-console.log(JSON.stringify(mac.getPrio()));
-""" % json.dumps(estado2), RAIZ)
-ok(any(p["t"] == "Revisar TOEFL" for p in mac2),
-   "e o computador recebe a que nasceu no celular", mac2)
-
-print("\n=== 3. apagar no celular apaga no computador (lapide) ===")
-saida3 = node("""
-const est = %s;
-const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
-cel.aplicarPrioridadesDoEstado(est);
-const alvo = cel.getPrio().filter(p=>p.t==="Pos-doc Notre Dame")[0];
-cel.delPrioridade(alvo.id);
-console.log(JSON.stringify({toques: cel.getToques(), restou: cel.getPrio().length}));
-""" % json.dumps(estado2), RAIZ)
-gravar_toques(TMP, saida3["toques"], "lote-apaga.json")
-estado3 = dobrar_em(TMP)
-apagadas = [v for v in estado3["prioridades"].values() if v.get("del")]
-ok(len(apagadas) == 1, "a lapide chegou ao estado", apagadas)
-mac3 = node("""
-const est = %s;
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
-mac.aplicarPrioridadesDoEstado(est);
-console.log(JSON.stringify(mac.getPrio()));
-""" % json.dumps(estado3), RAIZ)
-ok(not any(p["t"] == "Pos-doc Notre Dame" for p in mac3),
-   "e o computador tira da tela", mac3)
-ok(len(mac3) == 2, "sem levar as outras junto", mac3)
-
-print("\n=== 3b. cumprir no computador aparece cumprida no celular ===")
-# A conclusao da prioridade viaja pelo toque `prioridade`, que ja existia: nao
-# ha tipo novo. O que viaja e uma DATA, porque a regra de tela depende de QUANDO
-# foi cumprida — hoje ela fica marcada, amanha ela sai do Hoje.
-TMP3 = montar_repo_falso()
-feito = node("""
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, "Fichar o Lutero");
-mac.addPrioridadeLivre();
-const id = mac.getPrio()[0].id;
-mac.togglePrioridadeFeita(id);
-console.log(JSON.stringify({toques: mac.getToques(), id: id, hoje: mac.ymd(new Date())}));
-""", RAIZ)
-gravar_toques(TMP3, feito["toques"], "lote-feito.json")
-estadoF = dobrar_em(TMP3)
-vf = list(estadoF["prioridades"].values())[0]
-ok(vf.get("feito_em") == feito["hoje"],
-   "o dobrador real gravou feito_em com a data", vf)
-celF = node("""
-const est = %s;
-const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
-cel.aplicarPrioridadesDoEstado(est);
-const p = cel.getPrio()[0];
-console.log(JSON.stringify({feito_em: p.feito_em, cartao: cel.cartaoDePrioridade(p),
-                            naTela: cel.prioridadesDoDia().manuais.length}));
-""" % json.dumps(estadoF), RAIZ)
-ok(celF["feito_em"] == feito["hoje"], "e o celular recebeu a conclusao", celF["feito_em"])
-ok("pr-livre done" in celF["cartao"], "desenhando-a marcada")
-ok(celF["naTela"] == 1, "e no dia em que foi cumprida ela CONTINUA na tela")
-# desmarcar tambem atravessa: o campo vazio nao pode ser confundido com ausencia
-desf = node("""
-const est = %s;
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
-mac.aplicarPrioridadesDoEstado(est);
-mac.togglePrioridadeFeita("%s");
-console.log(JSON.stringify({toques: mac.getToques()}));
-""" % (json.dumps(estadoF), feito["id"]), RAIZ)
-gravar_toques(TMP3, desf["toques"], "lote-desfeito.json")
-estadoD = dobrar_em(TMP3)
-ok(list(estadoD["prioridades"].values())[0].get("feito_em") == "",
-   "desmarcar viaja como feito_em vazio", list(estadoD["prioridades"].values())[0])
-
-print("\n=== 4. os quatro tipos antigos continuam dobrando ===")
+# ============================================================
+# O QUE SOBROU DESTE TESTE, e por que (Fase 9G-2)
+# ============================================================
+# Ele provava o round-trip INTEIRO do caminho legado: pagina -> toques ->
+# dobrar_toques.py -> estado.json -> pagina, para prioridade, TOEFL, retomada e
+# os quatro tipos antigos. A 9G-2 cortou a subida legada do APLICATIVO: a
+# pagina nao emite mais toque nenhum, entao aquelas secoes ficaram sem sujeito
+# — nao "quebraram", deixaram de ter o que medir.
+#
+# NAO HOUVE PERDA DE COBERTURA. Os mesmos dominios sao provados entre dois
+# aparelhos pelo teste_sync.js, agora pelo caminho que existe de verdade.
+#
+# O QUE CONTINUA VALENDO e o que este arquivo passou a ser: o round-trip do
+# PIPELINE, que segue emitindo toque pelo `--registrar` e depende da dobra e da
+# descida. Enquanto a 9G-3 nao cortar a descida, este e o unico teste que
+# atravessa as duas linguagens com o codigo de verdade dos dois lados.
 TMP2 = montar_repo_falso()
-antigos = node("""
-const d = aparelho("velho", {"cron:aparelho":JSON.stringify("velho")}, "meta nova");
-d.vgMarcar("philjobs-31649", 1);
-const et = d.estagioDoTrilho("pipeline","a00");
-d.marcarDoHoje("pipeline","a00",et.subId,true);
-d.addMeta();
-const m = d.getMetas(); m[m.length-1].t="Meta de teste"; d.setMetas(m);
-d.tocarMeta(d.monthKey, m[m.length-1], false);
-d.addEv();
-const e = d.getEventos(); const ult = e[e.length-1];
-d.dateEv(ult.id, "2026-12-25");
-console.log(JSON.stringify({toques: d.getToques()}));
-""", RAIZ)
-gravar_toques(TMP2, antigos["toques"], "lote-antigos.json")
-est4 = dobrar_em(TMP2)
-ok(len(est4.get("itens") or {}) == 1, "registro -> itens", est4.get("itens"))
-ok(len(est4.get("triagem") or {}) == 1, "triagem -> triagem", est4.get("triagem"))
-ok(len(est4.get("metas") or {}) >= 1, "meta -> metas", est4.get("metas"))
-ok(len(est4.get("eventos") or {}) == 1, "evento -> eventos", est4.get("eventos"))
-ok(len(est4.get("prioridades") or {}) == 0,
-   "e a secao nova fica vazia quando nao ha prioridade nenhuma")
-ok(len(est4.get("historico") or []) == len(antigos["toques"]),
-   "todos os toques foram para o historico, como sempre")
-
 print("\n=== 5. pipeline -> --registrar -> estado -> trilho ===")
 import importlib
 import dobrar_toques
@@ -318,146 +181,18 @@ const ps = d.getProjs("pipeline"), pr = ps.filter(x=>x.id==="a00")[0];
 const alvo = est.itens["pipeline/a00/a00-4"];
 const sx = pr.subs.filter(x=>x.id==="a00-4")[0];
 if((sx.em||"") < alvo.quando){ sx.st = alvo.st; sx.em = alvo.quando; d.setProjs("pipeline", ps); }
-console.log(JSON.stringify({fechada: sx.st, toques: d.getToques().length,
+console.log(JSON.stringify({fechada: sx.st, fila: (d.LS("cron:sync-fila", []) || []).length,
                             estagio: (d.estagioDoTrilho("pipeline","a00")||{}).subId}));
 """ % json.dumps(est5), RAIZ)
 ok(depois["fechada"] == 2, "e o aparelho recebe a etapa fechada", depois)
 ok(depois["estagio"] != "a00-4", "e ja aponta para a seguinte", depois["estagio"])
-ok(depois["toques"] == 0, "sem gerar toque de volta (sem eco)", depois["toques"])
+ok(depois["fila"] == 0, "sem escrever de volta (sem eco)", depois["fila"])
 buf = _io.StringIO()
 with contextlib.redirect_stdout(buf):
     cod_estrela = dobrar_toques.registrar("pipeline/a00/a00-1", 2, "ativo", False, False)
 ok(cod_estrela != 0, "e ele RECUSA etapa de prova 'estrela' (decisao sua)",
    buf.getvalue()[-160:])
 
-print("\n=== 6. TOEFL: o guia atravessa (Fase 6A) ===")
-TMP3 = montar_repo_falso()
-# O computador marca dois itens do guia; um deles ele desmarca em seguida.
-saida_t = node("""
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
-mac.marcarGuia("f1-conta", true);
-mac.marcarGuia("f1-anki", true);
-mac.marcarGuia("f1-anki", false);
-console.log(JSON.stringify({toques: mac.getToques().filter(t=>t.tipo==="toefl")}));
-""", RAIZ)
-gravar_toques(TMP3, saida_t["toques"], "lote-toefl.json")
-est_t = dobrar_em(TMP3)
-ok("toefl" in est_t, "o estado.json ganhou a secao 'toefl'", sorted(est_t.keys()))
-ok(est_t["toefl"].get("f1-conta", {}).get("feito") is True,
-   "a marca chegou como booleano", est_t["toefl"].get("f1-conta"))
-ok(est_t["toefl"].get("f1-anki", {}).get("feito") is False,
-   "e a desmarcacao venceu a marcacao anterior do mesmo item",
-   est_t["toefl"].get("f1-anki"))
-ok(all(v.get("quando") and v.get("aparelho") == "mac" for v in est_t["toefl"].values()),
-   "cada uma com quando e aparelho", est_t["toefl"])
-ok(all("t" not in v and "fase" not in v for v in est_t["toefl"].values()),
-   "e o texto e a fase NAO viajam", est_t["toefl"])
-
-# Redobra: o mesmo lote outra vez nao muda nada e nao duplica o historico.
-antes_hist = len(est_t["historico"])
-gravar_toques(TMP3, saida_t["toques"], "lote-toefl-repetido.json")
-est_t2 = dobrar_em(TMP3)
-ok(est_t2["toefl"] == est_t["toefl"], "redobrar o mesmo lote nao muda o estado")
-ok(len(est_t2["historico"]) == antes_hist,
-   "e nao duplica o historico (idempotente)",
-   (antes_hist, len(est_t2["historico"])))
-
-# Toque atrasado de outro aparelho: entra no historico, nao manda no estado.
-atrasado = [{"v": 1, "id": "2020-01-01T00-00-00-000Z-velho",
-             "quando": "2020-01-01T00:00:00.000Z", "aparelho": "celular",
-             "app": "teste", "tipo": "toefl",
-             "dados": {"iid": "f1-conta", "feito": False}}]
-gravar_toques(TMP3, atrasado, "lote-atrasado.json")
-est_t3 = dobrar_em(TMP3)
-ok(est_t3["toefl"]["f1-conta"]["feito"] is True,
-   "toque atrasado NAO desmarca o que ja estava mais novo",
-   est_t3["toefl"]["f1-conta"])
-ok(any(t.get("id") == "2020-01-01T00-00-00-000Z-velho" for t in est_t3["historico"]),
-   "mas ele fica no historico: nada se perde")
-
-# Uniao: o celular marca outro item, e os dois convivem.
-saida_c = node("""
-const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
-cel.marcarGuia("f2-reading", true);
-console.log(JSON.stringify({toques: cel.getToques().filter(t=>t.tipo==="toefl")}));
-""", RAIZ)
-gravar_toques(TMP3, saida_c["toques"], "lote-cel.json")
-est_t4 = dobrar_em(TMP3)
-ok(est_t4["toefl"].get("f1-conta", {}).get("feito") is True and
-   est_t4["toefl"].get("f2-reading", {}).get("feito") is True,
-   "ids diferentes coexistem: a uniao preserva os dois aparelhos",
-   sorted(est_t4["toefl"].keys()))
-# E a pagina do outro lado recebe os dois, sem gerar toque de volta.
-volta = node("""
-const est = %s;
-const d = aparelho("mac2", {"cron:aparelho":JSON.stringify("mac2")}, null);
-const antes = d.getToques().length;
-d.aplicarToeflDoEstado(est);
-console.log(JSON.stringify({conta: d.guiaFeito("f1-conta"),
-                            reading: d.guiaFeito("f2-reading"),
-                            anki: d.guiaFeito("f1-anki"),
-                            novos: d.getToques().length - antes}));
-""" % json.dumps(est_t4), RAIZ)
-ok(volta["conta"] is True and volta["reading"] is True,
-   "o aparelho que nunca marcou nada recebe as duas", volta)
-ok(volta["anki"] is False, "e o item desmarcado chega desmarcado", volta)
-ok(volta["novos"] == 0, "sem gerar toque de volta (sem eco)", volta["novos"])
-
-print("\n=== 7. Retomadas: o silencio atravessa (Fase 6B) ===")
-TMP4 = montar_repo_falso()
-saida_r = node("""
-const mac = aparelho("mac", {"cron:aparelho":JSON.stringify("mac")}, null);
-mac.adiarRetomada("pipeline", "a01");
-console.log(JSON.stringify({toques: mac.getToques().filter(t=>t.tipo==="retomada"),
-                            ate: mac.LS("cron:retomadas-adiadas",{})["pipeline/a01"].ate}));
-""", RAIZ)
-gravar_toques(TMP4, saida_r["toques"], "lote-ret.json")
-est_r = dobrar_em(TMP4)
-R = est_r.get("retomadas", {})
-ok("retomadas" in est_r, "o estado.json ganhou a secao 'retomadas'", sorted(est_r.keys()))
-ok("pipeline/a01" in R, "o alvo e painel/projeto", sorted(R.keys()))
-ok(R["pipeline/a01"].get("ate") == saida_r["ate"],
-   "o `ate` chegou preservado", R["pipeline/a01"])
-ok(R["pipeline/a01"].get("quando") and R["pipeline/a01"].get("aparelho") == "mac",
-   "com quando e aparelho postos pela maquina existente", R["pipeline/a01"])
-ok(all(k not in R["pipeline/a01"] for k in ("t", "projT", "subT")),
-   "e nenhum titulo ou texto viajou", R["pipeline/a01"])
-
-antes_hist_r = len(est_r["historico"])
-gravar_toques(TMP4, saida_r["toques"], "lote-ret-repetido.json")
-est_r2 = dobrar_em(TMP4)
-ok(est_r2["retomadas"] == R, "redobrar o mesmo lote nao muda o estado")
-ok(len(est_r2["historico"]) == antes_hist_r,
-   "e nao duplica o historico (idempotente)",
-   (antes_hist_r, len(est_r2["historico"])))
-
-gravar_toques(TMP4, [{"v": 1, "id": "2020-01-01T00-00-00-000Z-ret",
-                      "quando": "2020-01-01T00:00:00.000Z", "aparelho": "celular",
-                      "app": "teste", "tipo": "retomada",
-                      "dados": {"pid": "pipeline", "projId": "a01",
-                                "ate": "2020-01-15"}}], "lote-ret-atrasado.json")
-est_r3 = dobrar_em(TMP4)
-ok(est_r3["retomadas"]["pipeline/a01"]["ate"] == saida_r["ate"],
-   "toque atrasado NAO derruba o silencio mais novo",
-   est_r3["retomadas"]["pipeline/a01"])
-ok(any(t.get("id") == "2020-01-01T00-00-00-000Z-ret" for t in est_r3["historico"]),
-   "mas ele fica no historico: nada se perde")
-
-saida_r2 = node("""
-const cel = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
-cel.adiarRetomada("pipeline", "a02");
-console.log(JSON.stringify({toques: cel.getToques().filter(t=>t.tipo==="retomada")}));
-""", RAIZ)
-gravar_toques(TMP4, saida_r2["toques"], "lote-ret-cel.json")
-est_r4 = dobrar_em(TMP4)
-ok(sorted(est_r4["retomadas"].keys()) == ["pipeline/a01", "pipeline/a02"],
-   "dois aparelhos com projetos diferentes produzem uniao",
-   sorted(est_r4["retomadas"].keys()))
-
-shutil.rmtree(TMP, ignore_errors=True)
-shutil.rmtree(TMP2, ignore_errors=True)
-shutil.rmtree(TMP3, ignore_errors=True)
-shutil.rmtree(TMP4, ignore_errors=True)
 print("\n" + "=" * 62)
 print("FALHAS: %d" % len(falhas))
 for f in falhas:

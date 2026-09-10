@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-10-arquivo";
+const APP_VERSION = "2026-09-10-sem-subida";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -660,9 +660,6 @@ var RETOMADA_EM = "2026-01-01T00:00:00.000Z";
    aparelho nao pode passar a atravessar retroativamente. Ela so muda de
    gaveta, aqui dentro. */
 var PRIO_MIGRADO_KEY = "cron:prio-feito-migrado";
-const TOQUES_SCHEMA = 1;
-const TOQUES_TETO = 500;
-const ENVIO_ESPERA = 4000;
 const RELOGIO_KEY = "cron:relogio";
 /* Um relogio de aparelho errado, e depois corrigido, deixaria a marca gravada
    no futuro — e dali em diante todo toque daqui venceria todo toque do outro
@@ -675,14 +672,10 @@ const RELOGIO_FOLGA = 86400000;   /* 24h */
    metas gastou 2026-01-01T00:00:00.000Z ate .006Z; a publicacao dos eventos,
    depois de um recarregamento, saiu com .000Z e .001Z outra vez, e a dobra
    descartou os dois como "ja vistos". Os eventos nunca teriam viajado.
-   O mapa e pequeno por construcao: so ganha chave quem chama enfileirarToque
-   com instante explicito, e isso e a migracao da triagem (uma vez, uma base
-   por dia de marcacao) e o botao do acervo (uma base, o piso). */
+   O mapa e pequeno por construcao: so ganha chave quem pede instante EXPLICITO
+   ao relogio, e isso e a migracao da triagem (uma vez, uma base por dia de
+   marcacao) e o botao do acervo (uma base, o piso). */
 const RELOGIO_BASES_KEY = "cron:relogio-bases";
-const TOKEN_KEY = "sync:token";
-const GH_DONO  = "profjonathansousa";
-const GH_REPO  = "profjonathansousa.github.io";
-const GH_RAMO  = "main";
 const GH_PASTA = "Cronograma/toques";
 const TOQUES_POR_ARQUIVO = "lote";   /* "lote" | "um" */
 

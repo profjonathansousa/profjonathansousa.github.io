@@ -897,8 +897,6 @@ function aplicarRetomadaOnline(linha){
   return ["renderHoje", "renderVistaRevisao"];
 }
 
-function getToques(){ return LS("cron:toques", []) || []; }
-function setToques(f){ save("cron:toques", f); }
 
 /* ENVIO AUTOMATICO, COM ESPERA CURTA.
    Antes, os toques so subiam ao abrir a pagina: quem marcava e fechava a aba
@@ -906,13 +904,6 @@ function setToques(f){ save("cron:toques", f); }
    envio, e um toque novo adia o envio agendado. Marcar dez itens seguidos
    continua sendo UM commit — que e o que protege o limite de reconstrucoes
    do Pages, a razao pela qual o lote existe. */
-var ENVIO_TIMER = null;
-function agendarEnvio(){
-  try{
-    if(ENVIO_TIMER) clearTimeout(ENVIO_TIMER);
-    ENVIO_TIMER = setTimeout(function(){ ENVIO_TIMER = null; enviarToques(true); }, ENVIO_ESPERA);
-  }catch(e){}
-}
 
 /* Identidade do aparelho: nasce no primeiro toque e não muda mais. Serve para o
    Cowork saber de onde veio cada toque, e para dois aparelhos que tocam no mesmo
@@ -975,229 +966,25 @@ function instanteDoToque(quandoISO){
    esperando acontecer. */
 function idDoToque(iso){ return String(iso).replace(/[:.]/g,"-") + "-" + aparelhoId(); }
 
-/* Hora de verdade, não a do carregamento da página: o `now` do topo é fixado
+/* O INSTANTE DE UMA DECISAO, e o que sobrou do enfileirarToque (Fase 9G-2).
+
+   A fila de toques saiu: cada decisao ja sobe pelo SYNC, e manter a segunda
+   subida seria manter o caminho que esta fase existe para cortar. O que NAO
+   podia sair e o relogio — os funis precisam do instante monotonico, e e o
+   mesmo `em` que vai para o cron_estado.
+
+   Hora de verdade, nao a do carregamento da pagina: o `now` do topo e fixado
    quando o app abre, e um celular que passa a noite aberto carimbaria ontem.
 
-   Devolve o instante que usou, em ISO. Quem migra precisa gravar no aparelho
-   exatamente o mesmo instante que subiu no toque — se o relogio deslocar um
-   milissegundo e o aparelho guardar o outro valor, os dois passam a discordar
-   sobre quando aquilo aconteceu. */
-function enfileirarToque(tipo, dados, quandoISO){
-  /* quandoISO existe para UM caso: publicar, uma vez, o que ja estava
-     marcado no aparelho antes de este mecanismo existir. Sem ele, uma
-     marcacao de semana passada subiria com a data de hoje e venceria uma
-     marcacao recente feita no outro aparelho. */
-  var iso = new Date(instanteDoToque(quandoISO)).toISOString();
-  var f = getToques();
-  f.push({ v:TOQUES_SCHEMA,
-           id: idDoToque(iso),
-           quando: iso,
-           aparelho: aparelhoId(),
-           app: APP_VERSION,
-           tipo: tipo,
-           dados: dados });
-  if(f.length > TOQUES_TETO){
-    var sobra = f.slice(0, f.length - TOQUES_TETO);
-    f = f.slice(-TOQUES_TETO);
-    save("cron:toques-excedente", (LS("cron:toques-excedente", [])||[]).concat(sobra));
-  }
-  setToques(f);
-  renderToquesAviso();
-  agendarEnvio();
-  return iso;
+   O `quandoISO` existe para UM caso: publicar, uma vez, o que ja estava
+   marcado no aparelho antes de o mecanismo existir. Sem ele, uma marcacao de
+   semana passada subiria com a data de hoje e venceria uma marcacao recente
+   feita no outro aparelho. */
+function instanteISO(quandoISO){
+  return new Date(instanteDoToque(quandoISO)).toISOString();
 }
 
-/* Só desenha se o elemento existir. A tela de ajustes ainda não foi construída,
-   e a ausência dela não pode derrubar um toque. */
 
-function getToken(){ try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch(e){ return ""; } }
-
-function salvarToken(){
-  var el = document.getElementById("sync-token");
-  var t = (el.value || "").trim();
-  if(!t){ alert("Cole o token antes de salvar."); return; }
-  if(t.indexOf("github_pat_") !== 0 && t.indexOf("ghp_") !== 0){
-    if(!confirm("Isso não parece um token do GitHub (eles começam com github_pat_ ou ghp_). Salvar assim mesmo?")) return;
-  }
-  try{ localStorage.setItem(TOKEN_KEY, t); }catch(e){ alert("Não foi possível guardar o token neste aparelho."); return; }
-  el.value = "";
-  renderSyncEstado();
-}
-
-function removerToken(){
-  if(!confirm("Remover o token deste aparelho? Os toques continuam na fila até você colar outro.")) return;
-  try{ localStorage.removeItem(TOKEN_KEY); }catch(e){}
-  renderSyncEstado();
-}
-
-/* Mostra os quatro últimos caracteres, e só. Serve para você conferir que a
-   colagem funcionou e qual token está aqui, sem exibir o token. */
-function semMotivo(linha){
-  var c = {};
-  for(var k in linha){ if(k !== "motivo") c[k] = linha[k]; }
-  c.temMotivo = !!(linha.motivo && String(linha.motivo).trim());
-  return c;
-}
-
-/* ================== ENVIO DOS TOQUES ==================
-   Um arquivo NOVO por envio, pela API do GitHub. Arquivo já enviado nunca é
-   editado: é isso, e só isso, que torna o desenho à prova de conflito quando o
-   celular e o Mac tocam o mesmo item no mesmo dia. Quem concilia é o Cowork, ao
-   dobrar tudo em estado.json.
-
-   GRANULARIDADE. O desenho original dizia "um arquivo por toque". Mantive a
-   propriedade que importa (arquivo novo, nunca editado) mas juntando os toques
-   pendentes num lote por envio, porque cada gravação pela API é um commit no
-   main, e cada commit no main é uma reconstrução do GitHub Pages. Marcar dez
-   etapas seguidas seriam dez reconstruções do site, e o Pages tem limite.
-   Para voltar ao literal, troque TOQUES_POR_ARQUIVO para "um".
-   ====================================================== */
-function paraBase64(obj){
-  var bytes = new TextEncoder().encode(JSON.stringify(obj, null, 1));
-  var bin = ""; for(var i=0;i<bytes.length;i++){ bin += String.fromCharCode(bytes[i]); }
-  return btoa(bin);
-}
-
-/* O NOME CARREGA A IDENTIDADE DO LOTE INTEIRO.
-   Era aqui o defeito. Com o nome derivado so de fila[0], um 422 provava apenas
-   que o PRIMEIRO toque ja subira — e a fila inteira era cortada mesmo assim,
-   levando junto tudo que tivesse entrado atras dele. O codigo sempre supos que
-   o nome identifica o que esta dentro; isso valia no modo "um" e deixou de
-   valer quando o lote entrou, sem que o nome acompanhasse.
-   Com o nome derivado do CONJUNTO, 422 volta a significar o que se supunha:
-   um arquivo com este nome so pode ter sido escrito por um envio com
-   exatamente estes toques, nesta ordem.
-   O prefixo continua sendo o instante do primeiro toque, para que a pasta siga
-   ordenada por tempo — a ordem de leitura da dobra depende disso. */
-function nomeDoLote(fila){
-  return fila[0].id + "-" + fila.length + "-" + impressaoDeIds(fila) + ".json";
-}
-/* FNV-1a de 32 bits sobre os ids, em ordem. Nao e criptografia: e uma
-   impressao curta e estavel do conjunto, calculada sem depender de
-   crypto.subtle, que e assincrono e exige contexto seguro. */
-function impressaoDeIds(fila){
-  var s = fila.map(function(t){ return t.id; }).join("|");
-  var h = 0x811c9dc5;
-  for(var i=0;i<s.length;i++){
-    h ^= s.charCodeAt(i);
-    h = (h + (h<<1) + (h<<4) + (h<<7) + (h<<8) + (h<<24)) >>> 0;
-  }
-  return ("0000000" + h.toString(16)).slice(-8);
-}
-
-/* CORTE DE TEMPO. Uma conexão pendurada nunca resolve a promessa do fetch, e
-   sem corte o ENVIANDO nunca voltava a false: a aba parava de enviar até ser
-   recarregada. O aborto cai no .catch abaixo e vira status 0 — "sem rede" —,
-   que descreve exatamente o que aconteceu, e deixa a fila intacta. */
-
-function gravarNoGitHub(nome, corpo, mensagem){
-  /* O corpo primeiro, e só depois o relógio: se paraBase64 falhar, ele falha
-     antes de existir temporizador algum para ficar solto por aí. */
-  var corpoJson = JSON.stringify({ message: mensagem, content: paraBase64(corpo), branch: GH_RAMO });
-  var ctl = null, corte = null;
-  try{ ctl = new AbortController(); }catch(e){ ctl = null; }
-  if(ctl) corte = setTimeout(function(){ try{ ctl.abort(); }catch(e){} }, ENVIO_TIMEOUT);
-  var solta = function(){ if(corte){ clearTimeout(corte); corte = null; } };
-  var pedido = {
-    method: "PUT",
-    headers: { "Authorization": "Bearer " + getToken(),
-               "Accept": "application/vnd.github+json",
-               "X-GitHub-Api-Version": "2022-11-28" },
-    body: corpoJson
-  };
-  if(ctl) pedido.signal = ctl.signal;
-  return fetch("https://api.github.com/repos/"+GH_DONO+"/"+GH_REPO+"/contents/"+GH_PASTA+"/"+nome, pedido)
-    .then(function(res){
-      solta();
-      if(res.status === 201 || res.status === 200) return {ok:true};
-      /* 422 é o que a API responde quando o arquivo já existe e não veio sha.
-         O nome carrega agora a identidade do LOTE INTEIRO — primeiro id,
-         quantidade e impressão dos ids —, então um arquivo com este nome só
-         pode ter sido escrito por um envio com exatamente estes toques. É
-         reenvio do que já subiu, e não falha. */
-      if(res.status === 422) return {ok:true, jaEstava:true};
-      return res.text().catch(function(){return "";}).then(function(t){
-        return {ok:false, status:res.status, msg:(t||"").slice(0,300)};
-      });
-    })
-    .catch(function(e){
-      solta();
-      return {ok:false, status:0, msg:String(e && e.message || e)};
-    });
-}
-
-function explicarFalha(f, enviados){
-  var base = enviados ? enviados + " toque(s) subiram antes da falha; o resto continua na fila.\n\n"
-                      : "Nada subiu; a fila está intacta.\n\n";
-  if(f.status === 0)   return base + "Sem rede, ou o GitHub não respondeu a tempo. Tente de novo quando houver sinal.";
-  if(f.status === 401) return base + "O GitHub recusou o token. Ele expirou, foi revogado, ou foi colado incompleto. Cole outro em Sincronização.";
-  if(f.status === 403) return base + "Token sem permissão para gravar. Ele precisa de Contents: Read and write neste repositório — e só disso.";
-  if(f.status === 404) return base + "Repositório ou caminho não encontrado: " + GH_DONO + "/" + GH_REPO + ". Se o token não enxerga este repositório, o GitHub responde 404 em vez de 403.";
-  if(f.status === 409) return base + "Conflito no ramo " + GH_RAMO + ". Tente de novo em alguns segundos.";
-  return base + "O GitHub respondeu " + f.status + ". " + (f.msg || "");
-}
-
-var ENVIANDO = false;
-
-/* silencioso = disparado pelo app (ao abrir, ao voltar a rede). Sem alertas:
-   um aviso de erro no meio de uma aula não ajuda ninguém. O contador da tela
-   de Sincronização continua contando a verdade. */
-function enviarToques(silencioso){
-  if(ENVIANDO) return Promise.resolve();
-  if(!getToken()){ if(!silencioso) alert("Cole o token primeiro, aqui em Sincronização."); return Promise.resolve(); }
-  var fila = getToques();
-  if(!fila.length){ if(!silencioso) alert("Nada esperando envio."); return Promise.resolve(); }
-
-  ENVIANDO = true; renderToquesAviso();
-
-  /* Cada pacote diz QUAIS ids ele leva. E por eles, e nao por contagem, que a
-     fila e cortada depois. */
-  var pacotes;
-  if(TOQUES_POR_ARQUIVO === "um"){
-    pacotes = fila.map(function(t){ return {nome:t.id+".json", corpo:t, ids:[t.id],
-             msg:"toque: "+((t.dados && t.dados.subT) || t.tipo)+" ("+t.aparelho+")"}; });
-  } else {
-    pacotes = [{ nome: nomeDoLote(fila), ids: fila.map(function(t){ return t.id; }),
-                 corpo: { v:TOQUES_SCHEMA, lote:fila[0].id, quando:new Date().toISOString(),
-                          aparelho:aparelhoId(), app:APP_VERSION, toques:fila },
-                 msg: "toques: " + fila.length + " de " + aparelhoId() }];
-  }
-
-  var subiram = {}, enviados = 0, falha = null;
-  /* Em ordem e parando na primeira falha: o que não subiu continua na fila,
-     na ordem em que aconteceu. */
-  var cadeia = Promise.resolve();
-  pacotes.forEach(function(pc){
-    cadeia = cadeia.then(function(){
-      if(falha) return;
-      return gravarNoGitHub(pc.nome, pc.corpo, pc.msg).then(function(r){
-        if(!r.ok){ falha = r; return; }
-        pc.ids.forEach(function(id){ subiram[id] = 1; });
-        enviados += pc.ids.length;
-      });
-    });
-  });
-
-  /* A trava tem de cair pelos dois caminhos. Sem o segundo ramo do then, uma
-     exceção inesperada na cadeia deixava ENVIANDO em true para o resto da vida
-     da aba, e nada mais subia até um recarregamento. */
-  var terminar = function(){ ENVIANDO = false; renderToquesAviso(); };
-
-  return cadeia.then(function(){
-    /* CORTA POR ID, NÃO POR POSIÇÃO. O slice(enviados) de antes supunha que os
-       N primeiros da fila atual eram os que subiram — suposição que cai por
-       terra se um toque novo entrou no meio do envio, ou se outra aba do mesmo
-       aparelho já cortou a fila. Remover exatamente os ids que subiram não
-       depende de suposição nenhuma. */
-    if(enviados) setToques(getToques().filter(function(t){ return !subiram[t.id]; }));
-    terminar();
-    if(falha && !silencioso) alert(explicarFalha(falha, enviados));
-  }, function(err){
-    terminar();
-    try{ console.error("envio de toques falhou:", err); }catch(e){}
-    if(!silencioso) alert("Não foi possível enviar agora. A fila está intacta e sobe na próxima tentativa.");
-  });
-}
 
 /* ---- Registro: histórico datado, só cresce ---- */
 function getReg(){return LS("cron:registro", []) || [];}
@@ -1216,13 +1003,11 @@ function logar(pid, proj, sub, de, para){
     save("cron:registro-arquivo", (LS("cron:registro-arquivo", [])||[]).concat(excedente));
   }
   save("cron:registro", r);
-  /* A fila leva a MESMA linha que o registro guarda: uma fonte, dois
-     consumidores. Se um dia o registro mudar de forma, o toque muda junto.
-     Fase 9D.3: sao tres consumidores, e continua sendo uma fonte. */
-  var iso = enfileirarToque("registro", semMotivo(linha));       /* legado: intacto */
-  /* O MESMO id do toque vira a chave primaria da linha em cron_registro. Nao e
-     economia: e o que impede a mesma etapa de virar duas linhas quando ela
-     descer pelos dois caminhos, que e o que vai acontecer ate a Fase 9G. */
+  var iso = instanteISO();
+  /* O ID CONTINUA SENDO O DO TOQUE, e a formula nao mudou (Fase 9G-2): a
+     descida pelo estado.json ainda existe ate a 9G-3, e e por esse id que ela
+     reconhece uma linha que ja desceu pelo Supabase e nao a repete. O `tid`
+     tambem e o que dedupe o que o pipeline registrar pelo --registrar. */
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       SYNC.registrar(linha, {id: idDoToque(iso)});

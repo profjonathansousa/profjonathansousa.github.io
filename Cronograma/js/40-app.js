@@ -41,22 +41,11 @@ try{
   renderAvisos();
 }catch(e){ console.error("avisos:", e); }
 renderBackupAviso();
-renderSyncEstado();
-renderToquesAviso();
-/* Sobe sozinho ao abrir e quando a rede volta. Em silêncio: o toque foi feito,
-   o envio é problema do app, não seu. */
+/* A SUBIDA LEGADA SAIU NA FASE 9G-2. O `enviarToques` e os quatro ouvintes que
+   o chamavam (abrir, `online`, `visibilitychange`, `pagehide`) nao existem
+   mais: cada decisao ja sobe pelo SYNC, que tem a propria fila e os proprios
+   ouvintes. A DESCIDA continua aqui, e sai na 9G-3. */
 try{ migrarTriagemUmaVez(); }catch(e){ console.error("migracao da triagem falhou:", e); }
-try{
-  enviarToques(true);
-  window.addEventListener("online", function(){ enviarToques(true); });
-  /* Sair da aba tambem envia. Quem marca e troca de app nao deixa a fila
-     parada. E melhor esforco: se a rede cortar no meio, a fila fica intacta
-     e sobe no proximo carregamento. */
-  document.addEventListener("visibilitychange", function(){
-    if(document.visibilityState === "hidden") enviarToques(true);
-  });
-  window.addEventListener("pagehide", function(){ enviarToques(true); });
-}catch(e){ console.error("envio de toques falhou ao iniciar:", e); }
 document.getElementById("ver").textContent = "v"+APP_VERSION;
 /* Migração do esquema v1 -> v2. Roda UMA vez, antes das sementes e de
    qualquer render. Nada é descartado: ver migrarEsquema(). */
