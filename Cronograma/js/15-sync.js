@@ -510,6 +510,50 @@ SYNC.buscarDeltaRegistro = function(){
     });
 };
 
+/* ============ A BASELINE DA ESTRUTURA (Fase 9G-0 B1) ============
+   SO LEITURA, e a tabela nao da outra coisa ao app. Quem escreve a base e o
+   publicador da estrutura, e essa assimetria e o que impede o aplicativo de
+   forjar "o pipeline nunca mudou isso".
+
+   GUARDA EM COPIA LOCAL porque o mesclarEntrada() roda no carregamento, antes
+   de a sincronia conectar: a base tem de ja estar aqui quando ele perguntar. */
+SYNC.carregarBase = function(){
+  if(!SYNC.pronto()) return Promise.resolve({lidas:0, motivo:"sem sessão"});
+  var lidas = 0, mapa = {};
+  var pagina = function(de){
+    return SYNC_CLI.from(SINCRONIA.TABELA_BASE).select("*")
+      .eq("dono", SYNC_DONO)
+      .order("chave", {ascending:true})
+      .range(de, de + SINCRONIA.LOTE - 1)
+      .then(function(r){
+        if(r && r.error) throw new Error(r.error.message || String(r.error));
+        var linhas = (r && r.data) || [];
+        linhas.forEach(function(l){
+          if(!l || !l.chave) return;
+          lidas++;
+          mapa[l.chave] = {tipo: l.tipo || "", valor: l.valor || {},
+                           gerado_em: l.gerado_em || ""};
+        });
+        if(linhas.length === SINCRONIA.LOTE) return pagina(de + SINCRONIA.LOTE);
+        return null;
+      });
+  };
+  return pagina(0).then(function(){
+    /* SO GRAVA SE VEIO ALGUMA COISA. Uma leitura que falhou no meio devolveria
+       um mapa parcial, e um mapa parcial diz "o pipeline nunca publicou isto"
+       sobre o que faltou — que e a mentira que esta fase existe para evitar. */
+    if(lidas) save(BASE_ESTRUTURA_KEY, mapa);
+    /* NAO REMESCLA AGORA, de proposito: o mesclarEntrada() ja rodou neste
+       carregamento, e refaze-lo aqui repintaria os Trilhos no meio da sessao.
+       A baseline entra no proximo carregamento, que e quando o merge pergunta. */
+    return {lidas:lidas};
+  }, function(e){
+    SYNC_SITUACAO = "offline";
+    SYNC_ULTIMO_ERRO = String((e && e.message) || e);
+    return {lidas:lidas, erro:SYNC_ULTIMO_ERRO};
+  });
+};
+
 /* ==================== REALTIME ==================== */
 SYNC.assinarMudancas = function(){
   if(!SYNC.pronto()) return Promise.resolve({assinado:false, motivo:"sem sessão"});
@@ -789,6 +833,7 @@ SYNC.iniciar = function(){
       SYNC.ouvir();
       return SYNC.carregarEstado()
         .then(function(){ return SYNC.carregarRegistro(); })
+        .then(function(){ return SYNC.carregarBase(); })
         .then(function(){ return SYNC.assinarMudancas(); })
         .then(function(){ return SYNC.drenarFila(); })
         .then(function(){

@@ -94,13 +94,13 @@ function migrarEsquema(){
    o que é dele. st e vida NUNCA são tocados por aqui. */
 /* ====== O MERGE DE TRES VIAS DA ESTRUTURA — A REGRA (Fase 9G-0 B1) ======
 
-   AINDA NAO E CHAMADA, e a espera e deliberada. O mesclarEntrada() logo abaixo
-   continua de DUAS vias ate a cron_estrutura_base existir de verdade — e ela so
-   passa a existir na primeira publicacao real da estrutura, pelo
-   `dobrar_toques.py --publicar-estrutura`. Ligar esta regra a uma base vazia
-   seria pior do que nao liga-la: "o pipeline nunca mudou nada" e verdade sobre
-   uma base vazia, e a regra concluiria que NENHUMA atualizacao legitima pode
-   escrever. A estrutura pararia de chegar.
+   LIGADA DESDE A PRIMEIRA PUBLICACAO REAL. Ate ela existir, o mesclarEntrada()
+   era de DUAS vias por necessidade: contra uma base vazia, "o pipeline nunca
+   mudou nada" e verdade sobre tudo, e a regra concluiria que NENHUMA
+   atualizacao legitima pode escrever — a estrutura pararia de chegar. Por isso
+   a terceira via e consultada CAMPO A CAMPO: onde a baseline nao conhece o
+   campo, o merge continua sendo de duas vias, que e o certo para uma peca
+   publicada pela primeira vez.
 
    O DEFEITO QUE ELA CORRIGE. Hoje, discordancia entre o entrada.json e o
    aparelho so pode significar "o aparelho esta desatualizado":
@@ -142,10 +142,41 @@ function mesclarEstrutura(local, entrada, base, temBase){
   return {escreve: true, conflito: true};
 }
 
+/* A copia local da baseline. Vazia enquanto a sincronia nunca tiver conectado —
+   e vazia e o caso em que tudo cai em duas vias, como antes desta fase. */
+function estruturaBase(){ var v = LS(BASE_ESTRUTURA_KEY, {}); return (v && typeof v === "object") ? v : {}; }
+
+/* CONFLITO NAO PODE SER SILENCIOSO. O merge escreve — vence o relogio da
+   publicacao —, mas o que foi sobrescrito fica registrado, com o valor que era
+   seu. E a diferenca entre "o pipeline atualizou" e "o pipeline apagou o que
+   voce escreveu e ninguem soube". */
+function registrarConflitoEstrutura(chave, campo, seu, doPipeline){
+  try{
+    var lista = LS(BASE_CONFLITOS_KEY, []) || [];
+    lista.push({quando: new Date(instanteDoToque()).toISOString(),
+                chave: chave, campo: campo, seu: seu, pipeline: doPipeline});
+    if(lista.length > BASE_CONFLITOS_TETO) lista = lista.slice(-BASE_CONFLITOS_TETO);
+    save(BASE_CONFLITOS_KEY, lista);
+  }catch(e){}
+}
+
+/* A pergunta de tres vias para UM campo. `temBase` e por CAMPO, e nao por
+   linha: a baseline de um projeto pode existir sem conhecer o `t` — foi o que
+   a primeira publicacao real gravou, porque o entrada.json so traz `id` no
+   nivel do projeto. Onde ela nao conhece, duas vias. */
+function entradaPodeEscrever(chave, campo, local, daEntrada, linhaBase){
+  var val = linhaBase && linhaBase.valor;
+  var temBase = !!(val && typeof val === "object" && (campo in val));
+  var r = mesclarEstrutura(local, daEntrada, temBase ? val[campo] : null, temBase);
+  if(r.conflito) registrarConflitoEstrutura(chave, campo, local, daEntrada);
+  return r.escreve;
+}
+
 function mesclarEntrada(){
   var ent = LS("cron:entrada", null);
   if(!ent || !ent.paineis) return;
   var aplicou = false;
+  var base = estruturaBase();
   Object.keys(ent.paineis).forEach(function(pid){
     if(!painelDef(pid)) return;
     var atuais = getProjs(pid), mudou = false, porId = {};
@@ -161,15 +192,24 @@ function mesclarEntrada(){
         if(!novo.t) return;
         atuais.push(normProj(Object.assign({}, novo, {origem:"entrada"}))); mudou=true; return;
       }
-      if(novo.t && novo.t!==alvo.t){ alvo.t=novo.t; mudou=true; }
-      if(novo.n && novo.n!==alvo.n){ alvo.n=novo.n; mudou=true; }
+      /* A guarda de sempre (so escreve o que a entrada traz de verdade) mais a
+         terceira via: o campo mudou desde a ultima publicacao? */
+      var kProj = pid + "/" + novo.id, bProj = base[kProj];
+      if(novo.t && novo.t!==alvo.t &&
+         entradaPodeEscrever(kProj, "t", alvo.t, novo.t, bProj)){ alvo.t=novo.t; mudou=true; }
+      if(novo.n && novo.n!==alvo.n &&
+         entradaPodeEscrever(kProj, "n", alvo.n, novo.n, bProj)){ alvo.n=novo.n; mudou=true; }
       var subsPorId={}; (alvo.subs||[]).forEach(function(s){ subsPorId[s.id]=s; });
       (novo.subs||[]).forEach(function(ns){
         if(!ns || !ns.id) return;
         var as = subsPorId[ns.id];
         if(!as){ alvo.subs.push(normSub(Object.assign({}, ns, {origem:"entrada"}))); mudou=true; return; }
+        var kSub = kProj + "/" + ns.id, bSub = base[kSub];
         ["t","n","onde","prova","medida"].forEach(function(campo){
-          if((campo in ns) && JSON.stringify(ns[campo])!==JSON.stringify(as[campo])){ as[campo]=ns[campo]; mudou=true; }
+          if(!(campo in ns)) return;
+          if(JSON.stringify(ns[campo])===JSON.stringify(as[campo])) return;
+          if(!entradaPodeEscrever(kSub, campo, as[campo], ns[campo], bSub)) return;
+          as[campo]=ns[campo]; mudou=true;
         });
       });
     });

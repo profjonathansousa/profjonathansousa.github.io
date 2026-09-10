@@ -2037,11 +2037,21 @@ campo, e tem teste para os três casos: **só você mexeu** (o rename sobrevive)
 real, registrado). Sem base, ela cai em duas vias — que é o certo para uma peça
 publicada pela primeira vez.
 
-**O `mesclarEntrada()` continua de duas vias**, e a espera é deliberada: contra
-uma base **vazia**, "o pipeline nunca mudou nada" é verdade sobre tudo, e a regra
-concluiria que nenhuma atualização legítima pode escrever — a estrutura pararia
-de chegar. Ela é ligada quando a base existir de verdade, isto é, depois da
-primeira publicação real.
+**Ligada desde a primeira publicação real** (91 linhas: 13 projetos + 78
+subitens, `_gerado_em` de 26/08). A terceira via é consultada **campo a campo**:
+onde a baseline não conhece o campo, o merge continua de duas vias — que é o
+certo para uma peça publicada pela primeira vez, e é o caso real dos 13 projetos,
+cujo `valor` está vazio porque o `entrada.json` só traz `id` nesse nível.
+
+A baseline chega ao aparelho por `SYNC.carregarBase()` e fica numa **cópia
+local** (`cron:estrutura-base`): o `mesclarEntrada()` roda no carregamento, antes
+de a sincronia conectar, então a base precisa já estar ali quando ele perguntar.
+A cópia só é gravada se a leitura trouxe alguma coisa — um mapa parcial diria "o
+pipeline nunca publicou isto" sobre o que faltou.
+
+**Conflito não é silencioso.** Quando os dois mexeram no mesmo campo, vence a
+publicação e o que era seu fica em `cron:estrutura-conflitos`, com a peça, o
+campo e o valor sobrescrito.
 
 #### O navegador continua só lendo
 
@@ -2340,7 +2350,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | bloqueada: ver acima |
 | 9F — Prova da escrita dupla | concluída |
 | 9G-0 A — pipeline com caminho online | concluída |
-| 9G-0 B1 — publicação da estrutura + `cron_estrutura_base` | concluída |
+| 9G-0 B1 — publicação da estrutura, baseline e merge de três vias ligado | concluída |
 | 9G-0 B2 — aposentar o `cron:arquivo` | aberta: decisão sobre o arquivo real |
 | 9G — desativação do caminho do GitHub | não iniciada |
 

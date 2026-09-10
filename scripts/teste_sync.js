@@ -2887,13 +2887,128 @@ console.log("\n=== 66. O merge de tres vias da estrutura (9G-0 B1) ===");
   ok(M({n: 3}, {n: 3}, {n: 3}, true).escreve === false, "compara objetos por valor");
   ok(M({n: 3}, {n: 4}, {n: 3}, true).escreve === true, "e ve a mudanca dentro deles");
 
-  /* A REGRA AINDA NAO ESTA LIGADA, e a espera e o desenho. */
+  /* A REGRA ESTA LIGADA desde a primeira publicacao real. */
   const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
   const corpoEntrada = nucleo.split("function mesclarEntrada(")[1].split("\n}")[0];
-  ok(!/mesclarEstrutura/.test(corpoEntrada),
-     "o mesclarEntrada continua de DUAS vias ate a base existir de verdade");
+  ok(/entradaPodeEscrever\(/.test(corpoEntrada),
+     "o mesclarEntrada consulta a terceira via, campo a campo");
+  ok(/estruturaBase\(\)/.test(corpoEntrada),
+     "e a baseline vem da copia local da cron_estrutura_base");
   ok((nucleo.match(/function mesclarEstrutura/g) || []).length === 1,
-     "e ha UMA implementacao da regra, esperando");
+     "e ha UMA implementacao da regra");
+  ok(/mesclarEstrutura\(/.test(nucleo.split("function entradaPodeEscrever(")[1].split("\n}")[0]),
+     "usada por um ponto so");
+}
+
+console.log("\n=== 68. A baseline real no merge de entrada (9G-0 B1) ===");
+{
+  const srv = criarServidor();
+  /* A baseline como ela existe em producao: o projeto sem `t` (o entrada.json
+     so traz `id` no nivel do projeto) e o subitem com `t`. */
+  const A = criarAparelho("mac", srv, {storage: {
+    "cron:estrutura-base": JSON.stringify({
+      "pipeline/a01":        {tipo:"projeto", valor:{}, gerado_em:"2026-08-26T14:05:00Z"},
+      "pipeline/a01/a01-1":  {tipo:"subitem", valor:{t:"Levantamento"}, gerado_em:"2026-08-26T14:05:00Z"}
+    })
+  }});
+
+  ok(Object.keys(A.estruturaBase()).length === 2, "a copia local da baseline e lida",
+     Object.keys(A.estruturaBase()));
+
+  const sub = () => {
+    let x = null;
+    (A.getProjs("pipeline") || []).forEach(p => { if (p.id === "a01")
+      (p.subs || []).forEach(s => { if (s.id === "a01-1") x = s; }); });
+    return x;
+  };
+  const publicar = (tSub) => {
+    A.save("cron:entrada", {_gerado_em: "2026-09-10T10:00:00Z", paineis: {pipeline: [
+      {id: "a01", subs: [{id: "a01-1", t: tSub}]}]}});
+    A.mesclarEntrada();
+  };
+
+  /* (1) SO VOCE MEXEU. A baseline diz "Levantamento", voce renomeou, e a
+         publicacao repete "Levantamento": o pipeline nao mexeu, e o seu
+         rename SOBREVIVE. E o defeito que a terceira via corrige. */
+  const projs = A.getProjs("pipeline");
+  projs.forEach(p => { if (p.id === "a01") (p.subs||[]).forEach(x => {
+    if (x.id === "a01-1") x.t = "Levantamento do Jonathan"; }); });
+  A.setProjs("pipeline", projs);
+  publicar("Levantamento");
+  ok(sub().t === "Levantamento do Jonathan",
+     "(1) so voce mexeu: a publicacao NAO desfaz o seu rename", sub().t);
+
+  /* (2) SO O PIPELINE MEXEU. Volta o local ao valor da baseline; a publicacao
+         traz outro. Entra. */
+  const p2 = A.getProjs("pipeline");
+  p2.forEach(p => { if (p.id === "a01") (p.subs||[]).forEach(x => {
+    if (x.id === "a01-1") x.t = "Levantamento"; }); });
+  A.setProjs("pipeline", p2);
+  publicar("Levantamento revisado");
+  ok(sub().t === "Levantamento revisado",
+     "(2) so o pipeline mexeu: atualizacao legitima entra", sub().t);
+
+  /* (3) OS DOIS MEXERAM. Vence o relogio da publicacao, e o conflito FICA
+         REGISTRADO — escrever em silencio e o que esta fase acaba. */
+  const p3 = A.getProjs("pipeline");
+  p3.forEach(p => { if (p.id === "a01") (p.subs||[]).forEach(x => {
+    if (x.id === "a01-1") x.t = "Levantamento do Jonathan"; }); });
+  A.setProjs("pipeline", p3);
+  const antes = (A.LS("cron:estrutura-conflitos", []) || []).length;
+  publicar("Levantamento auditado");
+  ok(sub().t === "Levantamento auditado", "(3) conflito real: vence a publicacao", sub().t);
+  const conf = A.LS("cron:estrutura-conflitos", []) || [];
+  ok(conf.length === antes + 1, "e o conflito ficou registrado", conf.length - antes);
+  ok(conf[conf.length-1].seu === "Levantamento do Jonathan" &&
+     conf[conf.length-1].campo === "t" &&
+     conf[conf.length-1].chave === "pipeline/a01/a01-1",
+     "com o que era seu, o campo e a peca", conf[conf.length-1]);
+
+  /* (4) SEM BASELINE PARA O CAMPO: duas vias, como antes. O projeto tem linha
+         na base, mas o `valor` nao conhece `t` — e o caso real da producao. */
+  A.save("cron:entrada", {_gerado_em: "2026-09-10T11:00:00Z", paineis: {pipeline: [
+    {id: "a01", t: "Titulo vindo do pipeline"}]}});
+  A.mesclarEntrada();
+  const proj = (A.getProjs("pipeline") || []).find(p => p.id === "a01");
+  ok(proj.t === "Titulo vindo do pipeline",
+     "(4) baseline sem o campo: duas vias, e a publicacao entra", proj.t);
+
+  /* (5) SEM BASELINE NENHUMA: idem — e o estado de um aparelho que nunca ligou
+         a sincronia. */
+  const B = criarAparelho("celular", srv);
+  ok(Object.keys(B.estruturaBase()).length === 0, "o celular nao tem baseline");
+  B.save("cron:entrada", {_gerado_em: "2026-09-10T12:00:00Z", paineis: {pipeline: [
+    {id: "a01", subs: [{id: "a01-1", t: "Do pipeline, sem baseline"}]}]}});
+  B.mesclarEntrada();
+  let sb = null;
+  (B.getProjs("pipeline") || []).forEach(p => { if (p.id === "a01")
+    (p.subs || []).forEach(x => { if (x.id === "a01-1") sb = x; }); });
+  ok(sb.t === "Do pipeline, sem baseline",
+     "(5) sem baseline, o merge continua de duas vias", sb.t);
+
+  /* (6) PROGRESSO CONTINUA SEPARADO. O merge de entrada nao encosta em st nem
+         em vida, e a baseline nao carrega progresso. */
+  const nucleo68 = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const corpoEntrada68 = nucleo68.split("function mesclarEntrada(")[1].split("\n}")[0];
+  ok(!/\bst\b|\bvida\b/.test(corpoEntrada68),
+     "o mesclarEntrada nao escreve st nem vida");
+  const stAntes = sub().st, vidaAntes = sub().vida;
+  publicar("Mais um titulo");
+  ok(sub().st === stAntes && sub().vida === vidaAntes,
+     "e uma publicacao de estrutura nao mexe no progresso",
+     {st: sub().st, vida: sub().vida});
+  const base = A.estruturaBase();
+  ok(Object.keys(base).every(k => !("st" in (base[k].valor || {})) &&
+                                  !("vida" in (base[k].valor || {}))),
+     "nem a baseline carrega progresso");
+
+  /* A leitura da base e SO leitura, e de um lugar so. */
+  const sync = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "15-sync.js"), "utf8");
+  ok((sync.match(/TABELA_BASE/g) || []).length === 1 &&
+     /from\(SINCRONIA\.TABELA_BASE\)\.select/.test(sync),
+     "o aplicativo so LE a cron_estrutura_base, num ponto so");
+  ok(!/TABELA_BASE[\s\S]{0,200}(upsert|insert|delete|rpc)/.test(sync),
+     "e nao escreve nela por caminho nenhum");
 }
 
 console.log("\n=== 67. Quem escreve a cron_estrutura_base, e quem so le (9G-0 B1) ===");

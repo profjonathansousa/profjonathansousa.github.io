@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-09-estrutura";
+const APP_VERSION = "2026-09-10-tresvias";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -791,6 +791,15 @@ const SYNC_MARCA_KEY  = "cron:sync-marca";
    ponto de partida da outra, e o catch-up da segunda pularia o que ficou
    entre as duas leituras. */
 const SYNC_MARCA_REG_KEY = "cron:sync-marca-reg";
+/* A BASELINE DA ESTRUTURA, em copia local (Fase 9G-0 B1). A cron_estrutura_base
+   e a terceira via do merge de entrada, e o merge roda no carregamento — antes
+   de a sincronia ter sequer conectado. Sem uma copia local ela chegaria tarde
+   demais para servir. Chave -> {tipo, valor, gerado_em}. */
+const BASE_ESTRUTURA_KEY = "cron:estrutura-base";
+/* Conflito real entre a sua edicao e a publicacao do pipeline. Nao pode ser
+   silencioso: o merge escreve, e aqui fica o que foi sobrescrito. */
+const BASE_CONFLITOS_KEY = "cron:estrutura-conflitos";
+const BASE_CONFLITOS_TETO = 200;
 const SYNC_LIGADO_KEY = "cron:sync-ligado";
 /* FORA DO PREFIXO cron:, de proposito — ver o comentario no 15-sync.js. O
    backup exportado varre tudo que comeca com "cron:", e a sessao nao pode ir
