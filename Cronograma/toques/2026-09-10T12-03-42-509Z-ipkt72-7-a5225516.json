@@ -1,0 +1,93 @@
+{
+ "v": 1,
+ "lote": "2026-09-10T12-03-42-509Z-ipkt72",
+ "quando": "2026-09-10T12:03:54.579Z",
+ "aparelho": "ipkt72",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-42-509Z-ipkt72",
+   "quando": "2026-09-10T12:03:42.509Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-45-859Z-ipkt72",
+   "quando": "2026-09-10T12:03:45.859Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-46-626Z-ipkt72",
+   "quando": "2026-09-10T12:03:46.626Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-diagnostico",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-47-358Z-ipkt72",
+   "quando": "2026-09-10T12:03:47.358Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-47-759Z-ipkt72",
+   "quando": "2026-09-10T12:03:47.759Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-tpl-writing",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-50-209Z-ipkt72",
+   "quando": "2026-09-10T12:03:50.209Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-50-577Z-ipkt72",
+   "quando": "2026-09-10T12:03:50.577Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": false
+   }
+  }
+ ]
+}
