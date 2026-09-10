@@ -73,10 +73,17 @@ arquivo na pasta conectada e lê de volta no mesmo comando. É a metade que falt
 do elo pipeline -> Cronograma.
 
 DESDE A FASE 9G-0 ele também publica o MESMO toque no estado compartilhado (uma
-linha `item` e uma linha de registro), quando SUPABASE_URL e SUPABASE_SECRET_KEY
-estiverem no ambiente. Sem elas, grava o toque, diz que não publicou e segue — o
-caminho do GitHub continua inteiro. O toque é o artefato durável; publicar é
-melhor esforço.
+linha `item` e uma linha de registro). E desde a 9G-3 isso deixou de ser melhor
+esforço e passou a ser CONDIÇÃO: sem SUPABASE_URL e SUPABASE_SECRET_KEY no
+ambiente, ele RECUSA e não grava nada.
+
+A razão está no que a 9G-3 cortou. Enquanto o aplicativo lia o estado.json, um
+toque gravado chegava aos aparelhos pelo repositório mesmo que a publicação
+online falhasse. Ele não lê mais. O arquivo de toque continua existindo e
+continua sendo dobrado — é artefato e trilha auditável —, mas não é mais um
+canal: nada nele alcança um aparelho. Gravar sem poder publicar produziria um
+comando que termina com sucesso e uma marcação que ninguém vê. É o mesmo
+argumento do --publicar-estrutura. Para conferir o alvo sem escrever, use --seco.
 
 REGRA DURA DO --registrar: ele RECUSA subitem de prova "estrela". O mapa_portal.json
 marca assim as etapas cuja conclusão é decisão do autor e não artefato — a escolha
@@ -597,9 +604,12 @@ def publicar_online(toque, seco):
     aconteceu — quem chama imprime, e nunca deixa isto derrubar a gravacao."""
     url, chave = _credenciais()
     if not url or not chave:
-        return ("nao publicado online: faltam %s e/ou %s no ambiente.\n"
-                "  O caminho do GitHub segue inteiro. Para publicar tambem online,\n"
-                "  rode onde as duas existam (ver .github/workflows/dobrar-toques.yml)."
+        # SEM DIZER SE O TOQUE FOI GRAVADO. Esta funcao e chamada nos dois modos,
+        # e no --seco nada foi escrito: afirmar "o toque foi gravado" aqui seria
+        # a mesma classe de mentira que esta mensagem existe para corrigir.
+        return ("sem %s e/ou %s no ambiente, nao ha publicacao online.\n"
+                "  E desde a Fase 9G-3 esse e o unico caminho que leva uma marcacao\n"
+                "  aos aparelhos: o aplicativo nao le mais o estado.json."
                 % (API_URL, API_CHAVE))
     if seco:
         return "--seco: nada publicado online."
@@ -654,6 +664,34 @@ def registrar(alvo, para, vida, forcar, seco):
         print("a apagaria. Se for mesmo o caso, repita com --forcar.")
         return 1
 
+    # SEM CREDENCIAIS, RECUSA — e a razao mudou na 9G-3.
+    #
+    # Ate a 9G-2 publicar online era melhor esforco legitimo: se falhasse, o
+    # toque ainda viajava pelo estado.json, que o aplicativo lia no boot. A 9G-3
+    # cortou essa leitura. O arquivo de toque continua existindo e continua
+    # sendo dobrado — e artefato e trilha auditavel —, mas NAO e mais um canal:
+    # nada nele alcanca um aparelho.
+    #
+    # Entao gravar sem poder publicar produz o pior resultado possivel: um
+    # comando que termina com sucesso, um arquivo que existe, um estado.json
+    # que muda, e uma marcacao que nunca aparece na tela de ninguem. E o mesmo
+    # argumento do --publicar-estrutura, que ja recusa sem credenciais: publicar
+    # so metade deixa o outro lado mentindo.
+    #
+    # O --seco escapa porque nao grava nada: ele existe para conferir o alvo.
+    if not seco:
+        _url, _chave = _credenciais()
+        if not _url or not _chave:
+            print("\nRECUSADO: faltam %s e/ou %s no ambiente." % (API_URL, API_CHAVE))
+            print("Desde a Fase 9G-3 o aplicativo nao le mais o estado.json: o unico")
+            print("caminho que leva uma marcacao aos aparelhos e a escrita online.")
+            print("Gravar o toque agora criaria um arquivo que nao alcanca ninguem,")
+            print("e o comando diria que deu certo.")
+            print("")
+            print("Rode onde as duas variaveis existam. Para so conferir o alvo sem")
+            print("escrever nada, use --seco.")
+            return 1
+
     estado = carregar_estado()
     atual = estado["itens"].get("%s/%s/%s" % (pid, proj_id, sub_id)) or {}
     de = atual.get("st")
@@ -693,7 +731,8 @@ def registrar(alvo, para, vida, forcar, seco):
         print("  " + publicar_online(toque, seco))
     except Exception as e:
         print("  nao publicado online: %s" % e)
-        print("  O toque esta gravado. A dobra e o caminho do GitHub seguem inteiros.")
+        print("  O toque esta gravado e sera dobrado, mas o aplicativo nao le o")
+        print("  estado.json desde a 9G-3: rode de novo, com rede, para publicar.")
     return 0
 
 

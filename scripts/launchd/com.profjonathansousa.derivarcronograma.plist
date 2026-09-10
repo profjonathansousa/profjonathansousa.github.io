@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Modelo do agendamento diario da derivacao. NAO e instalado por ninguem
+  automaticamente: copie, ajuste o caminho se o seu repositorio estiver noutro
+  lugar, e carregue.
+
+      cp scripts/launchd/com.profjonathansousa.derivarcronograma.plist \
+         ~/Library/LaunchAgents/
+      launchctl load ~/Library/LaunchAgents/com.profjonathansousa.derivarcronograma.plist
+
+  Para conferir o que rodou:  tail -f /tmp/derivar-cronograma.log
+  Para desligar:              launchctl unload ~/Library/LaunchAgents/com.profjonathansousa.derivarcronograma.plist
+
+  NENHUM SEGREDO AQUI. As credenciais moram em ~/.config/cronograma/env, que o
+  derivar_diario.sh carrega. Um .plist fica em texto plano no seu Library e
+  entraria em qualquer backup — nao e lugar de chave de servico.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.profjonathansousa.derivarcronograma</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>"$HOME/Library/Mobile Documents/com~apple~CloudDocs/03_PROJETO/PORTAL/scripts/derivar_diario.sh"</string>
+  </array>
+  <!-- Uma vez por dia, as 20h. Depois do trabalho do dia, antes de a maquina
+       dormir de vez: o que foi produzido hoje ja esta em disco. -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>20</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/tmp/derivar-cronograma.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/derivar-cronograma.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
