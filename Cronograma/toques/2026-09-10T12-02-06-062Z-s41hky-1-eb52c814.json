@@ -1,0 +1,27 @@
+{
+ "v": 1,
+ "lote": "2026-09-10T12-02-06-062Z-s41hky",
+ "quando": "2026-09-10T12:02:10.064Z",
+ "aparelho": "s41hky",
+ "app": "2026-09-07-entrar",
+ "toques": [
+  {
+   "v": 1,
+   "id": "2026-09-10T12-02-06-062Z-s41hky",
+   "quando": "2026-09-10T12:02:06.062Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1789041719282",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Teste",
+    "feito_em": "2026-09-10",
+    "del": true
+   }
+  }
+ ]
+}
