@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:02:33.759Z",
+ "_dobrado_em": "2026-09-10T12:02:53.518Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -3366,6 +3366,36 @@
     "de": null,
     "del": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-02-48-010Z-s41hky",
+   "quando": "2026-09-10T12:02:48.010Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1789041757789",
+    "data": "2026-09-10",
+    "priv": false,
+    "del": false,
+    "t": "Teste"
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-02-53-518Z-s41hky",
+   "quando": "2026-09-10T12:02:53.518Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "evento",
+   "dados": {
+    "eid": "e1789041757789",
+    "data": "2026-09-11",
+    "priv": false,
+    "del": false,
+    "t": "Teste"
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3593,7 +3623,9 @@
   "2026-09-10T12-02-01-727Z-s41hky",
   "2026-09-10T12-02-06-062Z-s41hky",
   "2026-09-10T12-02-30-377Z-ipkt72",
-  "2026-09-10T12-02-33-759Z-ipkt72"
+  "2026-09-10T12-02-33-759Z-ipkt72",
+  "2026-09-10T12-02-48-010Z-s41hky",
+  "2026-09-10T12-02-53-518Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -4202,6 +4234,14 @@
    "del": false,
    "t": "TOEFL Test",
    "quando": "2026-09-07T02:56:52.343Z",
+   "aparelho": "s41hky"
+  },
+  "e1789041757789": {
+   "data": "2026-09-11",
+   "priv": false,
+   "del": false,
+   "t": "Teste",
+   "quando": "2026-09-10T12:02:53.518Z",
    "aparelho": "s41hky"
   }
  },
