@@ -460,115 +460,6 @@ function pendencias(){
   }
   return out;
 }
-function pisoJaGasto(base){
-  var fora = LS(ACERVO_LA_FORA_KEY, null);
-  if(!fora) return 0;
-  /* `piso` vem do HISTORICO, e nao so das secoes. Faz diferenca num caso: uma
-     meta publicada pelo botao e editada depois carrega na secao o instante da
-     EDICAO, e o instante do piso sobrevive so no historico. Olhando apenas as
-     secoes, o relogio poderia reemitir aquele instante — e a dobra descartaria
-     o toque novo como ja visto. */
-  if(base === new Date(ACERVO_EM).getTime() && fora.piso) return fora.piso;
-  var maior = 0;
-  ["metas","eventos"].forEach(function(s){
-    var m = fora[s] || {};
-    Object.keys(m).forEach(function(k){
-      /* metas guardam a string do instante; eventos guardam um objeto */
-      var q = (typeof m[k] === "string") ? m[k] : (m[k] && m[k].q);
-      var ms = new Date(q).getTime();
-      if(isFinite(ms) && ms >= base && ms < base + 86400000 && ms > maior) maior = ms;
-    });
-  });
-  return maior;
-}
-
-/* Anota na fotografia local o que acabou de entrar na fila, para que apertar o
-   botao duas vezes antes de o estado.json voltar nao republique o mesmo. Se o
-   envio falhar, a proxima leitura desfaz esta anotacao sozinha: a fotografia e
-   sempre reescrita pelo que o servidor realmente tem. */
-
-function jaEstaLaFora(secao, chave, temInstante){
-  var fora = LS(ACERVO_LA_FORA_KEY, null);
-  /* Ainda nao lemos o estado publicado — primeira carga sem rede, tipicamente.
-     Sem a fotografia, a regra conservadora e o instante: quem tem instante ou
-     ja publicou ou ja recebeu. Nao republica por engano, e volta a acertar
-     assim que a primeira leitura chegar. */
-  if(!fora || !fora[secao]) return !!temInstante;
-  return Object.prototype.hasOwnProperty.call(fora[secao], chave);
-}
-
-/* A semente e identica nos dois aparelhos: METAS_SEED reconstroi as metas
-   art-* em qualquer navegador que carregue esta pagina, e o mes de inicio
-   nasce com METAS_DEFAULT. Publicar uma que ninguem tocou so engordaria o
-   estado.json com o que o outro lado ja tem igual. Feita ou trazida de outro
-   mes, ja nao e semente intocada: viaja. */
-function metaEhSementeIntocada(mes, m){
-  if(m.done || m.de) return false;
-  var r = (typeof ROTEIRO !== "undefined" && ROTEIRO[mes]) || [];
-  for(var i=0;i<r.length;i++){ if(m.id === "art-"+mes+"-"+i) return m.t === r[i]; }
-  if(mes === MES_INICIO){
-    for(var j=0;j<METAS_DEFAULT.length;j++){
-      if(m.id === METAS_DEFAULT[j].id) return m.t === METAS_DEFAULT[j].t;
-    }
-  }
-  return false;
-}
-
-function metasParaPublicar(){
-  var fora = [];
-  listaMeses().forEach(function(mes){
-    (getMetas(mes)||[]).forEach(function(m){
-      if(!m || !m.id) return;
-      if(!String(m.t||"").trim()) return;        /* meta em branco nao e meta */
-      if(metaEhSementeIntocada(mes, m)) return;
-      /* Nao ha mais trava de "uma vez por aparelho": ela impedia o conserto
-         acima de acontecer. Quem decide, meta a meta, e se ela ja esta la fora
-         — e isso ja impede o aparelho que RECEBEU de republicar o que recebeu,
-         que era a unica coisa que a trava protegia. */
-      if(jaEstaLaFora("metas", mes + "/" + m.id, m.em)) return;
-      fora.push({mes:mes, m:m});
-    });
-  });
-  return fora;
-}
-
-/* A semente de eventos tambem e identica nos dois aparelhos: EVENTOS_DEFAULT
-   nasce igual em qualquer navegador. Data mudada ja nao e semente intocada. */
-function eventoEhSementeIntocado(ev){
-  for(var i=0;i<EVENTOS_DEFAULT.length;i++){
-    if(ev.id === EVENTOS_DEFAULT[i].id) return ev.data === EVENTOS_DEFAULT[i].data;
-  }
-  return false;
-}
-
-function eventosParaPublicar(){
-  var snap = LS(ACERVO_LA_FORA_KEY, null);
-  var conhece = !!(snap && snap.eventos);
-  var fora = [];
-  (getEventos()||[]).forEach(function(ev){
-    if(!ev || !ev.id || !ev.data) return;
-    if(eventoEhSementeIntocado(ev)) return;
-    if(!jaEstaLaFora("eventos", ev.id, ev.em)){ fora.push({ev:ev, novo:true}); return; }
-    if(!conhece) return;
-    var la = snap.eventos[ev.id];
-    if(!la || typeof la !== "object") return;
-    /* Ja esta la fora, mas o que esta la nao corresponde mais. Dois casos, e os
-       dois nascem de 29/08, quando os eventos subiram sem titulo nenhum:
-         · o titulo devia estar publicado e nao esta  -> publica para completar
-         · o titulo esta publicado e agora e privado  -> publica para retirar
-       Nos dois a condicao para de casar assim que o toque e dobrado e a
-       fotografia e relida, o que faz isto acontecer uma vez e nao virar laco. */
-    var falta   = !ev.priv && String(ev.t||"").trim() && !la.t;
-    var retirar =  ev.priv && la.t;
-    /* A MARCA TAMBEM PRECISA ATRAVESSAR, mesmo quando nao ha titulo a retirar.
-       Sem esta terceira condicao, um evento ja publicado sem titulo e marcado
-       como privado aqui nunca contaria ao outro aparelho que e privado — e o
-       outro publicaria o titulo na primeira edicao. */
-    var marca   = (!!ev.priv) !== (!!la.p);
-    if(falta || retirar || marca) fora.push({ev:ev, novo:false});
-  });
-  return fora;
-}
 function diasAte(iso){const [y,m,dd]=iso.split("-").map(Number);
   const t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   return Math.round((new Date(y,m-1,dd)-t0)/86400000);}
@@ -586,13 +477,6 @@ function fmtData(iso){const [y,m,dd]=iso.split("-").map(Number);
    cinco, o indice da tela deixaria de ser o indice da lista: o botao da sexta
    data editaria e APAGARIA a data errada. O id do evento e estavel e nao
    depende de quantos estao na tela. */
-/* Este evento ja consta do estado.json publicado, segundo a ultima leitura. */
-function eventoJaSubiu(eid){
-  var fora = LS(ACERVO_LA_FORA_KEY, null);
-  if(!fora || !fora.eventos) return false;
-  return Object.prototype.hasOwnProperty.call(fora.eventos, eid);
-}
-
 /* UMA fonte para o que o toque de evento carrega. O botao do acervo montava o
    proprio payload e ficou para tras quando o titulo passou a viajar: publicava
    sem `t` e sem `priv`, justamente na hora em que existia para republicar os

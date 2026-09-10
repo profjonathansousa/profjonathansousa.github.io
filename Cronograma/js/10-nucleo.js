@@ -1,6 +1,6 @@
 /* CRONOGRAMA — 10-nucleo.js
-   Infraestrutura: localStorage, aparelho, entrada, estado, toques, relogio,
-   sincronizacao com o GitHub e as migracoes. E aqui que mora o mecanismo pelo
+   Infraestrutura: localStorage, aparelho, entrada, relogio, os merges de cada
+   dominio, as descidas online e as migracoes. E aqui que mora o mecanismo pelo
    qual o ARQUIVO DESCREVE e o APARELHO DECIDE.
 
    Carrega depois de 00-config.js e antes de tudo o mais. */
@@ -336,16 +336,6 @@ function mesclarToefl(st, iid, r){
   st[iid] = {feito: !!r.feito, em: r.quando};
   return true;
 }
-function aplicarToeflDoEstado(est){
-  if(!est || !est.toefl) return false;
-  var st = guiaStore(), mudou = false;
-  Object.keys(est.toefl).forEach(function(iid){
-    var r = est.toefl[iid];
-    if(mesclarToefl(st, iid, {quando: r && r.quando, feito: r && r.feito})) mudou = true;
-  });
-  if(mudou) save(TOEFL_GUIA_KEY, st);
-  return mudou;
-}
 /* A descida do guia pelo caminho online (Fase 9E). Receber nao e tocar: nao
    passa pelo marcarGuia, nao enfileira toque e nao reescreve online. */
 function aplicarToeflOnline(linha){
@@ -490,13 +480,16 @@ function aplicarItemOnline(linha){
    o `dadosDoEvento` de 29/08, em que o botao do acervo montava o proprio
    payload e ficou para tras no dia em que o titulo passou a viajar.
 
-   Entao o merge mora aqui, e so aqui. O aplicarPrioridadesDoEstado (legado)
-   chama num laco; o aplicarPrioridadeOnline (Fase 9B) chama uma vez. Se a
-   regra mudar, ela muda para os dois no mesmo ato.
+   Entao o merge mora aqui, e so aqui. Enquanto houve duas descidas, o
+   aplicarPrioridadesDoEstado (legado) chamava num laco e o
+   aplicarPrioridadeOnline (Fase 9B) uma vez; a 9G-3 aposentou a primeira e
+   sobrou a segunda, mas o merge continua separado dela — e o que permite
+   testa-lo sem rede, e o que impede que uma terceira descida, se um dia
+   houver, nasca com regra propria.
 
-   O `r` e a forma do estado.json — {quando, tipo, painel, projId, t, feito_em,
-   del} — e nao a da linha do Supabase. Converter na entrada custa tres linhas
-   e evita que a forma do banco vaze para dentro da regra.
+   O `r` guarda a forma {quando, tipo, painel, projId, t, feito_em, del}, que
+   era a do estado.json, e nao a da linha do Supabase. Converter na entrada
+   custa tres linhas e evita que a forma do banco vaze para dentro da regra.
 
    MUTA A LISTA E DEVOLVE SE MUDOU. Quem chama grava, porque quem chama sabe se
    esta gravando uma semana ou varias. */
@@ -519,28 +512,6 @@ function mesclarPrioridade(lista, prid, r){
               feito_em:r.feito_em || "", em:r.quando};
   if(j < 0) lista.push(novo); else lista[j] = novo;
   return true;
-}
-
-/* Os dados que viajam. O texto da ETAPA nunca entra aqui — ver o bloco acima.
-   `t` e o rotulo da prioridade livre, ou o titulo do projeto como legenda. */
-function aplicarPrioridadesDoEstado(est){
-  if(!est || !est.prioridades) return false;
-  var porSemana = {};
-  Object.keys(est.prioridades).forEach(function(k){
-    var corte = k.indexOf("/");
-    if(corte < 0) return;
-    (porSemana[k.slice(0,corte)] = porSemana[k.slice(0,corte)] || [])
-      .push({prid:k.slice(corte+1), r:est.prioridades[k]});
-  });
-  var mudou = false;
-  Object.keys(porSemana).forEach(function(sem){
-    var lista = getPrio(sem), mudouSem = false;
-    porSemana[sem].forEach(function(o){
-      if(mesclarPrioridade(lista, o.prid, o.r)) mudouSem = true;
-    });
-    if(mudouSem){ setPrio(lista, sem); mudou = true; }
-  });
-  return mudou;
 }
 
 /* ============ A DESCIDA ONLINE DAS PRIORIDADES — Fase 9B ============
@@ -617,27 +588,6 @@ function mesclarMeta(lista, mid, r){
   else { lista[j].t = r.t || lista[j].t; lista[j].done = !!r.done;
          if(r.de) lista[j].de = r.de; lista[j].em = r.quando; }
   return true;
-}
-
-/* A descida pelo estado.json — o caminho legado, agora com nome proprio. */
-function aplicarMetasDoEstado(est){
-  if(!est || !est.metas) return false;
-  var porMes = {};
-  Object.keys(est.metas).forEach(function(k){
-    var corte = k.indexOf("/");
-    if(corte < 0) return;
-    (porMes[k.slice(0,corte)] = porMes[k.slice(0,corte)] || [])
-      .push({mid:k.slice(corte+1), r:est.metas[k]});
-  });
-  var mudou = false;
-  Object.keys(porMes).forEach(function(mes){
-    var lista = getMetas(mes), mudouMes = false;
-    porMes[mes].forEach(function(o){
-      if(mesclarMeta(lista, o.mid, o.r)) mudouMes = true;
-    });
-    if(mudouMes){ setMetas(lista, mes); mudou = true; }
-  });
-  return mudou;
 }
 
 /* ============ A DESCIDA ONLINE DAS METAS — Fase 9C-2 ============
@@ -732,17 +682,6 @@ function mesclarEvento(evs, eid, r){
     evs[j].em = r.quando;
   }
   return true;
-}
-
-/* A descida pelo estado.json — o caminho legado, agora com nome proprio. */
-function aplicarEventosDoEstado(est){
-  if(!est || !est.eventos) return false;
-  var evs = getEventos(), mudou = false;
-  Object.keys(est.eventos).forEach(function(eid){
-    if(mesclarEvento(evs, eid, est.eventos[eid])) mudou = true;
-  });
-  if(mudou) setEventos(evs);
-  return mudou;
 }
 
 /* ============ A DESCIDA ONLINE DOS EVENTOS — Fase 9C-3 ============
@@ -862,17 +801,6 @@ function mesclarRetomada(m, chave, r){
   return true;
 }
 
-/* A descida pelo estado.json — o caminho legado, agora sobre o merge unico. */
-function aplicarRetomadasDoEstado(est){
-  if(!est || !est.retomadas) return false;
-  var m = retomadasAdiadas(), mudou = false;
-  Object.keys(est.retomadas).forEach(function(chave){
-    if(mesclarRetomada(m, chave, est.retomadas[chave])) mudou = true;
-  });
-  if(mudou) save(RETOMADA_KEY, m);
-  return mudou;
-}
-
 /* ============ A DESCIDA ONLINE DAS RETOMADAS — Fase 9D.2 ============
    Molde dos quatro anteriores. A chave e `painel/projeto`, e o valor leva so o
    `ate`: o titulo e o estagio do projeto sao lidos do trilho no aparelho que
@@ -940,11 +868,14 @@ function instanteDoToque(quandoISO){
     if(!isFinite(base)) base = Date.now();
     var chave = String(base);
     var mapa = LS(RELOGIO_BASES_KEY, {}) || {};
-    /* Primeira vez nesta base: comeca no piso, ou logo depois do ultimo
-       instante que o estado.json publicado ja mostra naquele mesmo piso. A
-       segunda metade cobre o aparelho que publicou ANTES desta correcao
-       existir e nao tem o mapa: a memoria dele esta la fora, no estado.json. */
-    var v = (chave in mapa) ? mapa[chave] + 1 : Math.max(base, pisoJaGasto(base) + 1);
+    /* Primeira vez nesta base: comeca no proprio piso. Ate a 9G-3 havia uma
+       segunda metade aqui — o pisoJaGasto(), que lia do cron:la-fora o maior
+       instante que o estado.json publicado ja mostrava naquele mesmo piso. Ela
+       existia para o botao do acervo, que podia reemitir um id que a dobra ja
+       tinha visto. O botao e a fotografia sairam juntos na 9G-3, e as bases
+       explicitas que restam (TOEFL_EM, RETOMADA_EM, MIGRA_EM) sao migracoes de
+       uma vez por aparelho, com mapa proprio desde o primeiro uso. */
+    var v = (chave in mapa) ? mapa[chave] + 1 : base;
     mapa[chave] = v;
     save(RELOGIO_BASES_KEY, mapa);
     return v;
@@ -1004,10 +935,9 @@ function logar(pid, proj, sub, de, para){
   }
   save("cron:registro", r);
   var iso = instanteISO();
-  /* O ID CONTINUA SENDO O DO TOQUE, e a formula nao mudou (Fase 9G-2): a
-     descida pelo estado.json ainda existe ate a 9G-3, e e por esse id que ela
-     reconhece uma linha que ja desceu pelo Supabase e nao a repete. O `tid`
-     tambem e o que dedupe o que o pipeline registrar pelo --registrar. */
+  /* O ID CONTINUA SENDO O DO TOQUE, e a formula nao mudou depois que os dois
+     caminhos do GitHub sairam (9G-2 e 9G-3): e por esse id que o `tid` dedupe
+     o que o pipeline registrar pelo --registrar, que continua escrevendo. */
   try{
     if(typeof SYNC !== "undefined" && SYNC.ligado()){
       SYNC.registrar(linha, {id: idDoToque(iso)});
@@ -1133,17 +1063,6 @@ function mesclarTriagem(tri, vid, r){
   if(atual && (atual.em || "") >= r.quando) return false;
   tri[vid] = {st:r.st, quando:String(r.quando).slice(0,10), em:r.quando};
   return true;
-}
-
-/* A descida pelo estado.json — o caminho legado, agora com nome proprio. */
-function aplicarTriagemDoEstado(est){
-  if(!est || !est.triagem) return false;
-  var tri = vgTriagem(), mudou = false;
-  Object.keys(est.triagem).forEach(function(vid){
-    if(mesclarTriagem(tri, vid, est.triagem[vid])) mudou = true;
-  });
-  if(mudou) vgSalvarTriagem(tri);
-  return mudou;
 }
 
 /* ============ A DESCIDA ONLINE DA TRIAGEM — Fase 9D ============
@@ -1339,183 +1258,10 @@ function buscarEntrada(){
       if(mesclarEntrada()){ renderOrdo(); renderHoje(); renderSemana(); renderTrilhos(); }
     });
 }
-/* ---- Estado: o que os OUTROS aparelhos marcaram ----
-   Os toques sobem, o Cowork dobra em estado.json, e e aqui que eles descem. Sem
-   isto o painel e um por aparelho: voce marca no celular e o Mac nao sabe.
-
-   Vence o relogio, item a item. Cada subitem carrega `em`, o instante da ultima
-   mudanca feita NESTE aparelho; o estado.json carrega `quando`, o instante da
-   ultima mudanca conhecida por todos. Mais novo manda, e empate fica como esta.
-
-   Isto NAO gera toque. Receber nao e tocar: chamar logar() aqui criaria um eco
-   que voltaria a subir a cada carregamento, para sempre. */
-function buscarEstado(){
-  return fetch("estado.json?v=" + Date.now(), {cache:"no-store"})
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .catch(function(){ return null; })
-    .then(function(est){
-      if(!est) return;
-      /* Fotografia do que o estado.json ja contem, para o contador do acervo.
-         Fora dos if() de cada secao de proposito: "publicado, e vazio" precisa
-         ficar gravado tanto quanto "publicado, e cheio". */
-      try{
-        var laFora = {metas:{}, eventos:{}, piso:0};
-        var pisoMs = new Date(ACERVO_EM).getTime(), lim = pisoMs + 86400000;
-        var olha = function(q){
-          var ms = new Date(q).getTime();
-          if(isFinite(ms) && ms >= pisoMs && ms < lim && ms > laFora.piso) laFora.piso = ms;
-        };
-        var sm = est.metas || {};
-        Object.keys(sm).forEach(function(k){ laFora.metas[k] = sm[k].quando || ""; olha(sm[k].quando); });
-        /* Do evento a fotografia guarda mais do que o instante: se o titulo ja
-           esta la fora e se a marca de privado ja chegou. E o que permite o
-           botao do acervo saber que falta publicar um titulo, ou que falta
-           retirar um que agora e privado. */
-        var se = est.eventos || {};
-        Object.keys(se).forEach(function(k){
-          laFora.eventos[k] = {q: se[k].quando || "", t: !!(se[k].t), p: !!se[k].priv};
-          olha(se[k].quando);
-        });
-        (est.historico || []).forEach(function(x){ if(x) olha(x.quando); });
-        save(ACERVO_LA_FORA_KEY, laFora);
-      }catch(e){}
-      var mudou = false;
-      if(est.itens) PAINEIS.forEach(function(P){
-        var projs = getProjs(P.id), mudouAqui = false;
-        (projs||[]).forEach(function(pr){
-          (pr.subs||[]).forEach(function(x){
-            normSub(x);
-            var r = est.itens[P.id + "/" + pr.id + "/" + x.id];
-            /* O MOTIVO NAO VIAJA POR AQUI: e texto livre e o repositorio e
-               publico. Quem recebe ve a marca e sabe onde esta a razao, em vez
-               de ver um motivo velho do proprio aparelho colado numa marca
-               nova. O rotulo e montado na entrada porque e proprio DESTE
-               caminho — o online manda o motivo inteiro. */
-            if(mesclarItem(x, r && {quando:r.quando, st:r.st, vida:r.vida,
-                                    motivo: r.temMotivo ? "motivo registrado no outro aparelho" : ""}))
-              mudouAqui = true;
-          });
-        });
-        if(mudouAqui){ setProjs(P.id, projs); mudou = true; }
-      });
-      /* ---- Vagas: a triagem tambem desce ----
-         Mesma regra do relogio, vaga a vaga. O id da vaga e estavel
-         (philjobs-31649), entao a triagem sobrevive a coleta semanal, que
-         reescreve dados/vagas.json inteiro toda segunda. */
-      if(aplicarTriagemDoEstado(est)){ try{ renderVistaVagas(); }catch(e){} }
-      /* ---- Metas do mes (agora no aplicarMetasDoEstado, Fase 9C-2) ---- */
-      if(aplicarMetasDoEstado(est)){ try{ renderMetas(); }catch(e){} }
-      /* ---- Datas importantes ----
-         Chave e o id do evento. SO A DATA ATRAVESSA: o titulo fica no aparelho
-         que o escreveu, porque o repositorio e publico e o historico nunca e
-         podado. Evento novo nasce aqui sem nome, e a tela mostra um marcador
-         apagado no lugar do titulo.
-         O aviso de dias restantes nao precisa de nada: renderEventos recalcula
-         diasAte() e o proximo evento a cada chamada, entao basta chamar. */
-      if(aplicarEventosDoEstado(est)){ try{ renderEventos(); }catch(e){} }
-      /* ---- Prioridades da semana (Fase 2) ----
-         O que voce elegeu no computador chega aqui, e vice-versa. */
-      if(aplicarPrioridadesDoEstado(est)){ try{ renderHoje(); }catch(e){} }
-      /* ---- Guia do TOEFL (Fase 6A) ----
-         Chave e o `id` do item. Vence o relogio, item a item: mais novo manda,
-         empate fica como esta, mais antigo e ignorado. Nao ha lapide — o item
-         nao pode ser apagado, so marcado ou desmarcado —, entao feito:false que
-         chega mais novo desmarca aqui, e e para isso que ele viaja.
-
-         NAO GERA TOQUE: receber nao e tocar. Chamar marcarGuia() aqui criaria
-         um eco que voltaria a subir a cada carregamento, para sempre — a mesma
-         razao dos subitens e do registro. */
-      if(aplicarToeflDoEstado(est)){ try{ renderProcessos(); }catch(e){} mudou = true; }
-      /* ---- Retomadas silenciadas (Fase 6B) ----
-         Dispensar num aparelho cala nos dois. So a data viaja. */
-      if(aplicarRetomadasDoEstado(est)) mudou = true;
-      /* ---- Registro datado: a metade que faltava ----
-         A subida ja existia inteira. logar() passa a MESMA linha que grava em
-         cron:registro para o toque, e a dobra guarda o toque cru no `historico`
-         do estado.json. Nada descia: o registro era o unico dos cinco que subia
-         e nao voltava, e cada aparelho via so a propria metade do dia.
-
-         NAO HA SECAO NOVA NO estado.json. O registro nao e estado corrente, e
-         lista que so cresce: nao existe "vence o mais recente" para ele, cada
-         linha vale por si. A fonte, aqui, e o proprio `historico`.
-
-         DUAS COISAS DECIDEM SE UMA LINHA ENTRA:
-
-         1. O id do toque, gravado na linha recebida como `tid`. E por ele que
-            reler o mesmo estado.json dez vezes nao cria dez linhas.
-         2. O aparelho. TOQUE MEU NAO DESCE NUNCA. logar() grava a linha e
-            enfileira o toque no mesmo ato, entao um toque com o meu aparelho
-            ja tem a linha aqui, por construcao — inclusive as linhas escritas
-            antes de isto existir, que nao tem `tid` nenhum e que a regra 1
-            sozinha deixaria entrar em duplicata. Sao 5 no iPhone e 6 no Mac
-            [VERIFICADO nos backups de 29/08], entao o caso e real, e nao
-            hipotetico. E a regra nao tem furo porque `cron:aparelho` e
-            `cron:registro` moram no MESMO localStorage: somem juntos e voltam
-            juntos. Um aparelho que perdesse o registro perderia tambem a
-            identidade, nasceria com outra, e receberia o proprio passado como
-            se fosse de fora — o que e o comportamento certo.
-
-         ISTO AMARRA O REGISTRO AO `historico`, e a amarra e a divida deste
-         bloco: enquanto o historico nunca for podado (achado 7, adiado), nada
-         muda; no dia em que for, a poda leva junto o registro DOS OUTROS
-         aparelhos. O que sobrevive a uma poda e so o que este aparelho
-         escreveu, porque so isso mora em cron:registro por direito proprio.
-
-         Nao chama logar(): receber nao e tocar, pela mesma razao dos subitens
-         logo acima. Um logar() aqui subiria de volta o que acabou de descer,
-         e o eco nao pararia mais. */
-      if(Array.isArray(est.historico)){
-        var meuAparelho = aparelhoId();
-        var reg = getReg(), tidsVistos = {}, recebidas = [];
-        reg.forEach(function(o){ if(o && o.tid) tidsVistos[o.tid] = true; });
-        est.historico.forEach(function(t){
-          if(!t || t.tipo !== "registro" || !t.id) return;
-          if(tidsVistos[t.id]) return;
-          if(t.aparelho === meuAparelho) return;
-          var d = t.dados || {};
-          if(!d.subId) return;
-          tidsVistos[t.id] = true;
-          recebidas.push({d:d.d, pid:d.pid, projId:d.projId, subId:d.subId,
-                          projT:d.projT, subT:d.subT,
-                          de:(d.de === undefined ? null : d.de), para:d.para,
-                          vida:d.vida || "ativo",
-                          /* O motivo nao viaja, e nao deve: e texto livre e o
-                             repositorio e publico — o toque leva so a marca de
-                             que existe um. A linha recebida ganha rotulo
-                             proprio, como o subitem ja ganhava, para dizer onde
-                             a razao esta em vez de mostrar um motivo velho
-                             deste aparelho colado numa marca de outro. */
-                          motivo: d.temMotivo ? "motivo registrado no outro aparelho" : "",
-                          tid: t.id});
-        });
-        if(recebidas.length){
-          /* Reordena por `d`, a data de origem: uma linha do celular de ontem
-             entra ANTES da que este aparelho escreveu hoje, e nao no fim da
-             lista. A ordenacao e estavel, entao dentro do mesmo dia o que ja
-             estava aqui continua na frente do que acabou de chegar. */
-          var todas = reg.concat(recebidas);
-          todas.sort(function(a,b){
-            var x = (a && a.d) || "", y = (b && b.d) || "";
-            return x < y ? -1 : (x > y ? 1 : 0);
-          });
-          /* Mesmo teto do logar(), e mesmo destino para o excedente: o registro
-             so cresce, mas nada e descartado. */
-          if(todas.length > REG_TETO){
-            save("cron:registro-arquivo",
-                 (LS("cron:registro-arquivo", []) || []).concat(todas.slice(0, todas.length - REG_TETO)));
-            todas = todas.slice(-REG_TETO);
-          }
-          save("cron:registro", todas);
-          try{ renderRegistro(); }catch(e){}
-        }
-      }
-      try{ renderAcervoEstado(); }catch(e){}
-      if(mudou){ renderOrdo(); renderHoje(); renderSemana(); renderTrilhos(); }
-    });
-}
-
-/* Estrutura primeiro, progresso depois: um item precisa existir para receber
-   estado. E de novo quando a rede volta, porque quem abriu offline abriu velho. */
+/* TRAVA DE 20s DA VOLTA A ABA. Nasceu para a descida do estado.json, que saiu
+   na 9G-3; o que ela guarda agora e o checkUpdate(), que e uma busca de rede
+   como a outra era. Sem ela, alternar de aplicativo no celular pediria a
+   versao a cada toque na tela. */
 var ULTIMA_BUSCA = 0;
 
 /* ==================== AVISOS — a mecanica (Fase 8) ====================

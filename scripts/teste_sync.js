@@ -269,12 +269,31 @@ console.log("\n=== 1. Carrega, e nao liga nada por conta propria ===");
      "e iniciar() devolve na primeira linha", r);
   ok(srv.escritas === 0 && srv.linhas.length === 0,
      "nada foi escrito no servidor por carregar a pagina");
-  /* 9G-2: a SUBIDA saiu; a DESCIDA fica ate a 9G-3. */
-  ok(typeof A.buscarEstado === "function",
-     "13. a descida pelo estado.json continua inteira — sai na 9G-3");
+  /* 9G: o GitHub saiu dos DOIS lados — subida na 9G-2, descida na 9G-3. */
   ok(typeof A.enviarToques === "undefined" && typeof A.gravarNoGitHub === "undefined" &&
      typeof A.enfileirarToque === "undefined" && typeof A.getToques === "undefined",
-     "    e a subida para o GitHub nao existe mais");
+     "13. a subida para o GitHub nao existe mais");
+  ok(typeof A.buscarEstado === "undefined",
+     "    e a descida tambem nao: o buscarEstado saiu na 9G-3");
+  ["aplicarPrioridadesDoEstado", "aplicarMetasDoEstado", "aplicarEventosDoEstado",
+   "aplicarRetomadasDoEstado", "aplicarTriagemDoEstado", "aplicarToeflDoEstado"
+  ].forEach(function (f) {
+    ok(typeof A[f] === "undefined", "    nem o " + f);
+  });
+  /* O QUE PROVA QUE A LEITURA SUMIU, e nao so o nome: o unico fetch que o
+     aparelho ainda faz no repositorio e o do entrada.json (estrutura) e o do
+     00-config.js (versao). O estado.json nao e pedido por ninguem. */
+  const nucleoSrc = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
+  const appSrc    = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
+  const semCom = s => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const alvos = ((semCom(nucleoSrc) + semCom(appSrc) +
+                  semCom(fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8")) +
+                  semCom(regrasSrc)).match(/fetch\(\s*"([^"?]+)/g) || [])
+                .map(x => x.replace(/^fetch\(\s*"/, "")).sort();
+  ok(alvos.indexOf("estado.json") < 0,
+     "    e nenhum arquivo do aparelho faz fetch de estado.json", alvos);
+  ok(alvos.indexOf("entrada.json") > -1,
+     "    o entrada.json (ESTRUTURA) continua sendo buscado", alvos);
 }
 
 console.log("\n=== 2. O relogio: quem vence, quem nao vence, e o empate ===");
@@ -836,8 +855,8 @@ console.log("\n=== 22. O que a 9B NAO mudou ===");
   ok(srv.linhas.filter(l => l.dominio === "prioridade").length === 2,
      "    e cada operacao continua produzindo a sua escrita online",
      srv.linhas.filter(l => l.dominio === "prioridade").length);
-  ok(typeof A.aplicarPrioridadesDoEstado === "function",
-     "    a descida pelo estado.json continua existindo");
+  ok(typeof A.aplicarPrioridadesDoEstado === "undefined",
+     "    e a descida pelo estado.json nao existe mais (9G-3)");
 }
 
 console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ===");
@@ -850,13 +869,16 @@ console.log("\n=== 23. Um escritor so, e uma implementacao de merge so (9B) ==="
   ok(escritores === 1, "ha UM unico ponto que escreve prioridade online", escritores);
   ok(/function tocarPrioridade[\s\S]{0,1400}SYNC\.salvarAlteracao\(\s*"prioridade"/.test(fonte),
      "e ele e o tocarPrioridade, por onde as cinco operacoes ja passavam");
-  /* E UMA implementacao de merge, usada pelos dois caminhos de descida. */
+  /* E UMA implementacao de merge. Enquanto houve duas descidas, isto provava
+     que as duas usavam a mesma; com a legada aposentada na 9G-3, o que resta a
+     provar e que o merge continua SEPARADO do aplicador — e o que o mantem
+     testavel sem rede e impede que uma descida futura nasca com regra propria. */
   ok((nucleo.match(/function mesclarPrioridade/g) || []).length === 1,
      "ha UMA implementacao de merge");
-  ok(/aplicarPrioridadesDoEstado[\s\S]*?mesclarPrioridade/.test(nucleo),
-     "o caminho legado (estado.json) a usa");
+  ok(!/function aplicarPrioridadesDoEstado/.test(nucleo),
+     "o caminho legado (estado.json) saiu na 9G-3");
   ok(/aplicarPrioridadeOnline[\s\S]*?mesclarPrioridade/.test(nucleo),
-     "e o caminho online tambem — nao ha logica de relogio paralela");
+     "e o caminho online a usa — nao ha logica de relogio paralela");
   /* O mesmo instante nos dois caminhos. */
   ok(/var iso = instanteISO\(\);[\s\S]{0,400}\{em: iso, del: d\.del\}/.test(fonte),
      "e o instante da decisao vem do relogio, e e o que sobe");
@@ -1016,10 +1038,14 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
     const n = (fonte.match(new RegExp('salvarAlteracao\\(\\s*"' + d + '"', "g")) || []).length;
     ok(n === 1, "10. ha UMA unica escrita online de \"" + d + "\" no codigo", n);
   });
-  ok(/var iso = tocarEvento\(ev, false, x\.novo \? ACERVO_EM : null\)/.test(fonte),
-     "    e o botao do acervo publica evento PELO FUNIL");
-  ok(/var iso = tocarMeta\(c\.mes, c\.m, false, ACERVO_EM\)/.test(fonte),
-     "    e meta tambem");
+  /* O BOTAO DO ACERVO SAIU NA 9G-3, e com ele as duas chamadas que este teste
+     verificava. Ele existia para publicar no estado.json as metas e datas
+     escritas antes de a sincronia existir; publicadas, e sem estado.json a
+     alimentar, nao havia mais o que migrar. O que a secao guarda continua de
+     pe pelas assercoes de "UMA unica escrita online" acima. */
+  ok(!/function publicarAcervoUmaVez/.test(fonte) && !/function marcarLaForaLocal/.test(fonte) &&
+     !/function renderAcervoEstado/.test(fonte),
+     "    e o botao do acervo saiu inteiro do 30-render.js (9G-3)");
   /* O corpo do tocarMeta cresceu na 9C-2 (ganhou a escrita online), entao a
      verificacao passou a ser sobre o CONTRATO e nao sobre a proximidade das
      linhas: aceita quandoISO, repassa-o ao relogio, e devolve o iso. */
@@ -1030,8 +1056,11 @@ console.log("\n=== 27. Um escritor so para Meta e Evento (9C-0) ===");
   /* Mesmo motivo do tocarMeta acima: o corpo cresceu na 9C-3 (ganhou a escrita
      online), entao verifica-se o CONTRATO e nao a proximidade das linhas. */
   const tocarE = fonte.split("function tocarEvento(")[1].split("\n}")[0];
-  ok(/^ev, apagado, quandoISO, opts\)/.test(tocarE),
-     "    o funil do evento aceita quandoISO e opts (9C-4)");
+  /* O `opts` saiu na 9G-3: o unico chamador que o passava decidia pelo
+     eventoJaSubiu(), que lia a fotografia do estado.json. O `quandoISO` fica —
+     e por ele que as migracoes de uma vez por aparelho escrevem com piso. */
+  ok(/^ev, apagado, quandoISO\)/.test(tocarE),
+     "    o funil do evento aceita quandoISO, e o `opts` inerte saiu (9G-3)");
   ok(/instanteISO\(quandoISO\)/.test(tocarE), "    e o repassa ao relogio");
   ok(/return iso;/.test(tocarE), "    e DEVOLVE o instante que subiu");
   /* 4. NENHUM caminho novo de sincronia foi criado nesta etapa. */
@@ -1389,14 +1418,12 @@ console.log("\n=== 36. Um escritor e um merge, tambem para Meta (9C-2) ===");
   ok((render.match(/SYNC\.salvarAlteracao\(\s*"meta"/g) || []).length === 1,
      "18. ha UM unico ponto que escreve meta online");
   ok(/function tocarMeta[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"meta"/.test(render),
-     "    e ele e o tocarMeta, o mesmo funil do caminho legado");
+     "    e ele e o tocarMeta, o funil por onde todas as operacoes passam");
   ok((render.match(/salvarAlteracao\(\s*"meta"/g) || []).length === 1,
      "    e continua havendo UM escrita online de meta (a 9C-0 nao regrediu)");
   ok((nucleo.match(/function mesclarMeta/g) || []).length === 1, "ha UMA implementacao de merge");
-  ok(/aplicarMetasDoEstado[\s\S]*?mesclarMeta/.test(nucleo), "o caminho legado a usa");
-  ok(/aplicarMetaOnline[\s\S]*?mesclarMeta/.test(nucleo), "e o online tambem");
-  ok(/var iso = tocarMeta\(c\.mes, c\.m, false, ACERVO_EM\)/.test(render),
-     "    e o acervo continua publicando pelo funil (9C-0 intacta)");
+  ok(!/function aplicarMetasDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarMetaOnline[\s\S]*?mesclarMeta/.test(nucleo), "e o online a usa");
   /* Os renders minimos. */
   const corpo = nucleo.split("function aplicarMetaOnline(")[1].split("\n}")[0];
   ok(/renderMetas/.test(corpo) && /renderVistaRevisao/.test(corpo),
@@ -1574,7 +1601,9 @@ console.log("\n=== 40. Privacidade: a fronteira nao foi ampliada (9C-3) ===");
   /* Renomear um privado que ja subiu nao publica nada de novo. */
   const antes = srv.linhas.filter(l => l.chave === id)[0].em;
   const linhasAntes = srv.linhas.filter(l => l.dominio === "evento").length;
-  A.__armazem["cron:la-fora"] = JSON.stringify({metas:{}, eventos:{[id]:{q:antes,t:false,p:true}}, piso:0});
+  /* Ate a 9G-3 era preciso plantar aqui a fotografia do cron:la-fora, para que
+     o editEv soubesse que o evento "ja subiu". A fotografia saiu com o acervo:
+     renomear escreve online sempre, privado ou nao. */
   A.editEv(id, "Consulta com o cardiologista");
   await A.SYNC.drenarFila();
   const depois = srv.linhas.filter(l => l.chave === id)[0];
@@ -1609,7 +1638,8 @@ console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ==
      {aparelho: noAparelho.em, online: online.em});
   ok(noAparelho.data === online.valor.data && noAparelho.t === online.valor.t,
      "   e o mesmo conteudo", {aparelho: noAparelho, online: online.valor});
-  ok(typeof A.aplicarEventosDoEstado === "function", "   a descida pelo estado.json continua existindo");
+  ok(typeof A.aplicarEventosDoEstado === "undefined",
+     "   e a descida pelo estado.json nao existe mais (9G-3)");
 
   /* O evento NAO tem `done`: nao existe concluir/desconcluir neste dominio. */
   ok(!("done" in (A.getEventos()[0] || {})),
@@ -1639,12 +1669,10 @@ console.log("\n=== 42. Um escritor e um merge, tambem para Evento (9C-3) ===");
   ok((render.match(/salvarAlteracao\(\s*"evento"/g) || []).length === 1,
      "e UM unico escrita online de evento (a 9C-0 nao regrediu)");
   ok(/function tocarEvento[\s\S]{0,2200}SYNC\.salvarAlteracao\(\s*"evento"/.test(render),
-     "e ele e o tocarEvento, o mesmo funil do caminho legado");
+     "e ele e o tocarEvento, o funil por onde todas as operacoes passam");
   ok((nucleo.match(/function mesclarEvento/g) || []).length === 1, "ha UMA implementacao de merge");
-  ok(/aplicarEventosDoEstado[\s\S]*?mesclarEvento/.test(nucleo), "o caminho legado a usa");
-  ok(/aplicarEventoOnline[\s\S]*?mesclarEvento/.test(nucleo), "e o online tambem");
-  ok(/var iso = tocarEvento\(ev, false, x\.novo \? ACERVO_EM : null\)/.test(render),
-     "e o acervo continua publicando pelo funil (9C-0 intacta)");
+  ok(!/function aplicarEventosDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarEventoOnline[\s\S]*?mesclarEvento/.test(nucleo), "e o online a usa");
 
   const corpo = nucleo.split("function aplicarEventoOnline(")[1].split("\n}")[0];
   ok(/renderEventos/.test(corpo) && /renderVistaRevisao/.test(corpo),
@@ -1689,8 +1717,6 @@ console.log("\n=== 43. O titulo privado no caminho online (9C-4) ===");
      "D. e o titulo esta no registro ONLINE", linhaDe(id).valor);
 
   /* E. editar o titulo enquanto privado: sincroniza online, nao vaza no legado. */
-  A.__armazem["cron:la-fora"] = JSON.stringify(
-    {metas:{}, eventos:{[id]:{q:linhaDe(id).em, t:false, p:true}}, piso:0});
   A.editEv(id, "Retiro de casais — Igreja de Nova Iguacu");
   await A.SYNC.drenarFila();
   ok(linhaDe(id).valor.t === "Retiro de casais — Igreja de Nova Iguacu",
@@ -1788,10 +1814,21 @@ console.log("\n=== 45. A fronteira publica, verificada nos artefatos (9C-4) ==="
      "1/4. dadosDoEvento (payload legado) nao MONTA o titulo quando priv");
   ok(/if not d\.get\("priv"\) and isinstance\(d\.get\("t"\), str\):/.test(dobra),
      "1. e a dobra tambem o recusa — dois guardas independentes no cano publico");
-  /* O cron:la-fora guarda so um booleano `t`, nunca o texto. */
-  ok(/t:\(!ev\.priv && !!String\(ev\.t\|\|""\)\.trim\(\)\)/.test(render.replace(/\s/g, "")) ||
-     /marcarLaForaLocal\("eventos", ev\.id, \{q:iso, t:\(!ev\.priv/.test(render),
-     "3. cron:la-fora guarda um booleano, nunca o texto do titulo");
+  /* O cron:la-fora guardava do titulo so um booleano, nunca o texto. A chave
+     saiu inteira na 9G-3 junto com o acervo, entao a garantia deixou de ser
+     "guarda so um booleano" e passou a ser "nao existe": nao ha mais nenhum
+     lugar no aparelho onde o titulo de um evento privado seja copiado para
+     fora do cron:eventos. */
+  /* MENCIONAR NAO E USAR: os comentarios que contam por que a chave saiu ficam,
+     e nao podem reprovar o corte. O que se le e o CODIGO, sem comentario. */
+  const semComent = s => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const codigoApp = ["00-config.js", "10-nucleo.js", "15-sync.js", "20-regras.js",
+                     "30-render.js", "40-app.js"]
+    .map(f => semComent(fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f), "utf8"))).join("\n");
+  ok(!/la-fora|ACERVO_LA_FORA_KEY|ACERVO_EM/.test(codigoApp),
+     "3. o cron:la-fora nao existe mais no codigo do aparelho (9G-3)");
+  ok(!/eventoJaSubiu|jaEstaLaFora|pisoJaGasto|marcarLaForaLocal/.test(codigoApp),
+     "   nem os quatro leitores que dependiam dela");
   /* O titulo privado so entra no payload ONLINE, e a partir de ev.t. */
   const tocar = render.split("function tocarEvento(")[1].split("\n}")[0];
   ok(/if\(!apagado\) valor\.t = ev\.t \|\| "";/.test(tocar),
@@ -1939,8 +1976,8 @@ console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
   ok(!!noAp && noAp.em === l.em, "L. o aparelho e o online com o MESMO ISO",
      {aparelho: noAp && noAp.em, online: l.em});
   ok(noAp.st === l.valor.st, "   e o mesmo st", {aparelho: noAp.st, online: l.valor.st});
-  ok(typeof A.aplicarTriagemDoEstado === "function",
-     "   a descida pelo estado.json continua existindo");
+  ok(typeof A.aplicarTriagemDoEstado === "undefined",
+     "   e a descida pelo estado.json nao existe mais (9G-3)");
 
   /* O. nenhum dominio posterior da 9D/9E foi antecipado. */
   const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
@@ -1978,8 +2015,8 @@ console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
   ok(!/new Date\(\)\.toISOString\(\)/.test(vg.split("iso ? new Date(iso)")[0]),
      "   e nao carimba um `em` proprio antes dele");
   ok((nucleo.match(/function mesclarTriagem/g) || []).length === 1, "ha UMA implementacao de merge");
-  ok(/aplicarTriagemDoEstado[\s\S]*?mesclarTriagem/.test(nucleo), "o caminho legado a usa");
-  ok(/aplicarTriagemOnline[\s\S]*?mesclarTriagem/.test(nucleo), "e o online tambem");
+  ok(!/function aplicarTriagemDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarTriagemOnline[\s\S]*?mesclarTriagem/.test(nucleo), "e o online a usa");
 
   /* Os renders, todos comprovados por leitura de vgEstado(). */
   const corpo = nucleo.split("function aplicarTriagemOnline(")[1].split("\n}")[0];
@@ -2123,8 +2160,8 @@ console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
   ok(/var iso = tocarRetomada\(pid, projId, ate\)/.test(corpoDe(render, "adiarRetomada")),
      "o adiarRetomada chama o funil");
   ok((nucleo.match(/function mesclarRetomada/g) || []).length === 1, "ha UMA implementacao de merge");
-  ok(/aplicarRetomadasDoEstado[\s\S]*?mesclarRetomada/.test(nucleo), "o caminho legado a usa");
-  ok(/aplicarRetomadaOnline[\s\S]*?mesclarRetomada/.test(nucleo), "e o online tambem");
+  ok(!/function aplicarRetomadasDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarRetomadaOnline[\s\S]*?mesclarRetomada/.test(nucleo), "e o online a usa");
   /* A clausula que le as DUAS formas nao pode ser simplificada. */
   ok(/typeof loc === "object"/.test(corpoDe(nucleo, "mesclarRetomada")),
      "o merge le a entrada local nas duas formas (string antiga e objeto)");
@@ -2380,9 +2417,13 @@ console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
   ok(/getReg\(\)/.test(corpoDe(regras, "revisaoDaSemana")),
      "   e a revisao da semana tambem le");
 
-  /* O CAMINHO LEGADO CONTINUA INTEIRO. */
-  ok(/est\.historico/.test(nucleo) && /t\.tipo !== "registro"/.test(nucleo),
-     "a descida pelo estado.json continua onde estava");
+  /* O CAMINHO LEGADO SAIU INTEIRO (9G-3). A descida do registro pelo
+     `est.historico` era a metade que o Supabase ja tinha absorvido na 9D.3: as
+     duas conviviam pela chave `tid`, e sobrou a online. */
+  ok(!/est\.historico/.test(nucleo) && !/t\.tipo !== "registro"/.test(nucleo),
+     "a descida do registro pelo estado.json saiu na 9G-3");
+  ok(/function aplicarRegistroOnline/.test(nucleo) && /\btid\b/.test(nucleo),
+     "   e a descida online, com o mesmo criterio de `tid`, continua");
   /* 9G-2: o semMotivo saiu com o caminho publico — nao ha mais onde cortar. */
   ok(!/function semMotivo/.test(nucleo),
      "e o semMotivo saiu: o caminho publico que o exigia nao existe mais");
@@ -2505,8 +2546,14 @@ console.log("\n=== 60. Um funil, tres escritores, e o que a 9D.4 NAO tem (9D.4) 
      "rotina tem UM escritor, e ele mora no funil — nenhum segundo apareceu");
   ok(typeof A.enfileirarToque === "undefined",
      "e nao ha mais toque nenhum a emitir: a subida legada saiu na 9G-2");
-  ok(!/rotina/.test(corpoDe(nucleo, "buscarEstado") || ""),
-     "e a descida do estado.json nao ganhou secao de rotina");
+  /* A assercao media isto contra o corpo do buscarEstado, que saiu na 9G-3 —
+     e contra uma funcao que nao existe ela passaria sozinha, provando nada.
+     O sujeito, agora, e o ARTEFATO: a dobra continua sem secao de rotina, e e
+     por isso que nao ha caminho legado a preservar neste dominio. */
+  const dobraSrc = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
+  const secoes = (dobraSrc.match(/^\s{8}"(\w+)": \{\},$/gm) || []).map(l => l.match(/"(\w+)"/)[1]);
+  ok(secoes.indexOf("rotina") < 0 && secoes.indexOf("rotinas") < 0,
+     "e o estado.json do pipeline nunca ganhou secao de rotina", secoes);
 
   /* Os leitores, cada um comprovado onde mora. */
   ok(/cron:checks:/.test(corpoDe(regras, "atrasadas")), "   atrasadas() le cron:checks");
@@ -2792,11 +2839,12 @@ console.log("\n=== 65. O guia do TOEFL online, e a estrutura que a 9E NAO fez (9
   const corpoDe = (f, n) => { const p = f.split("function " + n + "(")[1]; return p ? p.split("\n}")[0] : ""; };
 
   ok((nucleo.match(/function mesclarToefl/g) || []).length === 1, "ha UMA implementacao de merge do guia");
-  ok(/aplicarToeflDoEstado[\s\S]*?mesclarToefl/.test(nucleo), "o caminho legado a usa");
-  ok(/aplicarToeflOnline[\s\S]*?mesclarToefl/.test(nucleo), "e o online tambem");
+  ok(!/function aplicarToeflDoEstado/.test(nucleo), "o caminho legado saiu na 9G-3");
+  ok(/aplicarToeflOnline[\s\S]*?mesclarToefl/.test(nucleo), "e o online a usa");
   ok((nucleo.match(/function mesclarItem/g) || []).length === 1, "ha UMA implementacao de merge do item");
   ok(/mesclarItem/.test(corpoDe(nucleo, "aplicarItemOnline")), "o online a usa");
-  ok(/mesclarItem\(x, r &&/.test(nucleo), "e a descida do estado.json tambem");
+  ok(!/mesclarItem\(x, r &&/.test(nucleo),
+     "e a descida do estado.json, que era a outra consumidora, saiu na 9G-3");
 
   /* UM FUNIL POR ESCRITOR HUMANO. */
   ok((regrasSrc.match(/SYNC\.salvarAlteracao\(\s*"toefl"/g) || []).length === 1,

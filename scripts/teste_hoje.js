@@ -90,9 +90,9 @@ function criarAparelho(nome, opcoes) {
     navigator: { userAgent: "node", onLine: true },
     location: { href: "", reload() {} },
     setTimeout: (f) => 0, clearTimeout() {}, setInterval: () => 0, clearInterval() {},
-    /* Sem rede: o boot do arquivo chama buscarEntrada().then(buscarEstado) e
-       cai no catch dele proprio. E o que se quer — o teste controla a descida
-       chamando as funcoes a mao. */
+    /* Sem rede: o boot do arquivo chama buscarEntrada() e cai no catch dele
+       proprio. E o que se quer — o teste controla a descida chamando os
+       aplicadores online a mao. */
     fetch: () => Promise.reject(new Error("sem rede no teste")),
     alert() {}, confirm: () => true, prompt: () => opcoes.prompt || null,
     Date, Math, JSON, String, Number, Object, Array, Boolean, RegExp, Error, isFinite, isNaN
@@ -112,10 +112,12 @@ console.log("\n=== 1. A pagina inteira avalia sem navegador ===");
 const A = criarAparelho("mac");
 ok(typeof A.renderHoje === "function", "renderHoje existe");
 ok(typeof A.estagioDoTrilho === "function", "estagioDoTrilho existe");
-ok(typeof A.aplicarPrioridadesDoEstado === "function", "aplicarPrioridadesDoEstado existe");
+ok(typeof A.aplicarPrioridadeOnline === "function", "aplicarPrioridadeOnline existe");
 ok(typeof A.vgMarcar === "function", "vgMarcar continua existindo");
 ok(typeof A.enfileirarToque === "undefined",
    "enfileirarToque NAO existe mais: a subida legada saiu na 9G-2");
+ok(typeof A.buscarEstado === "undefined" && typeof A.aplicarPrioridadesDoEstado === "undefined",
+   "e a descida legada tambem nao: buscarEstado e os aplicar*DoEstado sairam na 9G-3");
 ok(typeof A.instanteISO === "function",
    "o que sobrou dele e o relogio, que os funis continuam usando");
 ok(typeof A.sortedRef === "undefined", "sortedRef saiu (enderecamento por id)");
@@ -282,29 +284,31 @@ ok(tPrio.filter(p => p.tipo === "trilho")
    "e NAO carrega o texto da etapa: ele e lido do trilho no destino",
    tPrio.map(p => p.t));
 
-/* A forma do estado.json que a dobra produz: chave periodo/id, valor com
-   `quando` e aparelho. O teste de sincronia roda o script de verdade; aqui a
-   forma so precisa bater para a DESCIDA poder ser exercitada. */
-/* A FILA DE TOQUES SAIU NA FASE 9G-2, e com ela o artefato que este teste usava
-   para montar o estado.json do outro aparelho. A DESCIDA continua (sai na
-   9G-3), entao o que muda e a FONTE: em vez de dobrar toques, o `est` e montado
-   a partir do estado do proprio aparelho — que e o que a dobra produzia. */
-function estadoDe(X, sem) {
-  const est = { prioridades: {} };
+/* AS DUAS DESCIDAS VIRARAM UMA. Ate a 9G-2 este teste dobrava toques para
+   montar o estado.json do outro aparelho; a 9G-2 tirou a fila de toques e a
+   fonte passou a ser o estado do proprio aparelho; a 9G-3 tirou o estado.json
+   inteiro, e o que resta e a descida ONLINE — a que o SYNC alimenta linha a
+   linha, uma por chave.
+
+   Entao `linhasDe` produz o que o cron_estado entrega: {chave, valor, em, del},
+   a forma exata que o SYNC.assinarDominio("prioridade", ...) passa ao
+   aplicador. O que o teste prova nao mudou: uma prioridade eleita num aparelho
+   chega ao outro, a lapide apaga, e o relogio recusa o que chega atrasado. */
+function linhasDe(X, sem) {
   const semana = sem || X.semanaAtual;
-  (X.getPrio(semana) || []).forEach(p => {
-    est.prioridades[semana + "/" + p.id] = {
-      tipo: p.tipo || "livre", painel: p.painel, projId: p.projId,
-      t: p.t, feito_em: p.feito_em || "",
-      del: !!p.del, quando: p.em, aparelho: "outro"
-    };
-  });
-  return est;
+  return (X.getPrio(semana) || []).map(p => ({
+    chave: semana + "/" + p.id,
+    valor: { tipo: p.tipo || "livre", painel: p.painel, projId: p.projId,
+             t: p.t, feito_em: p.feito_em || "" },
+    em: p.em, del: !!p.del
+  }));
 }
+/* Entrega as linhas de X a Y, como o Realtime faria. */
+function descer(Y, linhas) { linhas.forEach(l => Y.aplicarPrioridadeOnline(l)); }
 /* O celular, que nunca viu nada. */
 const CEL = criarAparelho("celular");
 ok(CEL.prioridadesDoDia().manuais.length === 0, "o celular comeca sem prioridade nenhuma");
-CEL.aplicarPrioridadesDoEstado(estadoDe(MAC));
+descer(CEL, linhasDe(MAC));
 const noCel = CEL.prioridadesDoDia().manuais;
 ok(noCel.length === 2, "computador -> celular: as duas chegaram", noCel.length);
 ok(noCel.some(p => p.t === "Pos-doc Notre Dame"), "a livre chegou com o texto");
@@ -317,7 +321,7 @@ ok(etCel && etCel.subT, "e o celular LE o estagio do proprio trilho dele", etCel
 const CEL2 = criarAparelho("celular2", { prompt: "Revisar TOEFL" });
 CEL2.addPrioridadeLivre();
 const MAC2 = criarAparelho("mac3");
-MAC2.aplicarPrioridadesDoEstado(estadoDe(CEL2));
+descer(MAC2, linhasDe(CEL2));
 ok(MAC2.prioridadesDoDia().manuais.some(p => p.t === "Revisar TOEFL"),
    "celular -> computador: tambem chega");
 
@@ -327,17 +331,15 @@ MAC3.addPrioridadeLivre();
 const prid = MAC3.getPrio()[0].id;
 MAC3.delPrioridade(prid);
 const CEL3 = criarAparelho("celular3");
-CEL3.aplicarPrioridadesDoEstado(estadoDe(MAC3));
+descer(CEL3, linhasDe(MAC3));
 ok(CEL3.prioridadesDoDia().manuais.length === 0,
    "apagada no computador -> some no celular (lapide del)");
 /* Um toque atrasado nao derruba o que e mais novo. */
 const CEL4 = criarAparelho("celular4");
-CEL4.aplicarPrioridadesDoEstado({ prioridades: {
-  [CEL4.semanaAtual + "/px"]: { tipo: "livre", t: "nova", del: false,
-    quando: new Date().toISOString(), aparelho: "outro" } } });
-CEL4.aplicarPrioridadesDoEstado({ prioridades: {
-  [CEL4.semanaAtual + "/px"]: { tipo: "livre", t: "velha", del: false,
-    quando: "2020-01-01T00:00:00.000Z", aparelho: "outro" } } });
+CEL4.aplicarPrioridadeOnline({ chave: CEL4.semanaAtual + "/px", del: false,
+  valor: { tipo: "livre", t: "nova" }, em: new Date().toISOString() });
+CEL4.aplicarPrioridadeOnline({ chave: CEL4.semanaAtual + "/px", del: false,
+  valor: { tipo: "livre", t: "velha" }, em: "2020-01-01T00:00:00.000Z" });
 ok(CEL4.getPrio()[0].t === "nova", "toque atrasado nao derruba estado mais novo",
    CEL4.getPrio());
 
@@ -1092,57 +1094,54 @@ ok(Object.keys(MIG.LS("cron:toefl-guia", {})).length === 3,
 
 console.log("\n=== 36. O guia atravessa aparelhos ===");
 /* A dobra do tipo toefl, na forma exata do dobrar_toques.py. */
-/* 9G-2: a fila saiu. O `est` do outro aparelho vem do estado dele — que e o
-   que a dobra produzia a partir dos toques. */
-function dobrarToefl(aparelhos, base) {
-  const est = { toefl: Object.assign({}, (base || {}).toefl) };
+/* 9G-3: a descida pelo estado.json saiu, e com ela o `est` que este bloco
+   montava. A uniao das marcas de varios aparelhos e agora o que a TABELA
+   guarda — uma linha por chave, a mais nova vencendo —, e e isso que `unirToefl`
+   reproduz: devolve LINHAS do cron_estado, {chave, valor:{feito}, em}. */
+function unirToefl(aparelhos) {
+  const porChave = {};
   aparelhos.forEach((X) => {
     const g = X.LS("cron:toefl-guia", {}) || {};
     Object.keys(g).forEach((k) => {
-      const atual = est.toefl[k];
-      if (atual && (atual.quando || "") > (g[k].em || "")) return;
-      est.toefl[k] = { feito: !!g[k].feito, quando: g[k].em, aparelho: "outro" };
+      const atual = porChave[k];
+      if (atual && (atual.em || "") > (g[k].em || "")) return;
+      porChave[k] = { chave: k, valor: { feito: !!g[k].feito }, em: g[k].em };
     });
   });
-  return est;
+  return Object.keys(porChave).sort().map(k => porChave[k]);
 }
+/* Uma marca vinda de fora, na forma que o SYNC entrega ao aplicador. */
+const linhaToefl = (chave, feito, em) => ({ chave, valor: { feito }, em });
 const MACT = criarAparelho("mac-toefl");
 const CELT = criarAparelho("cel-toefl");
 MACT.marcarGuia("f1-conta", true);
 CELT.marcarGuia("f1-anki", true);
-const estUniao = dobrarToefl([MACT, CELT]);
-ok(Object.keys(estUniao.toefl).sort().join(",") === "f1-anki,f1-conta",
-   "A marca X e B marca Y: a dobra guarda os dois", Object.keys(estUniao.toefl));
-MACT.aplicarToeflDoEstado(estUniao);
+const uniaoToefl = unirToefl([MACT, CELT]);
+ok(uniaoToefl.map(l => l.chave).join(",") === "f1-anki,f1-conta",
+   "A marca X e B marca Y: a tabela guarda os dois", uniaoToefl.map(l => l.chave));
+uniaoToefl.forEach(l => MACT.aplicarToeflOnline(l));
 ok(MACT.guiaFeito("f1-conta") && MACT.guiaFeito("f1-anki"),
    "e o aparelho A recebe a uniao, sem perder a propria");
 /* Desmarcacao mais nova vence marcacao antiga. */
 const DES = criarAparelho("desmarca");
 DES.marcarGuia("f1-conta", true);
-/* Um estado.json vindo de fora, montado a mao: e a forma que a descida
-   consome, e nao ha mais toque de onde derivá-la. */
-const estDes = { toefl: { "f1-conta": { feito:false, quando:"2099-01-01T00:00:00.000Z",
-                                        aparelho:"outro" } } };
-DES.aplicarToeflDoEstado(estDes);
+DES.aplicarToeflOnline(linhaToefl("f1-conta", false, "2099-01-01T00:00:00.000Z"));
 ok(DES.guiaFeito("f1-conta") === false, "desmarcacao mais nova desmarca aqui");
 /* Marcacao mais nova vence desmarcacao antiga. */
 const REM = criarAparelho("remarca");
 REM.marcarGuia("f1-conta", false);
-const estRem = { toefl: { "f1-conta": { feito:true, quando:"2099-01-01T00:00:00.000Z",
-                                        aparelho:"outro" } } };
-REM.aplicarToeflDoEstado(estRem);
+REM.aplicarToeflOnline(linhaToefl("f1-conta", true, "2099-01-01T00:00:00.000Z"));
 ok(REM.guiaFeito("f1-conta") === true, "marcacao mais nova marca aqui");
 /* Empate nao altera o local. */
 const EMP = criarAparelho("empate");
 EMP.marcarGuia("f1-conta", true);
 const emLocal = EMP.LS("cron:toefl-guia", {})["f1-conta"].em;
-EMP.aplicarToeflDoEstado({ toefl: { "f1-conta": { feito:false, quando:emLocal } } });
+EMP.aplicarToeflOnline(linhaToefl("f1-conta", false, emLocal));
 ok(EMP.guiaFeito("f1-conta") === true, "empate no relogio mantem o que ja estava aqui");
 /* Receber nao e tocar. */
 const ECO = criarAparelho("eco");
 const antesEco = JSON.stringify(ECO.LS("cron:toefl-guia", {}));
-ECO.aplicarToeflDoEstado({ toefl: { "f1-anki": { feito:true,
-  quando:"2099-01-01T00:00:00.000Z", aparelho:"outro" } } });
+ECO.aplicarToeflOnline(linhaToefl("f1-anki", true, "2099-01-01T00:00:00.000Z"));
 ok(ECO.guiaFeito("f1-anki") === true, "a marca de fora chega");
 ok(JSON.stringify(ECO.LS("cron:toefl-guia", {})) !== antesEco, "a descida aplicou algo");
 ok(ECO.SYNC.situacao().fila === 0, "e a descida NAO gera escrita de volta (sem eco)",
@@ -1152,8 +1151,8 @@ console.log("\n=== 37. O reforco sincronizado nao avanca a fase ===");
 const REF = criarAparelho("reforco");
 ok(REF.currentFaseId() === "f1", "a fase corrente comeca em f1", REF.currentFaseId());
 const reforcoDeF1 = REF.TOEFL_GUIA.f1.itens.filter(it => !it.n).map(it => it.id);
-REF.aplicarToeflDoEstado({ toefl: reforcoDeF1.reduce((a, iid) => {
-  a[iid] = { feito:true, quando:"2099-01-01T00:00:00.000Z" }; return a; }, {}) });
+reforcoDeF1.forEach(iid =>
+  REF.aplicarToeflOnline(linhaToefl(iid, true, "2099-01-01T00:00:00.000Z")));
 ok(reforcoDeF1.every(iid => REF.guiaFeito(iid)), "todo o reforco de f1 chegou marcado");
 ok(REF.currentFaseId() === "f1",
    "e a fase continua em f1: so o nucleo avanca", REF.currentFaseId());
@@ -1374,53 +1373,52 @@ ok(JSON.stringify(R6MG.LS("cron:retomadas-adiadas", {})) === antesMG,
 ok(R6MG.LS("cron:retomadas-migrado", false) === true, "cron:retomadas-migrado foi posto");
 
 console.log("\n=== 42. Convergencia entre aparelhos ===");
-function dobrarRetomadas(aparelhos, base) {
-  const est = { retomadas: Object.assign({}, (base || {}).retomadas) };
+/* 9G-3: a uniao deixou de ser um estado.json dobrado e passou a ser o que a
+   tabela guarda — uma linha por chave, a mais nova vencendo. */
+function unirRetomadas(aparelhos) {
+  const porChave = {};
   aparelhos.forEach((X) => {
     const m = X.LS("cron:retomadas-adiadas", {}) || {};
     Object.keys(m).forEach((k) => {
       const e = m[k]; if (!e || typeof e !== "object") return;
-      const atual = est.retomadas[k];
-      if (atual && (atual.quando || "") > (e.em || "")) return;
-      est.retomadas[k] = { ate: e.ate, quando: e.em, aparelho: "outro" };
+      const atual = porChave[k];
+      if (atual && (atual.em || "") > (e.em || "")) return;
+      porChave[k] = { chave: k, valor: { ate: e.ate }, em: e.em };
     });
   });
-  return est;
+  return Object.keys(porChave).sort().map(k => porChave[k]);
 }
+const linhaRet = (chave, ate, em) => ({ chave, valor: { ate }, em });
 const R6B1 = comParado("ret-b1"); R6B1.adiarRetomada("pipeline", "a01");
 const R6B2 = comParado("ret-b2"); R6B2.adiarRetomada("pipeline", "a02");
-const uniao = dobrarRetomadas([R6B1, R6B2]);
-ok(Object.keys(uniao.retomadas).sort().join(",") === "pipeline/a01,pipeline/a02",
-   "projetos diferentes coexistem", Object.keys(uniao.retomadas));
-R6B1.aplicarRetomadasDoEstado(uniao);
+const uniaoRet = unirRetomadas([R6B1, R6B2]);
+ok(uniaoRet.map(l => l.chave).join(",") === "pipeline/a01,pipeline/a02",
+   "projetos diferentes coexistem", uniaoRet.map(l => l.chave));
+uniaoRet.forEach(l => R6B1.aplicarRetomadaOnline(l));
 const mRB1 = R6B1.LS("cron:retomadas-adiadas", {});
 ok(mRB1["pipeline/a01"] && mRB1["pipeline/a02"],
    "e o aparelho A recebe a uniao sem perder a propria", Object.keys(mRB1));
 /* mais novo vence */
 const R6NV = comParado("ret-novo"); R6NV.adiarRetomada("pipeline", "a01");
-R6NV.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
-  { ate: "2099-12-31", quando: "2099-01-01T00:00:00.000Z" } } });
+R6NV.aplicarRetomadaOnline(linhaRet("pipeline/a01", "2099-12-31", "2099-01-01T00:00:00.000Z"));
 ok(R6NV.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === "2099-12-31",
    "remoto mais novo vence");
 /* mais antigo nao vence */
 const R6VL = comParado("ret-velho"); R6VL.adiarRetomada("pipeline", "a01");
 const ateVL = R6VL.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate;
-R6VL.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
-  { ate: "2020-01-01", quando: "2020-01-01T00:00:00.000Z" } } });
+R6VL.aplicarRetomadaOnline(linhaRet("pipeline/a01", "2020-01-01", "2020-01-01T00:00:00.000Z"));
 ok(R6VL.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === ateVL,
    "remoto mais antigo nao derruba o local");
 /* empate preserva o local */
 const R6EM = comParado("ret-empate"); R6EM.adiarRetomada("pipeline", "a01");
 const locEM = R6EM.LS("cron:retomadas-adiadas", {})["pipeline/a01"];
-R6EM.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
-  { ate: "2099-12-31", quando: locEM.em } } });
+R6EM.aplicarRetomadaOnline(linhaRet("pipeline/a01", "2099-12-31", locEM.em));
 ok(R6EM.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === locEM.ate,
    "empate no relogio preserva o local");
 /* receber nao e tocar */
 const R6EC = comParado("ret-eco");
 const antesEC = JSON.stringify(R6EC.LS("cron:retomadas-adiadas", {}));
-R6EC.aplicarRetomadasDoEstado({ retomadas: { "pipeline/a01":
-  { ate: "2099-12-31", quando: "2099-01-01T00:00:00.000Z" } } });
+R6EC.aplicarRetomadaOnline(linhaRet("pipeline/a01", "2099-12-31", "2099-01-01T00:00:00.000Z"));
 ok(R6EC.LS("cron:retomadas-adiadas", {})["pipeline/a01"].ate === "2099-12-31",
    "o silencio de fora chega");
 ok(R6EC.SYNC.situacao().fila === 0, "e a descida NAO escreve de volta",
@@ -1532,7 +1530,7 @@ ok(tqPrio.feito_em === HOJE,
    "e ela leva a DATA em que foi cumprida, e nao um booleano", tqPrio.feito_em);
 
 const SC = criarAparelho("sinc-celular");
-SC.aplicarPrioridadesDoEstado(estadoDe(SM));
+descer(SC, linhasDe(SM));
 const noCelSC = SC.getPrio().filter(p => p.id === smId)[0];
 ok(!!noCelSC && noCelSC.feito_em === HOJE,
    "o celular recebe a prioridade JA CUMPRIDA", noCelSC && noCelSC.feito_em);
@@ -1541,7 +1539,7 @@ ok(/pr-livre done/.test(SC.cartaoDePrioridade(noCelSC)),
 
 /* desmarcar tambem atravessa: mudar de ideia e um fato */
 SM.togglePrioridadeFeita(smId);
-SC.aplicarPrioridadesDoEstado(estadoDe(SM));
+descer(SC, linhasDe(SM));
 const noCelSC2 = SC.getPrio().filter(p => p.id === smId)[0];
 ok(!!noCelSC2 && !noCelSC2.feito_em,
    "desmarcar no computador desmarca no celular", noCelSC2 && noCelSC2.feito_em);
@@ -1552,12 +1550,13 @@ const SD = criarAparelho("sinc-descida", { prompt: "Preparar a aula" });
 SD.addPrioridadeLivre();
 const sdId = SD.getPrio()[0].id;
 SD.togglePrioridadeFeita(sdId);
-const estVelho = estadoDe(SD);
-estVelho.prioridades[SD.semanaAtual + "/" + sdId].feito_em = "";
-estVelho.prioridades[SD.semanaAtual + "/" + sdId].quando = "2020-01-01T00:00:00.000Z";
-SD.aplicarPrioridadesDoEstado(estVelho);
+const velhas = linhasDe(SD).map(l => Object.assign({}, l, {
+  valor: Object.assign({}, l.valor, { feito_em: "" }),
+  em: "2020-01-01T00:00:00.000Z"
+}));
+descer(SD, velhas);
 ok(SD.getPrio().filter(p => p.id === sdId)[0].feito_em === HOJE,
-   "um estado ANTIGO nao apaga a conclusao registrada agora",
+   "uma linha ANTIGA nao apaga a conclusao registrada agora",
    SD.getPrio().filter(p => p.id === sdId)[0].feito_em);
 
 console.log("\n=== 47. Mudanca de gaveta das marcas antigas ===");
@@ -1650,12 +1649,22 @@ ok(HTML.length < 20000, "o index.html virou um shell", HTML.length);
 /* e o que foi para o ar continua sendo o que se testa */
 ok(CODIGO.length > 200000, "o codigo real tem o tamanho esperado", CODIGO.length);
 const APP = criarAparelho("fase7");
-["renderHoje","estagioDoTrilho","aplicarPrioridadesDoEstado","vgMarcar",
+/* A LISTA TROCOU OS TRES APLICADORES LEGADOS E O buscarEstado pelos ONLINE que
+   os substituiram (9G-3). O que ela guarda e o mesmo de sempre: que a divisao
+   em cinco arquivos nao derrubou nenhuma funcao publica pelo caminho. */
+["renderHoje","estagioDoTrilho","aplicarPrioridadeOnline","vgMarcar",
  "renderProcessos","renderSemana","renderTrilhos","renderEventos",
  "renderMetas","vgRender","retomadas","motorDePrioridades","guiaChecks","toggleGuia",
- "adiarRetomada","aplicarToeflDoEstado","aplicarRetomadasDoEstado","processosVisiveis",
- "revisaoDaSemana","atrasadas","LS","save","instanteISO","buscarEstado"].forEach(function(f){
+ "adiarRetomada","aplicarToeflOnline","aplicarRetomadaOnline","processosVisiveis",
+ "revisaoDaSemana","atrasadas","LS","save","instanteISO","buscarEntrada"].forEach(function(f){
   ok(typeof APP[f] === "function", "a funcao publica " + f + " continua disponivel");
+});
+/* E que as quatro que a 9G-3 aposentou ficaram aposentadas. */
+["buscarEstado","aplicarPrioridadesDoEstado","aplicarToeflDoEstado",
+ "aplicarRetomadasDoEstado","aplicarMetasDoEstado","aplicarEventosDoEstado",
+ "aplicarTriagemDoEstado","publicarAcervoUmaVez","renderAcervoEstado",
+ "eventoJaSubiu","pisoJaGasto","jaEstaLaFora"].forEach(function(f){
+  ok(typeof APP[f] === "undefined", "e a funcao " + f + " nao existe mais (9G-3)");
 });
 /* nenhuma chave nem tipo de toque mudou de lugar junto com o codigo */
 const CHAVES = (CODIGO.match(/cron:[a-z0-9:-]*/g) || []);
@@ -1679,8 +1688,9 @@ const SW_BRUTO = fs.readFileSync(path.join(RAIZ, "Cronograma", "sw.js"), "utf8")
    as palavras que o codigo nao pode conter. */
 const SW = SW_BRUTO.replace(/\/\*[\s\S]*?\*\//g, "");
 /* A ASSERCAO QUE PROTEGE A SINCRONIZACAO. Um service worker com ouvinte de
-   fetch interceptaria estado.json e entrada.json, que sao mesma origem, e a
-   pagina passaria a desenhar estado velho. */
+   fetch interceptaria o entrada.json e o 00-config.js, que sao mesma origem, e
+   a pagina passaria a desenhar estrutura velha — ou a nao saber de uma versao
+   nova. (Ate a 9G-3 o estado.json estava nessa lista.) */
 ok(!/addEventListener\s*\(\s*["']fetch["']/.test(SW),
    "o service worker NAO tem ouvinte de fetch");
 ok(!/caches\b|CacheStorage|cache\.open/.test(SW), "e nao usa a Cache API");
@@ -1689,6 +1699,10 @@ ok(/addEventListener\s*\(\s*["']push["']/.test(SW) &&
    "so push e notificationclick");
 ok(!/estado\.json|entrada\.json|api\.github\.com/.test(SW),
    "e o codigo dele nao toca em estado.json, entrada.json nem na api do GitHub");
+/* 9G-3: o estado.json continua existindo, mas como ARTEFATO DO PIPELINE. Quem
+   o le e a dobra, nao o aparelho — e e isto que a assercao guarda. */
+ok(!/fetch\(\s*["']estado\.json/.test(CODIGO.replace(/\/\*[\s\S]*?\*\//g, "")),
+   "e nenhum arquivo do aparelho pede o estado.json (a descida saiu na 9G-3)");
 ok(/nao tem ouvinte de fetch|NAO HA addEventListener\("fetch"\)/.test(SW_BRUTO) ||
    /fetch/.test(SW_BRUTO),
    "e o arquivo explica por escrito por que o fetch ficou de fora");

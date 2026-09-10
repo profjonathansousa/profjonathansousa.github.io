@@ -584,7 +584,8 @@ Todo dado do Cronograma, com o seu escritor, o seu destino e a decisão da fase.
 
 **Não sincroniza porque é derivado ou cache** — sincronizar valor derivado é
 sincronizar consequência em vez de causa: `cron:toefl-recalibrado`,
-`cron:feed-cache`, `cron:la-fora`, `cron:entrada`, `cron:entrada-aplicada`.
+`cron:feed-cache`, `cron:entrada`, `cron:entrada-aplicada`. (`cron:la-fora`
+estava nesta lista até a 9G-3, que a aposentou junto com o acervo.)
 
 **Não sincroniza porque é estado de tela:** `cron:paineis-open`,
 `cron:painel-open:*`, `cron:processo-open:*`, `cron:toefl-guia-open`,
@@ -593,7 +594,8 @@ sincronizar consequência em vez de causa: `cron:toefl-recalibrado`,
 
 **Não sincroniza porque é maquinaria local:** `cron:schema-versao`, os
 `cron:*-migrado`, `cron:*-seed`, `cron:relogio`, `cron:relogio-bases`,
-`cron:toques`, `cron:ultimo-backup` e os arquivos de registro excedente.
+`cron:ultimo-backup` e os arquivos de registro excedente. (`cron:toques`, a fila
+de subida, saiu na 9G-2.)
 
 ### As quatro decisões
 
@@ -2190,12 +2192,13 @@ subida: `semMotivo`, `paraBase64`, `nomeDoLote`, `impressaoDeIds`,
 `instanteISO(quandoISO)`. A fila saiu, mas o **relógio monotônico não podia
 sair** — os sete funis precisam do instante, e é o mesmo `em` que vai para o
 `cron_estado`. O `idDoToque(iso)` também fica: é a chave da linha em
-`cron_registro`, e é por ela que a descida (que ainda existe) reconhece o que já
-desceu pelo Supabase.
+`cron_registro`, e é por ela que o registro publicado pelo `--registrar` do
+pipeline não vira uma segunda linha no aparelho.
 
 #### O que foi preservado, explicitamente, para a 9G-3
 
-`buscarEstado()` e os sete `aplicar*DoEstado`, `estado.json`,
+(Da primeira metade desta lista, a 9G-3 tratou logo abaixo; a segunda continua
+inteira.) `buscarEstado()` e os sete `aplicar*DoEstado`, `estado.json`,
 `scripts/dobrar_toques.py` inteiro (`--registrar` e `--publicar-estrutura`),
 `Cronograma/toques/`, o `dobrar-toques.yml`, `entrada.json` e `mesclarEntrada`,
 todo o SYNC e o `cron:sync-fila`, o Web Push e o notificador, a estrutura online
@@ -2225,6 +2228,105 @@ de existir; os mesmos domínios já são provados entre dois aparelhos pelo
 caminhos *do aplicativo* passaram a comparar o aparelho e o online; os que
 guardam a fronteira com o **pipeline** e o `prova: "estrela"` continuam
 exatamente como estavam — e são os que ainda têm dois lados.
+
+### 9G-3 — A descida legada cortada, e o acervo aposentado
+
+Fecha a Fase 9G. O aplicativo deixa de usar o GitHub como mecanismo de
+sincronização entre aparelhos: já não escrevia lá desde a 9G-2, e agora também
+não lê. O `estado.json` **continua existindo** — é o artefato que a dobra
+publica, e o pipeline continua o produzindo e o lendo. O que saiu é o aparelho
+como consumidor dele.
+
+**Pré-condição, registrada e não verificável por código:** além das duas da 9G-2
+(`cron:toques` vazio, `cron:sync-ligado === "true"`), esta exigiu uma terceira —
+**o acervo de cada aparelho já publicado**, sem metas nem datas pendentes. Um
+botão que não tem mais o que migrar é a única condição sob a qual ele pode sair.
+
+#### O que saiu
+
+`buscarEstado()`, o único `fetch("estado.json")` do aplicativo, os seis
+`aplicar*DoEstado` (prioridade, meta, evento, retomada, triagem, TOEFL), o merge
+de itens que rodava dentro do `buscarEstado`, a descida do registro pelo
+`est.historico` e a chamada de descida nos dois ouvintes do boot.
+
+E o **subsistema do acervo inteiro**: `cron:la-fora` e o `ACERVO_LA_FORA_KEY`,
+`ACERVO_EM`, `publicarAcervoUmaVez`, `marcarLaForaLocal`, `renderAcervoEstado`,
+`pisoJaGasto`, `jaEstaLaFora`, `metasParaPublicar`, `eventosParaPublicar`,
+`metaEhSementeIntocada`, `eventoEhSementeIntocado`, `eventoJaSubiu`, o botão e o
+`#acervo-estado` no `index.html`, e o parâmetro `opts.soOnline` do `tocarEvento`.
+
+#### Por que o acervo saiu junto, e não numa fase própria
+
+A auditoria de fronteira encontrou nele um **consumidor compartilhado**, e não um
+pedaço isolável. `cron:la-fora` era escrito por `buscarEstado` e lido por quatro
+funções que não pertencem à descida:
+
+| leitor | o que decidia |
+|---|---|
+| `pisoJaGasto` | o piso já gasto do **relógio monotônico** (`instanteDoToque`) |
+| `jaEstaLaFora` | o que o botão do acervo ainda tinha a publicar |
+| `eventosParaPublicar` | título faltando, título a retirar, marca de privado |
+| `eventoJaSubiu` | o `soOnline` de um evento privado renomeado |
+
+Cortar a descida sem decidir o acervo deixaria a fotografia **congelada**: o
+contador mostraria a mesma pendência para sempre, um aparelho novo veria o botão
+recusar-se a funcionar, e o relógio poderia reemitir um instante que a dobra já
+tinha visto. Por isso a implementação parou nessa fronteira e a decisão foi
+tomada fora do código — o acervo estava publicado, e o subsistema saiu inteiro.
+
+#### O que o relógio perdeu, e por que não precisa de substituto
+
+O ramo de base explícita do `instanteDoToque` era
+`Math.max(base, pisoJaGasto(base) + 1)` e passou a ser `base`. A segunda metade
+cobria o aparelho que publicara o acervo **antes** de o mapa `cron:relogio-bases`
+existir: a memória dele morava lá fora, no `estado.json`. As bases explícitas que
+restam — `TOEFL_EM`, `RETOMADA_EM`, `MIGRA_EM` — são migrações de uma vez por
+aparelho, com mapa próprio desde o primeiro uso. Não há memória externa a
+consultar porque não há publicação externa a repetir.
+
+#### O que foi preservado
+
+Todo o SYNC e o `cron:sync-fila`, os nove escritores online, o LWW pelo relógio
+do aparelho, os `mesclar*` (que agora têm um consumidor em vez de dois, e
+continuam separados dos aplicadores — é o que os mantém testáveis sem rede),
+`entrada.json` e `mesclarEntrada`, `estrutura_proj`/`estrutura_sub` e o
+`cron_estrutura_base`, `scripts/dobrar_toques.py` inteiro com `--registrar` e
+`--publicar-estrutura`, `Cronograma/toques/`, o `estado.json` como artefato,
+o `dobrar-toques.yml`, o Web Push e o `avisos/enviar.mjs`, o `checkUpdate` e o
+arquivamento por `vida`.
+
+Os dois ouvintes do boot **ficaram**, com sujeito novo: o de `online` rebusca o
+`entrada.json` (estrutura), e o de `visibilitychange` pede a versão pelo
+`checkUpdate`. O `ULTIMA_BUSCA`, a trava de 20s, ficou com eles — nasceu para a
+descida, mas guarda uma busca de rede que continua existindo.
+
+#### O que a mudança custou aos testes
+
+Menos do que a 9G-2, e por um motivo: a descida legada e a online sempre
+chamaram **o mesmo merge**. As provas de LWW, lápide, empate e "receber não é
+tocar" só trocaram o veículo — de um `est` inteiro para as linhas
+`{chave, valor, em, del}` que o SYNC entrega, uma por chave. Nenhuma regra
+mudou de forma para caber no teste.
+
+As asserções que provavam a *existência* da descida foram **invertidas**, não
+apagadas: onde se lia "o caminho legado continua existindo", lê-se agora que ele
+não existe mais, e as três inversões foram verificadas por mutação — reintroduzir
+um `fetch("estado.json")`, ressuscitar um `aplicar*DoEstado` e recriar o
+`ACERVO_LA_FORA_KEY` fazem falhar, cada um, entre uma e três suítes.
+
+Uma asserção perdeu o sujeito de um jeito perigoso e teve de ser refeita:
+`!/rotina/.test(corpoDe(nucleo, "buscarEstado"))` passaria **sozinha** contra uma
+função que não existe mais. O sujeito passou a ser o artefato — a dobra continua
+sem seção de rotina.
+
+#### A correção de segurança que veio junto
+
+`revoke insert, update, delete, truncate on public.cron_estrutura_base from
+authenticated`. A tabela nascera com os privilégios padrão do papel, que o
+`grant select` não revoga. A RLS já recusava toda escrita (`force row level
+security`, nenhuma política de escrita), então isto não fecha uma brecha aberta:
+tira a segunda linha de defesa da lista de coisas em que é preciso confiar.
+Aplicado em produção; `service_role` intocada.
 
 ### Como ligar, e o que a tela diz
 
@@ -2497,14 +2599,14 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9D.4 — Rotinas do dia online (primeira estreia sem caminho legado) | concluída |
 | 9D.5 — Dispensas online (fecha a Fase 9D) | concluída |
 | 9E — Trilhos: `item` e `toefl` online | concluída |
-| 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | bloqueada: ver acima |
+| 9E (estrutura) — `estrutura_proj`, `estrutura_sub` e o merge de três vias | concluída na 9G-0 B1 |
 | 9F — Prova da escrita dupla | concluída |
 | 9G-0 A — pipeline com caminho online | concluída |
 | 9G-0 B1 — publicação da estrutura, baseline e merge de três vias ligado | concluída |
 | 9G-0 B2 — `cron:arquivo` aposentado, arquivar por `vida` | concluída |
 | 9G-1 — notificador lê os eventos do `cron_estado` | concluída |
 | 9G-2 — subida legada cortada | concluída |
-| 9G-3 — cortar a descida (`buscarEstado`, `estado.json`) | não iniciada |
+| 9G-3 — cortar a descida (`buscarEstado`, `estado.json`) e aposentar o acervo | concluída |
 
 ### Previsto e ainda não implementado
 

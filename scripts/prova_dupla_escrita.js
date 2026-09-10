@@ -3,18 +3,24 @@
  *     node scripts/prova_dupla_escrita.js
  *
  * A Fase 9 manteve DOIS caminhos vivos de propósito, e esta prova media se os
- * dois diziam a mesma coisa. A Fase 9G-2 cortou a SUBIDA legada: o aplicativo
- * já não publica toque nenhum, então metade do que ela comparava deixou de ter
- * o outro lado.
+ * dois diziam a mesma coisa. A 9G cortou o caminho do GitHub dos dois lados —
+ * a subida na 9G-2, a descida na 9G-3 —, então o que ela comparava perdeu um
+ * dos lados no aplicativo.
  *
- * O QUE ELA MEDE AGORA, e continua sendo a fronteira entre caminhos:
+ * ELA NÃO PERDEU O ASSUNTO, porque a escrita dupla NUNCA foi só entre os dois
+ * caminhos do aplicativo: há DOIS ESCRITORES REAIS do mesmo estado — o
+ * aparelho (decisão humana) e o `dobrar_toques.py --registrar` (o pipeline).
+ * Essa fronteira continua inteira, e é ela que a prova mede.
+ *
+ * O QUE ELA MEDE AGORA:
  *   · o instante de uma decisão é UM só — o do aparelho e o da linha online;
  *   · receber do Supabase não escreve de volta (o laço que não pode existir);
- *   · receber do `estado.json` — a DESCIDA, que fica até a 9G-3 — não escreve
- *     online: é a fronteira que ainda tem dois lados;
+ *   · o caminho do GitHub saiu do aplicativo e NÃO deixou um segundo escritor
+ *     nem uma segunda descida para trás;
  *   · o pipeline continua sendo o segundo escritor real, e a fronteira do
  *     `prova: "estrela"` continua antes da escrita;
- *   · o registro continua append-only, e a chave continua unindo as descidas.
+ *   · o registro continua append-only, e a chave continua deduplicando o que o
+ *     pipeline registra.
  *
  * O QUE ELA NÃO É. Não é mais uma bateria de testes de unidade: o
  * `teste_sync.js` prova cada domínio por dentro. Esta prova olha para a
@@ -231,33 +237,37 @@ titulo("=== 2. O que desce do Supabase não vira toque ===");
      srv.escritas - antesEscritas - escritasDoMac);
 }
 
-titulo("=== 3. O que desce do estado.json não vira escrita online ===");
+titulo("=== 3. O caminho do GitHub saiu inteiro do aplicativo (9G) ===");
 {
+  /* ATÉ A 9G-3 ESTA SEÇÃO MEDIA A OUTRA METADE: um `estado.json` de outro
+     aparelho, aplicado pelos `aplicar*DoEstado`, não podia virar escrita
+     online. O sujeito daquela medida era a descida legada, e ela não existe
+     mais — então a fronteira que resta a provar é que ela saiu INTEIRA, e não
+     que sobrou um pedaço mudo em algum lugar. */
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  const antesEscritas = srv.escritas, antesFila = A.SYNC.situacao().fila;
 
-  /* O estado.json de um OUTRO aparelho, aplicado pelos mesmos aplicadores que
-     o buscarEstado usa. É o caminho legado inteiro, menos a rede. */
-  const pr = pecaDeTrilho(A);
-  const est = {
-    itens: {}, triagem: {}, metas: {}, eventos: {}, prioridades: {},
-    toefl: {}, retomadas: {}
-  };
-  est.itens["pipeline/" + pr.id + "/" + pr.subs[0].id] =
-    {quando: "2027-01-01T00:00:00.000Z", st: 2, vida: "ativo", temMotivo: false};
-  est.triagem["philjobs-9f"] = {quando: "2027-01-01T00:00:00.000Z", st: 1};
-  est.toefl[A.TOEFL_GUIA[A.TOEFL_FASES[0]].itens[0].id] =
-    {quando: "2027-01-01T00:00:00.000Z", feito: true};
+  ["buscarEstado", "aplicarItensDoEstado", "aplicarTriagemDoEstado",
+   "aplicarToeflDoEstado", "aplicarMetasDoEstado", "aplicarEventosDoEstado",
+   "aplicarPrioridadesDoEstado", "aplicarRetomadasDoEstado",
+   "enviarToques", "gravarNoGitHub", "enfileirarToque", "agendarEnvio"
+  ].forEach(f => ok(typeof A[f] === "undefined", "não existe mais: " + f));
 
-  ok(A.aplicarTriagemDoEstado(est) === true, "a triagem do estado.json foi aplicada");
-  ok(A.aplicarToeflDoEstado(est) === true, "e o guia do TOEFL também");
-  ok(srv.escritas === antesEscritas,
-     "e NADA foi escrito no Supabase por receber estado legado",
-     srv.escritas - antesEscritas);
-  ok(A.SYNC.situacao().fila === antesFila,
-     "nem entrou na fila para subir depois", A.SYNC.situacao().fila - antesFila);
-  ok(A.SYNC.situacao().fila === 0, "e nenhum toque foi gerado");
+  /* E o aparelho não busca o estado.json em lugar nenhum. Sem comentários: o
+     texto que EXPLICA o corte tem de poder dizer o nome do que saiu. */
+  const semCom = s => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const codigo = ["00-config.js", "10-nucleo.js", "15-sync.js", "20-regras.js",
+                  "30-render.js", "40-app.js"]
+    .map(f => semCom(fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f), "utf8"))).join("\n");
+  ok(!/estado\.json/.test(codigo),
+     "e o estado.json não é nomeado por nenhum código do aparelho");
+  ok(!/la-fora/.test(codigo),
+     "nem o cron:la-fora, a fotografia que aquela descida alimentava");
+  ok(/fetch\(\s*"entrada\.json/.test(codigo),
+     "o entrada.json, que traz ESTRUTURA, continua sendo buscado");
+  ok(srv.escritas === 0 && A.SYNC.situacao().fila === 0,
+     "e carregar a página com tudo isso fora não escreve nem enfileira nada",
+     {escritas: srv.escritas, fila: A.SYNC.situacao().fila});
 }
 
 /* ============================================================
@@ -285,20 +295,19 @@ titulo("=== 4. Dois caminhos, alterações diferentes do mesmo item ===");
   const meuEm = acha().em;
   ok(acha().st === 1, "o aparelho decidiu st=1");
 
-  /* O caminho legado traz st=2, MAIS NOVO. */
-  const est = {itens: {}};
-  est.itens["pipeline/" + pr.id + "/" + subId] =
-    {quando: "2099-01-01T00:00:00.000Z", st: 2, vida: "ativo", temMotivo: false};
+  /* O OUTRO ESCRITOR traz st=2, MAIS NOVO. Antes da 9G-3 quem representava
+     este lado era o estado.json; hoje é o pipeline, que escreve a mesma linha
+     pelo `--registrar`. A regra medida é a mesma: mais novo entra. */
   const projs = A.getProjs("pipeline");
   let x = null;
   projs.forEach(p => { if (p.id === pr.id)
     (p.subs || []).forEach(s => { if (s.id === subId) x = s; }); });
-  ok(A.mesclarItem(x, {quando: est.itens["pipeline/" + pr.id + "/" + subId].quando,
+  ok(A.mesclarItem(x, {quando: "2099-01-01T00:00:00.000Z",
                        st: 2, vida: "ativo", motivo: ""}) === true,
-     "o legado mais novo entra");
-  /* O merge MUTA e quem chama grava — é o contrato dele, e é o que a descida
-     do estado.json faz com setProjs. Sem gravar, o próximo `acha()` releria o
-     armazenamento e a prova mediria a si mesma. */
+     "o mais novo entra");
+  /* O merge MUTA e quem chama grava — é o contrato dele, e é o que o
+     aplicarItemOnline faz com setProjs. Sem gravar, o próximo `acha()` releria
+     o armazenamento e a prova mediria a si mesma. */
   A.setProjs("pipeline", projs);
   ok(acha().st === 2, "e o st gravado passa a 2", acha().st);
 
@@ -478,15 +487,17 @@ titulo("=== 8. O pipeline escreve nos dois caminhos, e não vira espelho ===");
   ok(!/eyJ[A-Za-z0-9_-]{20,}/.test(pipe) && !/service_role"\s*:/.test(pipe),
      "e nenhuma chave está gravada no arquivo");
 
-  /* E o caminho legado continua inteiro no aplicativo, que é o outro lado da
-     dupla escrita: se ele saísse agora, o pipeline ficaria sem interlocutor. */
+  /* E o pipeline NÃO ficou sem interlocutor ao perder o caminho do GitHub: o
+     que ele escreve no Supabase continua descendo, porque o aplicativo lê o
+     MESMO domínio `item` por onde o `--registrar` publica. */
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
-  /* 9G-2: o aplicativo já não ESCREVE no GitHub; a leitura fica até a 9G-3. */
-  ok(typeof A.buscarEstado === "function",
-     "e o aplicativo continua LENDO o estado.json — a descida sai na 9G-3");
-  ok(typeof A.enviarToques === "undefined" && typeof A.gravarNoGitHub === "undefined",
-     "mas não escreve mais nada lá: a subida saiu na 9G-2");
+  ok(typeof A.buscarEstado === "undefined" && typeof A.enviarToques === "undefined",
+     "o aplicativo não lê nem escreve mais no GitHub (9G-2 e 9G-3)");
+  ok(typeof A.aplicarItemOnline === "function",
+     "e o que desce do `--registrar` chega pelo aplicarItemOnline, que ficou");
+  ok(/"dominio": "item"/.test(pipe.replace(/#.*$/gm, "")),
+     "o pipeline publica no domínio `item`, o mesmo que o aparelho assina");
 }
 
 titulo("=== 9. A fronteira do pipeline: prova `estrela` continua dele ===");
@@ -537,15 +548,15 @@ titulo("=== 10. O registro é append-only, e a chave une os dois caminhos ===");
      "sem relógio e sem lápide: histórico não tem versão", Object.keys(srv.registros[0]));
   ok(B.getReg().length === 2, "e as duas chegaram ao celular");
 
-  /* A ponte com o caminho legado: o id da linha É o id do toque, então o
-     estado.json não a duplica quando trouxer o mesmo toque. */
+  /* A PONTE COM O PIPELINE: o id da linha É o id do toque, e é por ele que o
+     que o `--registrar` publica não vira uma segunda linha aqui. */
   const ids = srv.registros.map(r => r.id).sort();
   ok(ids.every(id => /^\d{4}-\d{2}-\d{2}T[\d-]+Z-mac$/.test(id)),
      "os ids online continuam no formato do id do toque (ISO + aparelho)", ids);
   const vistos = {};
   B.getReg().forEach(o => { if (o && o.tid) vistos[o.tid] = true; });
   ok(ids.every(id => vistos[id] === true),
-     "e o critério de deduplicação do estado.json já as reconhece");
+     "e o critério de deduplicação pelo `tid` já as reconhece");
 
   /* Reler não duplica — que é o que substitui o LWW aqui. */
   const antes = B.getReg().length;

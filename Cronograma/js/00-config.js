@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-10-sem-subida";
+const APP_VERSION = "2026-09-10-so-online";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -594,20 +594,16 @@ var TRILHO_PROVA = {estrela:"depende de voc\u00ea", maquina:"pelo pipeline"};
 var REVISAO_HORIZONTE = 14;   /* dias de "proxima semana" para datas e prazos */
 /* ---- Metas: navegação por mês, meses novos nascem vazios ---- */
 const MES_INICIO = "2026-07";
-const ACERVO_EM = "2026-01-01T00:00:00.000Z";
-
-/* FOTOGRAFIA DO QUE JA ESTA LA FORA.
-   Gravada pela mesclagem a cada leitura do estado.json. Existe para o contador
-   distinguir dois casos que o campo `em` sozinho nao separa:
-     · esta meta tem instante porque ja foi publicada ou recebida  -> nao conta
-     · esta meta tem instante mas nunca chegou ao estado.json      -> CONTA
-   O segundo caso e real: um toque destruido pelo defeito do 422 (achado 1,
-   corrigido em 29/08) deixava a meta com instante e sem nunca ter viajado. Sem
-   esta fotografia ela ficaria encalhada em silencio, para sempre. */
-const ACERVO_LA_FORA_KEY = "cron:la-fora";
-
-/* O maior instante ja publicado dentro do mesmo dia daquele piso. Serve para
-   o relogio nao reemitir um id que o estado.json ja conhece. */
+/* O ACERVO SAIU NA 9G-3. O ACERVO_EM (piso de 1o de janeiro de 2026) e o
+   ACERVO_LA_FORA_KEY ("cron:la-fora", a fotografia do que o estado.json ja
+   continha) moravam aqui. Os dois serviam ao botao "Publicar o acervo deste
+   aparelho", que existia para levar ao estado.json as metas e as datas
+   escritas ANTES de a sincronia existir — as que nao tem instante proprio e
+   por isso nao viajariam sozinhas. Com o acervo dos dois aparelhos publicado e
+   o caminho do GitHub aposentado, nao ha mais o que migrar nem onde ler a
+   fotografia: toda escrita nasce online, com instante do relogio monotonico.
+   O TOEFL_EM e o RETOMADA_EM, que citam o molde do ACERVO_EM, continuam — sao
+   migracoes de uma vez por aparelho e nao dependem de fotografia nenhuma. */
 const EVENTOS_NA_TELA = 5;
 const ST_LBL=["A fazer","Em andamento","Concluída"];
 var MOTOR_TETO_TOTAL = 3;      /* manuais + sugeridas, nunca mais que isto */
@@ -720,9 +716,11 @@ const ROTEIRO = {
 };
 
 /* ================== SINCRONIA ONLINE — Fase 9A ==================
-   A infraestrutura do estado compartilhado. NADA aqui liga coisa nenhuma: até
-   a Fase 9B nenhum domínio está conectado, e o caminho toques -> GitHub ->
-   estado.json continua sendo a verdade operacional. Ver README, "Fase 9".
+   A infraestrutura do estado compartilhado. Quando este bloco nasceu nenhum
+   domínio estava conectado e o caminho toques -> GitHub -> estado.json era a
+   verdade operacional; desde a 9G-3 ele é a única sincronia do aplicativo, e o
+   estado.json ficou sendo só o artefato que o pipeline publica. Ver README,
+   "Fase 9".
 
    O PROJETO SUPABASE É COMPARTILHADO com o CONTAS_CASA. A URL e a chave são as
    mesmas dos avisos — é o mesmo projeto —, e o isolamento NÃO vem de separar

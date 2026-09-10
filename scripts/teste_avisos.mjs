@@ -256,13 +256,15 @@ ok(!!semEventos && /faltam os eventos/.test(semEventos),
 
 /* E nada do corte 9G-2/9G-3 foi antecipado. */
 const nucleo = fsAvisos.readFileSync(new URL('../Cronograma/js/10-nucleo.js', import.meta.url), 'utf8');
-/* 9G-2 cortou a SUBIDA; a DESCIDA fica até a 9G-3, e o notificador não depende
-   de nenhuma das duas — é o que esta asserção guarda. */
-ok(/function buscarEstado/.test(nucleo),
-   '(9G-1) a descida pelo estado.json continua inteira — sai na 9G-3');
+/* A 9G cortou o caminho do GitHub dos dois lados — subida na 9G-2, descida na
+   9G-3 — e o notificador não dependia de nenhum deles. É o que estas duas
+   asserções guardam: o corte aconteceu, e o notificador seguiu inteiro (as
+   asserções acima, sobre o cron_estado, é que provam de onde ele lê agora). */
 ok(!/function enviarToques/.test(nucleo) && !/function gravarNoGitHub/.test(nucleo) &&
    !/function enfileirarToque/.test(nucleo),
-   '   e a subida saiu na 9G-2, sem levar o notificador junto');
+   '(9G-2) a subida para o GitHub saiu, sem levar o notificador junto');
+ok(!/function buscarEstado/.test(nucleo) && !/function aplicar\w+DoEstado/.test(nucleo),
+   '(9G-3) e a descida também: buscarEstado e os aplicar*DoEstado não existem mais');
 
 console.log('\n' + '='.repeat(62));
 console.log('FALHAS: ' + falhas.length);

@@ -11,8 +11,8 @@
 
    NAO HA CAMINHO LEGADO PARA ESTE DOMINIO, e a ausencia e da historia dele:
    `cron:checks:` nunca atravessou aparelho. Nao havia toque `rotina` nem secao
-   no estado.json, e nao e hora de inventar um — o caminho do GitHub sai na
-   9G. A razao de ele ser local era "historico permanente em repositorio
+   no estado.json, e nao houve por que inventar um — o caminho do GitHub saiu
+   na 9G. A razao de ele ser local era "historico permanente em repositorio
    publico por um valor que morre numa semana"; numa base privada e podavel a
    razao nao sobrevive, e e por isso que a 9D.4 existe.
 
@@ -76,8 +76,8 @@ function marcarAtrasada(dia, id){
 /* O FUNIL DAS DISPENSAS (Fase 9D.5), e o unico lugar que escreve
    `cron:hoje-dispensados`. Mesma historia da 9D.4 e pela mesma razao: a chave
    era local porque o repositorio e publico, nunca houve toque `dispensa` nem
-   secao no estado.json, e nao se inventa um agora — o caminho do GitHub sai na
-   9G.
+   secao no estado.json, e nao houve por que inventar um — o caminho do GitHub
+   saiu na 9G.
 
    AS DUAS FORMAS DA CHAVE. No aparelho a entrada e `AAAA-MM-DD|id`, com barra
    vertical; no estado online e `rotina/AAAA-MM-DD/id`, o formato que o esquema
@@ -822,119 +822,6 @@ function delMeta(i){const k=mesAtivo;const m=getMetas();const fora=m[i];if(!fora
 function addMeta(){const m=getMetas();m.push({id:"m"+Date.now(), t:"", done:false, em:new Date().toISOString()});setMetas(m);renderMetas();
   const b=document.querySelectorAll("#metas-wrap .goal-text");if(b.length)b[b.length-1].focus();}
 
-/* ============ PUBLICAR O ACERVO QUE JA ESTAVA NO APARELHO ============
-   O toque so publica marcacao NOVA. A meta que voce escreveu antes de a
-   sincronia existir mora so no aparelho que a escreveu, e nao viajaria nunca.
-   A triagem teve o mesmo problema em 27/08 e ganhou o migrarTriagemUmaVez.
-
-   POR QUE UM BOTAO, E NAO UMA ROTINA. A triagem podia migrar sozinha porque
-   guardava o dia da marcacao: havia um instante verdadeiro a usar. A meta nao
-   guarda data nenhuma. Sem instante verdadeiro, os dois aparelhos publicariam
-   o proprio acervo com a mesma data inventada, e o empate seria decidido no
-   servidor pelo nome do arquivo — que nao e dado, e ordem de leitura de
-   diretorio. Com botao, quem decide qual aparelho e a fonte e voce.
-
-   POR QUE UMA DATA ANTIGA. 1o de janeiro de 2026 nao e um instante verdadeiro,
-   e ninguem finge que seja: e um piso. Publicar com a data de hoje faria este
-   acervo vencer qualquer edicao real ja feita no outro aparelho. Com um piso,
-   qualquer edicao feita depois — em qualquer aparelho — vence. E a licao do
-   Passo 8 do briefing de 27/08, aplicada de novo.
-
-   Cada meta recebe um instante distinto porque o relogio monotonico conta as
-   bases explicitas a parte; sem isso as N metas nasceriam com o mesmo id.
-   ==================================================================== */
-function marcarLaForaLocal(secao, chave, valor){
-  var fora = LS(ACERVO_LA_FORA_KEY, null) || {metas:{}, eventos:{}};
-  if(!fora[secao]) fora[secao] = {};
-  /* metas guardam a string do instante; eventos guardam {q, t, p} */
-  fora[secao][chave] = valor;
-  save(ACERVO_LA_FORA_KEY, fora);
-}
-
-function publicarAcervoUmaVez(){
-  /* SEM A FOTOGRAFIA, NAO PUBLICA.
-     O contador ate funciona sem ela, por uma regra de reserva; a publicacao,
-     nao. Ela precisa saber qual instante do piso ja foi gasto, senao os toques
-     nascem com ids que a dobra ja viu e sao descartados EM SILENCIO. E ela e
-     gravada pelo buscarEstado, que corre depois do boot: apertar o botao nos
-     primeiros instantes da pagina caia bem nessa janela. Recusar e visivel;
-     publicar no vazio nao seria. */
-  if(LS(ACERVO_LA_FORA_KEY, null) === null){
-    alert("Este aparelho ainda n\u00e3o leu o estado publicado.\n\n" +
-          "Sem isso n\u00e3o d\u00e1 para saber o que j\u00e1 est\u00e1 l\u00e1 fora, e a publica\u00e7\u00e3o poderia " +
-          "repetir instantes j\u00e1 usados \u2014 o que faria os toques sumirem em sil\u00eancio.\n\n" +
-          "Saia da aba e volte, ou recarregue, e tente de novo em alguns segundos.");
-    return;
-  }
-  var metas = metasParaPublicar(), eventos = eventosParaPublicar();
-  if(!metas.length && !eventos.length){
-    renderAcervoEstado();
-    alert("Nada a publicar: o que est\u00e1 neste aparelho ou j\u00e1 est\u00e1 l\u00e1 fora, ou \u00e9 o que a p\u00e1gina cria sozinha.");
-    return;
-  }
-  var partes = [];
-  if(metas.length)   partes.push(metas.length + " meta(s)");
-  if(eventos.length) partes.push(eventos.length + " data(s) importante(s)");
-  if(!confirm("Publicar " + partes.join(" e ") + " deste aparelho para os outros?\n\n" +
-      "Sobem com data de 1\u00ba de janeiro de 2026, de prop\u00f3sito: assim qualquer edi\u00e7\u00e3o feita depois disso, " +
-      "em qualquer aparelho, vence.\n\n" +
-      "Das datas sobem a data E o t\u00edtulo, exceto as que est\u00e3o com o cadeado fechado \u2014 " +
-      "dessas sobe s\u00f3 a data. O reposit\u00f3rio \u00e9 p\u00fablico.\n\n" +
-      "Fa\u00e7a a partir do aparelho que tem o acervo certo.")) return;
-  eventos.forEach(function(x){
-    var ev = x.ev;
-    /* O PISO SO VALE PARA O ACERVO DE VERDADE — o que nunca subiu e nao tem
-       instante proprio. Corrigir o titulo ou a marca de um evento que JA esta
-       la fora e um ato de agora: com o piso, o toque nasceria mais velho do que
-       o estado que ele quer corrigir, a dobra o descartaria como atrasado, e o
-       contador mostraria a mesma pendencia para sempre. Medido: a "Prova TOEFL",
-       cujo estado veio de uma edicao das 01:35, nao recebia o titulo. */
-    /* PELO FUNIL, e nao por um enfileirarToque proprio. Ate a 9C-0 este botao
-       era o SEGUNDO escritor de evento — dois caminhos para o mesmo dominio, e
-       o repositorio ja pagou uma vez por isso: o payload daqui ficou para tras
-       no dia em que o titulo passou a viajar. O tocarEvento ganhou o parametro
-       `quandoISO` exatamente para que este caso coubesse nele. */
-    var iso = tocarEvento(ev, false, x.novo ? ACERVO_EM : null);
-    marcarLaForaLocal("eventos", ev.id, {q:iso, t:(!ev.priv && !!String(ev.t||"").trim()), p:!!ev.priv});
-    if(!ev.em){
-      var lista = getEventos();
-      for(var i=0;i<lista.length;i++){ if(lista[i].id===ev.id){ lista[i].em = iso; break; } }
-      setEventos(lista);
-    }
-  });
-  metas.forEach(function(c){
-    /* Pelo funil, pela mesma razao do evento acima. O payload que o tocarMeta
-       monta e identico ao que estava escrito aqui, campo por campo — esta
-       troca nao muda um byte do que sobe. */
-    var iso = tocarMeta(c.mes, c.m, false, ACERVO_EM);
-    marcarLaForaLocal("metas", c.mes + "/" + c.m.id, iso);
-    /* Meta que nunca teve instante passa a ter o que subiu: assim ela deixa de
-       ser "tempo desconhecido" aqui dentro e a mesclagem seguinte nao a devolve
-       como se fosse novidade de fora. Meta que JA tinha instante fica como
-       estava — aquele instante e verdadeiro e mais novo, e rebaixa-lo seria
-       mentir sobre quando voce a editou. */
-    if(!c.m.em){
-      var lista = getMetas(c.mes);
-      for(var i=0;i<lista.length;i++){ if(lista[i].id===c.m.id){ lista[i].em = iso; break; } }
-      setMetas(lista, c.mes);
-    }
-  });
-  renderAcervoEstado();
-  try{ renderEventos(); }catch(e){}
-  alert(partes.join(" e ") + " entraram na fila. Sobem em alguns segundos, e o outro aparelho as mostra em um a tr\u00eas minutos.");
-}
-
-function renderAcervoEstado(){
-  var el = document.getElementById("acervo-estado"); if(!el) return;
-  var m, e;
-  try{ m = metasParaPublicar(); e = eventosParaPublicar(); }catch(err){ return; }
-  var partes = [];
-  if(m.length) partes.push(m.length + " meta(s)");
-  if(e.length) partes.push(e.length + " data(s)");
-  el.textContent = partes.length ? partes.join(" e ") + " daqui ainda sem publicar."
-                                 : "Nada a publicar: tudo daqui j\u00e1 est\u00e1 l\u00e1 fora.";
-  el.className = "backup-aviso" + (partes.length ? " velho" : "");
-}
 function renderEventos(){
   const box=document.getElementById("eventos"); if(!box)return;
   const evts=getEventos().slice().sort((a,b)=>a.data<b.data?-1:1);
@@ -1002,7 +889,9 @@ function linhaDeEvento(e){
    desconhecimento. */
 
 /* Mesmo contrato do tocarMeta, e pela mesma razao — ver o comentario la. O
-   `quandoISO` existe para o botao do acervo, que precisa do piso ACERVO_EM. */
+   `quandoISO` nasceu para o botao do acervo, que saiu na 9G-3; continua no
+   contrato porque e por ele que as migracoes de uma vez por aparelho escrevem
+   com piso antigo, em vez de com o relogio de parede. */
 /* ============ O ESCRITOR DO EVENTO — Fase 9C-4 ============
    O QUE MUDA: o titulo de um evento PRIVADO passa a viajar pelo caminho online.
    O que NAO muda: ele continua fora do caminho legado, e a garantia continua
@@ -1013,8 +902,10 @@ function linhaDeEvento(e){
 
      1. Os dois canos sao DISJUNTOS. O estado.json e escrito pelo
         dobrar_toques.py a partir dos toques; nada em cron_estado alcanca o
-        repositorio, nem o entrada.json, nem o cron:la-fora. O titulo privado
-        nao entra no toque, logo nao existe caminho por onde chegar la.
+        repositorio nem o entrada.json. O titulo privado nao entra no toque,
+        logo nao existe caminho por onde chegar la. Desde a 9G-3 o aplicativo
+        nem le mais o estado.json: so o pipeline o escreve, e ninguem o le de
+        volta para dentro da pagina.
 
      2. A RLS de cron_estado exige `dono = auth.uid() AND cron_e_dono()`, e nao
         ha politica nenhuma para o papel `anon` — a chave publishable, que e
@@ -1027,20 +918,20 @@ function linhaDeEvento(e){
    A LAPIDE NAO CARREGA CONTEUDO. Ao apagar, o valor sobe sem `t`: um evento
    removido nao deve deixar o titulo — muito menos um privado — parado na
    tabela. A lapide precisa dizer "isto foi apagado", e nada mais. */
-function tocarEvento(ev, apagado, quandoISO, opts){
+function tocarEvento(ev, apagado, quandoISO){
   if(!ev || !ev.id) return null;
-  opts = opts || {};
   var d = dadosDoEvento(ev, apagado);
 
-  /* O INSTANTE VEM DO MESMO RELOGIO nos dois modos. No modo `soOnline` nao ha
-     toque a enfileirar, mas o instanteDoToque() continua sendo a unica fonte —
-     nao e um segundo relogio, e o mesmo. Isso APOSENTA a excecao que a 9C-0
-     precisou documentar: nao ha mais nenhum caminho de escrita destes dominios
-     carimbando o proprio `new Date()`. */
-  /* O `soOnline` existia para NAO gerar toque quando so o titulo mudava — uma
-     reconstrucao do Pages a toa. Com a subida legada cortada (9G-2) nao ha
-     mais toque nenhum, entao os dois ramos viraram o mesmo instante. A opcao
-     continua no contrato de quem chama, e deixou de ter efeito aqui. */
+  /* O INSTANTE VEM DO instanteDoToque(), e de mais lugar nenhum. Isso APOSENTA
+     a excecao que a 9C-0 precisou documentar: nao ha mais nenhum caminho de
+     escrita destes dominios carimbando o proprio `new Date()`.
+
+     O PARAMETRO `opts.soOnline` SAIU NA 9G-3. Ele existia para NAO gerar toque
+     quando so o titulo mudava — uma reconstrucao do Pages a toa. A subida
+     legada saiu na 9G-2 e os dois ramos viraram o mesmo instante; o unico
+     chamador que o passava decidia pelo eventoJaSubiu(), que lia a fotografia
+     do estado.json e saiu junto com ela. Ficaria um parametro sem efeito e sem
+     quem o produzisse. */
   var iso = instanteISO(quandoISO);
 
   try{
@@ -1090,25 +981,14 @@ function privEv(eid){
 function editEv(eid,t){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
   if(j<0)return;const novo=t.trim();if(novo===e[j].t)return;
   e[j].t=novo;setEventos(e);
-  /* Num evento PRIVADO que ja subiu, renomear nao muda nada la fora — o toque
-     seria um commit e uma reconstrucao do Pages a troco de nada. Mas se ele
-     ainda nem subiu, o toque sai: nomear e o ato que o torna real, e a DATA
-     precisa viajar mesmo que o nome fique aqui.
+  /* RENOMEAR SEMPRE ESCREVE ONLINE, privado ou nao: o nome novo tem de chegar
+     aos outros aparelhos do dono. Era a lacuna da 9C-3, fechada na 9C-4.
 
-     QUANDO NAO HA TOQUE, O `em` AINDA AVANCA — e com o relogio de parede
-     mesmo, porque nao ha instante publicado a copiar. E o unico caminho de
-     escrita destes dois dominios que legitimamente carimba o proprio tempo:
-     a mudanca existe so aqui dentro. */
-  /* Num evento PRIVADO que ja subiu, renomear nao gera TOQUE — seria um commit
-     e uma reconstrucao do Pages a troco de nada, ja que o titulo nao viaja por
-     ali. Mas a partir da 9C-4 ele gera ESCRITA ONLINE: o nome novo tem de
-     chegar aos outros aparelhos do dono. Era esta a lacuna da 9C-3.
-
-     Antes da 9C-4 este ramo carimbava o `em` com `new Date()`, por nao haver
-     instante publicado a copiar. Agora ha: o `soOnline` pede o instante ao
-     mesmo relogio monotonico, e a excecao deixa de existir. */
-  var soOnline = !!(e[j].priv && eventoJaSubiu(e[j].id));
-  e[j].em = tocarEvento(e[j], false, null, {soOnline: soOnline}) || e[j].em;
+     Ate a 9G-3 havia aqui um ramo `soOnline`, que perguntava ao eventoJaSubiu()
+     se o evento ja constava do estado.json publicado para decidir se valia um
+     commit. Sem caminho do GitHub nao ha essa pergunta a fazer: toda escrita e
+     online, e o instante vem do mesmo relogio monotonico nos dois casos. */
+  e[j].em = tocarEvento(e[j], false) || e[j].em;
   setEventos(e);
   renderEventos();}
 function dateEv(eid,v){const e=getEventos();const j=e.findIndex(x=>x.id===eid);
@@ -1287,9 +1167,9 @@ function editPrioridade(prid, texto){
 /* A ORDEM E A GARANTIA. `manuais` primeiro, sempre; `sugeridas` existe vazia
    de proposito, para que a Fase 3 preencha sem que ninguem precise lembrar da
    regra de precedencia — ela ja esta na forma do retorno. */
-/* A DESCIDA DAS PRIORIDADES. Isolada de proposito: o buscarEstado depende de
-   fetch, e esta parte precisa poder ser testada sem rede — e e ela que prova
-   que o computador e o celular veem a mesma prioridade.
+/* A DESCIDA DAS PRIORIDADES. Isolada de proposito: quem busca depende de rede,
+   e esta parte precisa poder ser testada sem ela — e e ela que prova que o
+   computador e o celular veem a mesma prioridade.
 
    Molde da meta, linha por linha: chave "periodo/id", lapide `del`, e o
    relogio decidindo item a item. Mais novo manda; empate fica como esta. */

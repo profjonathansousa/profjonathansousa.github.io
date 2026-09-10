@@ -32,8 +32,8 @@
   });
 })();
 /* Fase 8: o service worker existe so para receber o push. Ele NAO tem ouvinte
-   de fetch, entao nao intercepta estado.json, entrada.json nem a api do GitHub
-   — a sincronizacao continua exatamente como era. */
+   de fetch, entao nao intercepta o entrada.json — a unica coisa que a pagina
+   ainda busca no repositorio — nem as chamadas do Supabase. */
 try{
   if(avisosConfigurados()) registrarServiceWorker();
   var _btnAvisos = document.getElementById("btn-avisos");
@@ -41,10 +41,12 @@ try{
   renderAvisos();
 }catch(e){ console.error("avisos:", e); }
 renderBackupAviso();
-/* A SUBIDA LEGADA SAIU NA FASE 9G-2. O `enviarToques` e os quatro ouvintes que
-   o chamavam (abrir, `online`, `visibilitychange`, `pagehide`) nao existem
-   mais: cada decisao ja sobe pelo SYNC, que tem a propria fila e os proprios
-   ouvintes. A DESCIDA continua aqui, e sai na 9G-3. */
+/* O GITHUB SAIU DOS DOIS LADOS. A subida legada foi na 9G-2 — o `enviarToques`
+   e os quatro ouvintes que o chamavam (abrir, `online`, `visibilitychange`,
+   `pagehide`) —, e a descida na 9G-3: o `buscarEstado`, os `aplicar*DoEstado` e
+   a leitura do estado.json. Cada decisao sobe e desce pelo SYNC, que tem a
+   propria fila e os proprios ouvintes. O que continua vindo do repositorio e a
+   ESTRUTURA, pelo entrada.json, logo abaixo. */
 try{ migrarTriagemUmaVez(); }catch(e){ console.error("migracao da triagem falhou:", e); }
 document.getElementById("ver").textContent = "v"+APP_VERSION;
 /* Migração do esquema v1 -> v2. Roda UMA vez, antes das sementes e de
@@ -61,7 +63,7 @@ try{
 }catch(e){ console.error("migracao do arquivo falhou:", e); }
 try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", e); }
 /* Antes de qualquer descida: o aparelho precisa falar por `id` para que o
-   estado.json possa responder por `id`. */
+   estado compartilhado possa responder por `id`. */
 try{ migrarGuiaToefl(); }catch(e){ console.error("migracao do guia TOEFL falhou:", e); }
 try{ migrarRetomadas(); }catch(e){ console.error("migracao das retomadas falhou:", e); }
 /* Esta nao publica toque — so muda a conclusao da prioridade de gaveta, do
@@ -99,9 +101,6 @@ if(LS("cron:metas-seed", null) !== METAS_SEED){
   save("cron:metas-seed", METAS_SEED);
 }
 renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();
-/* Depois do bloco de sementes de proposito: renderAcervoEstado le ROTEIRO,
-   que so existe a partir da linha acima. */
-try{ renderAcervoEstado(); }catch(e){ console.error("estado do acervo:", e); }
 checkUpdate();
 
 /* ---- Entrada: o Cowork escreve, a pagina mescla ----
@@ -117,36 +116,39 @@ checkUpdate();
 
    Sem rede nao acontece nada: o que ja foi mesclado continua valendo. */
 try{
-  buscarEntrada().then(buscarEstado);
-  window.addEventListener("online", function(){ buscarEntrada().then(buscarEstado); });
-  /* Voltar para a aba tambem re-le o estado. Sem isto, o celular que ficou
-     aberto no bolso continua mostrando o que era verdade quando foi aberto,
-     e so um recarregamento a mao mostra o que o Mac marcou depois. Trava de
-     20s para alternar de app nao virar uma busca por vez. */
+  buscarEntrada();
+  window.addEventListener("online", function(){ buscarEntrada(); });
+  /* Voltar para a aba pede a VERSAO, e so ela. Ate a 9G-3 este ouvinte tambem
+     chamava o buscarEstado(): o progresso descia do estado.json e uma aba
+     aberta no bolso mostraria o que era verdade quando foi aberta. Agora quem
+     mantem o progresso em dia e o SYNC, que tem os proprios ouvintes e o
+     proprio catch-up por delta — buscar aqui seria uma segunda descida com
+     regra propria, que e exatamente o que a 9G veio desfazer.
+
+     O checkUpdate FICA, e a trava de 20s com ele. Ele so rodava no boot, entao
+     uma aba deixada aberta nunca ficava sabendo de uma versao nova. Foi
+     exatamente assim que o Safari do Mac passou a tarde na sincronia2 depois
+     da sincronia3 no ar: marcando vagas sem publicar nada, porque o codigo que
+     publica estava na versao que ele nao tinha carregado. Uma correcao que so
+     chega a quem recarrega e meia correcao. */
   document.addEventListener("visibilitychange", function(){
     if(document.visibilityState !== "visible") return;
     var agora = Date.now();
     if(agora - ULTIMA_BUSCA < 20000) return;
     ULTIMA_BUSCA = agora;
-    /* checkUpdate junto, e nao so buscarEstado. Ele so rodava no boot, entao
-       uma aba deixada aberta nunca ficava sabendo de uma versao nova. Foi
-       exatamente assim que o Safari do Mac passou a tarde na sincronia2
-       depois da sincronia3 no ar: marcando vagas sem publicar nada, porque o
-       codigo que publica estava na versao que ele nao tinha carregado. Uma
-       correcao que so chega a quem recarrega e meia correcao. */
     try{ checkUpdate(); }catch(e){}
-    buscarEstado();
   });
-}catch(e){ console.error("busca da entrada/estado falhou:", e); }
+}catch(e){ console.error("busca da entrada falhou:", e); }
 
 /* ---- Fase 9A: a sincronia online, se este aparelho a tiver ligado ----
    ULTIMA LINHA DO BOOT, e de proposito: tudo acima ja rodou, entao um erro aqui
    nao pode deixar a pagina pela metade. E ela devolve na primeira linha quando
-   cron:sync-ligado e falso, que e o padrao — um aparelho que so atualizou de
-   versao continua exatamente no caminho de toques, sem saber que isto existe.
+   cron:sync-ligado e falso, que e o padrao.
 
-   NAO SUBSTITUI NADA acima. Os ouvintes do GitHub continuam onde estavam e
-   continuam fazendo o que faziam: os dois caminhos convivem ate a Fase 9G. */
+   DESDE A 9G ELA E A SINCRONIA, e nao mais uma segunda ao lado de outra: os
+   ouvintes do GitHub sairam (subida na 9G-2, descida na 9G-3) e o que restou
+   acima e o entrada.json, que traz ESTRUTURA e nao progresso. Um aparelho que
+   nao entrou nao sincroniza — nao ha mais caminho de reserva por baixo. */
 /* Fase 9B: as prioridades sao o primeiro dominio a usar a camada. O registro
    mora aqui, e nao dentro do 15-sync.js, porque a camada e infraestrutura e nao
    pode conhecer dominio nenhum — quem conhece os dois lados e o bootstrap. */
@@ -173,8 +175,7 @@ catch(e){ console.error("sincronia: dominio retomada:", e); }
 try{ SYNC.assinarRegistro(aplicarRegistroOnline); }
 catch(e){ console.error("sincronia: registro datado:", e); }
 /* Fase 9D (4 de 5): as marcas de rotina do dia. Elas NUNCA atravessaram
-   aparelho — nao ha caminho legado a preservar aqui, so um a estrear. Dispensas
-   continuam LEGADAS. */
+   aparelho — nao havia caminho legado a preservar aqui, so um a estrear. */
 try{ SYNC.assinarDominio("rotina", aplicarRotinaOnline); }
 catch(e){ console.error("sincronia: dominio rotina:", e); }
 /* Fase 9D (5 de 5): as dispensas de rotina atrasada. Fecha a 9D — e, como a

@@ -540,6 +540,22 @@ grant select, insert, update on public.cron_estado         to authenticated;
 grant select, insert         on public.cron_registro       to authenticated;
 grant select                 on public.cron_estrutura_base to authenticated;
 
+-- E O QUE O SUPABASE JÁ TINHA DADO SOZINHO, RETIRADO À MÃO. O `grant select`
+-- acima concede, mas não revoga: uma tabela criada neste projeto nasce com os
+-- privilégios padrão do papel `authenticated`, que incluem insert/update/delete
+-- /truncate. Na cron_estrutura_base isso é errado por definição — ela é a
+-- BASE do merge de três vias, escrita só pelo publicador (cron_publicar_
+-- estrutura, security definer, execute só para service_role). Um app que
+-- pudesse escrevê-la poderia mentir sobre o que o pipeline publicou, e o merge
+-- passaria a decidir contra uma terceira via forjada.
+--
+-- HOJE ISSO JÁ ESTÁ COBERTO PELA RLS: force row level security e nenhuma
+-- política de escrita significa que toda escrita é recusada mesmo com o grant.
+-- O revoke não corrige uma brecha aberta — tira a segunda linha de defesa da
+-- lista de coisas em que é preciso confiar. As duas outras tabelas mantêm os
+-- grants que precisam, e a service_role não é tocada aqui.
+revoke insert, update, delete, truncate on public.cron_estrutura_base from authenticated;
+
 
 -- ============================================================
 -- REALTIME — a razão de tudo isto existir.

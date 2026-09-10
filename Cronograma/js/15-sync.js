@@ -3,10 +3,12 @@
    sincronização, que os painéis passarão a usar — e não uma sincronização por
    painel. Ver README, "Fase 9 — Estado compartilhado online".
 
-   ESTE ARQUIVO NÃO LIGA NADA. Nenhum domínio está conectado: a Fase 9A entrega
-   a infraestrutura, e 9B em diante conecta um domínio de cada vez, pelo
-   assinarDominio(). O caminho toques -> GitHub -> estado.json continua sendo a
-   verdade operacional até a Fase 9G, e nada aqui o desliga.
+   QUANDO ESTE ARQUIVO NASCEU ELE NÃO LIGAVA NADA: a Fase 9A entregou a
+   infraestrutura, e 9B em diante conectou um domínio de cada vez, pelo
+   assinarDominio(). O caminho toques -> GitHub -> estado.json foi a verdade
+   operacional até a 9G, que o desligou dos dois lados; hoje é este arquivo que
+   sincroniza o aplicativo, e o estado.json ficou sendo só o artefato do
+   pipeline.
 
    E ESTÁ DESLIGADO POR PADRÃO. Sem cron:sync-ligado, iniciar() devolve na
    primeira linha e o aparelho segue exatamente como sempre foi. É o que torna
@@ -637,8 +639,9 @@ SYNC.agendarReconexao = function(ms){
    evento, o da prioridade): um renderTrilhos() disparado no meio de uma
    digitação troca o nó sob o cursor, e o onblur lê o texto que já não existe.
 
-   Hoje isso não acontece porque buscarEstado() só roda no boot, no online e no
-   visibilitychange. Com Realtime, passa a poder acontecer a qualquer segundo.
+   Enquanto a descida era o buscarEstado(), isso não acontecia: ele só rodava no
+   boot, no online e no visibilitychange. Com Realtime, passa a poder acontecer
+   a qualquer segundo — e desde a 9G-3 o Realtime é a única descida que há.
 
    O QUE ADIA E O QUE NÃO ADIA. Adia enquanto houver foco num campo editável, e
    enquanto uma drenagem estiver em curso. NÃO adia por fila cheia: uma fila
@@ -818,13 +821,13 @@ SYNC.retomarSessao = function(){
 };
 
 /* ==================== O CICLO ====================
-   DESLIGADO POR PADRÃO, e a primeira linha é o que garante isso. Um aparelho
-   que atualiza para esta versão não muda de comportamento: continua no caminho
-   de toques, exatamente como antes, até alguém entrar de propósito.
+   DESLIGADO POR PADRÃO, e a primeira linha é o que garante isso. Quando este
+   bloco nasceu, um aparelho que atualizasse continuava no caminho de toques até
+   alguém entrar de propósito.
 
-   E NADA AQUI DESLIGA O GITHUB. Os ouvintes de online e visibilitychange do
-   40-app.js continuam chamando buscarEstado — a DESCIDA, que sai na 9G-3.
-   A subida legada saiu na 9G-2. */
+   O GITHUB SAIU DOS DOIS LADOS: a subida legada na 9G-2, a descida na 9G-3.
+   Este ciclo é agora a única sincronia do aplicativo, e a trava continua onde
+   estava — um aparelho que não entrou não sincroniza nada, e é isso mesmo. */
 SYNC.iniciar = function(){
   if(!SYNC.configurado()) return Promise.resolve({ligado:false, motivo:"não configurado"});
   if(!SYNC.ligado())      return Promise.resolve({ligado:false, motivo:"desligado neste aparelho"});
@@ -846,9 +849,10 @@ SYNC.iniciar = function(){
   });
 };
 
-/* Ouvintes PRÓPRIOS, acrescentados aos que já existem. Não mexo nos do
-   40-app.js: eles são do caminho do GitHub e continuam sendo dele. O `offline`
-   é novo no aplicativo — até aqui só havia `online`. */
+/* Ouvintes PRÓPRIOS. Nasceram acrescentados aos do 40-app.js, que eram do
+   caminho do GitHub; desde a 9G-3 os de lá cuidam do entrada.json e da versão,
+   e o progresso é todo daqui. O `offline` é próprio deste arquivo — no
+   aplicativo só havia `online`. */
 var SYNC_OUVINDO = false;
 SYNC.ouvir = function(){
   if(SYNC_OUVINDO) return;
