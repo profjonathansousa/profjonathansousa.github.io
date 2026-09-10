@@ -486,24 +486,25 @@ def publicar_estrutura(caminho_novo, seco):
         json.dump(entrada, f, ensure_ascii=False, indent=1)
         f.write("\n")
 
-    # 2. a base. Se qualquer parte falhar, o temporario cai e nada muda.
+    # 2. a base, NUMA CHAMADA SO. Gravar num POST e retirar num DELETE seriam
+    #    duas operacoes independentes: uma falha entre elas deixaria a base pela
+    #    metade — afirmando que o pipeline publicou algo que ele nao publicou —
+    #    enquanto o entrada.json antigo continuaria no disco. Compensar depois
+    #    nao resolve, porque a compensacao tambem pode falhar.
+    #
+    #    O cron_publicar_estrutura() faz a substituicao inteira dentro de UMA
+    #    transacao (ver sql/cron_estado.sql): ou a base passa a ser exatamente a
+    #    estrutura publicada, ou continua sendo exatamente a anterior. E o que
+    #    torna verdadeira a garantia que este comando anuncia.
     try:
         dono = _dono(url, chave)
         agora = _agora_iso()
-        corpo = [{"dono": dono, "chave": l["chave"], "tipo": l["tipo"],
-                  "valor": l["valor"], "gerado_em": gerado_em} for l in linhas]
-        if corpo:
-            _pedir(url, chave, "/cron_estrutura_base", "POST", corpo,
-                   prefer="resolution=merge-duplicates,return=minimal")
-        # EXATAMENTE a estrutura publicada: o que saiu do arquivo sai da base.
-        # Deixar a linha de uma peca que nao e mais publicada faria a base
-        # afirmar que o pipeline ainda a publica.
-        antigas = _pedir(url, chave, "/cron_estrutura_base?select=chave&dono=eq." + dono)
-        vivas = set(l["chave"] for l in linhas)
-        mortas = [a["chave"] for a in antigas if a.get("chave") not in vivas]
-        for k in mortas:
-            _pedir(url, chave, "/cron_estrutura_base?dono=eq.%s&chave=eq.%s"
-                   % (dono, _escapar(k)), "DELETE", prefer="return=minimal")
+        r = _pedir(url, chave, "/rpc/cron_publicar_estrutura", "POST", {
+            "p_dono": dono, "p_gerado_em": gerado_em, "p_linhas": linhas,
+        })
+        conta = (r[0] if isinstance(r, list) and r else r) or {}
+        mortas = int(conta.get("retiradas") or 0)
+        gravadas = int(conta.get("gravadas") or len(linhas))
     except Exception as e:
         try:
             os.remove(temporario)
@@ -519,7 +520,7 @@ def publicar_estrutura(caminho_novo, seco):
     print("\nPublicado:")
     print("  %s" % os.path.relpath(ARQ_ENTRADA, RAIZ))
     print("  cron_estrutura_base: %d linha(s) registrada(s)%s"
-          % (len(linhas), (", %d retirada(s)" % len(mortas)) if mortas else ""))
+          % (gravadas, (", %d retirada(s)" % mortas) if mortas else ""))
     print("  A base agora diz exatamente o que este arquivo publica (%s)." % agora)
     return 0
 
@@ -580,13 +581,6 @@ def _pedir(url, chave, caminho, metodo="GET", corpo=None, prefer=None):
     with urllib.request.urlopen(req, timeout=20) as r:
         bruto = r.read().decode("utf-8") or "[]"
     return json.loads(bruto) if bruto.strip() else []
-
-
-def _escapar(v):
-    """PostgREST le virgula e ponto como sintaxe do filtro. Uma chave e
-    `painel/proj/sub` e nao os tem hoje — mas amanha pode ter, e um id com
-    virgula viraria dois filtros silenciosamente. Aspas resolvem."""
-    return '"' + str(v).replace('"', '""') + '"'
 
 
 def _dono(url, chave):

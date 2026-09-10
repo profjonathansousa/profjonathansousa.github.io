@@ -41,7 +41,7 @@ class Base(object):
         self.linhas = {}          # chave -> linha
         self.donos = [{"uid": "dono-1"}]
         self.falhar_em = None     # "base" para simular a rede caindo no meio
-        self.deletes = 0
+        self.chamadas = 0         # quantas vezes a base foi escrita
 
 
 BASE = Base()
@@ -67,21 +67,44 @@ class Mao(BaseHTTPRequestHandler):
         return self._responder([], 404)
 
     def do_POST(self):
-        if BASE.falhar_em == "base":
-            return self._responder({"message": "rede fora"}, 500)
         n = int(self.headers.get("Content-Length") or 0)
-        corpo = json.loads(self.rfile.read(n) or "[]")
-        if self.path.startswith("/rest/v1/cron_estrutura_base"):
-            for l in corpo:
-                BASE.linhas[l["chave"]] = l
-        return self._responder([], 201)
+        corpo = json.loads(self.rfile.read(n) or "null")
+        if not self.path.startswith("/rest/v1/rpc/cron_publicar_estrutura"):
+            return self._responder({"message": "so a RPC escreve a base"}, 404)
+        BASE.chamadas += 1
+        if BASE.falhar_em == "base":
+            # A falha acontece DENTRO da transacao: nada e aplicado.
+            return self._responder({"message": "rede fora"}, 500)
+        if BASE.falhar_em == "meio":
+            # Uma recusa da propria funcao (um raise dentro dela): a transacao
+            # aborta e a base continua sendo exatamente a anterior.
+            return self._responder({"message": "linha invalida no meio"}, 400)
+        try:
+            return self._responder(self._transacao(corpo))
+        except Exception as e:
+            return self._responder({"message": str(e)}, 400)
 
-    def do_DELETE(self):
-        # chave=eq."painel/proj"  -> o publicador escapa com aspas
-        alvo = self.path.split("chave=eq.")[-1].strip('"').replace('""', '"')
-        BASE.linhas.pop(alvo, None)
-        BASE.deletes += 1
-        return self._responder([], 204)
+    def _transacao(self, corpo):
+        """Espelha o cron_publicar_estrutura(): substitui a base inteira, e ou
+        tudo entra ou nada entra. Emular isso importa — um servidor de mentira
+        que aplicasse pela metade provaria o contrario do que o teste afirma."""
+        linhas = (corpo or {}).get("p_linhas")
+        gerado = (corpo or {}).get("p_gerado_em")
+        dono = (corpo or {}).get("p_dono")
+        if not dono or not gerado or not isinstance(linhas, list):
+            raise ValueError("argumentos invalidos")
+        if not linhas:
+            raise ValueError("estrutura vazia nao e publicacao")
+        nova = {}
+        for l in linhas:
+            if not l.get("chave") or l.get("tipo") not in ("projeto", "subitem"):
+                raise ValueError("linha invalida: %r" % (l,))
+            nova[l["chave"]] = {"chave": l["chave"], "tipo": l["tipo"],
+                                "valor": l.get("valor") or {},
+                                "gerado_em": gerado, "dono": dono}
+        retiradas = len([k for k in BASE.linhas if k not in nova])
+        BASE.linhas = nova              # a troca so acontece se nada acima levantou
+        return [{"gravadas": len(nova), "retiradas": retiradas}]
 
 
 def subir_servidor():
@@ -172,7 +195,9 @@ def principal():
            "com o carimbo da NOVA publicacao")
         ok("pipeline/a02" not in BASE.linhas and "pipeline/a02/a02-1" not in BASE.linhas,
            "e a peca que saiu do arquivo saiu da base", sorted(BASE.linhas))
-        ok(BASE.deletes == 2, "retirada por DELETE explicito, e nao por sobra", BASE.deletes)
+        ok(BASE.chamadas == 2,
+           "e tudo isso numa CHAMADA so por publicacao: gravar e retirar sao "
+           "uma transacao, nao duas operacoes", BASE.chamadas)
         with open(D.ARQ_ENTRADA, encoding="utf-8") as f:
             ok(len(json.load(f)["paineis"]["pipeline"]) == 1,
                "o arquivo tambem ficou com uma peca so")
@@ -190,6 +215,50 @@ def principal():
            "e a base tambem: os dois continuam de acordo um com o outro")
         ok(not os.path.exists(D.ARQ_ENTRADA + ".novo"),
            "e o temporario foi removido, sem lixo no disco")
+
+        print("\n=== 3b. Erro DENTRO da substituicao: nem base, nem arquivo ===")
+        antes = open(D.ARQ_ENTRADA, encoding="utf-8").read()
+        base_antes = json.dumps(BASE.linhas, sort_keys=True)
+        BASE.falhar_em = "meio"
+        r = publicar(estrutura("2026-09-12T11:00:00Z", titulo_a1="TAMBEM NAO DEVIA"))
+        BASE.falhar_em = None
+        ok(r == 1, "o comando devolveu erro quando a base recusou no meio", r)
+        ok(json.dumps(BASE.linhas, sort_keys=True) == base_antes,
+           "a base nao ficou pela metade: e uma transacao, nao um lote")
+        ok(open(D.ARQ_ENTRADA, encoding="utf-8").read() == antes,
+           "e o entrada.json anterior continua no disco")
+
+        print("\n=== 3c. A garantia mora no SQL, e nao numa compensacao ===")
+        SQL = open(os.path.join(RAIZ, "sql", "cron_estado.sql"), encoding="utf-8").read()
+        ok("create or replace function public.cron_publicar_estrutura" in SQL,
+           "a funcao existe no esquema")
+        corpo_sql = SQL.split("create or replace function public.cron_publicar_estrutura")[1]
+        corpo_sql = corpo_sql.split("$$;")[0]
+        ok("insert into public.cron_estrutura_base" in corpo_sql and
+           "delete from public.cron_estrutura_base" in corpo_sql,
+           "gravar e retirar acontecem DENTRO dela — uma transacao so")
+        ok("jsonb_array_length(p_linhas) = 0" in corpo_sql,
+           "estrutura vazia e recusada, e nao tratada como `apagar tudo`")
+        ok("not exists" in corpo_sql and "not in (" not in corpo_sql,
+           "a retirada usa `not exists`: um `chave` nulo nao a faria sumir em silencio")
+        import re as _re
+        concessao = _re.search(
+            r"grant execute on function public\.cron_publicar_estrutura[^;]*;", SQL)
+        ok(bool(concessao) and "service_role" in concessao.group(0) and
+           "authenticated" not in concessao.group(0),
+           "e so a service_role pode chama-la",
+           concessao.group(0) if concessao else None)
+        ok("revoke all on function public.cron_publicar_estrutura" in SQL,
+           "revogada de public/anon/authenticated: o navegador nao a alcanca")
+
+        # E o publicador nao tem mais como fazer meia publicacao: uma chamada so.
+        fonte = open(os.path.join(RAIZ, "scripts", "dobrar_toques.py"), encoding="utf-8").read()
+        corpo_pub = fonte.split("def publicar_estrutura")[1].split("\ndef ")[0]
+        ok(corpo_pub.count("_pedir(") == 1,
+           "o publicador faz UMA chamada de escrita, e nao um POST mais N DELETEs",
+           corpo_pub.count("_pedir("))
+        ok("/rpc/cron_publicar_estrutura" in corpo_pub,
+           "e ela e a RPC transacional")
 
         print("\n=== 4. Sem credenciais, RECUSA — nao publica so o arquivo ===")
         url = os.environ.pop("SUPABASE_URL")

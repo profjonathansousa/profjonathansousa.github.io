@@ -349,6 +349,90 @@ create table if not exists public.cron_estrutura_base (
 );
 
 
+-- A SUBSTITUIÇÃO DA BASE, NUMA TRANSAÇÃO SÓ.
+--
+-- Publicar a estrutura é substituir *toda* a base daquele dono pela versão que
+-- acabou de ser publicada: gravar o que existe agora e retirar o que deixou de
+-- existir. Em chamadas separadas — um POST por lote, um DELETE por peça — uma
+-- falha no meio deixa a base pela metade, e uma base pela metade é pior do que
+-- base nenhuma: ela AFIRMA que o pipeline publicou uma coisa que ele não
+-- publicou, e o merge de três vias passa a decidir com base numa mentira, em
+-- silêncio. Compensar depois não resolve — a compensação também pode falhar.
+--
+-- Por isso a substituição inteira mora aqui, numa função. O PostgREST executa
+-- cada chamada dentro de uma transação: ou a base fica sendo exatamente a
+-- estrutura publicada, ou continua sendo exatamente a anterior. Não há terceiro
+-- estado, e é isso que torna verdadeira a garantia que o publicador anuncia.
+--
+-- ARRAY VAZIO É RECUSADO, e não tratado como "publicar nada". Uma publicação
+-- vazia apagaria a base inteira, que é o efeito mais destrutivo possível aqui, e
+-- quase sempre significa arquivo malformado a montante. Recusar é o que impede
+-- que um erro de geração vire perda de dado.
+--
+-- QUEM CHAMA É SÓ A service_role, como no cron_podar(). O app não pode chamá-la:
+-- se pudesse, poderia reescrever a base e forjar "o pipeline nunca mudou isso" —
+-- e o merge de três vias viraria de duas outra vez. É a mesma razão pela qual a
+-- tabela não tem política de escrita.
+create or replace function public.cron_publicar_estrutura(
+  p_dono      uuid,
+  p_gerado_em timestamptz,
+  p_linhas    jsonb            -- [{chave, tipo, valor}, ...]
+)
+returns table (gravadas bigint, retiradas bigint)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_gravadas  bigint;
+  v_retiradas bigint;
+begin
+  if p_dono is null or p_gerado_em is null then
+    raise exception 'cron_publicar_estrutura: dono e gerado_em sao obrigatorios';
+  end if;
+  if p_linhas is null or jsonb_typeof(p_linhas) <> 'array' then
+    raise exception 'cron_publicar_estrutura: p_linhas precisa ser um array';
+  end if;
+  if jsonb_array_length(p_linhas) = 0 then
+    raise exception 'cron_publicar_estrutura: estrutura vazia nao e publicacao, e apagaria a base';
+  end if;
+
+  with nova as (
+    select l->>'chave' as chave, l->>'tipo' as tipo, l->'valor' as valor
+      from jsonb_array_elements(p_linhas) as l
+  ),
+  gravar as (
+    insert into public.cron_estrutura_base (dono, chave, tipo, valor, gerado_em)
+    select p_dono, chave, tipo, coalesce(valor, '{}'::jsonb), p_gerado_em
+      from nova
+    on conflict (dono, chave) do update
+      set tipo        = excluded.tipo,
+          valor       = excluded.valor,
+          gerado_em   = excluded.gerado_em,
+          servidor_em = now()
+    returning 1
+  )
+  select count(*) into v_gravadas from gravar;
+
+  -- `not exists`, e não `not in`: um `chave` nulo no array faria o `not in`
+  -- devolver zero linhas e a retirada não aconteceria — em silêncio.
+  delete from public.cron_estrutura_base b
+   where b.dono = p_dono
+     and not exists (
+       select 1 from jsonb_array_elements(p_linhas) as l
+        where l->>'chave' = b.chave);
+  get diagnostics v_retiradas = row_count;
+
+  return query select v_gravadas, v_retiradas;
+end;
+$$;
+
+revoke all on function public.cron_publicar_estrutura(uuid, timestamptz, jsonb)
+  from public, anon, authenticated;
+grant execute on function public.cron_publicar_estrutura(uuid, timestamptz, jsonb)
+  to service_role;
+
+
 -- ============================================================
 -- PODA — o que a base privada finalmente permite.
 -- ============================================================

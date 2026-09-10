@@ -2921,8 +2921,10 @@ console.log("\n=== 67. Quem escreve a cron_estrutura_base, e quem so le (9G-0 B1
 
   /* QUEM ESCREVE E O PUBLICADOR DA ESTRUTURA, e so ele. */
   const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
-  ok((pipe.match(/"\/cron_estrutura_base"/g) || []).length === 1,
-     "ha UM unico ponto que escreve a base");
+  ok((pipe.match(/"\/rpc\/cron_publicar_estrutura"/g) || []).length === 1,
+     "ha UM unico ponto que escreve a base, e ele e a RPC transacional");
+  ok(!/"\/cron_estrutura_base/.test(pipe),
+     "e nenhuma escrita direta na tabela: gravar e retirar sao um ato so");
   const corpo = pipe.split("def publicar_estrutura")[1].split("\ndef ")[0];
   ok(/linhas_da_base\(entrada\)/.test(corpo),
      "e ele registra a estrutura que RECEBEU, e nao outra reconstruida");
@@ -2930,12 +2932,25 @@ console.log("\n=== 67. Quem escreve a cron_estrutura_base, e quem so le (9G-0 B1
      "nao le o entrada.json do disco para semear a base");
   /* MEDE A CHAMADA, e nao a mencao: a docstring da funcao fala da
      cron_estrutura_base logo na primeira linha, e comparar posicoes de texto
-     media o comentario. O que importa e onde esta o POST. */
+     media o comentario. O que importa e onde esta a RPC. */
+  const iRpc = corpo.indexOf('"/rpc/cron_publicar_estrutura"');
   ok(/os\.replace\(temporario, ARQ_ENTRADA\)/.test(corpo) &&
-     corpo.indexOf('"/cron_estrutura_base"') > 0 &&
-     corpo.indexOf('"/cron_estrutura_base"') < corpo.indexOf("os.replace"),
+     iRpc > 0 && iRpc < corpo.indexOf("os.replace"),
      "a base e registrada ANTES de o arquivo tomar o lugar do anterior",
-     {post: corpo.indexOf('"/cron_estrutura_base"'), replace: corpo.indexOf("os.replace")});
+     {rpc: iRpc, replace: corpo.indexOf("os.replace")});
+
+  /* A GARANTIA MORA NO SQL. Chamada unica no cliente e metade da historia: a
+     outra metade e a funcao substituir a base inteira dentro de uma transacao. */
+  const fn = SQL.split("create or replace function public.cron_publicar_estrutura")[1] || "";
+  const corpoFn = fn.split("$$;")[0];
+  ok(/insert into public\.cron_estrutura_base/.test(corpoFn) &&
+     /delete from public\.cron_estrutura_base/.test(corpoFn),
+     "gravar e retirar acontecem dentro da MESMA funcao");
+  ok(/jsonb_array_length\(p_linhas\) = 0/.test(corpoFn),
+     "e estrutura vazia e recusada: publicar nada nao e apagar tudo");
+  ok(!/create policy[^;]*cron_publicar_estrutura/i.test(CODIGO) &&
+     /revoke all on function public\.cron_publicar_estrutura/.test(SQL),
+     "a funcao nao e alcancavel pelo navegador");
   ok(/RECUSADO: faltam/.test(corpo),
      "e sem credenciais o comando recusa a publicacao inteira");
 }

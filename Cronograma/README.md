@@ -1979,13 +1979,38 @@ de duas **sem ninguém perceber**.
 Daí a ordem, que é a garantia:
 
 1. o arquivo novo é escrito num **temporário**, ao lado do definitivo;
-2. a base é publicada;
+2. a base é substituída **inteira, numa transação só**;
 3. só então o temporário toma o lugar do `entrada.json`.
 
 Falhou a base → o temporário cai e **nada muda**: o arquivo anterior e a base
 anterior continuam de acordo um com o outro. Por isso, ao contrário do
 `--registrar`, aqui publicar **não é melhor esforço**: sem credenciais o comando
 **recusa**, em vez de publicar metade.
+
+**E o passo 2 é uma chamada só, de propósito.** A primeira versão gravava num
+`POST` e retirava numa sequência de `DELETE`s — operações independentes. Uma
+falha entre elas deixaria a base **pela metade** enquanto o `entrada.json` antigo
+continuava no disco: a base afirmando que o pipeline publicou uma coisa que ele
+não publicou, e o merge de três vias decidindo com base nisso, em silêncio.
+Compensar depois não resolve, porque a compensação também pode falhar.
+
+A substituição inteira mora agora numa função do banco,
+`cron_publicar_estrutura(dono, gerado_em, linhas)`, e o PostgREST executa cada
+chamada dentro de uma transação: **ou a base passa a ser exatamente a estrutura
+publicada, ou continua sendo exatamente a anterior**. Não há terceiro estado — é
+o que torna verdadeira a garantia que o comando anuncia.
+
+Duas defesas moram nela, e as duas são contra perda de dado:
+
+- **array vazio é recusado**, e não tratado como "publicar nada": uma publicação
+  vazia apagaria a base inteira, e quase sempre significa arquivo malformado a
+  montante;
+- a retirada usa `not exists`, e não `not in`: com `not in`, uma `chave` nula no
+  array faria a retirada devolver zero linhas e não acontecer — em silêncio.
+
+**Só a `service_role` pode chamá-la**, como o `cron_podar()`. Se o app pudesse,
+poderia reescrever a base e forjar "o pipeline nunca mudou isso" — a mesma razão
+pela qual a tabela não tem política de escrita.
 
 #### O que a base registra
 
@@ -2035,8 +2060,10 @@ continuam sem escritor no aplicativo.
 
 `scripts/teste_publicar_estrutura.py` sobe um PostgREST de mentira em localhost e
 exercita o comando de verdade: a base nascendo vazia, a republicação que retira o
-que saiu, a falha no meio que não publica metade, a recusa sem credenciais e as
-estruturas inválidas. `teste_sync.js`, seções 66 e 67, cobrem a regra de três
+que saiu, a falha **antes** e a recusa **dentro** da transação (nenhuma das duas
+publica metade), a ausência de credenciais e as estruturas inválidas. O servidor
+falso **emula a transação** e recusa qualquer escrita que não seja a RPC — um
+servidor que aplicasse pela metade provaria o contrário do que o teste afirma. `teste_sync.js`, seções 66 e 67, cobrem a regra de três
 vias e quem pode escrever a base.
 
 ### Como ligar, e o que a tela diz
