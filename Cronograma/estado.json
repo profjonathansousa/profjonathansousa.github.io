@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:04:12.061Z",
+ "_dobrado_em": "2026-09-10T12:04:30.758Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -3549,6 +3549,30 @@
     "vida": "ativo",
     "temMotivo": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-04-25-076Z-ipkt72",
+   "quando": "2026-09-10T12:04:25.076Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
+    "st": 1
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-04-30-758Z-ipkt72",
+   "quando": "2026-09-10T12:04:30.758Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "triagem",
+   "dados": {
+    "vid": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
+    "st": 0
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3788,7 +3812,9 @@
   "2026-09-10T12-03-50-577Z-ipkt72",
   "2026-09-10T12-04-03-947Z-ipkt72",
   "2026-09-10T12-04-11-244Z-ipkt72",
-  "2026-09-10T12-04-12-061Z-ipkt72"
+  "2026-09-10T12-04-12-061Z-ipkt72",
+  "2026-09-10T12-04-25-076Z-ipkt72",
+  "2026-09-10T12-04-30-758Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -4133,8 +4159,8 @@
   },
   "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba": {
    "st": 0,
-   "quando": "2026-09-07T03:00:37.831Z",
-   "aparelho": "s41hky"
+   "quando": "2026-09-10T12:04:30.758Z",
+   "aparelho": "ipkt72"
   },
   "philevents-146753": {
    "st": 3,
