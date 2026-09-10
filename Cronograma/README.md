@@ -2133,6 +2133,42 @@ migração das prioridades.
 `teste_sync.js`, seções 69 a 71 — incluindo uma asserção sobre o **HTML do
 painel**: sem ela, remover o filtro do render não fazia teste nenhum falhar.
 
+### 9G-1 — O notificador deixa de depender do `estado.json`
+
+A auditoria de fronteira da 9G encontrou **uma** dependência bloqueante: o job
+diário de avisos push lia `Cronograma/estado.json` para saber os eventos. Não é
+sincronização entre aparelhos — é uma segunda função que se apoiou no mesmo
+arquivo. Enquanto ela existisse, desligar o caminho do GitHub faria os avisos
+pararem de conhecer datas novas **em silêncio**.
+
+Agora `buscarEventos(api)` lê o `cron_estado`, domínio `evento`, com a
+`service_role` que o próprio `enviar.mjs` **já usa** para as inscrições. Nenhuma
+chave nova, nenhuma infraestrutura da Fase 8 recriada.
+
+**Sem volta ao arquivo, nem como fallback.** Um fallback silencioso faria o job
+ficar verde avisando o passado no dia em que a leitura falhasse. O `api()` lança
+em qualquer resposta que não seja ok, e o job cai — que é o comportamento certo.
+
+Duas guardas a mais, pela mesma razão:
+
+- **`lerDados` deixou de devolver `eventos`**, em vez de devolver `{}` de
+  consolo: quem monta os dados tem de ir buscá-los;
+- **`decidir` lança** se os eventos não estiverem lá. Antes eles vinham sempre
+  do `lerDados`; agora vêm da rede, e a ausência da chave só pode significar que
+  alguém esqueceu de buscar. Emudecer faria o aviso de datas sumir sem ninguém
+  notar.
+
+A **lápide é a coluna `del`** — evento apagado num aparelho não volta a virar
+aviso. Privado continua saindo por inteiro, e a regra de janela, montagem e
+deduplicação **não mudou uma linha**: o que mudou foi a fonte.
+
+#### Testes
+
+`scripts/teste_avisos.mjs` ganhou a seção 9G-1, e o critério central é a
+**equivalência**: o mesmo conjunto de eventos, na forma do `estado.json` e na
+forma do banco, produz a **mesma janela e o mesmo aviso**. É o que prova que a
+migração trocou a fonte e não a regra.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -2409,7 +2445,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9G-0 A — pipeline com caminho online | concluída |
 | 9G-0 B1 — publicação da estrutura, baseline e merge de três vias ligado | concluída |
 | 9G-0 B2 — `cron:arquivo` aposentado, arquivar por `vida` | concluída |
-| 9G — desativação do caminho do GitHub | não iniciada |
+| 9G-1 — notificador lê os eventos do `cron_estado` | concluída |
+| 9G-2 e 9G-3 — cortar a subida e a descida do GitHub | não iniciadas |
 
 ### Previsto e ainda não implementado
 
