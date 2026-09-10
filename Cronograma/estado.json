@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:01:39.409Z",
+ "_dobrado_em": "2026-09-10T12:02:06.062Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -3280,6 +3280,60 @@
     "feito_em": "2026-09-07",
     "del": true
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-01-59-282Z-s41hky",
+   "quando": "2026-09-10T12:01:59.282Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1789041719282",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Teste",
+    "feito_em": "",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-02-01-727Z-s41hky",
+   "quando": "2026-09-10T12:02:01.727Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1789041719282",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Teste",
+    "feito_em": "2026-09-10",
+    "del": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-02-06-062Z-s41hky",
+   "quando": "2026-09-10T12:02:06.062Z",
+   "aparelho": "s41hky",
+   "app": "2026-09-07-entrar",
+   "tipo": "prioridade",
+   "dados": {
+    "sem": "2026-W37",
+    "prid": "pr1789041719282",
+    "tipo": "livre",
+    "painel": "",
+    "projId": "",
+    "t": "Teste",
+    "feito_em": "2026-09-10",
+    "del": true
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3502,7 +3556,10 @@
   "2026-09-10T12-01-13-097Z-s41hky",
   "2026-09-10T12-01-27-721Z-ipkt72",
   "2026-09-10T12-01-29-827Z-ipkt72",
-  "2026-09-10T12-01-39-409Z-ipkt72"
+  "2026-09-10T12-01-39-409Z-ipkt72",
+  "2026-09-10T12-01-59-282Z-s41hky",
+  "2026-09-10T12-02-01-727Z-s41hky",
+  "2026-09-10T12-02-06-062Z-s41hky"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -4242,6 +4299,16 @@
    "del": true,
    "quando": "2026-09-10T12:01:39.409Z",
    "aparelho": "ipkt72"
+  },
+  "2026-W37/pr1789041719282": {
+   "tipo": "livre",
+   "painel": "",
+   "projId": "",
+   "t": "Teste",
+   "feito_em": "2026-09-10",
+   "del": true,
+   "quando": "2026-09-10T12:02:06.062Z",
+   "aparelho": "s41hky"
   }
  },
  "toefl": {
