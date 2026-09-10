@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:02:53.518Z",
+ "_dobrado_em": "2026-09-10T12:03:50.577Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -3396,6 +3396,90 @@
     "del": false,
     "t": "Teste"
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-42-509Z-ipkt72",
+   "quando": "2026-09-10T12:03:42.509Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-45-859Z-ipkt72",
+   "quando": "2026-09-10T12:03:45.859Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-46-626Z-ipkt72",
+   "quando": "2026-09-10T12:03:46.626Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-diagnostico",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-47-358Z-ipkt72",
+   "quando": "2026-09-10T12:03:47.358Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-conta",
+    "feito": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-47-759Z-ipkt72",
+   "quando": "2026-09-10T12:03:47.759Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-tpl-writing",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-50-209Z-ipkt72",
+   "quando": "2026-09-10T12:03:50.209Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": true
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-03-50-577Z-ipkt72",
+   "quando": "2026-09-10T12:03:50.577Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "toefl",
+   "dados": {
+    "iid": "f1-anki",
+    "feito": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3625,7 +3709,14 @@
   "2026-09-10T12-02-30-377Z-ipkt72",
   "2026-09-10T12-02-33-759Z-ipkt72",
   "2026-09-10T12-02-48-010Z-s41hky",
-  "2026-09-10T12-02-53-518Z-s41hky"
+  "2026-09-10T12-02-53-518Z-s41hky",
+  "2026-09-10T12-03-42-509Z-ipkt72",
+  "2026-09-10T12-03-45-859Z-ipkt72",
+  "2026-09-10T12-03-46-626Z-ipkt72",
+  "2026-09-10T12-03-47-358Z-ipkt72",
+  "2026-09-10T12-03-47-759Z-ipkt72",
+  "2026-09-10T12-03-50-209Z-ipkt72",
+  "2026-09-10T12-03-50-577Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
@@ -4395,19 +4486,19 @@
  },
  "toefl": {
   "f1-conta": {
-   "feito": true,
-   "quando": "2026-09-07T14:22:50.337Z",
-   "aparelho": "s41hky"
+   "feito": false,
+   "quando": "2026-09-10T12:03:47.358Z",
+   "aparelho": "ipkt72"
   },
   "f1-anki": {
    "feito": false,
-   "quando": "2026-09-07T14:22:54.371Z",
-   "aparelho": "s41hky"
+   "quando": "2026-09-10T12:03:50.577Z",
+   "aparelho": "ipkt72"
   },
   "f1-tpl-writing": {
-   "feito": false,
-   "quando": "2026-09-07T14:22:30.960Z",
-   "aparelho": "s41hky"
+   "feito": true,
+   "quando": "2026-09-10T12:03:47.759Z",
+   "aparelho": "ipkt72"
   },
   "f1-notas-listening": {
    "feito": false,
@@ -4420,9 +4511,9 @@
    "aparelho": "s41hky"
   },
   "f1-diagnostico": {
-   "feito": true,
-   "quando": "2026-09-07T14:22:30.277Z",
-   "aparelho": "s41hky"
+   "feito": false,
+   "quando": "2026-09-10T12:03:46.626Z",
+   "aparelho": "ipkt72"
   },
   "f1-sample40": {
    "feito": false,
