@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:04:30.758Z",
+ "_dobrado_em": "2026-09-10T12:05:19.227Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -56,6 +56,15 @@
    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
    "subT": "Janela 0 · planilha de corpus",
    "quando": "2026-09-10T12:04:12.061Z",
+   "aparelho": "ipkt72"
+  },
+  "pipeline/a01/a01-2": {
+   "st": 2,
+   "vida": "ativo",
+   "temMotivo": false,
+   "projT": "Ago · A consciência em Lutero e Spinoza",
+   "subT": "Janela 0 · planilha de corpus",
+   "quando": "2026-09-10T12:05:19.227Z",
    "aparelho": "ipkt72"
   }
  },
@@ -3573,6 +3582,26 @@
     "vid": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
     "st": 0
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-05-19-227Z-ipkt72",
+   "quando": "2026-09-10T12:05:19.227Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-10",
+    "pid": "pipeline",
+    "projId": "a01",
+    "subId": "a01-2",
+    "projT": "Ago · A consciência em Lutero e Spinoza",
+    "subT": "Janela 0 · planilha de corpus",
+    "de": 0,
+    "para": 2,
+    "vida": "ativo",
+    "temMotivo": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3814,7 +3843,8 @@
   "2026-09-10T12-04-11-244Z-ipkt72",
   "2026-09-10T12-04-12-061Z-ipkt72",
   "2026-09-10T12-04-25-076Z-ipkt72",
-  "2026-09-10T12-04-30-758Z-ipkt72"
+  "2026-09-10T12-04-30-758Z-ipkt72",
+  "2026-09-10T12-05-19-227Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
