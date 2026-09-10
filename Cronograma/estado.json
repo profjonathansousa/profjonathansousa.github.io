@@ -2,7 +2,7 @@
  "_versao": 3,
  "_o_que_e": "Estado consolidado do Cronograma. Escrito SO por scripts/dobrar_toques.py, a partir dos arquivos de Cronograma/toques/. Nao editar a mao.",
  "_escritor": "scripts/dobrar_toques.py",
- "_dobrado_em": "2026-09-10T12:06:26.027Z",
+ "_dobrado_em": "2026-09-10T12:06:42.811Z",
  "itens": {
   "pipeline/a01/a01-1": {
    "st": 2,
@@ -50,12 +50,12 @@
    "aparelho": "s41hky"
   },
   "pipeline/a00/a00-2": {
-   "st": 2,
+   "st": 1,
    "vida": "ativo",
    "temMotivo": false,
    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
    "subT": "Janela 0 · planilha de corpus",
-   "quando": "2026-09-10T12:06:26.027Z",
+   "quando": "2026-09-10T12:06:42.811Z",
    "aparelho": "ipkt72"
   },
   "pipeline/a01/a01-2": {
@@ -3702,6 +3702,46 @@
     "vida": "ativo",
     "temMotivo": false
    }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-06-39-707Z-ipkt72",
+   "quando": "2026-09-10T12:06:39.707Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-10",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-2",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · planilha de corpus",
+    "de": 2,
+    "para": 0,
+    "vida": "ativo",
+    "temMotivo": false
+   }
+  },
+  {
+   "v": 1,
+   "id": "2026-09-10T12-06-42-811Z-ipkt72",
+   "quando": "2026-09-10T12:06:42.811Z",
+   "aparelho": "ipkt72",
+   "app": "2026-09-07-entrar",
+   "tipo": "registro",
+   "dados": {
+    "d": "2026-09-10",
+    "pid": "pipeline",
+    "projId": "a00",
+    "subId": "a00-2",
+    "projT": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
+    "subT": "Janela 0 · planilha de corpus",
+    "de": 0,
+    "para": 1,
+    "vida": "ativo",
+    "temMotivo": false
+   }
   }
  ],
  "_ids_dobrados": [
@@ -3949,7 +3989,9 @@
   "2026-09-10T12-05-37-844Z-ipkt72",
   "2026-09-10T12-05-39-427Z-ipkt72",
   "2026-09-10T12-05-41-125Z-ipkt72",
-  "2026-09-10T12-06-26-027Z-ipkt72"
+  "2026-09-10T12-06-26-027Z-ipkt72",
+  "2026-09-10T12-06-39-707Z-ipkt72",
+  "2026-09-10T12-06-42-811Z-ipkt72"
  ],
  "triagem": {
   "anpof-chamadas-40-anos-de-para-a-genealogia-da-moral-de-friedrich-nietzsche": {
