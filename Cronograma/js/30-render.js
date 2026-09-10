@@ -1169,10 +1169,10 @@ function tocarItem(pid, proj, x, de){
   }catch(e){ try{ console.error("sync: item nao subiu:", e); }catch(e2){} }
   return iso;
 }
-function cycleSub(pid,pi,si){
-  var p=getProjs(pid), pr=p[pi], x=pr && pr.subs && normSub(pr.subs[si]);
+function cycleSub(pid,projId,subId){
+  var x=acharSub(getProjs(pid), projId, subId);
   if(!x) return;
-  if(!marcarSub(pid, pr.id, x.id, (x.st+1)%3)) return;
+  if(!marcarSub(pid, projId, subId, (x.st+1)%3)) return;
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
 /* A caixa que a aba Hoje mostra. Marcar conclui; desmarcar volta para "a
@@ -1225,7 +1225,7 @@ function addPrioridadeTrilho(valor){
   if(!valor) return;
   var corte = valor.indexOf("/");
   var painel = valor.slice(0, corte), projId = valor.slice(corte+1);
-  var pr = (getProjs(painel)||[]).filter(function(x){ return x.id === projId; })[0];
+  var pr = vivos(getProjs(painel)).filter(function(x){ return x.id === projId; })[0];
   var lista = getPrio();
   if(lista.some(function(x){ return x.painel===painel && x.projId===projId; })) return;
   var p = {id:"pr"+Date.now(), tipo:"trilho", painel:painel, projId:projId,
@@ -1364,15 +1364,16 @@ function renderVagasIndicador(){
 /* Ciclo de vida: ativo -> adiado -> abandonado -> ativo. Pede motivo, e
    no caso de adiar pergunta também para quando voltar. O progresso (st)
    não é tocado: uma peça 60% escrita e adiada continua 60% escrita. */
-function ciclarVida(pid,pi,si){
-  var p=getProjs(pid), x=normSub(p[pi].subs[si]);
+function ciclarVida(pid,projId,subId){
+  var p=getProjs(pid), pr=acharProj(p,projId), x=pr && acharSub(p,projId,subId);
+  if(!pr || !x) return;
   /* Sair de "nao se aplica" e decisao, nao passo do ciclo: sem esta pergunta,
      um toque no lugar errado transformaria em "ativa" uma etapa que o pipeline
      ja disse que nao cabe neste artigo. */
   if(x.vida==="inaplicavel"){
     if(!confirm("Esta etapa esta marcada como \u201cn\u00e3o se aplica\u201d"+(x.motivo?" ("+x.motivo+")":"")+".\n\nVoltar para ativa?")) return;
     x.vida="ativo"; x.motivo=""; x.voltar_em=""; x.vidaDesde=ymd(now);
-    tocarItem(pid, p[pi], x, x.st);
+    tocarItem(pid, pr, x, x.st);
     setProjs(pid,p);
     renderPainel(pid); renderRegistro(); sincronizarHoje(pid); return;
   }
@@ -1390,7 +1391,7 @@ function ciclarVida(pid,pi,si){
     } else { x.voltar_em=""; }
   }
   x.vidaDesde=ymd(now);
-  tocarItem(pid, p[pi], x, x.st);
+  tocarItem(pid, pr, x, x.st);
   setProjs(pid,p);
   renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
 }
@@ -1544,18 +1545,22 @@ function rotuloReg(o){
 /* ---- Aba Arquivo: o que foi removido, com bot\u00e3o de restaurar ---- */
 function renderArquivo(){
   var box=document.getElementById("arquivo"); if(!box) return;
-  var a=getArquivo();
+  /* UMA VISAO, e nao uma gaveta: a lista sai do proprio painel, filtrada por
+     vida='arquivado'. E o botao restaura POR ID — nao ha posicao a acertar. */
+  var a=arquivados();
   if(!a.length){ box.innerHTML='<div class="vazio">Nada arquivado. Quando voc\u00ea remover um item de um painel, ele vem parar aqui \u2014 e pode voltar.</div>'; return; }
   var h="";
-  a.slice().reverse().forEach(function(it, revIdx){
-    var k=a.length-1-revIdx;
+  a.slice().reverse().forEach(function(it){
     var P=painelDef(it.pid);
-    var titulo = it.item && it.item.t ? it.item.t : "(sem t\u00edtulo)";
-    var contexto = it.tipo==="subtarefa" && it.ondeEstava && it.ondeEstava.projT ? " \u00b7 de \u201c"+it.ondeEstava.projT+"\u201d" : "";
-    h+='<div class="reg-i"><span class="reg-d">'+Number(String(it.d||"").slice(8,10)||0)+'</span>'+
+    var titulo = it.t || "(sem t\u00edtulo)";
+    var contexto = it.tipo==="subtarefa" && it.de ? " \u00b7 de \u201c"+it.de+"\u201d" : "";
+    var volta = it.tipo==="projeto"
+      ? "restaurarProj('"+it.pid+"','"+it.projId+"')"
+      : "restaurarSub('"+it.pid+"','"+it.projId+"','"+it.subId+"')";
+    h+='<div class="reg-i"><span class="reg-d">'+Number(String(it.vidaDesde||"").slice(8,10)||0)+'</span>'+
        '<span class="reg-t">'+escapeHtml(titulo)+
        '<span>'+(it.tipo==="projeto"?"item":"subtarefa")+' \u00b7 '+escapeHtml(P?P.titulo:it.pid)+escapeHtml(contexto)+'</span></span>'+
-       '<button class="add-row" style="margin:0;padding:4px 10px" onclick="restaurarArquivo('+k+')">restaurar</button></div>';
+       '<button class="add-row" style="margin:0;padding:4px 10px" onclick="'+volta+'">restaurar</button></div>';
   });
   box.innerHTML=h;
 }
@@ -1573,20 +1578,54 @@ function irAoTrilho(pid, projId){
     setTimeout(function(){ alvo.classList.remove("realce"); }, 1700);
   }, 80);
 }
-function editProj(pid,i,t){var p=getProjs(pid);p[i].t=t.trim()||p[i].t;setProjs(pid,p);}
-function editSub(pid,pi,si,t){var p=getProjs(pid);p[pi].subs[si].t=t.trim()||p[pi].subs[si].t;setProjs(pid,p);}
+/* POR ID, E NAO POR POSICAO (Fase 9G-0 B2). Com as pecas arquivadas ficando no
+   array e saindo so da TELA, a posicao que o render emite deixou de ser a
+   posicao no armazenamento — editar pelo indice passaria a editar a peca
+   errada. O `acharProj`/`acharSub` sao o unico endereco daqui em diante. */
+function acharProj(p, projId){
+  for(var i=0;i<(p||[]).length;i++){ if(p[i].id === projId) return p[i]; }
+  return null;
+}
+function acharSub(p, projId, subId){
+  var pr = acharProj(p, projId); if(!pr) return null;
+  for(var j=0;j<(pr.subs||[]).length;j++){ if(pr.subs[j].id === subId) return normSub(pr.subs[j]); }
+  return null;
+}
+function editProj(pid,projId,t){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;pr.t=t.trim()||pr.t;setProjs(pid,p);}
+function editSub(pid,projId,subId,t){var p=getProjs(pid);var x=acharSub(p,projId,subId);if(!x)return;x.t=t.trim()||x.t;setProjs(pid,p);}
 /* Remover deixa de destruir: vai para a aba Arquivo e pode voltar. */
-function delProj(pid,i){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para a aba Arquivo e pode ser restaurado."))return;
-  var p=getProjs(pid);var removido=p.splice(i,1)[0];
-  arquivar(pid, removido, "projeto", {indice:i});
-  setProjs(pid,p);renderPainel(pid);renderArquivo();sincronizarHoje(pid);}
-function delSub(pid,pi,si){var p=getProjs(pid);var removido=p[pi].subs.splice(si,1)[0];
-  arquivar(pid, removido, "subtarefa", {projId:p[pi].id, projT:p[pi].t, indice:si});
-  setProjs(pid,p);renderPainel(pid);renderArquivo();sincronizarHoje(pid);}
+/* ARQUIVAR E RESTAURAR VIRARAM MUDANCA DE CAMPO. A peca fica onde esta; o que
+   muda e `vida`. Restaurar nao depende de posicao nenhuma — e o mesmo campo de
+   volta para 'ativo'.
+
+   PROJETO fica LOCAL: `estrutura_proj` e {t, n, mes} e a estrutura ainda nao e
+   dominio online, entao nao ha por onde isso viajar. SUBITEM ATRAVESSA, e de
+   graca: `vida` ja e campo do dominio `item`, e o tocarItem ja o publica. */
+function delProj(pid,projId){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para a aba Arquivo e pode ser restaurado."))return;
+  var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  pr.vida="arquivado";pr.vidaDesde=ymd(now);
+  setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
+function restaurarProj(pid,projId){
+  var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  pr.vida="ativo";pr.vidaDesde=ymd(now);
+  setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
+function delSub(pid,projId,subId){arquivarSub(pid,projId,subId,"arquivado");}
+function restaurarSub(pid,projId,subId){arquivarSub(pid,projId,subId,"ativo");}
+/* UM funil para os dois sentidos, e ele e o tocarItem — o mesmo que ja carrega
+   st e vida. Arquivar no Mac arquiva no celular; restaurar tambem. */
+function arquivarSub(pid,projId,subId,vida){
+  var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  var x=acharSub(p,projId,subId);if(!x)return;
+  if(x.vida===vida)return;
+  x.vida=vida;x.vidaDesde=ymd(now);
+  tocarItem(pid, pr, x, x.st);
+  setProjs(pid,p);
+  renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
 function addProj(pid){var p=getProjs(pid);p.push(normProj({id:"p"+Date.now(),t:"",subs:[],origem:"manual"}));setProjs(pid,p);renderPainel(pid);
   var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj-name');if(b.length)b[b.length-1].focus();}
-function addSub(pid,pi){var p=getProjs(pid);p[pi].subs.push(normSub({id:"s"+Date.now(),t:"",st:0,origem:"manual"}));setProjs(pid,p);renderPainel(pid);
-  var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-pi="'+pi+'"] .sub-text');if(b.length)b[b.length-1].focus();}
+function addSub(pid,projId){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  pr.subs.push(normSub({id:"s"+Date.now(),t:"",st:0,origem:"manual"}));setProjs(pid,p);renderPainel(pid);
+  var b=document.querySelectorAll('[data-painel="'+pid+'"] .proj[data-proj="'+pid+'/'+projId+'"] .sub-text');if(b.length)b[b.length-1].focus();}
 /* Antes so a esteira alimentava o Hoje, entao so ela precisava avisar. Agora
    qualquer trilho pode estar mostrando a proxima acao dele la, e um `if` por
    painel seria uma lista para alguem esquecer de atualizar. */
@@ -1594,20 +1633,23 @@ function sincronizarHoje(pid){ renderHoje(); }
 function renderPainel(pid){
   var alvos=document.querySelectorAll('[data-painel="'+pid+'"]');
   if(!alvos.length) return;
-  var projs=getProjs(pid), h="";
+  /* A TELA MOSTRA OS VIVOS. As arquivadas continuam no armazenamento — e por
+     isso o filtro e aqui, e nao no getProjs(). */
+  var projs=vivos(getProjs(pid)), h="";
   projs.forEach(function(p,pi){
-    var contam=p.subs.filter(function(x){return x.vida!=="inaplicavel";});
+    var subsVivos=vivos(p.subs);
+    var contam=subsVivos.filter(function(x){return x.vida!=="inaplicavel";});
     var total=contam.length, feitas=contam.filter(function(x){return x.st===2;}).length;
-    var emAnd=p.subs.some(function(x){return x.st===1;});
+    var emAnd=subsVivos.some(function(x){return x.st===1;});
     var ab=projAberto(pid,p.id,emAnd);
-    h+='<details class="proj'+(emAnd?" ativo":"")+'" data-pi="'+pi+'" data-proj="'+pid+'/'+p.id+'" '+(ab?"open":"")+
+    h+='<details class="proj'+(emAnd?" ativo":"")+'" data-proj="'+pid+'/'+p.id+'" '+(ab?"open":"")+
        ' ontoggle="setProjAberto(\''+pid+'\',\''+p.id+'\',this.open)">'+
        '<summary class="proj-head">'+
        '<div class="proj-name" contenteditable="true" onclick="event.stopPropagation()" '+
-       'onblur="editProj(\''+pid+'\','+pi+',this.innerText)">'+escapeHtml(p.t)+'</div>'+
+       'onblur="editProj(\''+pid+'\',\''+p.id+'\',this.innerText)">'+escapeHtml(p.t)+'</div>'+
        '<span class="proj-prog">'+feitas+'/'+total+'</span></summary><div class="proj-body">';
     if(p.n) h+='<div class="proj-note">'+escapeHtml(p.n)+'</div>';
-    p.subs.forEach(function(x,si){
+    subsVivos.forEach(function(x,si){
       normSub(x);
       var vClass = x.vida && x.vida!=="ativo" ? " vida-"+x.vida : "";
       var selo = "";
@@ -1618,14 +1660,14 @@ function renderPainel(pid){
               ? '<span class="sub-medida">'+(x.medida.feito||0)+'/'+x.medida.total+'</span>' : '';
       var ondeT = x.onde ? '<span class="sub-onde">'+escapeHtml(x.onde)+'</span>' : '';
       h+='<div class="sub st-'+x.st+vClass+'">'+
-         '<span class="st-dot" onclick="cycleSub(\''+pid+'\','+pi+','+si+')" title="'+ST_LBL[x.st]+'"></span>'+
-         '<div class="sub-text" contenteditable="true" onblur="editSub(\''+pid+'\','+pi+','+si+',this.innerText)">'+escapeHtml(x.t)+'</div>'+
+         '<span class="st-dot" onclick="cycleSub(\''+pid+'\',\''+p.id+'\',\''+x.id+'\')" title="'+ST_LBL[x.st]+'"></span>'+
+         '<div class="sub-text" contenteditable="true" onblur="editSub(\''+pid+'\',\''+p.id+'\',\''+x.id+'\',this.innerText)">'+escapeHtml(x.t)+'</div>'+
          selo+med+ondeT+
-         '<button class="vida-btn" onclick="ciclarVida(\''+pid+'\','+pi+','+si+')" title="adiar, abandonar ou reativar">&#8943;</button>'+
-         '<button class="del" onclick="delSub(\''+pid+'\','+pi+','+si+')" aria-label="Arquivar subtarefa">&times;</button></div>';
+         '<button class="vida-btn" onclick="ciclarVida(\''+pid+'\',\''+p.id+'\',\''+x.id+'\')" title="adiar, abandonar ou reativar">&#8943;</button>'+
+         '<button class="del" onclick="delSub(\''+pid+'\',\''+p.id+'\',\''+x.id+'\')" aria-label="Arquivar subtarefa">&times;</button></div>';
     });
-    h+='<button class="add-sub" onclick="addSub(\''+pid+'\','+pi+')">+ subtarefa</button>'+
-       '<button class="del-proj" onclick="delProj(\''+pid+'\','+pi+')">remover este item</button>'+
+    h+='<button class="add-sub" onclick="addSub(\''+pid+'\',\''+p.id+'\')">+ subtarefa</button>'+
+       '<button class="del-proj" onclick="delProj(\''+pid+'\',\''+p.id+'\')">remover este item</button>'+
        '</div></details>';
   });
   h+='<button class="add-row" onclick="addProj(\''+pid+'\')">+ Novo item</button>';
@@ -1655,7 +1697,7 @@ function renderTrilhos(){
      ' ontoggle="save(\'cron:painel-open:registro\', this.open)">'+
      '<summary><span class="tb-t">Registro</span><span class="tb-sub">o que voc\u00ea fechou, por data</span></summary>'+
      '<div class="tb-body"><div id="registro"></div></div></details>';
-  var nArq = getArquivo().length;
+  var nArq = arquivados().length;
   h+='<details class="tecbloco" id="painel-arquivo" '+(LS("cron:painel-open:arquivo",false)?"open":"")+
      ' ontoggle="save(\'cron:painel-open:arquivo\', this.open)">'+
      '<summary><span class="tb-t">Arquivo</span><span class="tb-sub">'+(nArq? nArq+' item'+(nArq===1?'':'s')+' \u00b7 nada foi apagado' : 'nada arquivado')+'</span></summary>'+

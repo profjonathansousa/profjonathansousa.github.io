@@ -191,7 +191,7 @@ function resumoDoTrilho(pid, pr){
   (pr.subs || []).forEach(function(sx){
     var x = normSub(sx);
     if(x.em && x.em > ultimo) ultimo = x.em;
-    if(x.vida === "inaplicavel") return;
+    if(x.vida === "inaplicavel" || estaArquivado(x)) return;
     total++;
     if(x.st === 2){ feito++; return; }
     /* A POSICAO DA ETAPA ATUAL NAO SE DEDUZ DA CONTAGEM. `feito + 1` so acerta
@@ -265,7 +265,7 @@ function processoDeTrilho(pid, pr){
 function processosVisiveis(){
   var out = PROCESSOS.slice();
   PAINEIS.forEach(function(P){
-    (getProjs(P.id) || []).forEach(function(pr){
+    vivos(getProjs(P.id)).forEach(function(pr){
       if(projConcluido(pr)) return;
       if(!projetoComecou(pr)) return;
       out.push(processoDeTrilho(P.id, pr));
@@ -331,7 +331,7 @@ function revisaoDaSemana(){
     var o = ultimoNaSemana[k];
     if(o.para !== 2) return;                                  /* condicao 2 */
     var partes = k.split("/");
-    var pr = (getProjs(partes[0]) || []).filter(function(x){ return x.id===partes[1]; })[0];
+    var pr = vivos(getProjs(partes[0])).filter(function(x){ return x.id===partes[1]; })[0];
     var sx = pr && (pr.subs||[]).filter(function(x){ return x.id===partes[2]; })[0];
     if(!sx || sx.st !== 2) return;                            /* condicao 3 */
     etapas.push({pid:partes[0], projId:partes[1], subId:partes[2],
@@ -606,14 +606,14 @@ function dadosDoEvento(ev, apagado){
   return d;
 }
 function estagioDoTrilho(pid, projId){
-  var projs = getProjs(pid) || [];
+  var projs = vivos(getProjs(pid));
   for(var i=0;i<projs.length;i++){
     var pr = projs[i];
     if(projId){ if(pr.id !== projId) continue; }
     else if(projConcluido(pr)) continue;
     for(var j=0;j<(pr.subs||[]).length;j++){
       var x = normSub(pr.subs[j]);
-      if(x.vida === "inaplicavel") continue;
+      if(x.vida === "inaplicavel" || estaArquivado(x)) continue;
       if(x.st === 2) continue;
       return {pid:pid, projId:pr.id, projT:pr.t, subId:x.id, subT:x.t, st:x.st,
               vida:x.vida, motivo:x.motivo, prova:x.prova||"", em:x.em||""};
@@ -634,7 +634,7 @@ function proximaDoTrilho(pid){ return estagioDoTrilho(pid, null); }
    Prioridades. A regra le o dado, entao ela se corrige sozinha conforme os
    paineis enchem e esvaziam; nao ha lista de excecao para manter. */
 function projetosAtivos(pid){
-  return (getProjs(pid) || []).filter(function(pr){ return !projConcluido(pr); });
+  return vivos(getProjs(pid)).filter(function(pr){ return !projConcluido(pr); });
 }
 function trilhoSemEscolha(pid){
   var ativos = projetosAtivos(pid);
@@ -716,7 +716,7 @@ function candidatoDoMotor(P, pr){
     if(x.em){ comecou = true; if(x.em > ultimo) ultimo = x.em; }
     if(x.st > 0) comecou = true;
     if(x.st === 2) return;
-    if(x.vida === "inaplicavel" || x.vida === "abandonado") return;
+    if(x.vida === "inaplicavel" || x.vida === "abandonado" || estaArquivado(x)) return;
     if(x.vida === "adiado"){
       if(x.voltar_em && x.voltar_em > adiadoAte) adiadoAte = x.voltar_em;
       return;
@@ -804,7 +804,7 @@ function motorDePrioridades(manuais){
 
   var candidatos = [];
   PAINEIS.forEach(function(P){
-    (getProjs(P.id) || []).forEach(function(pr){
+    vivos(getProjs(P.id)).forEach(function(pr){
       var chave = P.id + "/" + pr.id;
       if(jaManual[chave]) return;                       /* voce ja escolheu */
       if(retomadaSilenciada(silenciadas, chave, hojeStr)) return;
@@ -956,7 +956,7 @@ function retomadas(limite){
   limite = (typeof limite === "number") ? limite : RETOMADA_DIAS;
   var adiadas = retomadasAdiadas(), hojeStr = ymd(now), out = [];
   PAINEIS.forEach(function(P){
-    (getProjs(P.id) || []).forEach(function(pr){
+    vivos(getProjs(P.id)).forEach(function(pr){
       if(projConcluido(pr)) return;
       var chave = P.id + "/" + pr.id;
       if(retomadaSilenciada(adiadas, chave, hojeStr)) return;  /* silenciada */
@@ -966,7 +966,7 @@ function retomadas(limite){
         if(x.em){ comecou = true; if(x.em > ultimo) ultimo = x.em; }
         if(x.st > 0) comecou = true;
         if(x.st === 2) return;
-        if(x.vida === "inaplicavel" || x.vida === "abandonado") return;
+        if(x.vida === "inaplicavel" || x.vida === "abandonado" || estaArquivado(x)) return;
         if(x.vida === "adiado"){
           /* Adiada COM data no futuro nao conta; adiada sem data nenhuma
              tambem nao, porque continua sendo uma decisao sua. */
@@ -1017,7 +1017,7 @@ function contagemDeVagas(){
   return {novas:novas, revisar:revisar, marcadas:marcadas, total:itens.length};
 }
 function projConcluido(p){
-  var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel"; });
+  var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel" && !estaArquivado(x); });
   return conta.length > 0 && conta.every(function(x){ return x.st === 2; });
 }
 /* A PECA CORRENTE DA ESTEIRA — e por que ela deixou de ser "a peca do mes".
@@ -1039,12 +1039,12 @@ function mesesEntre(a, b){
   return (Number(pb[0])-Number(pa[0]))*12 + (Number(pb[1])-Number(pa[1]));
 }
 function pecaDoMes(){
-  var projs=getProjs("pipeline"), p=null;
+  var projs=vivos(getProjs("pipeline")), p=null;
   for(var i=0;i<projs.length;i++){ if(!projConcluido(projs[i])){ p=projs[i]; break; } }
   if(!p) return null;
   var etapa=null;
   for(var j=0;j<p.subs.length;j++){
-    if(p.subs[j].vida==="inaplicavel") continue;
+    if(p.subs[j].vida==="inaplicavel" || estaArquivado(p.subs[j])) continue;
     if(p.subs[j].st!==2){etapa=p.subs[j].t;break;}
   }
   var atraso = (p.mes && p.mes < monthKey) ? mesesEntre(p.mes, monthKey) : 0;
@@ -1080,7 +1080,7 @@ function ritmoDoRegistro(){
    regra do pecaDoMes, e nao uma segunda contagem paralela que um dia
    discordaria dela. */
 function entregaDosArtigos(){
-  var projs = (getProjs("pipeline") || []).filter(function(p){ return p.mes; });
+  var projs = vivos(getProjs("pipeline")).filter(function(p){ return p.mes; });
   var previstos = projs.filter(function(p){ return p.mes <= monthKey; });
   return {previstos:previstos.length, entregues:previstos.filter(projConcluido).length,
           total:projs.length};

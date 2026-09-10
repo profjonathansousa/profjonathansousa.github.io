@@ -3070,6 +3070,188 @@ console.log("\n=== 67. Quem escreve a cron_estrutura_base, e quem so le (9G-0 B1
      "e sem credenciais o comando recusa a publicacao inteira");
 }
 
+console.log("\n=== 69. Arquivar virou `vida`, e a posicao foi aposentada (9G-0 B2) ===");
+{
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const acha = (X, projId, subId) => {
+    let x = null;
+    (X.getProjs("pipeline") || []).forEach(p => { if (p.id === projId)
+      (p.subs || []).forEach(s => { if (s.id === subId) x = s; }); });
+    return x;
+  };
+  const proj = (X, projId) => (X.getProjs("pipeline") || []).find(p => p.id === projId);
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const subId = pr.subs[0].id;
+
+  /* ARQUIVAR SUBITEM: a peca FICA no armazenamento, com vida trocada. */
+  A.delSub("pipeline", pr.id, subId);
+  await A.SYNC.drenarFila();
+  ok(!!acha(A, pr.id, subId), "a peca continua no armazenamento — nada de splice");
+  ok(acha(A, pr.id, subId).vida === "arquivado", "com vida='arquivado'",
+     acha(A, pr.id, subId).vida);
+  ok(A.vivos(proj(A, pr.id).subs).every(x => x.id !== subId),
+     "e some da lista de vivos, que e o que a tela desenha");
+
+  /* ATRAVESSA: vida ja e campo do dominio `item`. */
+  const l = srv.linhas.find(x => x.dominio === "item" &&
+                            x.chave === "pipeline/" + pr.id + "/" + subId);
+  ok(!!l && l.valor.vida === "arquivado", "e subiu pelo dominio `item`", l && l.valor);
+  ok(acha(B, pr.id, subId).vida === "arquivado",
+     "chegando ao celular: arquivar atravessa aparelhos", acha(B, pr.id, subId).vida);
+  const toque = A.getToques().filter(t => t.tipo === "registro").pop();
+  ok(toque && toque.dados.vida === "arquivado",
+     "e o toque legado carrega a mesma vida", toque && toque.dados.vida);
+  ok(l.em === toque.quando, "com o mesmo instante nos dois caminhos");
+
+  /* RESTAURAR: so o campo de volta, sem posicao nenhuma. */
+  A.restaurarSub("pipeline", pr.id, subId);
+  await A.SYNC.drenarFila();
+  ok(acha(A, pr.id, subId).vida === "ativo", "restaurar devolve vida='ativo'");
+  ok(acha(B, pr.id, subId).vida === "ativo", "e isso tambem atravessa");
+  ok(A.vivos(proj(A, pr.id).subs).some(x => x.id === subId), "a peca volta aos vivos");
+
+  /* PROJETO: arquiva local, e nao viaja — estrutura_proj nao tem `vida`. */
+  const linhasAntes = srv.linhas.length;
+  A.delProj("pipeline", pr.id);
+  await A.SYNC.drenarFila();
+  ok(proj(A, pr.id).vida === "arquivado", "o projeto arquiva por vida tambem",
+     proj(A, pr.id).vida);
+  ok(A.vivos(A.getProjs("pipeline")).every(p => p.id !== pr.id), "e sai dos vivos");
+  ok(srv.linhas.length === linhasAntes,
+     "e NAO viaja: nao ha dominio online para estrutura", srv.linhas.length - linhasAntes);
+  A.restaurarProj("pipeline", pr.id);
+  ok(proj(A, pr.id).vida === "ativo", "e restaurar o projeto e o mesmo campo de volta");
+}
+
+console.log("\n=== 70. O que a peca arquivada NAO faz mais (9G-0 B2) ===");
+{
+  const A = criarAparelho("mac", criarServidor());
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const subId = pr.subs[0].id;
+
+  const antesEtapa = A.estagioDoTrilho("pipeline", pr.id);
+  const antesPeca  = A.pecaDoMes();
+  A.delSub("pipeline", pr.id, subId);
+
+  /* O motor, a revisao e a esteira deixam de ve-la. */
+  const et = A.estagioDoTrilho("pipeline", pr.id);
+  ok(!et || et.subId !== subId, "a etapa arquivada nao e mais a proxima do trilho",
+     et && et.subId);
+  const mot = A.motorDePrioridades([]);
+  ok((mot || []).every(o => o.subId !== subId),
+     "nem e sugerida pelo motor de prioridades");
+  const rev = A.revisaoDaSemana();
+  ok(!!rev && !!rev.concluido, "a revisao da semana continua funcionando", Object.keys(rev));
+
+  /* A TELA. Sem isto o teste media so o motor — e o painel e justamente onde
+     uma peca arquivada nao pode reaparecer. O document falso devolve [] em
+     querySelectorAll, entao aqui ele ganha um alvo para o render escrever. */
+  const alvo = {innerHTML: ""};
+  A.document.querySelectorAll = (sel) =>
+    (String(sel).indexOf('data-painel="pipeline"') >= 0 ? [alvo] : []);
+  A.renderPainel("pipeline");
+  ok(alvo.innerHTML.length > 0, "o painel desenhou", alvo.innerHTML.length);
+  ok(alvo.innerHTML.indexOf("'" + subId + "'") < 0,
+     "e a etapa arquivada NAO aparece no painel", subId);
+  ok(alvo.innerHTML.indexOf("'" + pr.subs[1].id + "'") > 0,
+     "enquanto as vivas continuam la", pr.subs[1].id);
+  /* E os handlers que ele emite enderecam por id. */
+  ok(/delSub\('pipeline','[^']+','[^']+'\)/.test(alvo.innerHTML),
+     "com delSub por painel/projeto/subitem, sem posicao");
+  ok(!/delSub\('pipeline',\d/.test(alvo.innerHTML), "e nunca por indice");
+
+  /* E o contador do painel nao a conta. RELE do armazenamento: o `pr` de cima
+     e uma copia anterior ao arquivamento, e mediria a si mesma. */
+  const prAgora = (A.getProjs("pipeline") || []).find(p => p.id === pr.id);
+  const contam = A.vivos(prAgora.subs).filter(x => x.vida !== "inaplicavel");
+  ok(contam.every(x => x.id !== subId), "e o contador do painel nao a conta",
+     contam.map(x => x.id));
+
+  /* PROJETO arquivado sai da esteira. */
+  A.delProj("pipeline", pr.id);
+  ok((A.projetosAtivos("pipeline") || []).every(p => p.id !== pr.id),
+     "projeto arquivado sai dos projetos ativos");
+  const pc = A.pecaDoMes();
+  ok(!pc || pc.projId !== pr.id, "e deixa de ser a peca do mes", pc && pc.projId);
+  ok(!!antesEtapa || antesEtapa === null, "(controle: havia etapa antes)", !!antesEtapa);
+  ok(antesPeca !== undefined, "(controle: pecaDoMes respondia antes)");
+}
+
+console.log("\n=== 71. A gaveta `cron:arquivo` foi aposentada (9G-0 B2) ===");
+{
+  /* MIGRACAO: a gaveta antiga vira vida='arquivado' no painel, uma vez. */
+  const antiga = [
+    {quando:"2026-09-01T10:00:00Z", d:"2026-09-01", pid:"pipeline", tipo:"subtarefa",
+     ondeEstava:{projId:"a01", projT:"Artigo", indice:2},
+     item:{id:"a01-9", t:"Etapa arquivada faz tempo", st:1, vida:"ativo"}},
+    {quando:"2026-09-02T10:00:00Z", d:"2026-09-02", pid:"pipeline", tipo:"projeto",
+     ondeEstava:{indice:5},
+     item:{id:"aZZ", t:"Projeto arquivado faz tempo", subs:[{id:"aZZ-1", t:"uma etapa"}]}}
+  ];
+  const A = criarAparelho("mac", criarServidor(),
+                          {storage:{"cron:arquivo": JSON.stringify(antiga)}});
+  ok(A.LS("cron:arquivo", null) === null || A.__armazem["cron:arquivo"] === undefined,
+     "a gaveta some do armazenamento depois da migracao no boot",
+     A.__armazem["cron:arquivo"]);
+
+  const projs = A.getProjs("pipeline") || [];
+  const sub = (projs.find(p => p.id === "a01") || {subs:[]}).subs.find(x => x.id === "a01-9");
+  ok(!!sub && sub.vida === "arquivado", "o subitem voltou ao painel, arquivado", sub && sub.vida);
+  ok(sub.t === "Etapa arquivada faz tempo" && sub.st === 1,
+     "com o que ele era: nada foi inventado nem perdido", {t: sub.t, st: sub.st});
+  const pz = projs.find(p => p.id === "aZZ");
+  ok(!!pz && pz.vida === "arquivado", "e o projeto tambem", pz && pz.vida);
+  ok((pz.subs || []).length === 1, "com os subitens que tinha", pz && pz.subs.length);
+  ok(A.arquivados().length === 2, "e os dois aparecem na aba Arquivo", A.arquivados().length);
+
+  /* NAO PUBLICA TOQUE: o arquivamento antigo nunca atravessou aparelho. */
+  ok(A.getToques().length === 0, "a migracao nao publica toque", A.getToques().map(t => t.tipo));
+
+  /* TRAVA EM VEZ DE MIGRAR PELA METADE. */
+  const orfa = [{quando:"2026-09-01T10:00:00Z", d:"2026-09-01", pid:"pipeline",
+                 tipo:"subtarefa", ondeEstava:{projId:"nao-existe", projT:"sumiu"},
+                 item:{id:"x-1", t:"orfa"}}];
+  const B = criarAparelho("celular", criarServidor(),
+                          {storage:{"cron:arquivo": JSON.stringify(orfa)}});
+  ok(!!B.__armazem["cron:arquivo"],
+     "com uma entrada sem projeto-pai, a gaveta fica INTACTA");
+  const r = B.migrarArquivo();
+  ok(r.migrados === 0 && r.travados.length === 1,
+     "e a migracao devolve o que travou, sem migrar nada", r);
+
+  /* NENHUM CONSUMIDOR DE `cron:arquivo` SOBROU. */
+  const app = ["00-config", "10-nucleo", "15-sync", "20-regras", "30-render", "40-app"]
+    .map(f => fs.readFileSync(path.join(RAIZ, "Cronograma", "js", f + ".js"), "utf8"));
+  const codigo = app.join("\n").split("\n")
+    .filter(l => !/^\s*(\/\*|\*|\/\/)/.test(l)).join("\n");
+  const usos = (codigo.match(/["']cron:arquivo["']/g) || []).length;
+  ok(usos === 3, "so a migracao fala em cron:arquivo (ler, apagar, marcar)", usos);
+  ok(/function migrarArquivo/.test(codigo), "e ela e a migracao");
+  ok(!/getArquivo|restaurarArquivo|function arquivar\(/.test(codigo),
+     "getArquivo, arquivar e restaurarArquivo nao existem mais");
+  /* `ondeEstava` so pode aparecer DENTRO da migracao: e a forma da gaveta
+     antiga, e ninguem mais deve conhece-la. */
+  const semMigracao = codigo.split("function migrarArquivo")[0] +
+                      (codigo.split("function migrarArquivo")[1] || "").split("\n}").slice(1).join("\n}");
+  ok(!/ondeEstava/.test(semMigracao),
+     "e `ondeEstava` so existe dentro da migracao");
+
+  /* E NENHUM HANDLER ENDERECA POR POSICAO. */
+  const render = app[4];
+  ["editProj", "editSub", "delProj", "delSub", "cycleSub", "ciclarVida", "addSub"]
+    .forEach(f => {
+      const corpo = render.split("function " + f + "(")[1] || "";
+      const assinatura = corpo.split(")")[0];
+      ok(!/\bpi\b|\bsi\b|\bi\b(?!d)/.test(assinatura),
+         "   " + f + " endereca por id, e nao por posicao", assinatura);
+    });
+  ok(!/restaurarArquivo\(/.test(render) && /restaurarProj\(|restaurarSub\(/.test(render),
+     "e restaurar e por id, sem posicao");
+}
+
 console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politicas ===");
 {
   /* O PROJETO SUPABASE E COMPARTILHADO. Este bloco le o sql/cron_estado.sql e

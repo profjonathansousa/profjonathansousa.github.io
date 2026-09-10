@@ -2076,6 +2076,63 @@ falso **emula a transação** e recusa qualquer escrita que não seja a RPC — 
 servidor que aplicasse pela metade provaria o contrário do que o teste afirma. `teste_sync.js`, seções 66 e 67, cobrem a regra de três
 vias e quem pode escrever a base.
 
+### 9G-0 B2 — O `cron:arquivo` aposentado
+
+Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta
+paralela indexada por **posição**. Agora é `vida = 'arquivado'` na própria peça
+— um valor que o esquema v2 já declarava e nunca usava.
+
+| | antes | agora |
+|---|---|---|
+| arquivar | `splice` + entrada em `cron:arquivo` | `vida = 'arquivado'` |
+| restaurar | `restaurarArquivo(k)`, `k` = posição na gaveta | `vida = 'ativo'`, por id |
+| aba Arquivo | a gaveta | um **filtro** sobre os painéis |
+| atravessa? | nunca | **subitem sim**, projeto não |
+
+#### Subitem atravessa, projeto não
+
+`vida` já é campo do domínio `item` e já sobe pelo `tocarItem` (9E) — então
+arquivar e restaurar subitem passaram a atravessar aparelhos **de graça**, pelo
+LWW de sempre, com o mesmo instante nos dois caminhos. Arquivar no Mac arquiva
+no celular.
+
+**Projeto continua local**, e é consequência conhecida: `estrutura_proj` é
+`{t, n, mes}`, sem `vida`, e a estrutura ainda não é domínio online. Não há
+regressão — arquivar projeto já era local.
+
+#### A posição saiu dos handlers, não só da gaveta
+
+Com as peças arquivadas ficando no array e saindo só da **tela**, a posição que
+o render emitia deixou de ser a posição no armazenamento: `editProj(pid, i, …)`
+passaria a editar a peça errada. Por isso `editProj`, `editSub`, `delProj`,
+`delSub`, `cycleSub`, `ciclarVida` e `addSub` passaram a endereçar **por id**, e
+`renderPainel` emite ids. O `data-pi` saiu do HTML.
+
+#### O filtro é nos leitores, nunca no `getProjs()`
+
+`getProjs()` continua devolvendo tudo. Quinze pontos fazem
+`setProjs(getProjs(...))`, e um `getProjs` filtrado apagaria as arquivadas do
+armazenamento na primeira volta. O `vivos()` entra nos **leitores**: o painel, o
+motor de prioridades, a revisão da semana, o estágio do trilho, os projetos
+ativos, a peça do mês, a entrega dos artigos, os processos visíveis e as
+retomadas.
+
+#### A migração, uma vez por aparelho, e nunca pela metade
+
+Cada entrada da gaveta volta ao painel com `vida='arquivado'` — a peça inteira,
+como estava. Se **alguma** entrada não puder voltar (um subitem cujo projeto-pai
+não existe mais), a migração **não acontece**, a gaveta fica intacta e o console
+diz o que travou. Meia migração seria pior do que nenhuma.
+
+**Não publica toque**: o arquivamento antigo nunca atravessou aparelho, e uma
+decisão que nunca viajou não passa a viajar retroativamente — mesma regra da
+migração das prioridades.
+
+#### Testes
+
+`teste_sync.js`, seções 69 a 71 — incluindo uma asserção sobre o **HTML do
+painel**: sem ela, remover o filtro do render não fazia teste nenhum falhar.
+
 ### Como ligar, e o que a tela diz
 
 Em **Sincronização**, abaixo do bloco do token do GitHub, há **Estado online**:
@@ -2351,7 +2408,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9F — Prova da escrita dupla | concluída |
 | 9G-0 A — pipeline com caminho online | concluída |
 | 9G-0 B1 — publicação da estrutura, baseline e merge de três vias ligado | concluída |
-| 9G-0 B2 — aposentar o `cron:arquivo` | aberta: decisão sobre o arquivo real |
+| 9G-0 B2 — `cron:arquivo` aposentado, arquivar por `vida` | concluída |
 | 9G — desativação do caminho do GitHub | não iniciada |
 
 ### Previsto e ainda não implementado

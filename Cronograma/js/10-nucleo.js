@@ -18,7 +18,7 @@ function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
      vida — ciclo     : ativo · adiado · abandonado · arquivado
    Nada é descartado em lugar nenhum:
      · o que passa do teto do registro       -> cron:registro-arquivo
-     · o que você remove de um painel        -> cron:arquivo (com restaurar)
+     · o que você remove de um painel        -> vida='arquivado' na própria peça
      · o histórico que não casar na migração -> cron:registro-antigo
    O log passa a ser gravado por id, com o título fotografado no momento:
    renomear um item deixa de orfanar o histórico.
@@ -229,28 +229,94 @@ function mesclarEntrada(){
   save("cron:entrada-aplicada", ent._gerado_em || new Date().toISOString());
   return aplicou;
 }
-/* ---- Arquivo: remover deixa de destruir ---- */
-function getArquivo(){ return LS("cron:arquivo", []) || []; }
-function arquivar(pid, item, tipo, ondeEstava){
-  var a = getArquivo();
-  a.push({quando:new Date().toISOString(), d:ymd(now), pid:pid, tipo:tipo, ondeEstava:ondeEstava||null, item:item});
-  save("cron:arquivo", a);
+/* ---- Arquivo: remover deixa de destruir, e deixa de mudar de lugar ----
+
+   ATE A FASE 9G-0 B2 arquivar era um MECANISMO PROPRIO: splice no array mais
+   uma gaveta paralela (`cron:arquivo`) indexada por POSICAO. Duas consequencias
+   ruins, e as duas reais:
+
+     · a posicao se desloca. O `indice` era gravado e nunca lido — restaurar
+       empurrava a peca para o fim —, mas o `k` do botao da tela era a posicao
+       na gaveta, e a tela inteira dependia dela;
+     · a gaveta e local por construcao. Arquivar no Mac nao arquivava no
+       celular, e a peca continuava viva la.
+
+   AGORA E `vida = 'arquivado'`, um valor que o esquema v2 ja declarava e nunca
+   usava. A peca fica onde esta, com um campo a mais; a aba Arquivo e um FILTRO;
+   restaurar e voltar o campo para 'ativo'. Para SUBITENS isso atravessa
+   aparelhos de graca, porque `vida` ja e campo do dominio `item` e ja viaja
+   pelo LWW (Fase 9E). Para PROJETOS continua local, porque `estrutura_proj` e
+   {t, n, mes} e a estrutura ainda nao e dominio online. */
+function estaArquivado(x){ return !!(x && x.vida === "arquivado"); }
+/* O que a tela e o motor devem enxergar. NAO se aplica ao getProjs(), de
+   proposito: 15 pontos fazem setProjs(getProjs(...)), e um getProjs filtrado
+   apagaria as arquivadas do armazenamento na primeira volta. */
+function vivos(lista){ return (lista || []).filter(function(x){ return !estaArquivado(x); }); }
+
+/* A aba Arquivo, agora uma visao e nao uma gaveta. Devolve as pecas arquivadas
+   de todos os paineis, projeto e subitem, com o endereco por ID. */
+function arquivados(){
+  var fora = [];
+  PAINEIS.forEach(function(P){
+    (getProjs(P.id) || []).forEach(function(p){
+      if(estaArquivado(p)){
+        fora.push({pid:P.id, tipo:"projeto", projId:p.id, t:p.t || "", de:"", vidaDesde:p.vidaDesde || ""});
+        return;   /* subitem de projeto arquivado nao entra duas vezes */
+      }
+      (p.subs || []).forEach(function(x){
+        if(!estaArquivado(x)) return;
+        fora.push({pid:P.id, tipo:"subtarefa", projId:p.id, subId:x.id,
+                   t:x.t || "", de:p.t || "", vidaDesde:x.vidaDesde || ""});
+      });
+    });
+  });
+  return fora;
 }
-function restaurarArquivo(k){
-  var a = getArquivo(), it = a[k];
-  if(!it) return;
-  var p = getProjs(it.pid);
-  if(it.tipo==="projeto"){
-    p.push(normProj(it.item));
-  } else {
-    var alvo = null, procurado = it.ondeEstava && it.ondeEstava.projId;
-    for(var i=0;i<p.length;i++){ if(p[i].id===procurado){ alvo=p[i]; break; } }
-    if(!alvo){ alert("O item que continha esta subtarefa não existe mais no painel. Restaure-o primeiro."); return; }
-    alvo.subs.push(normSub(it.item));
+
+/* MIGRACAO, UMA VEZ POR APARELHO. Cada entrada da gaveta antiga volta para o
+   painel com vida='arquivado' — a peca inteira, como estava. Nada se inventa: o
+   `item` guardado E a peca. Nada se perde: se alguma entrada nao puder voltar
+   (um subitem cujo projeto-pai nao existe mais), a migracao NAO acontece, a
+   gaveta fica intacta e o relatorio diz o que travou. Meia migracao seria pior
+   do que nenhuma.
+
+   NAO PUBLICA TOQUE. O arquivamento antigo nunca atravessou aparelho, e uma
+   decisao que nunca viajou nao pode passar a viajar retroativamente — mesma
+   regra da migracao das prioridades (ver PRIO_MIGRADO_KEY). */
+function migrarArquivo(){
+  var antigo = LS("cron:arquivo", null);
+  if(!antigo || !antigo.forEach || !antigo.length){
+    if(antigo) localStorage.removeItem("cron:arquivo");   /* gaveta vazia: some */
+    return {migrados:0, travados:[]};
   }
-  setProjs(it.pid, p);
-  a.splice(k,1); save("cron:arquivo", a);
-  renderPainel(it.pid); renderArquivo(); sincronizarHoje(it.pid);
+  var porPainel = {}, travados = [];
+  antigo.forEach(function(it){
+    if(!it || !it.item || !it.item.id) return;
+    var pid = it.pid;
+    if(!porPainel[pid]) porPainel[pid] = getProjs(pid) || [];
+    var p = porPainel[pid];
+    if(it.tipo === "projeto"){
+      var existe = p.some(function(x){ return x.id === it.item.id; });
+      /* Ja voltou por outro caminho (o pipeline republicou): a copia arquivada
+         e redundante, e a peca viva manda. Nao e perda — e a mesma peca. */
+      if(existe) return;
+      var novo = normProj(it.item); novo.vida = "arquivado";
+      p.push(novo);
+      return;
+    }
+    var alvo = null;
+    for(var i=0;i<p.length;i++){ if(p[i].id === (it.ondeEstava && it.ondeEstava.projId)){ alvo = p[i]; break; } }
+    if(!alvo){ travados.push(it); return; }
+    if((alvo.subs || []).some(function(x){ return x.id === it.item.id; })) return;
+    var ns = normSub(it.item); ns.vida = "arquivado";
+    alvo.subs.push(ns);
+  });
+  if(travados.length) return {migrados:0, travados:travados};
+  var n = 0;
+  Object.keys(porPainel).forEach(function(pid){ setProjs(pid, porPainel[pid]); n++; });
+  localStorage.removeItem("cron:arquivo");
+  save("cron:arquivo-migrado", {quando:new Date().toISOString(), entradas:antigo.length});
+  return {migrados:antigo.length, paineis:n, travados:[]};
 }
 let checks = LS("cron:checks:"+dateKey, {});
 function guiaStore(){ return LS(TOEFL_GUIA_KEY, {}) || {}; }

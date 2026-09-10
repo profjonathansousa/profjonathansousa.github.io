@@ -61,6 +61,15 @@ document.getElementById("ver").textContent = "v"+APP_VERSION;
 /* Migração do esquema v1 -> v2. Roda UMA vez, antes das sementes e de
    qualquer render. Nada é descartado: ver migrarEsquema(). */
 try{ migrarEsquema(); }catch(e){ console.error("migração do esquema falhou:", e); }
+/* Fase 9G-0 B2: a gaveta antiga vira `vida=arquivado` no proprio painel, uma
+   vez por aparelho. Antes do mesclarEntrada, para que a entrada ja encontre as
+   pecas arquivadas no lugar e nao as recrie como novas. */
+try{
+  var _arq = migrarArquivo();
+  if(_arq.travados && _arq.travados.length)
+    console.error("cron:arquivo NAO migrado: " + _arq.travados.length +
+                  " entrada(s) sem projeto-pai. A gaveta ficou intacta.", _arq.travados);
+}catch(e){ console.error("migracao do arquivo falhou:", e); }
 try{ mesclarEntrada(); }catch(e){ console.error("mesclagem da entrada falhou:", e); }
 /* Antes de qualquer descida: o aparelho precisa falar por `id` para que o
    estado.json possa responder por `id`. */
