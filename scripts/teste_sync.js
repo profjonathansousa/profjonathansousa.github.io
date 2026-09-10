@@ -2008,8 +2008,18 @@ console.log("\n=== 50. Um escritor e um merge, tambem para a Triagem (9D) ===");
      {render: toquesRender, nucleo: toquesNucleo});
   ok(/migrarTriagemUmaVez[\s\S]*?tocarTriagem\(vid, r\.st, em\)/.test(nucleo),
      "e a migracao das marcacoes antigas passa pelo funil");
-  ok(/function tocarTriagem[\s\S]{0,1400}SYNC\.salvarAlteracao\(\s*"triagem"/.test(render),
-     "o escritor e o tocarTriagem, e o vgMarcar passa por ele");
+  /* A ESCRITA SAIU DE DENTRO DO tocarTriagem (10/09) e virou o
+     escreverTriagemOnline, para que a republicacao das decisoes antigas use o
+     MESMO payload sem passar pelo relogio — republicar nao e decidir. Entao a
+     assercao deixou de ser sobre proximidade de linhas e passou a ser sobre a
+     cadeia: ha UM lugar que escreve, o funil chama esse lugar, e o vgMarcar
+     chama o funil. A contagem acima e que garante o "um lugar so". */
+  ok((render.match(/function escreverTriagemOnline/g) || []).length === 1,
+     "ha UM escritor online de triagem");
+  ok(/function escreverTriagemOnline[\s\S]{0,500}SYNC\.salvarAlteracao\(\s*"triagem"/.test(render),
+     "   e e nele que a salvarAlteracao mora");
+  ok(/function tocarTriagem[\s\S]{0,400}escreverTriagemOnline\(/.test(render),
+     "o funil tocarTriagem chama esse escritor, e o vgMarcar passa pelo funil");
   const vg = render.split("function vgMarcar(")[1].split("\n}")[0];
   ok(/var iso = tocarTriagem\(id, st\)/.test(vg), "   o vgMarcar chama o funil");
   ok(!/new Date\(\)\.toISOString\(\)/.test(vg.split("iso ? new Date(iso)")[0]),
@@ -3342,6 +3352,99 @@ console.log("\n=== 14. O esquema: isolamento do CONTAS_CASA e forma das politica
      "    o app nao pode escrever na cron_dono");
   ok(!/create policy[^;]*on public\.cron_estrutura_base[^;]*for (insert|update|delete)/i.test(CODIGO),
      "    nem na cron_estrutura_base (merge de tres vias)");
+}
+
+console.log("\n=== 72. As decisoes anteriores ao corte, publicadas uma vez (10/09) ===");
+{
+  /* O PROBLEMA QUE ESTA SECAO GUARDA. Ate a 9G-3 uma decisao de triagem ou de
+     subitem viajava pelo GitHub: o funil carimbava `em` e o toque subia para o
+     estado.json. Cortado esse caminho, as decisoes tomadas ANTES do corte
+     ficaram com instante e sem linha online. Medido em producao: 103 vagas
+     triadas num aparelho, DUAS linhas de triagem no banco.
+
+     O migrarTriagemUmaVez nao as alcanca — ele pula quem tem `em`, tratando o
+     instante como prova de que a marca "ja viaja". Isso valia com dois
+     caminhos; com um so, nao diz nada. */
+  const srv = criarServidor();
+  const ANTES_TRI = "2026-08-20T10:00:00.000Z";
+  const ANTES_SUB = "2026-08-21T11:00:00.000Z";
+  const A = criarAparelho("mac", srv, {storage: {
+    /* Duas decididas (com instante) e uma nunca tocada (sem instante). */
+    "cron:triagem": JSON.stringify({
+      "philjobs-1": {st:2, quando:"2026-08-20", em:ANTES_TRI},
+      "philjobs-2": {st:0, quando:"2026-08-20", em:ANTES_TRI},
+      "philjobs-3": {st:0}
+    }),
+    /* A trava do migrarTriagemUmaVez JA esta posta, como esta nos aparelhos
+       reais: se a rotina nova dependesse dele, nada seria publicado. */
+    "cron:triagem-publicada": "true"
+  }}).__conectar();
+
+  /* Um subitem com instante antigo, no trilho real. */
+  const pr = (A.getProjs("pipeline") || [])[0];
+  const projs = A.getProjs("pipeline");
+  projs[0].subs[0].st = 2;
+  projs[0].subs[0].em = ANTES_SUB;
+  A.setProjs("pipeline", projs);
+
+  const regAntes = A.getReg().length;
+  const fora = A.publicarDecisoesAntigas();
+  await A.SYNC.drenarFila();
+
+  ok(fora.correu === true, "1. a rotina correu com a sincronia ligada", fora);
+  ok(fora.triagem === 2,
+     "2. as DUAS decididas subiram, e a nunca tocada nao", fora.triagem);
+  const tri = srv.linhas.filter(l => l.dominio === "triagem");
+  ok(tri.length === 2 && tri.every(l => l.chave !== "philjobs-3"),
+     "   e a philjobs-3, sem instante, nao virou linha", tri.map(l => l.chave));
+
+  /* O QUE TORNA ISTO SEGURO DE RODAR NOS DOIS APARELHOS: o instante publicado
+     e o VERDADEIRO da decisao, e nao o de agora. Com o instante de agora, uma
+     marca de agosto atropelaria uma decisao de setembro do outro aparelho. */
+  ok(tri.every(l => l.em === ANTES_TRI),
+     "3. e sobem com o instante VERDADEIRO da decisao, nao com o de agora",
+     tri.map(l => l.em));
+
+  /* st = 0 COM INSTANTE E UMA DECISAO — a vaga foi desmarcada de proposito, e
+     desmarcar precisa atravessar tanto quanto marcar. */
+  const zero = tri.filter(l => l.chave === "philjobs-2")[0];
+  ok(zero && zero.valor.st === 0,
+     "4. `st:0` com instante viaja: desmarcar tambem e decisao", zero && zero.valor);
+
+  const itens = srv.linhas.filter(l => l.dominio === "item");
+  ok(itens.length >= 1, "5. o subitem com instante tambem subiu", itens.length);
+  ok(itens.every(l => l.em !== null && /^2026-08-21/.test(l.em)),
+     "   com o instante dele, e nao com o de agora", itens.map(l => l.em));
+  ok(itens.every(l => l.valor && typeof l.valor.st === "number" && "vida" in l.valor),
+     "   e com o MESMO payload do funil (st, vida, motivo, voltar_em, vidaDesde)",
+     itens[0] && Object.keys(itens[0].valor));
+
+  /* REPUBLICAR NAO E DECIDIR. As linhas de registro daquelas decisoes ja
+     existem aqui, escritas no dia em que foram tomadas: criar outras seria
+     inventar historico. */
+  ok(A.getReg().length === regAntes,
+     "6. e NADA foi escrito no registro: republicar nao e decidir",
+     A.getReg().length - regAntes);
+  ok(srv.registros.length === 0,
+     "   nem no cron_registro", srv.registros.length);
+
+  /* UMA VEZ SO. */
+  const linhasAntes = srv.linhas.length;
+  const denovo = A.publicarDecisoesAntigas();
+  await A.SYNC.drenarFila();
+  ok(denovo.triagem === 0 && denovo.itens === 0 && srv.linhas.length === linhasAntes,
+     "7. rodar de novo nao republica nada: a trava foi posta", denovo);
+
+  /* E A TRAVA SO E POSTA QUANDO CORREU. Um aparelho que abre a pagina antes de
+     a sessao subir nao pode gastar a unica chance que tem. */
+  const B = criarAparelho("cel", srv, {ligado: false, storage: {
+    "cron:triagem": JSON.stringify({"philjobs-9": {st:1, em:ANTES_TRI}})
+  }});
+  const semRede = B.publicarDecisoesAntigas();
+  ok(semRede.correu === false && semRede.triagem === 0,
+     "8. com a sincronia desligada nao publica nada", semRede);
+  ok(B.LS("cron:publicado-online", false) === false,
+     "   e NAO grava a trava: tenta de novo quando a conta entrar");
 }
 
 console.log("\n==============================================================");

@@ -194,5 +194,19 @@ catch(e){ console.error("sincronia: dominio item:", e); }
 try{ SYNC.assinarDominio("toefl", aplicarToeflOnline); }
 catch(e){ console.error("sincronia: dominio toefl:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
-try{ SYNC.iniciar().then(function(){ try{ renderSincroniaOnline(); }catch(e){} }); }
-catch(e){ console.error("sincronia online:", e); }
+/* DEPOIS do iniciar(), e nao antes: a publicacao das decisoes anteriores ao
+   corte precisa da sincronia LIGADA para ter onde escrever, e o iniciar() e
+   quem estabelece a sessao. Rodando antes, ela devolveria na primeira linha e
+   gravaria a trava sem ter publicado nada — o pior dos dois mundos. */
+try{
+  SYNC.iniciar().then(function(){
+    try{ renderSincroniaOnline(); }catch(e){}
+    try{
+      var pub = publicarDecisoesAntigas();
+      if(pub && (pub.triagem || pub.itens)){
+        try{ renderVistaVagas(); }catch(e){}
+        try{ renderProcessos(); }catch(e){}
+      }
+    }catch(e){ console.error("publicacao das decisoes antigas:", e); }
+  });
+}catch(e){ console.error("sincronia online:", e); }

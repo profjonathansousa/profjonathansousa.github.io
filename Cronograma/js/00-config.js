@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-09-10-so-online";
+const APP_VERSION = "2026-09-10-acervo-e-tela";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -656,6 +656,16 @@ var RETOMADA_EM = "2026-01-01T00:00:00.000Z";
    aparelho nao pode passar a atravessar retroativamente. Ela so muda de
    gaveta, aqui dentro. */
 var PRIO_MIGRADO_KEY = "cron:prio-feito-migrado";
+/* AS DECISOES ANTERIORES AO ESTADO ONLINE, publicadas uma vez por aparelho.
+   Ate a 9G-3 uma decisao de triagem ou de subitem viajava pelo GitHub: o funil
+   carimbava `em` e o toque subia para o estado.json. Cortado esse caminho, as
+   decisoes tomadas ANTES do corte ficaram com instante e sem linha online —
+   existem so no aparelho que as tomou, e nenhum outro as ve.
+
+   O migrarTriagemUmaVez nao as alcanca: ele pula quem tem `em`, tratando o
+   instante como prova de que a marca "ja viaja". Era verdade enquanto havia
+   dois caminhos; deixou de ser quando sobrou um. */
+var PUBLICADO_ONLINE_KEY = "cron:publicado-online";
 const RELOGIO_KEY = "cron:relogio";
 /* Um relogio de aparelho errado, e depois corrigido, deixaria a marca gravada
    no futuro — e dali em diante todo toque daqui venceria todo toque do outro
