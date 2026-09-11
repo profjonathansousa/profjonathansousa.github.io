@@ -3515,6 +3515,57 @@ console.log("\n=== 73. Etapa NOVA entra no lugar que a entrada declara (11/09) =
   ok(semNome.indexOf("zzz-sem-nome") < 0 && semNome.length === quantasAntes,
      "4. id desconhecido SEM titulo nao cria etapa em branco", semNome);
 
+  /* A ENTRADA CORRIGE A POSICAO DE QUEM JA ESTA AQUI. Este e o caso que
+     aconteceu em producao: o aparelho recebeu o arquivo novo com o codigo
+     velho — que ainda fazia push() —, ficou com o -4b no FIM, gravou o
+     cron:entrada-aplicada, e nenhuma remesclagem o movia. A correcao da
+     insercao nao alcanca quem ja errou; so a entrada mandando na ORDEM
+     alcanca. */
+  {
+    const B = criarAparelho("reparo", srv);
+    const idsB = () => {
+      let o = [];
+      (B.getProjs("pipeline") || []).forEach(p => { if (p.id === "a02") o = (p.subs||[]).map(s => s.id); });
+      return o;
+    };
+    const projsB = B.getProjs("pipeline");
+    projsB.forEach(p => { if (p.id === "a02")
+      p.subs.push({id: "a02-4b", t: "NotebookLM", prova: "estrela", st: 0}); });
+    B.setProjs("pipeline", projsB);
+    ok(idsB()[idsB().length - 1] === "a02-4b",
+       "6. o aparelho comeca com a etapa no lugar errado, no fim", idsB());
+
+    B.save("cron:entrada", {_gerado_em: "2026-09-11T09:00:00Z", paineis: {pipeline: [
+      {id: "a02", subs: [{id: "a02-4"}, {id: "a02-4b", t: "NotebookLM"}, {id: "a02-5"}]}]}});
+    B.mesclarEntrada();
+    const arr = idsB();
+    ok(arr.indexOf("a02-4b") === arr.indexOf("a02-4") + 1 &&
+       arr.indexOf("a02-4b") < arr.indexOf("a02-5"),
+       "   e a remesclagem a traz para o lugar declarado", arr);
+    ok(arr.length === new Set(arr).size,
+       "   sem duplicar nada no caminho", arr);
+  }
+
+  /* SUBITEM QUE A ENTRADA NAO MENCIONA NAO E REORDENADO. Ela nao fala dele, e
+     nao lhe cabe opinar sobre onde ele fica. */
+  {
+    const C = criarAparelho("intacto", srv);
+    const idsC = () => {
+      let o = [];
+      (C.getProjs("pipeline") || []).forEach(p => { if (p.id === "a03") o = (p.subs||[]).map(s => s.id); });
+      return o;
+    };
+    const projsC = C.getProjs("pipeline");
+    projsC.forEach(p => { if (p.id === "a03")
+      p.subs.splice(1, 0, {id: "a03-meu", t: "Coisa minha", st: 0}); });
+    C.setProjs("pipeline", projsC);
+    C.save("cron:entrada", {_gerado_em: "2026-09-11T09:00:00Z", paineis: {pipeline: [
+      {id: "a03", subs: [{id: "a03-1"}, {id: "a03-2"}, {id: "a03-3"}]}]}});
+    C.mesclarEntrada();
+    ok(idsC().indexOf("a03-meu") === 1,
+       "7. subitem local que a entrada nao menciona fica onde estava", idsC());
+  }
+
   /* E uma etapa nova declarada em PRIMEIRO lugar entra em primeiro. */
   A.save("cron:entrada", {_gerado_em: "2026-09-11T00:00:02Z", paineis: {pipeline: [
     {id: "a01", subs: [{id: "a01-0", t: "Antes de tudo"}, {id: "a01-1"}]}]}});
