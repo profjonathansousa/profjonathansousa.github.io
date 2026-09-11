@@ -44,6 +44,7 @@ O MODO PADRÃO É SECO, e imprime sempre a lista do que faria.
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -68,6 +69,36 @@ def ler_json(caminho, padrao=None):
         return json.load(f)
 
 
+def padroes_do_id(sub_id):
+    """Devolve os padroes que um id CONCRETO pode ter no mapa, em ordem.
+
+    O MAPA FALA POR PADRAO, O CRONOGRAMA POR INSTANCIA. O mapa descreve a
+    esteira uma vez so — `aNN-2` — e o Cronograma tem doze pecas, `a01-2` a
+    `a12-2`. Sem esta ponte, nenhum dos treze subitens do mapa casa com nenhum
+    dos setenta e oito do Cronograma, e o script diz "nada a marcar" estando
+    cego. Foi exatamente o que aconteceu na primeira execucao real.
+
+    A CONVENCAO E DECLARADA, NAO ADIVINHADA. O proprio mapa diz, em
+    objetivos.esteira.forma: "12 pecas unicas, uma por mes, ago/26 a jul/27.
+    ids a01..a12". E `aNN` e o que ele usa para falar de todas de uma vez. A
+    familia ebd usa `AAAA-MM` no lugar do ano e do mes, pela mesma razao.
+
+    DEVOLVE CANDIDATOS, E QUEM CHAMA EXIGE CASAMENTO EXATO. Nenhum padrao e
+    construido "parecido": ou o mapa tem aquela chave, ou o item nao casa e e
+    reportado. E o que mantem a regra 5 de pe — nada aqui adivinha.
+    """
+    fora = [sub_id]
+    # a01-2 -> aNN-2 ; a00-4b -> aNN-4b
+    porN = re.sub(r"^([a-z]+)\d+", lambda m: m.group(1) + "N" * 2, sub_id)
+    if porN != sub_id:
+        fora.append(porN)
+    # ebd-2026-08-1 -> ebd-AAAA-MM-1
+    porData = re.sub(r"^([a-z]+)-\d{4}-\d{2}", r"\1-AAAA-MM", sub_id)
+    if porData != sub_id:
+        fora.append(porData)
+    return fora
+
+
 def mapa_dos_artefatos(mapa):
     """Achata o mapa_portal.json em {sub_id: {"artefato":…, "prova":…}}.
 
@@ -84,7 +115,9 @@ def mapa_dos_artefatos(mapa):
             art = no.get("artefato")
             sid = no.get("id") or chave_pai
             if art and sid and isinstance(art, str):
-                fora[str(sid)] = {"artefato": art, "prova": no.get("prova")}
+                fora[str(sid)] = {"artefato": art, "prova": no.get("prova"),
+                                  "confirmar": bool(no.get("confirmar")),
+                                  "nota": no.get("nota_confirmar") or ""}
             for k, v in no.items():
                 visitar(v, k)
         elif isinstance(no, list):
@@ -114,18 +147,44 @@ def subitens_do_cronograma(entrada, estado):
 
 def avaliar(entrada, estado, arte, raiz_producao):
     """Sem efeito colateral: classifica cada subitem e devolve as listas."""
-    candidatos, divergentes, pulados = [], [], []
+    candidatos, divergentes, pulados, sem_mapa = [], [], [], []
 
     for it in subitens_do_cronograma(entrada, estado):
         sub = it["sub"]
         sid = str(sub.get("id") or "")
-        info = arte.get(sid)
+        # A PONTE. O mapa fala por PADRAO (aNN-2), o Cronograma por INSTANCIA
+        # (a01-2). Sem ela, nenhum dos treze subitens do mapa casa com nenhum
+        # dos setenta e oito do Cronograma — foi o que aconteceu na primeira
+        # execucao real, e o script disse "nada a marcar" estando cego.
+        # Exige casamento EXATO com uma das formas candidatas: nada e
+        # construido "parecido", e e isso que mantem a regra 5 de pe.
+        info = None
+        for cand in padroes_do_id(sid):
+            if cand in arte:
+                info = arte[cand]
+                break
         if not info:
-            continue                                   # o mapa não fala dele
+            # SO CONTA O QUE DEVERIA TER CASADO. Um subitem `estrela` sem
+            # entrada no mapa nao e falha: ele nunca seria derivado.
+            if sub.get("prova") == "maquina":
+                sem_mapa.append((it["chave"], sid))
+            continue
 
         prova = sub.get("prova") or info.get("prova")
         if prova != "maquina":
             continue                                   # regra 1
+
+        # REGRA 6 — O MAPA AVISA, E O SCRIPT ESCUTA. `confirmar: true` quer
+        # dizer, nas palavras do proprio _como_ler: "caminho inferido, ainda
+        # nao verificado no disco. Nao tratar como fato." Derivar marcacao de
+        # um caminho assim seria marcar por um endereco que o autor do mapa
+        # declarou nao conferido — e a AUSENCIA do arquivo tambem nao provaria
+        # nada, porque quem pode estar errado e o endereco.
+        if info.get("confirmar"):
+            pulados.append((it["chave"],
+                            "o mapa marca `confirmar: true` — caminho nao verificado"
+                            + ((": " + info["nota"]) if info.get("nota") else "")))
+            continue
 
         atual = (estado.get("itens") or {}).get(it["chave"]) or {}
         vida = atual.get("vida") or sub.get("vida") or "ativo"
@@ -151,7 +210,7 @@ def avaliar(entrada, estado, arte, raiz_producao):
         elif not existe and st >= 2:
             divergentes.append((it["chave"], caminho_rel))   # regra 2
 
-    return candidatos, divergentes, pulados
+    return candidatos, divergentes, pulados, sem_mapa
 
 
 def emitir(chave, aplicar):
@@ -189,11 +248,26 @@ def main():
         print("O mapa_portal.json nao declarou nenhum `artefato`. Nada a derivar.")
         return 0
 
-    candidatos, divergentes, pulados = avaliar(entrada, estado, arte, raiz)
+    candidatos, divergentes, pulados, sem_mapa = avaliar(entrada, estado, arte, raiz)
 
     print("Pasta de producao: %s" % raiz)
     print("Subitens com artefato declarado no mapa: %d" % len(arte))
+    print("Casaram com o Cronograma: %d" % (len(candidatos) + len(divergentes) + len(pulados)))
     print("")
+
+    # CEGUEIRA NAO E SILENCIO. A primeira versao imprimia "nada a marcar"
+    # quando NENHUM subitem do mapa casava com o Cronograma — um relatorio
+    # tranquilizador sobre uma comparacao que nao aconteceu. E o mesmo tipo de
+    # silencio que escondeu por tres semanas o fato de o Cowork nunca ter
+    # marcado nada. Agora a falta de casamento e ruido, e nao calma.
+    if sem_mapa:
+        print("SEM CORRESPONDENCIA no mapa (%d subitens de prova `maquina`):" % len(sem_mapa))
+        for chave, sid in sem_mapa[:8]:
+            print("  %s  (id %s)" % (chave, sid))
+        if len(sem_mapa) > 8:
+            print("  ... e mais %d" % (len(sem_mapa) - 8))
+        print("  Estes NAO foram avaliados: o mapa nao declara artefato para eles.")
+        print("")
 
     for chave, motivo in pulados:
         print("PULADO  %s  (%s)" % (chave, motivo))
@@ -204,7 +278,11 @@ def main():
         print("")
 
     if not candidatos:
-        print("Nada a marcar: todo artefato presente ja tem a etapa concluida.")
+        if sem_mapa or pulados:
+            print("Nada a marcar — mas veja acima: ha subitens que nem chegaram a")
+            print("ser avaliados. Isso NAO e o mesmo que 'esta tudo em dia'.")
+        else:
+            print("Nada a marcar: todo artefato presente ja tem a etapa concluida.")
         return 0
 
     print("A MARCAR (%d):" % len(candidatos))
