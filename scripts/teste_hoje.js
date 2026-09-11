@@ -1262,12 +1262,32 @@ ok(/TOEFL/.test(htmlPV) && htmlPV.indexOf(PV.escapeHtml(etReal.subT)) > -1,
 console.log("\n=== 39. O bloco de rotinas diz o que e ===");
 const RB = criarAparelho("rotinas");
 function summaryDeAtrasadas(ctx, quantas){
-  /* deixa `quantas` rotinas de ontem sem marcar e marca todas as outras */
+  /* Deixa `quantas` rotinas sem marcar num dia recente e marca todas as
+     demais.
+
+     O DIA ESCOLHIDO NAO E "ONTEM", e a diferenca e a correcao de um teste que
+     falhava dois dias por semana. A versao antiga desmarcava sempre em k = 1;
+     como cada dia do DIAS tem um numero diferente de tarefas — quinta e sexta
+     tem duas —, pedir tres numa sexta-feira era pedir o impossivel, e a
+     assercao acusava um defeito que nao existia. Um teste que depende do dia
+     em que roda nao mede o codigo, mede o calendario.
+
+     Agora ele procura, dentro da janela que atrasadas() enxerga, o primeiro
+     dia com tarefas SUFICIENTES. O sujeito da prova continua o mesmo: o texto
+     que o painel escreve para N rotinas por marcar. */
+  let escolhido = 0;
+  for (let k = 1; k <= 7; k++) {
+    const dt = new Date(ctx.now.getFullYear(), ctx.now.getMonth(), ctx.now.getDate() - k);
+    const D = ctx.DIAS[dt.getDay()];
+    if (D && (D.tasks || []).length >= quantas) { escolhido = k; break; }
+  }
+  if (!escolhido) throw new Error(
+    "nenhum dia da janela tem " + quantas + " tarefas: o fixture perdeu o sujeito");
   for (let k = 1; k <= 7; k++) {
     const dt = new Date(ctx.now.getFullYear(), ctx.now.getMonth(), ctx.now.getDate() - k);
     const D = ctx.DIAS[dt.getDay()]; if (!D) continue;
     const dia = ctx.ymd(dt), ck = {};
-    D.tasks.forEach((t, i) => { ck[t.id] = !(k === 1 && i < quantas); });
+    D.tasks.forEach((t, i) => { ck[t.id] = !(k === escolhido && i < quantas); });
     ctx.save("cron:checks:" + dia, ck);
   }
   return ctx.renderAtrasadas();
