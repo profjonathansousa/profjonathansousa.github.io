@@ -1,6 +1,6 @@
 {
  "_versao": 1,
- "_gerado_em": "2026-09-11T00:00:00Z",
+ "_gerado_em": "2026-09-11T10:00:00Z",
  "_o_que_e": "Estrutura das peças do Cronograma, escrita pelo Cowork a partir do que o pipeline produziu. A página lê no carregamento e mescla: a ENTRADA manda na estrutura (quais peças, quais subitens, os títulos), o TOQUE manda no progresso. Subitem que já existe não tem st nem vida alterados por aqui. O campo prova vem do mapa_portal.json: 'maquina' = o artefato prova; 'estrela' = exige decisao do autor, e o Cowork nao escreve toque sobre ela.",
  "_escritor": "Cowork. Não editar à mão.",
  "paineis": {

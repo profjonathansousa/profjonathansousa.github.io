@@ -242,6 +242,46 @@ function mesclarEntrada(){
           as[campo]=ns[campo]; mudou=true;
         });
       });
+
+      /* A ENTRADA MANDA NA ORDEM, e nao so na existencia. A mesclagem sempre
+         foi idempotente POR ID: uma vez que a etapa existia aqui, so os campos
+         eram atualizados e a posicao nunca era revista. Isso bastava enquanto
+         nenhuma etapa nascia no meio da lista.
+
+         O `-4b` mostrou o buraco em producao: um aparelho que recebeu o
+         arquivo novo com o codigo velho — que ainda fazia push() — ficou com a
+         etapa no FIM, gravou o cron:entrada-aplicada, e nenhuma remesclagem a
+         movia. Corrigir a insercao nao alcanca quem ja errou.
+
+         A REGRA E SOBRE OS MENCIONADOS, E SO SOBRE ELES. As posicoes que os
+         subitens citados pela entrada ocupam hoje sao preenchidas de novo, na
+         ordem em que a entrada os lista. Quem a entrada NAO menciona nao sai do
+         lugar: ela nao fala dele, e nao lhe cabe opinar.
+
+         A primeira tentativa disto puxava cada item para logo apos o irmao
+         anterior, e o teste mostrou o preco: ela COMPACTAVA os mencionados e
+         empurrava para a frente um subitem local que estava no meio. Reordenar
+         so o que se menciona, nos lugares que ja se ocupa, nao tem esse efeito
+         colateral. */
+      var citados = {}, ordem = [];
+      (novo.subs||[]).forEach(function(ns){
+        if(ns && ns.id && !citados[ns.id]){ citados[ns.id] = true; ordem.push(ns.id); }
+      });
+      var vagas = [], naVaga = [];
+      alvo.subs.forEach(function(s, i){
+        if(citados[s.id]){ vagas.push(i); naVaga.push(s); }
+      });
+      if(vagas.length > 1){
+        var porOrdem = naVaga.slice().sort(function(a, b){
+          return ordem.indexOf(a.id) - ordem.indexOf(b.id);
+        });
+        for(var v2=0; v2<vagas.length; v2++){
+          if(alvo.subs[vagas[v2]] !== porOrdem[v2]){
+            alvo.subs[vagas[v2]] = porOrdem[v2];
+            mudou = true;
+          }
+        }
+      }
     });
     if(mudou){
       /* Peca nova entra pela ponta certa. Sem isto, um artigo de agosto
