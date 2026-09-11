@@ -11,10 +11,15 @@
 #
 #     mkdir -p ~/.config/cronograma
 #     cat > ~/.config/cronograma/env <<'FIM'
-#     export SUPABASE_URL="https://<projeto>.supabase.co/rest/v1"
+#     export SUPABASE_URL="https://<projeto>.supabase.co"      # SEM /rest/v1
 #     export SUPABASE_SECRET_KEY="<a chave de servico>"
 #     FIM
 #     chmod 600 ~/.config/cronograma/env
+#
+# A URL E A BASE DO PROJETO, sem /rest/v1: o _pedir() do dobrar_toques.py
+# acrescenta esse trecho sozinho, e duplica-lo produz /rest/v1/rest/v1 e um 404
+# que so aparece na hora de publicar. Sao as MESMAS duas variaveis que o
+# avisos.yml e o dobrar-toques.yml ja usam no GitHub.
 #
 # Sem esse arquivo o derivar_do_pipeline.py recusa e diz por que — que e o
 # comportamento certo, e nao uma falha a esconder.
