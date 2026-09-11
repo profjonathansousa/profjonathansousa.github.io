@@ -200,10 +200,40 @@ function mesclarEntrada(){
       if(novo.n && novo.n!==alvo.n &&
          entradaPodeEscrever(kProj, "n", alvo.n, novo.n, bProj)){ alvo.n=novo.n; mudou=true; }
       var subsPorId={}; (alvo.subs||[]).forEach(function(s){ subsPorId[s.id]=s; });
-      (novo.subs||[]).forEach(function(ns){
+      (novo.subs||[]).forEach(function(ns, k){
         if(!ns || !ns.id) return;
         var as = subsPorId[ns.id];
-        if(!as){ alvo.subs.push(normSub(Object.assign({}, ns, {origem:"entrada"}))); mudou=true; return; }
+        if(!as){
+          /* ETAPA NOVA ENTRA NO LUGAR QUE A ENTRADA DECLARA, e nao no fim.
+             A ordem do array E a ordem da tela, e o estagioDoTrilho devolve o
+             PRIMEIRO subitem nao concluido nessa mesma ordem. Uma etapa
+             acrescentada no fim seria desenhada depois da ultima e nunca
+             viraria "Agora" antes das que ela deveria preceder — o portao do
+             NotebookLM, que a 4b existe para ser, nao portaria nada.
+
+             A ANCORA E O IRMAO ANTERIOR, e nao o indice cru: a lista local
+             pode ter itens que a entrada nao menciona, e contar posicoes
+             cegamente colocaria a etapa no meio de outra coisa. Sem ancora
+             encontravel — a entrada comeca por ela, ou o irmao nao existe
+             aqui — o comportamento antigo vale: vai para o fim. */
+          /* SUBITEM NOVO PRECISA DE NOME, pela MESMA razao que o projeto —
+             ver a guarda logo acima. A entrada de renomeacao manda `{id, t}`
+             de itens que ja existem; um id que este aparelho nao tem e, quase
+             sempre, um aparelho atrasado ou um id errado, e criar a partir
+             dele produz uma etapa em branco no meio do trilho. Etapa sem nome
+             nao e etapa: e ruido que o "Agora" pode apontar. */
+          if(!ns.t) return;
+          var novoSub = normSub(Object.assign({}, ns, {origem:"entrada"}));
+          var pos = alvo.subs.length, irmao = k > 0 ? novo.subs[k-1] : null;
+          if(!irmao){ pos = 0; }
+          else for(var q=0;q<alvo.subs.length;q++){
+            if(alvo.subs[q].id === irmao.id){ pos = q + 1; break; }
+          }
+          alvo.subs.splice(pos, 0, novoSub);
+          subsPorId[ns.id] = novoSub;
+          mudou = true;
+          return;
+        }
         var kSub = kProj + "/" + ns.id, bSub = base[kSub];
         ["t","n","onde","prova","medida"].forEach(function(campo){
           if(!(campo in ns)) return;

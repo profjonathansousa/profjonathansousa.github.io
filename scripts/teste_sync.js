@@ -3447,6 +3447,83 @@ console.log("\n=== 72. As decisoes anteriores ao corte, publicadas uma vez (10/0
      "   e NAO grava a trava: tenta de novo quando a conta entrar");
 }
 
+console.log("\n=== 73. Etapa NOVA entra no lugar que a entrada declara (11/09) ===");
+{
+  /* O PORTAO SO PORTA SE ESTIVER NA FRENTE. O estagioDoTrilho devolve o
+     PRIMEIRO subitem nao concluido na ORDEM DO ARRAY, e a ordem do array e a
+     ordem da tela. Ate 11/09 o mesclarEntrada fazia `alvo.subs.push()` para
+     toda etapa nova: o `-4b` — a verificacao de fontes no NotebookLM, que
+     existe para travar a Janela 2 — cairia DEPOIS do `-6` e o trilho apontaria
+     para o `-5` antes dele. A etapa apareceria na tela e nao portaria nada. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv);
+  const subsDe = (pid, projId) => {
+    let fora = [];
+    (A.getProjs(pid) || []).forEach(p => { if (p.id === projId)
+      fora = (p.subs || []).map(s => s.id); });
+    return fora;
+  };
+  const antes = subsDe("pipeline", "a01");
+  ok(antes.indexOf("a01-4") > -1 && antes.indexOf("a01-5") > -1,
+     "1. a peca tem o -4 e o -5 antes da mesclagem", antes);
+
+  A.save("cron:entrada", {_gerado_em: "2026-09-11T00:00:00Z", paineis: {pipeline: [
+    {id: "a01", subs: [
+      {id: "a01-4"},
+      {id: "a01-4b", t: "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+       prova: "estrela", onde: "manual"},
+      {id: "a01-5"}
+    ]}]}});
+  A.mesclarEntrada();
+
+  const depois = subsDe("pipeline", "a01");
+  ok(depois.indexOf("a01-4b") === depois.indexOf("a01-4") + 1,
+     "2. o -4b entra LOGO DEPOIS do -4", depois);
+  ok(depois.indexOf("a01-4b") < depois.indexOf("a01-5"),
+     "   e ANTES do -5, que e o que ele existe para travar", depois);
+  ok(depois.indexOf("a01-4b") < depois.length - 1,
+     "   e nao no fim da lista, que era o defeito", depois);
+
+  /* A PROVA QUE IMPORTA, e nao a posicao por si: com o -4 concluido e o -4b em
+     aberto, o "Agora" do trilho tem de parar NO -4b. Se ele apontasse para o
+     -5, a etapa estaria na tela sem efeito nenhum — que e exatamente como o
+     mapa_portal.json descreve o problema: "da para marcar aNN-4 e pular direto
+     para aNN-5 sem aviso". */
+  const projs = A.getProjs("pipeline");
+  projs.forEach(p => { if (p.id === "a01") (p.subs || []).forEach(s => {
+    if (s.id === "a01-1" || s.id === "a01-2" || s.id === "a01-3" || s.id === "a01-4") s.st = 2;
+  }); });
+  A.setProjs("pipeline", projs);
+  const et = A.estagioDoTrilho("pipeline", "a01");
+  ok(et && et.subId === "a01-4b",
+     "3. com o -4 fechado, o Agora do trilho PARA no -4b", et && et.subId);
+  ok(et && et.prova === "estrela",
+     "   e ele chega como `estrela`: a conclusao e decisao sua, nao artefato",
+     et && et.prova);
+
+  /* ETAPA SEM NOME NAO E CRIADA — e esta assercao existe porque a anterior a
+     descobriu. A entrada de renomeacao manda `{id, t}` de itens que JA
+     existem; um id desconhecido e um aparelho atrasado ou um id errado, e
+     criar a partir dele punha uma etapa EM BRANCO no meio do trilho, que o
+     "Agora" podia apontar. A guarda ja existia para projetos, com o mesmo
+     argumento, e faltava para subitens. */
+  const quantasAntes = subsDe("pipeline", "a01").length;
+  A.save("cron:entrada", {_gerado_em: "2026-09-11T00:00:01Z", paineis: {pipeline: [
+    {id: "a01", subs: [{id: "zzz-sem-nome"}]}]}});
+  A.mesclarEntrada();
+  const semNome = subsDe("pipeline", "a01");
+  ok(semNome.indexOf("zzz-sem-nome") < 0 && semNome.length === quantasAntes,
+     "4. id desconhecido SEM titulo nao cria etapa em branco", semNome);
+
+  /* E uma etapa nova declarada em PRIMEIRO lugar entra em primeiro. */
+  A.save("cron:entrada", {_gerado_em: "2026-09-11T00:00:02Z", paineis: {pipeline: [
+    {id: "a01", subs: [{id: "a01-0", t: "Antes de tudo"}, {id: "a01-1"}]}]}});
+  A.mesclarEntrada();
+  const comPrimeira = subsDe("pipeline", "a01");
+  ok(comPrimeira[0] === "a01-0",
+     "5. etapa declarada em primeiro lugar entra em primeiro", comPrimeira);
+}
+
 console.log("\n==============================================================");
 console.log(falhas.length ? "FALHAS: " + falhas.length : "TUDO PASSA");
 falhas.forEach(f => console.log("  - " + f));
