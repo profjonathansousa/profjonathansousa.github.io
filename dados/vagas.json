@@ -1,14 +1,14 @@
 {
-  "_gerado_em": "2026-09-07T13:20:58.116692-03:00",
+  "_gerado_em": "2026-09-14T13:54:09.127469-03:00",
   "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_VAGAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-09-07T13:20:58.116692-03:00",
+    "quando": "2026-09-14T13:54:09.127469-03:00",
     "fontes": {
       "curadas": "ok · 1 curados · atualizado em 2026-08-25",
-      "philjobs": "ok · 101 sondados · 17 novos",
-      "anpof": "ok · 491 links · moldura podada: 67236 chars",
-      "docentefederal": "ok · 6 links · moldura podada: 3143 chars",
-      "faperj": "ok · 56 links · moldura podada: 124967 chars",
+      "philjobs": "ok · 81 sondados · 13 novos",
+      "anpof": "ok · 496 links · moldura podada: 65539 chars",
+      "docentefederal": "ok · 6 links · moldura podada: 2579 chars",
+      "faperj": "ok · 60 links · moldura podada: 123344 chars",
       "dou": "desligada",
       "fapesp": "desligada",
       "pciconcursos": "desligada",
@@ -17,10 +17,13 @@
       "h-net": "desligada"
     },
     "avisos": [
+      "anpof: ConnectionError em https://anpof.org.br/agenda/concursos-e-selecoes/processo-se",
       "anpof: teto de 40 itens novos atingido",
-      "87 itens ja vivos reclassificados (sem rede, sem remocao)"
+      "anpof: 1 de 40 paginas vieram SEM CORPO",
+      "faperj: teto de 40 itens novos atingido",
+      "98 itens ja vivos reclassificados (sem rede, sem remocao)"
     ],
-    "resumo": "99 vivos (A:40 B:9 C:50) · 4 urgentes · 11 novos · 2 arquivados por prazo · 92 barrados"
+    "resumo": "108 vivos (A:40 B:9 C:59) · 4 urgentes · 9 novos · 3 arquivados por prazo · 89 barrados"
   },
   "itens": [
     {
@@ -48,18 +51,18 @@
       "esforco": "Alto",
       "elegibilidade": "Aberto",
       "idioma": "DE",
-      "dias_ate_prazo": 8,
+      "dias_ate_prazo": 1,
       "urgente": true,
       "marcas": [
-        "prazo em 8 dia(s)"
+        "prazo em 1 dia(s)"
       ],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy"
+      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31849",
@@ -86,56 +89,56 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 8,
+      "dias_ate_prazo": 1,
       "urgente": true,
       "marcas": [
-        "prazo em 8 dia(s)"
+        "prazo em 1 dia(s)"
       ],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: epistemology, political philosophy, metaphysics"
+      "porque_veredicto": "competencia: epistemology, political philosophy, metaphysics",
+      "descartado": false
     },
     {
-      "id": "philjobs-31921",
+      "id": "philjobs-31949",
       "fonte": "philjobs",
-      "url": "https://philjobs.org/job/show/31921",
-      "titulo": "Hong Kong Postdoctoral Fellowship",
-      "instituicao": "Lingnan University",
-      "aos": "Open",
+      "url": "https://philjobs.org/job/show/31949",
+      "titulo": "Postdoctoral Researcher/Researcher",
+      "instituicao": "University of Helsinki",
+      "aos": "Epistemology, Ethics",
       "aoc": "Open",
-      "local": "Tuen Mun, Hong Kong",
+      "local": "Helsinki, Finland",
       "categoria": "Postdoc or similar / Fixed term",
-      "contrato": "Email",
-      "prazo": "2026-09-11",
+      "contrato": "",
+      "prazo": "2026-09-25",
       "prazo_brando": false,
       "publicado": "",
-      "texto": "Hong Kong Postdoctoral Fellowship, Lingnan University, Hong Kong\n - PhilJobs:JFP \n Hong Kong Postdoctoral Fellowship, Lingnan University, Hong Kong\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31920\n Hong Kong Postdoctoral Fellowship \n Department of Philosophy, Lingnan University, Hong Kong\n Job category\n Postdoc or similar / Fixed term\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Tuen Mun, Hong Kong \n Start date\n Flexible; between June and December 2027\n Job description\n We are looking for excellent philosophers to nominate for the Hong Kong Research Grants Council (RGC) Junior Research Fellow Scheme. The fellowship supports each awardee with a full-time appointment as Postdoctoral Fellow for a period of 24 months, with an optional extension to 36 months. The basic salary amounts to HK$44,700 per month (HK$34,700 from the research council + HK$10,000 from the university). Standard (for example, medical and dental) benefits are included, as well as a HK$13,600 per year allowance for conference and research-related",
-      "visto_em": "2026-08-30",
+      "texto": "Postdoctoral Researcher/Researcher, University of Helsinki\n - PhilJobs:JFP \n Postdoctoral Researcher/Researcher, University of Helsinki\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31948\n Postdoctoral Researcher/Researcher \n Department of Philosophy, University of Helsinki\n Job category\n Postdoc or similar / Fixed term\n AOS\n Epistemology, Ethics\n AOS categories\n Epistemology\n Ethics\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Helsinki, Finland \n Start date\n January 2027\n Job description\n We seek a researcher for a fixed term two-year position that runs from January 1, 2027 to December 31, 2028. The researcher will be a core member of the research team for the project  The Many Faces of Inquiry: Towards a Dynamic and Pluralistic Epistemology . The project began in 2024 and will run until December 2029. It is funded by the Kone Foundation and is housed at the Philosophy unit at the University of Helsinki.  \n Project \n For us to be responsible epistemic agents, it does not suffice that we respond properly to the evidence that ",
+      "visto_em": "2026-09-07",
+      "avisos_extracao": [],
+      "extracao": "ok",
       "tipo": "pos-doc",
-      "porque": "AOS aberto",
-      "relevancia": "aberto",
-      "pais": "Hong Kong",
+      "porque": "competencia: ethics, epistemology",
+      "relevancia": "competencia",
+      "pais": "Finland",
       "uf": "",
       "bloco": "C",
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 4,
+      "dias_ate_prazo": 11,
       "urgente": true,
       "marcas": [
-        "prazo em 4 dia(s)"
+        "prazo em 11 dia(s)"
       ],
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: ethics, epistemology",
       "novo": true,
       "vencida": false,
-      "avisos_extracao": [],
-      "extracao": "ok",
-      "descartado": false,
-      "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "descartado": false
     },
     {
       "id": "philjobs-31661",
@@ -150,7 +153,7 @@
       "publicado": "",
       "texto": "Visiting Professor (f/m/d), Central European University\n - PhilJobs:JFP \n Visiting Professor (f/m/d), Central European University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31660\n Visiting Professor (f/m/d) \n Department of Philosophy, Central European University\n Job category\n Visiting fellowship / Professorship / Fixed term\n AOS\n Open\n AOC\n Open, but one course will be taught in Philosophical Problems in Economics and Politics\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n 1002\n Location\n Vienna, Vienna, Austria \n Start date\n January 1st, 2027\n Job description\n The Department of Philosophy invites applications for a visiting teaching position for the 2027 academic year. The successful candidate will contribute to the Department's undergraduate and graduate teaching programs, offering courses in their area of specialization and participating in the intellectual life of the Department. Applicants should hold a PhD in Philosophy by the start of the appointment.\n Duties and Responsibilities \n Teaching Responsibiliti",
       "visto_em": "2026-08-24",
-      "dias_ate_prazo": 13,
+      "dias_ate_prazo": 6,
       "porque": "AOS aberto",
       "novo": true,
       "vencida": false,
@@ -167,13 +170,13 @@
       "idioma": "DE",
       "urgente": true,
       "marcas": [
-        "prazo em 13 dia(s)"
+        "prazo em 6 dia(s)"
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "anpof-ior-no-departamento-de-filosofia-da-universidade-de-brasilia",
@@ -211,9 +214,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: historia da filosofia"
+      "porque_veredicto": "competencia: historia da filosofia",
+      "descartado": false
     },
     {
       "id": "anpof-lecoes-concurso-para-professor-efetivo-em-filosofia-politica",
@@ -251,9 +254,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: filosofia politica"
+      "porque_veredicto": "competencia: filosofia politica",
+      "descartado": false
     },
     {
       "id": "anpof-fricana-e-afro-brasileira-ufu-e-1-vaga-em-filosofia-politica",
@@ -291,9 +294,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: filosofia politica"
+      "porque_veredicto": "competencia: filosofia politica",
+      "descartado": false
     },
     {
       "id": "anpof-ofessor-adjunto-epistemologia-pratica-de-ensino-de-filosofia",
@@ -331,9 +334,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: epistemologia"
+      "porque_veredicto": "competencia: epistemologia",
+      "descartado": false
     },
     {
       "id": "anpof-o-historia-da-filosofia-com-enfase-em-estetica-contemporanea",
@@ -371,9 +374,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: historia da filosofia"
+      "porque_veredicto": "competencia: historia da filosofia",
+      "descartado": false
     },
     {
       "id": "anpof-ncurso-de-historia-da-filosofia-tema-filosofia-da-mente-uerj",
@@ -411,9 +414,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: historia da filosofia"
+      "porque_veredicto": "competencia: historia da filosofia",
+      "descartado": false
     },
     {
       "id": "anpof--selecoes-concurso-publico-para-professora-ufmtcampus-cuiaba",
@@ -451,9 +454,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: filosofia da educacao"
+      "porque_veredicto": "competencia: filosofia da educacao",
+      "descartado": false
     },
     {
       "id": "anpof-urso-para-professor-doutor-de-historia-da-filosofia-medieval",
@@ -491,9 +494,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: historia da filosofia, filosofia medieval"
+      "porque_veredicto": "competencia: historia da filosofia, filosofia medieval",
+      "descartado": false
     },
     {
       "id": "anpof-urso-para-professora-efetivoa-departamento-de-filosofia-ufes",
@@ -531,9 +534,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: filosofia da educacao"
+      "porque_veredicto": "competencia: filosofia da educacao",
+      "descartado": false
     },
     {
       "id": "anpof-isciplinafilosofialogica-epistemologia-introducao-afilosofia",
@@ -566,14 +569,14 @@
       "idioma": "PT",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "relevante",
       "porque_veredicto": "competencia: epistemologia",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "manual-fapesp-pd",
@@ -591,7 +594,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Bolsa de pos-doutorado da FAPESP em FLUXO CONTINUO. VERIFICADO na propria pagina em 2026-08-25: 'Em qualquer epoca do ano (fluxo continuo)' — nao ha edital com data limite, e por isso este item nunca apareceria numa lista de novidades. SEM RESTRICAO DE AREA do conhecimento. Requisitos: doutorado obtido nos ultimos 7 anos; supervisor com doutorado e vinculo com instituicao de pesquisa ou ensino superior NO ESTADO DE SAO PAULO, com liderança em projetos competitivos e experiencia internacional; a pesquisa e realizada em instituicao paulista. Duracao inicial de ate 36 meses (minimo 6), renovavel ate 48 no total. Inclui mensalidade, reserva tecnica e auxilio instalacao. O QUE TRAVA: dedicacao exclusiva, sem vinculo empregaticio e sem acumular outra bolsa. Para quem da aula, isso e a decisao inteira, nao um detalhe. O PASSO REAL nao e a inscricao: e achar o supervisor em Sao Paulo. Sem ele nao ha submissao, e e isso que consome o tempo.",
-      "visto_em": "2026-09-07",
+      "visto_em": "2026-09-14",
       "avisos_extracao": [],
       "extracao": "ok",
       "porta_passou": true,
@@ -649,9 +652,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "edital geral"
+      "porque_veredicto": "edital geral",
+      "descartado": false
     },
     {
       "id": "anpof-selecoes-pos-graduacao-o-nascimento-do-ateismo-contemporaneo",
@@ -689,9 +692,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "edital geral"
+      "porque_veredicto": "edital geral",
+      "descartado": false
     },
     {
       "id": "anpof-fetivoa-de-filosofia-na-ufam-campus-sao-gabriel-da-cachoeira",
@@ -729,9 +732,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-losofia-ppgfil-da-universidade-federal-de-lavras-ufla-202601",
@@ -769,10 +772,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "anpof-o-de-pos-doutorado-em-filosofia-na-modalidade-voluntaria-uft",
@@ -810,9 +813,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de pos-doc, area nao declarada"
+      "porque_veredicto": "edital de pos-doc, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-ea-de-ensino-de-filosofia-na-universidade-federal-da-paraiba",
@@ -850,9 +853,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-agenda-concursos-e-selecoes-escola-de-talentos-2026",
@@ -890,9 +893,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "edital geral"
+      "porque_veredicto": "edital geral",
+      "descartado": false
     },
     {
       "id": "anpof-da-concursos-e-selecoes-chamada-pos-doutorado-ippcebrap-2026",
@@ -930,9 +933,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de pos-doc, area nao declarada"
+      "porque_veredicto": "edital de pos-doc, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-isterio-superior-setor-de-estudo-filosofiafilosofia-africana",
@@ -970,9 +973,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-doutorado-profissional-em-filosofia-e-ensino-do-pais-em-2026",
@@ -1010,10 +1013,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "selecao discente pelo corpo: curso de doutorado",
       "veredicto": "rejeitado",
-      "porque_veredicto": "selecao discente pelo corpo: curso de doutorado"
+      "porque_veredicto": "selecao discente pelo corpo: curso de doutorado",
+      "descartado": true,
+      "motivo_saida": "selecao discente pelo corpo: curso de doutorado"
     },
     {
       "id": "anpof-urso-publico-para-area-estagio-e-ensino-de-filosofia-unespar",
@@ -1051,9 +1054,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-lecao-para-o-mestrado-em-filosofia-do-ppgfil-uesc-ufsb-20261",
@@ -1091,10 +1094,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "anpof-ecoes-edital-de-selecao-20261-metrado-e-doutorado-no-ppgfufs",
@@ -1132,10 +1135,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "selecao discente pelo corpo: ingresso nos cursos de mestrado",
       "veredicto": "rejeitado",
-      "porque_veredicto": "selecao discente pelo corpo: ingresso nos cursos de mestrado"
+      "porque_veredicto": "selecao discente pelo corpo: ingresso nos cursos de mestrado",
+      "descartado": true,
+      "motivo_saida": "selecao discente pelo corpo: ingresso nos cursos de mestrado"
     },
     {
       "id": "anpof--a-selecao-ao-programa-de-pos-graduacao-em-filosofia-puc-rio",
@@ -1173,10 +1176,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "selecao discente pelo corpo: vagas para o mestrado",
       "veredicto": "rejeitado",
-      "porque_veredicto": "selecao discente pelo corpo: vagas para o mestrado"
+      "porque_veredicto": "selecao discente pelo corpo: vagas para o mestrado",
+      "descartado": true,
+      "motivo_saida": "selecao discente pelo corpo: vagas para o mestrado"
     },
     {
       "id": "anpof--mestrado-academico-e-doutorado-em-filosofia-do-ppgfil-ufrgs",
@@ -1214,10 +1217,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "faperj-_Tecnologia_e_Soberania_Alimentar_-Foodtechs_e_Agritechs-pdf",
@@ -1259,9 +1262,9 @@
         "sem corpo"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "anpof-da-concursos-e-selecoes-concurso-para-professor-efetivo-ufrb",
@@ -1298,9 +1301,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-adas-edital-processo-seletivo-ppgfil-ufsc-2025-ingresso-2026",
@@ -1338,9 +1341,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "edital geral"
+      "porque_veredicto": "edital geral",
+      "descartado": false
     },
     {
       "id": "anpof-agenda-concursos-e-selecoes-selecao-mestrado-em-filosofia",
@@ -1378,10 +1381,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "anpof-agenda-concursos-e-selecoes-mestrado-em-filosofia-uffs",
@@ -1419,10 +1422,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "anpof-agenda-concursos-e-selecoes-processo-seletivo-ppg-fil-2026",
@@ -1460,10 +1463,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "selecao discente pelo corpo: ingresso nos cursos de mestrado",
       "veredicto": "rejeitado",
-      "porque_veredicto": "selecao discente pelo corpo: ingresso nos cursos de mestrado"
+      "porque_veredicto": "selecao discente pelo corpo: ingresso nos cursos de mestrado",
+      "descartado": true,
+      "motivo_saida": "selecao discente pelo corpo: ingresso nos cursos de mestrado"
     },
     {
       "id": "anpof-selecoes-concurso-professor-efetivo-ensino-de-filosofia-ufmt",
@@ -1501,9 +1504,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-selecoes-ppgfilufsc-processo-seletivo-inscricoes-prorrogadas",
@@ -1541,10 +1544,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "selecao discente pelo corpo: ingresso nos cursos de mestrado",
       "veredicto": "rejeitado",
-      "porque_veredicto": "selecao discente pelo corpo: ingresso nos cursos de mestrado"
+      "porque_veredicto": "selecao discente pelo corpo: ingresso nos cursos de mestrado",
+      "descartado": true,
+      "motivo_saida": "selecao discente pelo corpo: ingresso nos cursos de mestrado"
     },
     {
       "id": "anpof-rsos-e-selecoes-processo-seletivo-mestrado-em-filosofia-ufms",
@@ -1582,10 +1585,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "anpof-ico-para-professor-do-departamento-de-filosofia-da-unicentro",
@@ -1623,9 +1626,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de efetivo, area nao declarada"
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-e-selecoes-selecao-complementar-mestrado-em-filosofia-unicap",
@@ -1663,10 +1666,10 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": true,
-      "motivo_saida": "tipo 'discente' nao e vaga",
       "veredicto": "rejeitado",
-      "porque_veredicto": "tipo 'discente' nao e vaga"
+      "porque_veredicto": "tipo 'discente' nao e vaga",
+      "descartado": true,
+      "motivo_saida": "tipo 'discente' nao e vaga"
     },
     {
       "id": "anpof-a-concursos-e-selecoes-concurso-para-professor-auxiliar-uefs",
@@ -1699,14 +1702,14 @@
       "idioma": "PT",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "edital geral",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof--selecoes-selecao-de-alunos-especializacao-em-filosofia-ufrb",
@@ -1739,14 +1742,14 @@
       "idioma": "PT",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "edital geral",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "docentefederal-repositorio",
@@ -1781,7 +1784,6 @@
       "idioma": "PT",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "titulo curto demais para ser anuncio",
         "sem prazo"
@@ -1789,7 +1791,8 @@
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-ra-visitante-em-filosofia-da-religiao-eou-metafisica-ppgfufs",
@@ -1827,9 +1830,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "nicho: filosofia da religiao, religiao"
+      "porque_veredicto": "nicho: filosofia da religiao, religiao",
+      "descartado": false
     },
     {
       "id": "anpof-fessores-substituto-para-o-departamento-de-filosofia-da-uerj",
@@ -1867,9 +1870,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: historia da filosofia"
+      "porque_veredicto": "competencia: historia da filosofia",
+      "descartado": false
     },
     {
       "id": "anpof-toa-de-filosofia-da-educacao-da-faculdade-de-educacao-da-uff",
@@ -1907,9 +1910,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: filosofia da educacao"
+      "porque_veredicto": "competencia: filosofia da educacao",
+      "descartado": false
     },
     {
       "id": "anpof--filosofia-da-ufam-abre-4-vagas-para-professores-substitutos",
@@ -1947,9 +1950,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de substituto, area nao declarada"
+      "porque_veredicto": "edital de substituto, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-or-substituto-instituto-de-filosofia-edital-progep-n-1342026",
@@ -1987,9 +1990,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de substituto, area nao declarada"
+      "porque_veredicto": "edital de substituto, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-a-concursos-e-selecoes-processo-seletivo-de-prof-substitutoa",
@@ -2027,9 +2030,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de substituto, area nao declarada"
+      "porque_veredicto": "edital de substituto, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-coes-processo-seletivo-simplificado-para-professor-visitante",
@@ -2067,9 +2070,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de visitante, area nao declarada"
+      "porque_veredicto": "edital de visitante, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-letivo-simplificado-para-contratacao-de-professora-visitante",
@@ -2107,9 +2110,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de visitante, area nao declarada"
+      "porque_veredicto": "edital de visitante, area nao declarada",
+      "descartado": false
     },
     {
       "id": "anpof-a-professora-substitutoa-no-departamento-de-filosofia-da-unb",
@@ -2147,49 +2150,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "edital de substituto, area nao declarada"
-    },
-    {
-      "id": "philjobs-31949",
-      "fonte": "philjobs",
-      "url": "https://philjobs.org/job/show/31949",
-      "titulo": "Postdoctoral Researcher/Researcher",
-      "instituicao": "University of Helsinki",
-      "aos": "Epistemology, Ethics",
-      "aoc": "Open",
-      "local": "Helsinki, Finland",
-      "categoria": "Postdoc or similar / Fixed term",
-      "contrato": "",
-      "prazo": "2026-09-25",
-      "prazo_brando": false,
-      "publicado": "",
-      "texto": "Postdoctoral Researcher/Researcher, University of Helsinki\n - PhilJobs:JFP \n Postdoctoral Researcher/Researcher, University of Helsinki\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31948\n Postdoctoral Researcher/Researcher \n Department of Philosophy, University of Helsinki\n Job category\n Postdoc or similar / Fixed term\n AOS\n Epistemology, Ethics\n AOS categories\n Epistemology\n Ethics\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Helsinki, Finland \n Start date\n January 2027\n Job description\n We seek a researcher for a fixed term two-year position that runs from January 1, 2027 to December 31, 2028. The researcher will be a core member of the research team for the project  The Many Faces of Inquiry: Towards a Dynamic and Pluralistic Epistemology . The project began in 2024 and will run until December 2029. It is funded by the Kone Foundation and is housed at the Philosophy unit at the University of Helsinki.  \n Project \n For us to be responsible epistemic agents, it does not suffice that we respond properly to the evidence that ",
-      "visto_em": "2026-09-07",
-      "avisos_extracao": [
-        "pais nao lido"
-      ],
-      "extracao": "suspeita",
-      "tipo": "pos-doc",
-      "porque": "competencia: ethics, epistemology",
-      "relevancia": "competencia",
-      "pais": "Finland",
-      "uf": "",
-      "bloco": "C",
-      "esforco": "Medio",
-      "elegibilidade": "Aberto",
-      "idioma": "EN",
-      "dias_ate_prazo": 18,
-      "urgente": false,
-      "descartado": false,
-      "marcas": [
-        "pais nao lido"
-      ],
-      "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita",
-      "novo": true,
-      "vencida": false
+      "porque_veredicto": "edital de substituto, area nao declarada",
+      "descartado": false
     },
     {
       "id": "philjobs-31853",
@@ -2216,16 +2179,16 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 24,
+      "dias_ate_prazo": 17,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: history of philosophy"
+      "porque_veredicto": "competencia: history of philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31785",
@@ -2252,16 +2215,56 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 30,
+      "dias_ate_prazo": 23,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics"
+      "porque_veredicto": "competencia: ethics",
+      "descartado": false
+    },
+    {
+      "id": "philjobs-32065",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32065",
+      "titulo": "Assistant Professor of Philosophy",
+      "instituicao": "Providence College",
+      "aos": "Philosophy of AI",
+      "aoc": "History of Philosophy",
+      "local": "Providence, Rhode Island, United States",
+      "categoria": "Junior faculty / Tenure-track or similar",
+      "contrato": "",
+      "prazo": "2026-10-12",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Assistant Professor of Philosophy, Providence College\n - PhilJobs:JFP \n Assistant Professor of Philosophy, Providence College\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32064\n Assistant Professor of Philosophy \n Department of Philosophy, Providence College\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Philosophy of AI\n AOS categories\n Meta-Ethics\n AOC\n History of Philosophy\n AOC categories\n History of Philosophy\n Workload\n Full time\n Vacancies\n 1\n Location\n Providence, Rhode Island, United States \n Start date\n August, 2027\n Job description\n Providence College: The Department of Philosophy invites applications for the post of Assistant Professor, commencing August 2027 with AOS: Philosophy of AI and Technology, AOC: History of Philosophy.  The teaching load for this position is three courses per semester.\n Successful candidates will possess a Ph.D. (or be ABD with Ph.D. in hand by August 2027) from an accredited institution and should have a demonstrable commitment to and/or experience with engaging diverse students in ",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "tenure-track",
+      "porque": "competencia: history of philosophy",
+      "relevancia": "competencia",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Provavel c/ patrocinio",
+      "idioma": "EN",
+      "dias_ate_prazo": 28,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philjobs-31801",
@@ -2288,16 +2291,16 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 38,
+      "dias_ate_prazo": 31,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: history of philosophy"
+      "porque_veredicto": "competencia: history of philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31809",
@@ -2324,16 +2327,16 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 38,
+      "dias_ate_prazo": 31,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: epistemology, social epistemology"
+      "porque_veredicto": "competencia: epistemology, social epistemology",
+      "descartado": false
     },
     {
       "id": "philjobs-31821",
@@ -2360,16 +2363,16 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 38,
+      "dias_ate_prazo": 31,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: political philosophy"
+      "porque_veredicto": "competencia: political philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31825",
@@ -2396,16 +2399,16 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 38,
+      "dias_ate_prazo": 31,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy"
+      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31589",
@@ -2420,7 +2423,7 @@
       "publicado": "",
       "texto": "Assistant Professor of Philosophy, University of Wisconsin, Madison\n - PhilJobs:JFP \n Assistant Professor of Philosophy, University of Wisconsin, Madison\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31588\n Assistant Professor of Philosophy \n Department of Philosophy, University of Wisconsin, Madison\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Early Modern British Political and Moral Philosophy\n AOS categories\n Early Modern Philosophy\n AOC\n Early Modern British Political and Moral Philosophy\n AOC categories\n Early Modern Philosophy\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n JR10012096\n Location\n Madison, Wisconsin, United States \n Start date\n August 23, 2027\n Job description\n The highly ranked Department of Philosophy is seeking excellent junior candidates for a tenure-track faculty position in the area of Early Modern British Political and Moral Philosophy. The selected candidate will mount a vigorous research program while making significant contributions to the department's teaching mission.",
       "visto_em": "2026-08-24",
-      "dias_ate_prazo": 38,
+      "dias_ate_prazo": 31,
       "porque": "competencia: moral philosophy, early modern",
       "novo": true,
       "vencida": false,
@@ -2439,9 +2442,9 @@
       "marcas": [],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: moral philosophy, early modern"
+      "porque_veredicto": "competencia: moral philosophy, early modern",
+      "descartado": false
     },
     {
       "id": "philjobs-31981",
@@ -2459,10 +2462,8 @@
       "publicado": "",
       "texto": "Catherine of Siena Teaching Scholar, Villanova University\n - PhilJobs:JFP \n Catherine of Siena Teaching Scholar, Villanova University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31980\n Catherine of Siena Teaching Scholar \n Ethics Program, Villanova University\n Job category\n Postdoc or similar / Fixed term\n AOS\n Ethics\n AOS categories\n Ethics\n AOC\n Christian Ethics, applied ethics, normative ethics\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n 20260069F\n Location\n Villanova, Pennsylvania, United States \n Start date\n August 2027\n Job description\n The Ethics Program of Villanova University seeks junior candidates for the position of Catherine of Siena Teaching Scholar (ideally, individuals that have completed a relevant Ph.D. within the previous 3 years). This term-limited position offers teacher-scholars an opportunity to hone teaching skills, advance a research agenda, and receive mentorship as they pursue permanent academic opportunities beyond Villanova. Candidates must specialize in ethics and show command of p",
       "visto_em": "2026-09-07",
-      "avisos_extracao": [
-        "pais nao lido"
-      ],
-      "extracao": "suspeita",
+      "avisos_extracao": [],
+      "extracao": "ok",
       "tipo": "pos-doc",
       "porque": "competencia: ethics",
       "relevancia": "competencia",
@@ -2472,7 +2473,45 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 39,
+      "dias_ate_prazo": 32,
+      "urgente": false,
+      "marcas": [],
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: ethics",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "philjobs-32021",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32021",
+      "titulo": "Tenure-Track Assistant Professor of Philosophy",
+      "instituicao": "Haverford College",
+      "aos": "Philosophy of Language",
+      "aoc": "Open, though the Department would especially welcome AOCs in Philosophy of Place or Time, Latin American, Critical History of Modern Philosophy, Philosophy of Art",
+      "local": "Haverford, Pennsylvania, United States",
+      "categoria": "Junior faculty / Tenure-track or similar",
+      "contrato": "",
+      "prazo": "2026-10-26",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Tenure-Track Assistant Professor of Philosophy, Haverford College\n - PhilJobs:JFP \n Tenure-Track Assistant Professor of Philosophy, Haverford College\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32020\n Tenure-Track Assistant Professor of Philosophy \n Department of Philosophy, Haverford College\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Philosophy of Language\n AOS categories\n Philosophy of Language\n AOC\n Open, though the Department would especially welcome AOCs in Philosophy of Place or Time, Latin American, Critical History of Modern Philosophy, Philosophy of Art.\n Workload\n Full time\n Vacancies\n 1\n Location\n Haverford, Pennsylvania, United States \n Job description\n Haverford College invites applications for a Tenure-Track Assistant Professor of Philosophy to begin Fall 2027.\n The Department of Philosophy seeks a full-time, tenure-track Assistant Professor beginning Fall semester, 2027. Area of Specialization (AOS): Philosophy of Language. Areas of Competence (AOC): Open, though the Department would especially welcome",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "tenure-track",
+      "porque": "competencia: modern philosophy",
+      "relevancia": "competencia",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Provavel c/ patrocinio",
+      "idioma": "EN",
+      "dias_ate_prazo": 42,
       "urgente": false,
       "descartado": false,
       "marcas": [
@@ -2508,16 +2547,16 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 54,
+      "dias_ate_prazo": 47,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics"
+      "porque_veredicto": "competencia: ethics",
+      "descartado": false
     },
     {
       "id": "philjobs-31913",
@@ -2544,16 +2583,56 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 56,
+      "dias_ate_prazo": 49,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: political philosophy"
+      "porque_veredicto": "competencia: political philosophy",
+      "descartado": false
+    },
+    {
+      "id": "philjobs-32017",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32017",
+      "titulo": "Academic research assistant (6 years)",
+      "instituicao": "Universität des Saarlandes",
+      "aos": "Feminist philosophy of language, feminist metaphysics, metaphilosophy",
+      "aoc": "Feminist philosophy, philosophy of language, metaphysics, metaphilosophy, social epistemology, or other applications of theoretical philosophy to issues of broader societal relevance",
+      "local": "Saarbrücken, Saarland, Germany",
+      "categoria": "Junior faculty / Fixed term",
+      "contrato": "",
+      "prazo": "2026-11-02",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Academic research assistant (6 years), Universität des Saarlandes\n - PhilJobs:JFP \n Academic research assistant (6 years), Universität des Saarlandes\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32016\n Academic research assistant (6 years) \n Department of Philosophy, Universität des Saarlandes\n Job category\n Junior faculty / Fixed term\n AOS\n Feminist philosophy of language, feminist metaphysics, metaphilosophy\n AOS categories\n Metaphysics\n Philosophy of Language\n Feminist Philosophy\n Philosophy of Gender\n AOC\n Feminist philosophy, philosophy of language, metaphysics, metaphilosophy, social epistemology, or other applications of theoretical philosophy to issues of broader societal relevance\n AOC categories\n Metaphysics\n Philosophy of Language\n Feminist Philosophy\n Philosophy of Gender\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n W2907\n Location\n Saarbrücken, Saarland, Germany \n Start date\n 01 April 2027\n Job description\n The Philosophy Department at UdS is inviting applications for the position of an academic rese",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "tenure-track",
+      "porque": "competencia: epistemology, social epistemology, metaphysics",
+      "relevancia": "competencia",
+      "pais": "Germany",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Aberto",
+      "idioma": "DE",
+      "dias_ate_prazo": 49,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philjobs-31793",
@@ -2580,16 +2659,16 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 57,
+      "dias_ate_prazo": 50,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: medieval philosophy"
+      "porque_veredicto": "competencia: medieval philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31977",
@@ -2607,10 +2686,8 @@
       "publicado": "",
       "texto": "Assistant Professor, Lehigh University\n - PhilJobs:JFP \n Assistant Professor, Lehigh University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31976\n Assistant Professor \n Department of Philosophy, Lehigh University\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Metaphysics\n AOS categories\n Metaphysics\n AOC\n Philosophy of mind or any core area\n AOC categories\n Metaphysics and Epistemology\n Philosophy of Language\n Philosophy of Mind\n Logic\n Philosophy of Science\n Value Theory\n Workload\n Full time\n Vacancies\n 1\n Location\n Bethlehem, Bethlehem, United States \n Start date\n July 1st 2027\n Job description\n LEHIGH UNIVERSITY. The Department of Philosophy invites applications for a tenure-track Assistant Professor position with an area of specialization (AOS) in Metaphysics in the analytic tradition (broadly construed), and areas of competence (AOC) in Philosophy of Mind or any core area.  The anticipated start date will be July 1st, 2027. \n Candidates must have earned a PhD in Philosophy by the date of employment, have a record of",
       "visto_em": "2026-09-07",
-      "avisos_extracao": [
-        "pais nao lido"
-      ],
-      "extracao": "suspeita",
+      "avisos_extracao": [],
+      "extracao": "ok",
       "tipo": "tenure-track",
       "porque": "competencia: metaphysics",
       "relevancia": "competencia",
@@ -2620,16 +2697,14 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 69,
+      "dias_ate_prazo": 62,
       "urgente": false,
-      "descartado": false,
-      "marcas": [
-        "pais nao lido"
-      ],
-      "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita",
+      "marcas": [],
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: metaphysics",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "philjobs-31989",
@@ -2647,10 +2722,8 @@
       "publicado": "",
       "texto": "Lecturer in Ethics and/or Political Philosophy, King's College London\n - PhilJobs:JFP \n Lecturer in Ethics and/or Political Philosophy, King's College London\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31988\n Lecturer in Ethics and/or Political Philosophy \n Department of Philosophy, King's College London\n Job category\n Junior faculty / Tenured, continuing or permanent\n AOS\n Ethics and/or Political Philosophy\n AOS categories\n Ethics\n Social and Political Philosophy\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n 14456\n Location\n London, England, United Kingdom \n Start date\n 1.9.2027\n Job description\n About us : The Department of Philosophy is one of the largest and most distinguished in the UK. We have particular research strengths in the history of philosophy, philosophy of mind and psychology, philosophy of language and linguistics, metaphysics, epistemology, and philosophy of science and ethics and political philosophy. \n About the role : The Philosophy Department at King’s College London is seeking an",
       "visto_em": "2026-09-07",
-      "avisos_extracao": [
-        "pais nao lido"
-      ],
-      "extracao": "suspeita",
+      "avisos_extracao": [],
+      "extracao": "ok",
       "tipo": "tenure-track",
       "porque": "competencia: ethics, political philosophy",
       "relevancia": "competencia",
@@ -2660,16 +2733,14 @@
       "esforco": "Alto",
       "elegibilidade": "Provavel c/ patrocinio",
       "idioma": "EN",
-      "dias_ate_prazo": 69,
+      "dias_ate_prazo": 62,
       "urgente": false,
-      "descartado": false,
-      "marcas": [
-        "pais nao lido"
-      ],
-      "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita",
+      "marcas": [],
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: ethics, political philosophy",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "philjobs-31833",
@@ -2696,16 +2767,16 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 85,
+      "dias_ate_prazo": 78,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: epistemology, metaphysics"
+      "porque_veredicto": "competencia: epistemology, metaphysics",
+      "descartado": false
     },
     {
       "id": "philjobs-31721",
@@ -2741,9 +2812,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: continental philosophy"
+      "porque_veredicto": "competencia: continental philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31729",
@@ -2779,9 +2850,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy"
+      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31737",
@@ -2817,9 +2888,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: history of philosophy, continental philosophy"
+      "porque_veredicto": "competencia: history of philosophy, continental philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31753",
@@ -2855,9 +2926,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics, political philosophy"
+      "porque_veredicto": "competencia: ethics, political philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31761",
@@ -2893,9 +2964,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics"
+      "porque_veredicto": "competencia: ethics",
+      "descartado": false
     },
     {
       "id": "philjobs-31897",
@@ -2931,9 +3002,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy"
+      "porque_veredicto": "competencia: early modern, early modern philosophy, modern philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31689",
@@ -2969,9 +3040,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics"
+      "porque_veredicto": "competencia: ethics",
+      "descartado": false
     },
     {
       "id": "philjobs-31629",
@@ -3007,9 +3078,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics"
+      "porque_veredicto": "competencia: ethics",
+      "descartado": false
     },
     {
       "id": "philjobs-31669",
@@ -3045,9 +3116,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: political philosophy"
+      "porque_veredicto": "competencia: political philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31697",
@@ -3083,9 +3154,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: political philosophy"
+      "porque_veredicto": "competencia: political philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31693",
@@ -3125,9 +3196,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "philjobs-31677",
@@ -3163,9 +3234,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: epistemology, social epistemology"
+      "porque_veredicto": "competencia: epistemology, social epistemology",
+      "descartado": false
     },
     {
       "id": "philjobs-31933",
@@ -3201,9 +3272,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics, political philosophy"
+      "porque_veredicto": "competencia: ethics, political philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31581",
@@ -3239,9 +3310,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: ethics"
+      "porque_veredicto": "competencia: ethics",
+      "descartado": false
     },
     {
       "id": "philjobs-31973",
@@ -3259,10 +3330,8 @@
       "publicado": "",
       "texto": "Assistant Professor, University of Wisconsin-Whitewater\n - PhilJobs:JFP \n Assistant Professor, University of Wisconsin-Whitewater\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31972\n Assistant Professor \n Department of Philosophy and Religious Studies, University of Wisconsin-Whitewater\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Social and Political Philosophy\n AOS categories\n Social and Political Philosophy\n AOC\n Preference for candidates who can contribute to the college’s interdisciplinary programs in Women’s and Gender Studies and/or Race and Ethnic Studies.\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n JR10014610\n Location\n Whitewater, Wisconsin, United States \n Start date\n August 2027\n Job description\n The Department of Philosophy and Religious Studies in the College of Letters and Sciences at the University of Wisconsin-Whitewater seeks a tenure-track Assistant Professor in Philosophy, with specialization in Social and Political Philosophy, beginning August 2027. This is a full-time positi",
       "visto_em": "2026-09-07",
-      "avisos_extracao": [
-        "pais nao lido"
-      ],
-      "extracao": "suspeita",
+      "avisos_extracao": [],
+      "extracao": "ok",
       "tipo": "tenure-track",
       "porque": "competencia: political philosophy",
       "relevancia": "competencia",
@@ -3274,15 +3343,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
-        "pais nao lido",
         "sem prazo"
       ],
-      "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita",
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: political philosophy",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "philjobs-31657",
@@ -3297,7 +3365,7 @@
       "publicado": "",
       "texto": "Assistant Professor of Philosophy, Umeå University\n - PhilJobs:JFP \n Assistant Professor of Philosophy, Umeå University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31656\n Assistant Professor of Philosophy \n Faculty of Arts and Humanities, Umeå University\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n AN 2026/903\n Location\n Umeå, Västerbotten, Sweden \n Start date\n July 1, 2027\n Job description\n The Faculty of Arts and Humanities at Umeå University invites applications for two positions as Assistant Professor. The call is open to all subjects in the faculty where scientific research is conducted, among them philosophy. Of the two positions, no more than one may be allocated to the same subject area within the faculty.\n The philosophy subject in Umeå has 18 permanent teachers. It offers courses and awards degrees in philosophy at the undergraduate (first-cycle), advanced (second-cycle), and graduate (third-cycle) level. The research activit",
       "visto_em": "2026-08-24",
-      "dias_ate_prazo": 24,
+      "dias_ate_prazo": 17,
       "porque": "AOS aberto",
       "novo": true,
       "vencida": false,
@@ -3316,9 +3384,49 @@
       "marcas": [],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
+    },
+    {
+      "id": "philjobs-32025",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32025",
+      "titulo": "Visiting Assistant Professor",
+      "instituicao": "St. Mary's College",
+      "aos": "Open",
+      "aoc": "Open",
+      "local": "St. Mary's City, Maryland, United States",
+      "categoria": "Visiting fellowship / Professorship / Fixed term",
+      "contrato": "",
+      "prazo": "2026-10-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Visiting Assistant Professor, St. Mary's College, Maryland\n - PhilJobs:JFP \n Visiting Assistant Professor, St. Mary's College, Maryland\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32024\n Visiting Assistant Professor \n Department of Philosophy, St. Mary's College, Maryland\n Job category\n Visiting fellowship / Professorship / Fixed term\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n St. Mary's City, Maryland, United States \n Start date\n January 1, 2027\n Job description\n The Department of Philosophy at St. Mary’s College of Maryland is accepting applications for a 1.5 year position as a Visiting Assistant Professor of Philosophy for three (3) semesters, beginning January 2027 until May 2028.  The salary range for this position is $63,700 to $71,000, depending on qualifications and experience.\n Non-sectarian since its founding, St. Mary's College of Maryland, a public Carnegie Baccalaureate, Arts and Sciences institution located in St. Mary's City, 70 miles southeast of Washington, D.C., has been designated as Maryland",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "visitante",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Medio",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 17,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philjobs-31701",
@@ -3345,16 +3453,96 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 38,
+      "dias_ate_prazo": 31,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
+    },
+    {
+      "id": "philjobs-32049",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32049",
+      "titulo": "Dean, Faculty of Arts and Social Sciences, National University of Singapore",
+      "instituicao": "National University of Singapore",
+      "aos": "Open",
+      "aoc": "Open",
+      "local": "Block AS7, 5 Arts Link, Level 5 Dean's Office, Singapore, Singapore",
+      "categoria": "Senior faculty / Tenure-track or similar",
+      "contrato": "",
+      "prazo": "2026-10-16",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Dean, Faculty of Arts and Social Sciences, National University of Singapore, National University of Singapore\n - PhilJobs:JFP \n Dean, Faculty of Arts and Social Sciences, National University of Singapore, National University of Singapore\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32048\n Dean, Faculty of Arts and Social Sciences, National University of Singapore \n National University of Singapore\n Job category\n Senior faculty / Tenure-track or similar\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Block AS7, 5 Arts Link, Level 5 Dean's Office, Singapore, Singapore \n Job description\n Background \n The National University of Singapore (NUS) invites applications for the post of Dean, Faculty of Arts and Social Sciences .\n With a history that goes back to 1929, the Faculty comprises fifteen Departments and a Centre for Language Studies. The Departments span the arts, humanities and social sciences, and form three divisions: Asian Studies, Humanities, and Social Sciences.\n The Faculty has strong interdisciplinary collabo",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "senior",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "Singapore",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 32,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
+    },
+    {
+      "id": "philjobs-32045",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32045",
+      "titulo": "Postdoctoral Fellowship in Moral and Political Economy",
+      "instituicao": "Johns Hopkins University",
+      "aos": "Open",
+      "aoc": "Political Economy",
+      "local": "Baltimore, Maryland, United States",
+      "categoria": "Postdoc or similar / Fixed term",
+      "contrato": "",
+      "prazo": "2026-11-06",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Postdoctoral Fellowship in Moral and Political Economy , Johns Hopkins University\n - PhilJobs:JFP \n Postdoctoral Fellowship in Moral and Political Economy , Johns Hopkins University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32044\n Postdoctoral Fellowship in Moral and Political Economy \n SNF Agora Institute, Johns Hopkins University\n Job category\n Postdoc or similar / Fixed term\n AOS\n Open\n AOC\n Political Economy\n AOC categories\n History of Philosophy\n Philosophy of Science\n Ethics\n Workload\n Full time\n Vacancies\n 2\n Location\n Baltimore, Maryland, United States \n Start date\n July 1, 2027\n Job description\n TheCenter for Economy and Society,a division of theSNF Agora Institute at Johns Hopkins University, invites applications for two or more postdoctoral fellowships in Moral and Political Economy. Applications are encouraged from scholars working on cross-disciplinary topics related to moral and political economy, who anticipate having a Ph.D. in hand prior to the anticipated start date of July 1, 2027. Current faculty and postdocs have",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "pos-doc",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Medio",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 53,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philjobs-31769",
@@ -3381,16 +3569,16 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 69,
+      "dias_ate_prazo": 62,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31709",
@@ -3417,16 +3605,16 @@
       "esforco": "Medio",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 86,
+      "dias_ate_prazo": 79,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31653",
@@ -3441,7 +3629,7 @@
       "publicado": "",
       "texto": "Princeton DeCenter Postdoctoral Fellowships, Princeton University\n - PhilJobs:JFP \n Princeton DeCenter Postdoctoral Fellowships, Princeton University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31652\n Princeton DeCenter Postdoctoral Fellowships \n Center for the Decentralization of Power Through Blockchain Technology, Princeton University\n Job category\n Postdoc or similar / Fixed term\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 2\n Organization's reference number\n Princeton University\n Location\n Princeton, New Jersey, United States \n Start date\n 09/01/2027\n Job description\n Description\n The Princeton DeCenter invites applications for Postdoctoral Fellows, (including more senior researchers) with academic or industry experience expected to begin in Feb. 2027 through Feb. 2028. They will be appointed at the rank of Postdoctoral Research Associate or at a more senior rank, as appropriate.\n The Term of appointment is based on rank. Positions at the postdoctoral rank are for one year with the possibility of renewal pending satisfac",
       "visto_em": "2026-08-24",
-      "dias_ate_prazo": 297,
+      "dias_ate_prazo": 290,
       "porque": "AOS aberto",
       "novo": true,
       "vencida": false,
@@ -3460,9 +3648,9 @@
       "marcas": [],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31705",
@@ -3498,9 +3686,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31765",
@@ -3536,9 +3724,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31789",
@@ -3578,9 +3766,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "philjobs-31829",
@@ -3616,9 +3804,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31865",
@@ -3654,9 +3842,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31613",
@@ -3692,9 +3880,9 @@
       ],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31929",
@@ -3730,9 +3918,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     },
     {
       "id": "philjobs-31969",
@@ -3765,7 +3953,6 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "pais nao lido",
         "pais nao lido",
@@ -3774,7 +3961,8 @@
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "philjobs-32001",
@@ -3793,7 +3981,47 @@
       "texto": "Lecturer, Massachusetts Institute of Technology\n - PhilJobs:JFP \n Lecturer, Massachusetts Institute of Technology\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32000\n Lecturer \n Women's and Gender Studies, Massachusetts Institute of Technology\n Job category\n Junior faculty / Tenured, continuing or permanent\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n 25968\n Location\n Cambridge, Massachusetts, United States \n Start date\n Fall 2027\n Job description\n LECTURER I, Women’s and Gender Studies Program , to perform the duties of a full-time lecturer with full benefits. This is a three-year appointment beginning July 1, 2027, with the possibility of indefinite renewals based on favorable performance reviews and program needs. The standard teaching load is 6 courses per year (3-3). Candidates should be prepared to teach courses in their specialization and WGS core courses -  Introduction to Women’s and Gender Studies (WGS.101) and Feminist Thought (WGS.301). Responsibilities include teaching three cour",
       "visto_em": "2026-09-07",
       "avisos_extracao": [
+        "titulo curto demais para ser anuncio"
+      ],
+      "extracao": "suspeita",
+      "tipo": "tenure-track",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Provavel c/ patrocinio",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "marcas": [
         "titulo curto demais para ser anuncio",
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "philjobs-32013",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32013",
+      "titulo": "Full-Time Tenure Track Faculty: Philosophy (College of Arts & Sciences)",
+      "instituicao": "Quinnipiac University",
+      "aos": "Open",
+      "aoc": "Open",
+      "local": "Hamden, Connecticut, United States",
+      "categoria": "Junior faculty / Tenure-track or similar",
+      "contrato": "Full-time",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Full-Time Tenure Track Faculty: Philosophy (College of Arts & Sciences), Quinnipiac University\n - PhilJobs:JFP \n Full-Time Tenure Track Faculty: Philosophy (College of Arts & Sciences), Quinnipiac University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32012\n Full-Time Tenure Track Faculty: Philosophy (College of Arts & Sciences) \n Quinnipiac University\n Job category\n Junior faculty / Tenure-track or similar\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Hamden, Connecticut, United States \n Start date\n August 2027\n Job description\n Full-Time Tenure Track Faculty: Philosophy (College of Arts & Sciences)\n Job Number: 497323\n Type: Full-time\n Campus: Mount Carmel - Hamden, CT\n Categories: Faculty\n Overview:\n The Department of Philosophy and Political Science in the College of Arts & Sciences at Quinnipiac University invites applications for a tenure-track position at the rank of Assistant Professor. The preferred start date is August 2027.\n We seek a dynamic and collaborative teacher-scholar committed to excellence in ",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
         "pais nao lido"
       ],
       "extracao": "suspeita",
@@ -3810,7 +4038,88 @@
       "urgente": false,
       "descartado": false,
       "marcas": [
-        "titulo curto demais para ser anuncio",
+        "pais nao lido",
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
+    },
+    {
+      "id": "philjobs-32029",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32029",
+      "titulo": "Postdoctoral Associate, Program on Freedom and Free Societies",
+      "instituicao": "Cornell University",
+      "aos": "Open",
+      "aoc": "Open",
+      "local": "Ithaca, New York, United States",
+      "categoria": "Postdoc or similar / Fixed term",
+      "contrato": "",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Postdoctoral Associate, Program on Freedom and Free Societies, Cornell University\n - PhilJobs:JFP \n Postdoctoral Associate, Program on Freedom and Free Societies, Cornell University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32028\n Postdoctoral Associate, Program on Freedom and Free Societies \n College of Arts & Sciences, Cornell University\n Job category\n Postdoc or similar / Fixed term\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Ithaca, New York, United States \n Start date\n 1/1/2027\n Job description\n The Program on Freedom and Free Societies at Cornell University ( https://freedomandfreesocieties.cornell.edu/ ) invites applications for a two-year Postdoctoral Associate appointment running from January 1, 2027, through December 31, 2028. Per university policy Postdoctoral Associates must be appointed in one-year intervals.  Therefore, the appointment for Year One will run from January 1, 2027, through December 31, 2027. The Program supports research, teaching, and public engagement on the institutions, ideas, a",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "pos-doc",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Medio",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido",
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
+    },
+    {
+      "id": "philjobs-32037",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32037",
+      "titulo": "Research Scientist",
+      "instituicao": "Resolution",
+      "aos": "Open",
+      "aoc": "Open",
+      "local": "Berkeley, California, United States",
+      "categoria": "Other (non-academic) / Tenured, continuing or permanent",
+      "contrato": "",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Research Scientist, Resolution\n - PhilJobs:JFP \n Research Scientist, Resolution\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32036\n Research Scientist \n Philosophy Program, Resolution\n Job category\n Other (non-academic) / Tenured, continuing or permanent\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 3\n Location\n Berkeley, California, United States \n Start date\n Winter 2026, Spring 2027\n Job description\n About the Philosophy Program at Resolution \n Work on AI alignment raises philosophical questions, including what concepts like honesty mean, what character is, what moral competence looks like, which moral theories should guide model behavior, and what research ought (or ought not) be delegated to models. Resolution’s philosophy team seeks to advance alignment by examining these kinds of questions and testing empirical claims where experimentation can help. Some projects will be primarily conceptual; others will involve collaboration with empirical researchers.\n Our initial research agenda is under development. The following giv",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "tenure-track",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Provavel c/ patrocinio",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
         "pais nao lido",
         "sem prazo"
       ],
@@ -3832,7 +4141,7 @@
       "publicado": "",
       "texto": "Term Assistant Professor of Philosophy , George Mason University\n - PhilJobs:JFP \n Term Assistant Professor of Philosophy , George Mason University\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31648\n Term Assistant Professor of Philosophy  \n Department of Philosophy, George Mason University\n Job category\n Junior faculty / Fixed term\n AOS\n Social and Political Philosophy; Philosophy of Law\n AOS categories\n Philosophy of Law\n Social and Political Philosophy\n AOC\n Logic\n AOC categories\n Logic\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n 10004213\n Location\n Fairfax, Virginia, United States \n Start date\n Spring 2027\n Job description\n Department: Philosophy\n Classification: 9-month Instructional Faculty\n Job Category: Instructional Faculty\n Job Type: Full-Time\n Work Schedule: Full-time (1.0 FTE, 40 hrs/wk)\n Location: Fairfax, VA\n Sponsorship Eligibility: Not eligible for visa sponsorship\n Salary: Salary commensurate with education and experience\n About the Position:\n The Term Assistant Professor of Philosophy is a dyna",
       "visto_em": "2026-08-24",
-      "dias_ate_prazo": -7,
+      "dias_ate_prazo": -14,
       "porque": "competencia: political philosophy",
       "novo": true,
       "vencida": true,
@@ -3851,9 +4160,9 @@
       "marcas": [],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: political philosophy"
+      "porque_veredicto": "competencia: political philosophy",
+      "descartado": false
     },
     {
       "id": "philjobs-31673",
@@ -3868,7 +4177,7 @@
       "publicado": "",
       "texto": "Director, Uehiro Oxford Institute, University of Oxford\n - PhilJobs:JFP \n Director, Uehiro Oxford Institute, University of Oxford\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31672\n Director, Uehiro Oxford Institute \n Uehiro Oxford Institute, University of Oxford\n Job category\n Other (non-academic) / Tenure-track or similar\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Oxford, England, United Kingdom \n Job description\n The University of Oxford is seeking a new Director to lead the Uehiro Oxford Institute (UOI).\n The Uehiro Oxford Institute (UOI) is built around the fundamental question: “How should we live?”. Through research, teaching and public engagement, it aims to address the most significant issues facing humanity in a well-informed, helpful, and ethically grounded manner.\n Beginning as a research centre within the Faculty of Philosophy, UOI was established as an institute within the University’s Humanities Division in October 2024 thanks to generous support from the Uehiro Foundation on Ethics and Education.",
       "visto_em": "2026-08-24",
-      "dias_ate_prazo": -5,
+      "dias_ate_prazo": -12,
       "porque": "AOS aberto",
       "novo": true,
       "vencida": true,
@@ -3887,9 +4196,45 @@
       "marcas": [],
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "AOS aberto"
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
+    },
+    {
+      "id": "philjobs-31921",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/31921",
+      "titulo": "Hong Kong Postdoctoral Fellowship",
+      "instituicao": "Lingnan University",
+      "aos": "Open",
+      "aoc": "Open",
+      "local": "Tuen Mun, Hong Kong",
+      "categoria": "Postdoc or similar / Fixed term",
+      "contrato": "Email",
+      "prazo": "2026-09-11",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Hong Kong Postdoctoral Fellowship, Lingnan University, Hong Kong\n - PhilJobs:JFP \n Hong Kong Postdoctoral Fellowship, Lingnan University, Hong Kong\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 31920\n Hong Kong Postdoctoral Fellowship \n Department of Philosophy, Lingnan University, Hong Kong\n Job category\n Postdoc or similar / Fixed term\n AOS\n Open\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Location\n Tuen Mun, Hong Kong \n Start date\n Flexible; between June and December 2027\n Job description\n We are looking for excellent philosophers to nominate for the Hong Kong Research Grants Council (RGC) Junior Research Fellow Scheme. The fellowship supports each awardee with a full-time appointment as Postdoctoral Fellow for a period of 24 months, with an optional extension to 36 months. The basic salary amounts to HK$44,700 per month (HK$34,700 from the research council + HK$10,000 from the university). Standard (for example, medical and dental) benefits are included, as well as a HK$13,600 per year allowance for conference and research-related",
+      "visto_em": "2026-08-30",
+      "tipo": "pos-doc",
+      "porque": "AOS aberto",
+      "relevancia": "aberto",
+      "pais": "Hong Kong",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Medio",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": -3,
+      "urgente": false,
+      "marcas": [],
+      "novo": true,
+      "vencida": true,
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "veredicto": "revisar",
+      "porque_veredicto": "AOS aberto",
+      "descartado": false
     }
   ]
 }

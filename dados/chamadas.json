@@ -1,21 +1,59 @@
 {
-  "_gerado_em": "2026-09-07T13:26:50.379672-03:00",
+  "_gerado_em": "2026-09-14T13:59:47.074873-03:00",
   "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_CHAMADAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-09-07T13:26:50.379672-03:00",
+    "quando": "2026-09-14T13:59:47.074873-03:00",
     "fontes": {
       "curadas": "ok · 5 curados · atualizado em 2026-08-25",
       "philevents": "ok · 120 sondados · 30 novos",
-      "anpof-chamadas": "ok · 1530 links · moldura podada: 67339 chars",
+      "anpof-chamadas": "ok · 1537 links · moldura podada: 67294 chars",
       "upenn-cfp": "desligada"
     },
     "avisos": [
       "anpof-chamadas: teto de 40 itens novos atingido",
-      "77 itens ja vivos reclassificados (sem rede, sem remocao)"
+      "86 itens ja vivos reclassificados (sem rede, sem remocao)"
     ],
-    "resumo": "91 vivos (?:1 evento:29 publicacao:61) · 2 urgentes · 11 novos · 14 arquivados por prazo · 50 barrados"
+    "resumo": "100 vivos (?:1 evento:32 publicacao:67) · 7 urgentes · 10 novos · 6 arquivados por prazo · 57 barrados"
   },
   "itens": [
+    {
+      "id": "lsn-jle-homelessness-2026",
+      "fonte": "curadas",
+      "url": "https://www.lutheranscholarsnetwork.org/",
+      "titulo": "Journal of Lutheran Ethics — numero de dezembro/janeiro de 2026: 'Homelessness'",
+      "instituicao": "Journal of Lutheran Ethics",
+      "aos": "religious ethics, christian ethics, theology",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Estados Unidos",
+      "prazo": "2026-10-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. PRAZO DE PROPOSTA: 1 de outubro de 2026. Entrega final dos textos: 1 de novembro de 2026. E o unico prazo duro do boletim inteiro. O tema: pensando o nascimento de Cristo num estabulo e a fuga da Sagrada Familia para o Egito, a chamada convida a considerar quem se encontra em situacao semelhante — sem meios de custear moradia, ou fugindo de violencia, pobreza ou desastre. Editora do numero: Jennifer Hockenbery. O JLE e publicacao eclesial online, bimestral, gratuita e de acesso aberto, catalogada na ATLA, que trata questoes sociais a partir da tradicao historica, teologica e etica. Ha mais chamadas do JLE para 2026 alem desta.",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "periodico",
+      "porque": "nicho: luther, lutheran",
+      "relevancia": "nicho",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 17,
+      "urgente": true,
+      "descartado": false,
+      "marcas": [
+        "prazo em 17 dia(s)"
+      ],
+      "veredicto": "relevante",
+      "porque_veredicto": "nicho: luther, lutheran",
+      "vencida": false
+    },
     {
       "id": "anpof-chamadas-isualidades-e-disputas-narrativas-no-cotidiano-do-sul-global",
       "fonte": "anpof-chamadas",
@@ -42,19 +80,19 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 7,
+      "dias_ate_prazo": 0,
       "urgente": true,
       "marcas": [
-        "prazo em 7 dia(s)",
+        "prazo em 0 dia(s)",
         "so com texto pronto"
       ],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-hamadas-de-revistas-dossie-filosofia-arquitetura-inter-artes",
@@ -82,55 +120,178 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 8,
+      "dias_ate_prazo": 1,
       "urgente": true,
       "marcas": [
-        "prazo em 8 dia(s)",
+        "prazo em 1 dia(s)",
         "so com texto pronto"
       ],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
-      "id": "lsn-jle-homelessness-2026",
-      "fonte": "curadas",
-      "url": "https://www.lutheranscholarsnetwork.org/",
-      "titulo": "Journal of Lutheran Ethics — numero de dezembro/janeiro de 2026: 'Homelessness'",
-      "instituicao": "Journal of Lutheran Ethics",
-      "aos": "religious ethics, christian ethics, theology",
+      "id": "anpof-chamadas-icacao-da-revista-inconfidentia-v10-n10-chamada-e-divulgacao",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/nova-publicacao-da-revista-inconfidentia-v10-n10--chamada-e-divulgacao",
+      "titulo": "NOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO",
+      "instituicao": "cuja vida e missão continuam a inspirar gerações",
+      "aos": "",
       "aoc": "",
       "local": "",
       "categoria": "",
       "contrato": "",
-      "pais": "Estados Unidos",
-      "prazo": "2026-10-01",
+      "pais": "Brasil",
+      "prazo": "2026-09-30",
       "prazo_brando": false,
       "publicado": "",
-      "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. PRAZO DE PROPOSTA: 1 de outubro de 2026. Entrega final dos textos: 1 de novembro de 2026. E o unico prazo duro do boletim inteiro. O tema: pensando o nascimento de Cristo num estabulo e a fuga da Sagrada Familia para o Egito, a chamada convida a considerar quem se encontra em situacao semelhante — sem meios de custear moradia, ou fugindo de violencia, pobreza ou desastre. Editora do numero: Jennifer Hockenbery. O JLE e publicacao eclesial online, bimestral, gratuita e de acesso aberto, catalogada na ATLA, que trata questoes sociais a partir da tradicao historica, teologica e etica. Ha mais chamadas do JLE para 2026 alem desta.",
-      "visto_em": "2026-09-07",
-      "avisos_extracao": [],
-      "extracao": "ok",
+      "texto": "NOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO | ANPOF\n27/06/2026\nNOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO\nFaculdade Dom Luciano Mendes (FDLM)\nNOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.19) - CHAMADA E DIVULGAÇÃO\nA Faculdade Dom Luciano Mendes – FDLM ( https://faculdadedomluciano.com.br/ ), vinculada à Arquidiocese de Mariana – instituição quase tricentenária – tem a alegria de apresentar o novo número da Revista de Filosofia Inconfidentia (v. 10, n. 19). Os artigos que compõem esta edição reúnem diferentes olhares e enfoques filosóficos, percorrendo campos como o teatro, o cinema, as artes em geral, o sagrado e a mística, a política, a psicanálise e questões situadas na fronteira com a teologia.\nCom espírito de gratidão, a Faculdade rememora, neste ano, os 20 anos de falecimento do Servo de Deus Dom Luciano Pedro Mendes de Almeida (2006-2026), quarto arcebispo de Mariana e patrono da instituição, cuja vida e missão continuam a inspirar gerações.\nSumário\n- Editorial\n- O teatro popular na Baixa Idade Média: o drama litúrgico das representações bíblicas , por Mabel Pereira e Jonas Assis\n- Fenomenologia da religião e experiência do sagrado: uma análise a partir de Van der Leew, Schleimacher e Rudolf Otto , por Raimundo Pereira de Sousa\n- A psique e suas configurações no mundo ocidental , por Dilson da Rocha\n- As implicações sociais e polít",
+      "visto_em": "2026-08-25",
       "tipo": "periodico",
-      "porque": "nicho: luther, lutheran",
-      "relevancia": "nicho",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
       "uf": "",
       "forma": "publicacao",
       "bloco": null,
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 24,
-      "urgente": false,
+      "dias_ate_prazo": 16,
+      "urgente": true,
+      "marcas": [
+        "prazo em 16 dia(s)"
+      ],
+      "novo": true,
+      "vencida": false,
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-stas-submissao-para-a-revista-ideacao-injusticas-epistemicas",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/submissao-para-a-revista-ideacao--injusticas-epistemicas",
+      "titulo": "Submissão para a Revista Ideação - Injustiças epistêmicas",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2026-09-30",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Submissão para a Revista Ideação - Injustiças epistêmicas | ANPOF\n15/04/2026\nSubmissão para a Revista Ideação - Injustiças epistêmicas\nVirtual\nA revista Ideação organiza, sob a coordenação dos professores Alexnaldo Teixeira Rodrigues (UEFS) e Luciane Luisa Lindenmeyer (UEFS), o Dossiê  INJUSTIÇAS EPISTÊMICAS , a ser publicado no primeiro semestre de 2027, com artigos que dialoguem com essa temática em uma chave filosófica. Os artigos para o dossiê poderão ser enviados até  30/09/2026 .\nContinuamos a receber artigos, resenhas e traduções por submissão contínua.\nLink: https://periodicos.uefs.br/index.php/revistaideacao/index\nANPOF no Facebook\nAnpof - associação nacional de pós-graduação em filosofia\nANPOF no X\nTweets by anpof\nANPOF no YouTube\nA Associação Nacional de Pós-Graduação em Filosofia (Anpof) foi fundada em 1983 durante uma reunião sobre pesquisa em Filosofia promovida pelo CNPq, em Brasília. Segundo o Art. 3º de seu Estatuto, seus objetivos eram \"promover maior integração dos cursos de pós-graduação em Filosofia; defender os interesses das pós-graduações [desta área] junto aos órgãos competentes [e] estimular, em todos os níveis, a investigação filosófica no País\".\nDiretoria ANPOF\ndiretoria@anpof.org.br",
+      "visto_em": "2026-08-30",
+      "tipo": "periodico",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 16,
+      "urgente": true,
+      "marcas": [
+        "prazo em 16 dia(s)"
+      ],
+      "novo": true,
+      "vencida": false,
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-revista-paradigmas-filosofia-realidade-arte-setembro-de-2026",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/revista-paradigmas-filosofia-realidade-arte-setembro-de-2026",
+      "titulo": "Revista Paradigmas. Filosofia, Realidade & Arte (setembro de 2026)",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2026-09-30",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Revista Paradigmas. Filosofia, Realidade & Arte (setembro de 2026) | ANPOF\n15/09/2026\nRevista Paradigmas. Filosofia, Realidade & Arte (setembro de 2026)\nCefs - Centro de Estudos Filosóficos de Santos online\nA Revista Paradigmas - Filosofia, Realidade & Arte, publicação do CEFS - Centro de Estudos Filosóficos de Santos, torna pública a chamada para submissão de artigos com temáticas das áreas de Filosofia e áreas conexas. A revista recebe a contribuição de Mestres, Doutores, professores, alunos de pós-graduação, e demais pesquisadores e investigadores que tenham interesse em difundir suas pesquisas.\nPublicação bimestral. Proxima edição: setembro/outubro. ISSN 1980-4342\nA revista é oferecida em versões impressa, online e pdf.\nAs normas estão em nossa página: https://paradigmas.com.br/revista/normas\nSubmissões até 30/09/2026\nPara mais informações entre em contato: cefs2016@gmail.com. ou whats 13 98203-2132 c/ Luiz Meirelles.\nEdição agosto/setembro já está disponível\nLink: https://paradigmas.com.br/revista/normas",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "periodico",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 16,
+      "urgente": true,
       "descartado": false,
-      "marcas": [],
-      "veredicto": "relevante",
-      "porque_veredicto": "nicho: luther, lutheran",
+      "marcas": [
+        "prazo em 16 dia(s)"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
       "vencida": false
+    },
+    {
+      "id": "philevents-146569",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/146569",
+      "titulo": "Business Ethics: Past, Present",
+      "instituicao": "and Future",
+      "aos": "areas",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "prazo": "2026-10-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Business Ethics: Past, Present, and Future\n - PhilEvents \n Business Ethics: Past, Present, and Future\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Business Ethics: Past, Present, and Future\n Celebrating the HCBE's 50th Anniversary \n October 15, 2026\n Hoffman Center for Business Ethics, Bentley University \n LaCava Center\n175 Forest St.\nWaltham 02478\nUnited States\n This will be an accessible event, including organized related activities \n Organisers:\n Jeffrey Moriarty \n Bentley University \n Topic areas\n Applied Ethics \n Talks at this conference\n Add a talk \n Details\n The Hoffman Center for Business Ethics (HCBE) at Bentley University turns 50 in 2026! Founded in 1976 by Bentley Professor W. Michael Hoffman, the HCBE is one of the world's oldest academic centers dedicated to busine",
+      "visto_em": "2026-08-25",
+      "tipo": "outro",
+      "porque": "competencia: ethics",
+      "relevancia": "competencia",
+      "pais": "",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 17,
+      "urgente": true,
+      "marcas": [
+        "pais nao lido",
+        "prazo em 17 dia(s)"
+      ],
+      "novo": true,
+      "vencida": false,
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "lsn-promissio-2028-law-gospel",
@@ -148,7 +309,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Periodico trimestral, com numeros tematicos, editado por Paul R. Hinlicky desde o inicio de 2026. Aceita submissoes em dogmatica, exegese teologica, historia da doutrina e missiologia contemporanea. Os quatro temas anunciados para 2028: janeiro, 'Perspectives on Law and Gospel, New and Old'; abril, 'Salvation History versus Apocalyptic'; agosto, 'What's Really Wrong with Dispensationalism?'; outubro, 'The Parables of Jesus — Jesus as Parable of God'. O boletim NAO declara prazo de submissao para nenhum deles. Prazo longo: numero de 2028 anunciado em 2026.",
-      "visto_em": "2026-09-07",
+      "visto_em": "2026-09-14",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "dossie",
@@ -186,7 +347,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Sem prazo: convida manuscritos em fluxo continuo, sobre qualquer parte do escopo do periodico. O foco e teologia publica em sentido amplo, de interesse para luteranos e nao-luteranos, no Canada e fora dele; a ELCIC e parceira de plena comunhao com a Igreja Anglicana do Canada, e o publico e deliberadamente diverso. NORMAS: 3.000 a 4.000 palavras, formato Word, citacao Chicago full-note. Co-editor-chefe: Kyle Schiefelbein-Guerrero. Requisitos completos na pagina de politicas do periodico.",
-      "visto_em": "2026-09-07",
+      "visto_em": "2026-09-14",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -224,7 +385,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Sem prazo e sem tema declarado: o boletim so convida ideias de artigo e manuscritos. Editado por Piotr J. Malysz e Matthew O. Staneck. Chamada generica — util como destino, nao como urgencia.",
-      "visto_em": "2026-09-07",
+      "visto_em": "2026-09-14",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -262,7 +423,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Resenhas de 1.000 a 1.500 palavras, de livros recentes que contribuam para a reflexao teologica ou a deliberacao etica na igreja e na sociedade — inclusive livros que nao sejam teologicos em si. O livro NAO precisa ser do tema do numero. Envia-se a proposta (o livro e a direcao da resenha) ao editor de resenhas, William Rodriguez, com 'Book Review' no assunto; tambem se pode pedir cadastro como resenhista, indicando areas de interesse. ESFORCO BAIXO, porta de entrada: e o item mais barato deste boletim.",
-      "visto_em": "2026-09-07",
+      "visto_em": "2026-09-14",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -319,9 +480,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "nicho: espinosa"
+      "porque_veredicto": "nicho: espinosa",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-das-de-revistas-revista-de-filosofia-moderna-e-contemporanea",
@@ -358,52 +519,15 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "relevante",
-      "porque_veredicto": "competencia: filosofia moderna"
+      "porque_veredicto": "competencia: filosofia moderna",
+      "descartado": false
     },
     {
-      "id": "anpof-chamadas-icacao-da-revista-inconfidentia-v10-n10-chamada-e-divulgacao",
+      "id": "anpof-chamadas--2025-dossie-propostas-epistemicas-sobre-o-canone-filosofico",
       "fonte": "anpof-chamadas",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/nova-publicacao-da-revista-inconfidentia-v10-n10--chamada-e-divulgacao",
-      "titulo": "NOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO",
-      "instituicao": "cuja vida e missão continuam a inspirar gerações",
-      "aos": "",
-      "aoc": "",
-      "local": "",
-      "categoria": "",
-      "contrato": "",
-      "pais": "Brasil",
-      "prazo": "2026-09-30",
-      "prazo_brando": false,
-      "publicado": "",
-      "texto": "NOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO | ANPOF\n27/06/2026\nNOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.10) - CHAMADA E DIVULGAÇÃO\nFaculdade Dom Luciano Mendes (FDLM)\nNOVA PUBLICAÇÃO DA REVISTA INCONFIDENTIA (V.10, N.19) - CHAMADA E DIVULGAÇÃO\nA Faculdade Dom Luciano Mendes – FDLM ( https://faculdadedomluciano.com.br/ ), vinculada à Arquidiocese de Mariana – instituição quase tricentenária – tem a alegria de apresentar o novo número da Revista de Filosofia Inconfidentia (v. 10, n. 19). Os artigos que compõem esta edição reúnem diferentes olhares e enfoques filosóficos, percorrendo campos como o teatro, o cinema, as artes em geral, o sagrado e a mística, a política, a psicanálise e questões situadas na fronteira com a teologia.\nCom espírito de gratidão, a Faculdade rememora, neste ano, os 20 anos de falecimento do Servo de Deus Dom Luciano Pedro Mendes de Almeida (2006-2026), quarto arcebispo de Mariana e patrono da instituição, cuja vida e missão continuam a inspirar gerações.\nSumário\n- Editorial\n- O teatro popular na Baixa Idade Média: o drama litúrgico das representações bíblicas , por Mabel Pereira e Jonas Assis\n- Fenomenologia da religião e experiência do sagrado: uma análise a partir de Van der Leew, Schleimacher e Rudolf Otto , por Raimundo Pereira de Sousa\n- A psique e suas configurações no mundo ocidental , por Dilson da Rocha\n- As implicações sociais e polít",
-      "visto_em": "2026-08-25",
-      "tipo": "periodico",
-      "porque": "chamada brasileira sem area no titulo",
-      "relevancia": "aberto",
-      "uf": "",
-      "forma": "publicacao",
-      "bloco": null,
-      "esforco": "",
-      "elegibilidade": "Aberto",
-      "idioma": "EN",
-      "dias_ate_prazo": 23,
-      "urgente": false,
-      "marcas": [],
-      "novo": true,
-      "vencida": false,
-      "avisos_extracao": [],
-      "extracao": "ok",
-      "descartado": false,
-      "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
-    },
-    {
-      "id": "anpof-chamadas-stas-submissao-para-a-revista-ideacao-injusticas-epistemicas",
-      "fonte": "anpof-chamadas",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/submissao-para-a-revista-ideacao--injusticas-epistemicas",
-      "titulo": "Submissão para a Revista Ideação - Injustiças epistêmicas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/cadernos-de-etica-e-filosofia-politica--v-44-n-2-2025-dossie-propostas-epistemicas-sobre-o-canone-filosofico",
+      "titulo": "Cadernos de Ética e Filosofia Política - v. 44 n. 2 (2025): Dossiê Propostas epistêmicas sobre o cânone filosófico",
       "instituicao": "",
       "aos": "",
       "aoc": "",
@@ -411,30 +535,32 @@
       "categoria": "",
       "contrato": "",
       "pais": "Brasil",
-      "prazo": "2026-09-30",
+      "prazo": "",
       "prazo_brando": false,
       "publicado": "",
-      "texto": "Submissão para a Revista Ideação - Injustiças epistêmicas | ANPOF\n15/04/2026\nSubmissão para a Revista Ideação - Injustiças epistêmicas\nVirtual\nA revista Ideação organiza, sob a coordenação dos professores Alexnaldo Teixeira Rodrigues (UEFS) e Luciane Luisa Lindenmeyer (UEFS), o Dossiê  INJUSTIÇAS EPISTÊMICAS , a ser publicado no primeiro semestre de 2027, com artigos que dialoguem com essa temática em uma chave filosófica. Os artigos para o dossiê poderão ser enviados até  30/09/2026 .\nContinuamos a receber artigos, resenhas e traduções por submissão contínua.\nLink: https://periodicos.uefs.br/index.php/revistaideacao/index\nANPOF no Facebook\nAnpof - associação nacional de pós-graduação em filosofia\nANPOF no X\nTweets by anpof\nANPOF no YouTube\nA Associação Nacional de Pós-Graduação em Filosofia (Anpof) foi fundada em 1983 durante uma reunião sobre pesquisa em Filosofia promovida pelo CNPq, em Brasília. Segundo o Art. 3º de seu Estatuto, seus objetivos eram \"promover maior integração dos cursos de pós-graduação em Filosofia; defender os interesses das pós-graduações [desta área] junto aos órgãos competentes [e] estimular, em todos os níveis, a investigação filosófica no País\".\nDiretoria ANPOF\ndiretoria@anpof.org.br",
-      "visto_em": "2026-08-30",
-      "tipo": "periodico",
-      "porque": "chamada brasileira sem area no titulo",
-      "relevancia": "aberto",
+      "texto": "Cadernos de Ética e Filosofia Política - v. 44 n. 2 (2025): Dossiê Propostas epistêmicas sobre o cânone filosófico | ANPOF\n05/12/2025\nCadernos de Ética e Filosofia Política - v. 44 n. 2 (2025): Dossiê Propostas epistêmicas sobre o cânone filosófico\nO s editores dos Cadernos de Ética e Filosofia Política , da Universidade de São Paulo, divulgam a publicação do volume 44, número 2, de 2025 desta revista. A edição apresenta um dossiê intitulado 'Propostas epistêmicas sobre o cânone filosófico'. Os artigos, traduções e resenha reunidos neste volume dos Cadernos são frutos das apresentações realizadas durante o Seminário: Referenciais da política moderna em debate , realizado nos dias 07 e 08 de novembro de 2024 na Universidade de São Paulo. Para contato: cadernosdeetica@gmail.com\nLink: https://revistas.usp.br/cefp/",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "dossie",
+      "porque": "competencia: etica, filosofia politica",
+      "relevancia": "competencia",
       "uf": "",
       "forma": "publicacao",
       "bloco": null,
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 23,
+      "dias_ate_prazo": null,
       "urgente": false,
-      "marcas": [],
-      "novo": true,
-      "vencida": false,
-      "avisos_extracao": [],
-      "extracao": "ok",
       "descartado": false,
-      "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: etica, filosofia politica",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "anpof-chamadas-issao-de-artigos-dossie-niilismo-existencialismo-gnosticismo",
@@ -462,16 +588,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 53,
+      "dias_ate_prazo": 46,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-para-compor-o-dossie-donna-haraway-reverberacoes-no-brasil",
@@ -499,16 +625,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 54,
+      "dias_ate_prazo": 47,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--insubmissoes-dossie-n-14-lutar-sem-arkh-2o-semestre-de-2026",
@@ -536,16 +662,53 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 84,
+      "dias_ate_prazo": 77,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-as-revista-sisifo-dossie-a-traducao-como-problema-filosofico",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/revista-sisifo-dossie-a-traducao-como-problema-filosofico",
+      "titulo": "Revista Sísifo; Dossiê: A Tradução como Problema Filosófico",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2027-01-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Revista Sísifo; Dossiê: A Tradução como Problema Filosófico | ANPOF\n08/09/2026\nRevista Sísifo; Dossiê: A Tradução como Problema Filosófico\nA  Revista Sísifo  é uma publicação online semestral de democratização do acesso ao conhecimento discutido dentro das universidades na atualidade. Mais do que ser uma página voltada ao público acadêmico, ela busca o contato com os potenciais pensadores que procuram, dia após dia, um espaço que lhes provoque um embate racional inteligente sem ser elitista. É essa busca que permite a criatividade do pensador que, esperamos, alcance os mais diversos leitores. Qualis B2.\nPara o dossiê, serão bem-vindas contribuições que discutam filosoficamente a tradução, traduções inéditas* de textos filosóficos (sobretudo se acompanhadas por uma reflexão introdutória sobre o processo de tradução das mesmas), assim como contribuições que se proponham a desenvolver discussões sobre a tradução de algum termo especial ou alguma passagem de uma obra filosófica. Outros tipos de contribuição não mencionados acima, mas que dialoguem com a proposta do dossiê e da chamada também serão bem-vindos.\n*Observamos que, no caso de tradução de textos protegidos por direitos autorais e que não se encontram em domínio público, nossa política editorial estabelece que a tradução submetida deve ser acompanhada de carta de autorização do autor ou do detentor dos direitos autorais do texto original.\nPrazo para envio de artigos: 01/01/2027\nAguardamos ansiosamente pelas suas contribuições, e estamos disponíveis para quaisquer esclarecimentos pelo e-mail da Revista, revistasisifofilosofia@gmail.com\nAtenciosamente,\nOrganizadores do Dossiê: Carla Oliveira, Laurênio Sombra, Lucas Nascimento Machado e Marloren Miranda Lopes\nLink: https://revistasisifo.com.br/chamada-para-dossie/",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "dossie",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 109,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "anpof-chamadas-os-e-chamadas-de-revistas-dossie-logica-e-historia-da-logica",
@@ -573,16 +736,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 146,
+      "dias_ate_prazo": 139,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-da-de-ensaios-dossie-as-mulheres-da-igreja-revista-neokrisis",
@@ -619,9 +782,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-dossie-ensino-de-filosofia-dialogos-desde-a-america-do-sul",
@@ -658,9 +821,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--negras-caribenhas-e-latino-americanas-cis-trans-e-travestis",
@@ -697,9 +860,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-rto-numero-e-dossie-intercultural-e-conflitos-etnico-raciais",
@@ -736,9 +899,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-memoria-e-performance-na-america-latina-rev-lampiao-6-1-ufal",
@@ -775,9 +938,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-losofia-da-existencia-nas-origens-da-filosofia-contemporanea",
@@ -814,9 +977,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-so-usp-561-dossie-nietzsche-e-em-homenagem-a-scarlett-marton",
@@ -853,9 +1016,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-v2-n2-2026",
@@ -892,9 +1055,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-das-de-revistas-revista-paranaense-de-filosofia-v-6-n-1-2026",
@@ -931,9 +1094,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--griot-revista-de-filosofia-novo-numero-e-chamada-de-artigos",
@@ -970,9 +1133,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-ossie-a-interseccionalidade-entre-a-literatura-e-a-filosofia",
@@ -1009,9 +1172,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-e-chamadas-de-revistas-call-for-paperschamada-de-trabalhos",
@@ -1048,9 +1211,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-de-revistas-manuscrito-international-journal-of-philosophy",
@@ -1087,9 +1250,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--dossie-v-encontro-cearense-de-professores-de-filosofia-ecpf",
@@ -1126,9 +1289,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-e-hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho",
@@ -1165,9 +1328,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--revista-benjaminiana-chamada-para-artigos-em-fluxo-continuo",
@@ -1204,9 +1367,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-e-chamadas-de-revistas-revista-limar-dossie-razao-tragicva",
@@ -1243,9 +1406,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-tecnocientificos-da-transcendencia-e-da-superacao-da-morte",
@@ -1282,9 +1445,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-dossie-pensando-o-ensino-de-filosofia-a-partir-do-nordeste",
@@ -1321,9 +1484,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--colombia-memoria-conflitos-e-reconfiguracoes-contemporaneas",
@@ -1360,9 +1523,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-e-revistas-revista-paradigmas-filosofia-realidade-arte-20261",
@@ -1399,9 +1562,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--hannah-arendt-e-karl-jaspers-amizade-politica-e-testemunho2",
@@ -1438,9 +1601,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-as-de-revistas-revista-tragica-publicacoes-em-fluxo-continuo",
@@ -1477,9 +1640,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-ossie-genero-ciencia-e-filosofia-e-artigos-de-fluxo-continuo",
@@ -1516,9 +1679,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-sao-de-artigos-revista-estudos-libertarios-relufrj-qualis-b1",
@@ -1555,9 +1718,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-os-sem-heidegger-tecnica-obra-de-arte-e-diferenca-ontologica",
@@ -1594,9 +1757,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-emoracao-aos-30-anos-da-publicacao-da-obra-o-desentendimento",
@@ -1633,9 +1796,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-ncamentos-e-chamadas-de-revistas-dossie-10-anos-do-prof-filo",
@@ -1672,9 +1835,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--perspectivas-filosoficas-sobre-cognicao-tecnica-e-sociedade",
@@ -1711,9 +1874,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-lor-intrinseco-brentano-e-a-transformacao-do-sentimentalismo",
@@ -1750,9 +1913,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-as-chamada-para-submissoes-em-fluxo-continuo-revista-geltung",
@@ -1789,9 +1952,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-os-e-chamadas-de-revistas-dossie-vivencias-fenomenologia-rpq",
@@ -1828,9 +1991,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-agenda-lancamentos-e-chamadas-de-revistas-revista-ser-tao",
@@ -1867,9 +2030,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-camentos-e-chamadas-de-revistas-dossie-fenomenologia-critica",
@@ -1906,9 +2069,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-5-editores-convidados-joao-f-n-b-cortese-e-ricardo-mantovani",
@@ -1945,9 +2108,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--revista-iluminus-ufma-brasil-2026-reinventando-o-imaginario",
@@ -1984,9 +2147,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-ntos-e-chamadas-de-revistas-convocatoria-revista-tarka-20261",
@@ -2023,9 +2186,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--dossie-nietzsche-e-schopenhauer-sobre-o-sofrimento-e-a-arte",
@@ -2057,14 +2220,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-stas-lancado-vol16-n39-2025-da-pensando-revista-de-filosofia",
@@ -2096,14 +2259,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-revistas-v-15-n-1-2026-resultados-de-pesquisa-fluxo-continuo",
@@ -2135,14 +2298,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-ssie-cognicao-estendida-e-suas-implicacoes-a-filosofia-da-ia",
@@ -2174,14 +2337,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-vistas-revista-paradigmas-filosofia-realidade-arte-edicao-69",
@@ -2213,14 +2376,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-r-hegel-als-leser-kants-dossie-hegel-leitor-de-kant-v-202025",
@@ -2252,14 +2415,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-anarquistas-e-decoloniais-readufrj-primeiro-semestre-de-2026",
@@ -2291,14 +2454,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-amentos-e-chamadas-de-revistas-revista-instante-v-7-n-3-2025",
@@ -2330,6 +2493,45 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas--libertarios-neocolonialismo-e-militarismo-no-tempo-presente",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/edicao-atual-da-revista-estudos-libertarios-neocolonialismo-e-militarismo-no-tempo-presente",
+      "titulo": "Edição Atual da Revista Estudos Libertários: NEOCOLONIALISMO E MILITARISMO NO TEMPO PRESENTE",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Edição Atual da Revista Estudos Libertários: NEOCOLONIALISMO E MILITARISMO NO TEMPO PRESENTE | ANPOF\n05/01/2026\nEdição Atual da Revista Estudos Libertários: NEOCOLONIALISMO E MILITARISMO NO TEMPO PRESENTE\nUFRJ\nChegamos ao final de 2025 e lançamos mais um número da nossa querida REL. Este volume reafirma o compromisso da  Revista Estudos Libertários  em ser uma plataforma de crítica radical às estruturas de poder, violência de Estado e colonialidade, ao mesmo tempo que celebra e investiga as formas de resistência, autonomia e construção de mundos outros. Neste número, os artigos dialogam em torno de eixos urgentes: a necrofilia colonialista outrocida que opera em favelas e territórios ocupados; a crítica ao militarismo e à colonialidade algorítmica; as epistemologias anarquistas, decoloniais e libertárias; e as histórias subterrâneas de saberes e tecnologias insurgentes de africanos no Rio de Janeiro escravista. Dessa forma, celebramos um espaço, no qual a discussão sobre a mais ampla defesa da liberdade associada a mais profunda crítica a toda forma de discriminação, seja ela racial, patriarcal, estadolátrica e/ou capitalista, encontre acolhimento. Por isso, nos denominamos um lugar de reflexão libertária e decolonial.\nVivemos um momento histórico de recrudescimento global das forças autoritárias. A extrema direita avança em parlamentos e nas ruas, normalizando discursos de ódio, militarizando a vida cotidiana e aprofundando lógicas necrofílicas, autoritárias e coloniais. Diante dessa ofensiva, o pensamento e a prática anarquista e decolonial libertária reafirmam sua urgência. Não se trata de buscar refúgio em purismos ideológicos, mas de atuar nos movimentos sociais com autonomia radical, promovendo a ação direta, o apoio mútuo e a construção de poder popular desde baixo. As lutas contra-coloniais, antirracistas, feministas, ambientais e pela moradia são, todas elas, trincheiras onde se disputa não apenas políticas públicas, mas a própria ideia de futuro.\nA capa desta edição tenta expressar duas das vertentes dessa violência. A chacina no Morro do Alemão e o genocídio na Faixa de Gaza, embora inscritos em contextos geopolíticos distintos, revelam uma mesma lógica contemporânea da violência: a naturalização da morte de populações racializadas e territorializadas como efeito colateral aceitável para os governantes neocolonialistas e neocruzadistas. No caso brasileiro, o militarismo permanente das favelas, legitimada por discursos de guerra às drogas, expõe ",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "periodico",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
       "descartado": false,
       "marcas": [
         "sem prazo"
@@ -2340,45 +2542,82 @@
       "vencida": false
     },
     {
-      "id": "philevents-146569",
-      "fonte": "philevents",
-      "url": "https://philevents.org/event/show/146569",
-      "titulo": "Business Ethics: Past, Present",
-      "instituicao": "and Future",
-      "aos": "areas",
+      "id": "anpof-chamadas-dossie-tematico-rousseau-kant-e-dialogos-na-revista-iluminus",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/dossie-tematico-rousseau-kant-e-dialogos-na-revista-iluminus",
+      "titulo": "Dossiê Temático: Rousseau, Kant e Diálogos na Revista Iluminus",
+      "instituicao": "Federal do Maranhão",
+      "aos": "",
       "aoc": "",
       "local": "",
       "categoria": "",
       "contrato": "",
-      "prazo": "2026-10-01",
+      "pais": "Brasil",
+      "prazo": "",
       "prazo_brando": false,
       "publicado": "",
-      "texto": "Business Ethics: Past, Present, and Future\n - PhilEvents \n Business Ethics: Past, Present, and Future\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Business Ethics: Past, Present, and Future\n Celebrating the HCBE's 50th Anniversary \n October 15, 2026\n Hoffman Center for Business Ethics, Bentley University \n LaCava Center\n175 Forest St.\nWaltham 02478\nUnited States\n This will be an accessible event, including organized related activities \n Organisers:\n Jeffrey Moriarty \n Bentley University \n Topic areas\n Applied Ethics \n Talks at this conference\n Add a talk \n Details\n The Hoffman Center for Business Ethics (HCBE) at Bentley University turns 50 in 2026! Founded in 1976 by Bentley Professor W. Michael Hoffman, the HCBE is one of the world's oldest academic centers dedicated to busine",
-      "visto_em": "2026-08-25",
-      "tipo": "outro",
-      "porque": "competencia: ethics",
-      "relevancia": "competencia",
-      "pais": "",
-      "uf": "",
-      "forma": "evento",
+      "texto": "Dossiê Temático: Rousseau, Kant e Diálogos na Revista Iluminus | ANPOF\n15/12/2025\nDossiê Temático: Rousseau, Kant e Diálogos na Revista Iluminus\nUniversidade Federal do Maranhão\nA Revista Iluminus tem a satisfação de anunciar a publicação de sua mais nova edição — v. 2, n. 2 (jul./dez. 2025), o quarto número do periódico.\nEsta edição reafirma o compromisso da Iluminus com uma reflexão crítica, interdisciplinar e rigorosa sobre filosofia, literatura, artes e pensamento moderno e contemporâneo. Ao todo, são 17 trabalhos que oferecem ao leitor um panorama plural de investigações centradas, sobretudo, no Iluminismo, com especial atenção às obras de Jean-Jacques Rousseau e Immanuel Kant, além de seus desdobramentos estéticos, políticos, pedagógicos e literários em diferentes contextos históricos.\nOs textos estão organizados em seções articuladas entre si, preservando a diversidade temática e metodológica que caracteriza a revista:\nArtigos – Século XVIII\nArtigos Dossiê: Rousseau em Diálogos Ibero-americanos I – Perspectivas filosóficas\nArtigos Dossiê Temático: Rousseau, Kant e Diálogos\nArtigos – Temática Livre\nPoesias/Poemas.\nA edição reúne contribuições de pesquisadoras e pesquisadores de diferentes instituições, consolidando a Iluminus como um espaço qualificado de diálogo acadêmico e produção intelectual.\n? Acesse a edição completa:\nhttps://periodicoseletronicos.ufma.br/index.php/iluminus/issue/current\nLink: https://periodicoseletronicos.ufma.br/index.php/iluminus/issue/view/1036",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "dossie",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "MA",
+      "forma": "publicacao",
       "bloco": null,
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 24,
+      "dias_ate_prazo": null,
       "urgente": false,
-      "marcas": [
-        "pais nao lido"
-      ],
-      "novo": true,
-      "vencida": false,
-      "avisos_extracao": [
-        "pais nao lido"
-      ],
-      "extracao": "suspeita",
       "descartado": false,
+      "marcas": [
+        "sem prazo"
+      ],
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false
+    },
+    {
+      "id": "anpof-chamadas--revistas-dossie-rousseau-kant-e-dialogos-rics-v-11-n-2-2025",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/dossie-rousseau-kant-e-dialogos-rics--v-11-n-2-2025",
+      "titulo": "Dossiê Rousseau, Kant e Diálogos (RICS - v. 11, n. 2, 2025)",
+      "instituicao": "Federal do Maranhão",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Dossiê Rousseau, Kant e Diálogos (RICS - v. 11, n. 2, 2025) | ANPOF\n10/12/2025\nDossiê Rousseau, Kant e Diálogos (RICS - v. 11, n. 2, 2025)\nUniversidade Federal do Maranhão\nTemos a alegria de anunciar o dossiê temático “Rousseau, Kant & Diálogos”, resultado de conferências e mesas-redondas apresentadas no XI Colóquio Internacional Rousseau, no III Congresso Internacional Rousseau x Kant – UFMA, no V Congresso Nacional Jean-Jacques Rousseau – UFMA e no III Congresso Nacional Kant – UFMA, realizados em São Luís, em junho de 2025.\nOrganizado por Luciano da Silva Façanha, Barbara Rodrigues Barbosa, Maria Constança Peres Pissarra, Jacira de Freitas, Zilmara de Jesus Viana de Carvalho e Maria do Socorro Gonçalves da Costa, o dossiê reúne pesquisas atuais, diálogos instigantes e reflexões que atravessam filosofia, estética, política, ética, educação e questões de gênero.\n? As seções do dossiê foram organizadas tematicamente, oferecendo ao leitor uma navegação clara e aprofundada pelos debates contemporâneos em torno do pensamento de Jean-Jacques Rousseau, Immanuel Kant e seus desdobramentos.\nLink: https://periodicoseletronicos.ufma.br/index.php/ricultsociedade/issue/view/1032",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "dossie",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "MA",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philevents-146661",
@@ -2406,7 +2645,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 46,
+      "dias_ate_prazo": 39,
       "urgente": false,
       "marcas": [
         "pais nao lido"
@@ -2417,9 +2656,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "philevents-146497",
@@ -2447,7 +2686,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 54,
+      "dias_ate_prazo": 47,
       "urgente": false,
       "marcas": [
         "pais nao lido"
@@ -2458,9 +2697,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "philevents-146341",
@@ -2500,9 +2739,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "philevents-146669",
@@ -2542,9 +2781,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     },
     {
       "id": "philevents-147185",
@@ -2578,7 +2817,6 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "pais nao lido",
         "sem prazo"
@@ -2586,7 +2824,8 @@
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-onstro-demasiado-humano-sobre-monstros-linguagem-e-violencia",
@@ -2614,16 +2853,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 33,
+      "dias_ate_prazo": 26,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--e-chamadas-de-revistas-o-que-pode-a-filosofia-pop-no-brasil",
@@ -2651,16 +2890,53 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 39,
+      "dias_ate_prazo": 32,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-s-chamada-para-publicacao-na-logos-culturas-novembro-de-2026",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-publicacao-na-logos-culturas-novembro-de-2026",
+      "titulo": "Chamada para publicação na Logos & Culturas (novembro de 2026)",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2026-11-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Chamada para publicação na Logos & Culturas (novembro de 2026) | ANPOF\n08/09/2026\nChamada para publicação na Logos & Culturas (novembro de 2026)\nFaculdade Católica de Fortaleza (FCF)\nA Revista Logos & Culturas (Qualis B1) torna pública a chamada para publicação de artigos, resenhas e traduções de temática livre, porém, vinculadas às discussões filosóficas e/ou teológicas.\nA revista adota o fluxo de publicação contínua, no entanto, a fim de que as submissões cumpram as etapas editoriais necessárias para fazerem parte do próximo número, elas devem ser feitas até o dia 01/11/2026.\nInformações sobre normalização, diretrizes para autores e notas sobre o processo de avaliação podem ser acessados no site:  https://ojs.catolicadefortaleza.edu.br/index.php/logosculturas/index .\nEm caso de dúvidas, entre em contato através do e-mail: periodicos@catolicadefortaleza.edu.br .\nLink para submissão:  https://ojs.catolicadefortaleza.edu.br/index.php/logosculturas/index .\nLink: https://ojs.catolicadefortaleza.edu.br/index.php/logosculturas/index",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "outro",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 48,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "anpof-chamadas-tomachia-dialetheia-o-problema-do-ente-contraditorio-chamada",
@@ -2690,7 +2966,44 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 115,
+      "dias_ate_prazo": 108,
+      "urgente": false,
+      "marcas": [],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-das-de-revistas-chamada-para-submissoes-filosofia-dos-animes",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-submissoes-filosofia-dos-animes",
+      "titulo": "Chamada para submissões: Filosofia dos Animes",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2027-02-01",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Chamada para submissões: Filosofia dos Animes | ANPOF\n03/09/2026\nChamada para submissões: Filosofia dos Animes\nRevista Das Questões (UnB)\nA Revista das Questões, publicação transdisciplinar e alternativa do Departamento de Filosofia da Universidade de Brasília, abre chamada de artigos para dossiê temático dedicado à filosofia das mídias de animes e mangas. Convidamos pesquisadoras, pesquisadores, estudantes de pós-graduação e graduação, e todo interessado em pensar filosoficamente a produção de animes e mangás japoneses a submeter artigos, capítulos de dissertação ou tese, resenhas, ensaios, entrevistas, traduções comentadas, textos experimentais e produções audiovisuais que tomem essas obras não como mera reprodução de certa indústria cultural, mas como matéria legítima de reflexão filosófica — capazes de colocar em movimento problemas ontológicos, éticos, políticos, estéticos e epistemológicos com o mesmo rigor e a mesma seriedade que dedicamos a qualquer outro objeto das aproximações com outras manifestações artísticas e culturais.\nAnimes e mangás compõem, hoje, um dos territórios mais férteis e menos explorados pela filosofia acadêmica brasileira para se pensar certos campos da Filosofia. Ao mesmo tempo, sua ligeira aproximação com os universos digitais e ecossistemas alternativos sempre denunciou uma ligeira inclinação de seus fãs, fóruns e espaços de discussão serem tomados por reflexões e engajamentos de natureza filosófica e desafiante ao pensar. Longe de serem apenas produtos de consumo em série, essas narrativas condensam, sob a forma de imagem, personagem e enredo, disputas conceituais que atravessam a modernidade tardia: a relação entre indivíduo e sistema, entre tradição e técnica, entre corpo e informação, entre memória e simulação. Pensar filosoficamente as mídias de anime e manga é reconhecer sobretudo que a imagem popular também pensa — e que, por vezes, pensa aquilo que o discurso filosófico tradicional ainda hesita ou não foi capaz de registrar tão precocemente. Com algumas obras se inserindo no verdadeiro escopo de chamadas “obras ensaio”, como o filme surrealista  Tenshi no Tamago  (1985), com artes conceituais de Yoshitaka Amano e Suzuki Toshio como um dos produtores, ou o célebre manga de horror cósmico de Junji Ito,  Uzumaki  (1998-1999).\nUm dos pontos de partida possíveis para se engajar com as reflexões deste número é a leitura que Hiroki Azuma propõe em  Otaku: Japan's Database Animals  (2001). Retomando e deslocando a noção de “",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "outro",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 140,
       "urgente": false,
       "descartado": false,
       "marcas": [],
@@ -2725,16 +3038,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 205,
+      "dias_ate_prazo": 198,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-to-transfiguracoes-e-recredenciamentos-na-arte-contemporanea",
@@ -2762,16 +3075,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 358,
+      "dias_ate_prazo": 351,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-adas-de-revistas-chamada-de-trabalho-alter-puc-rio-v-20-2026",
@@ -2808,9 +3121,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-istas-politica-comunidade-e-emancipacao-leituras-filosoficas",
@@ -2847,9 +3160,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-tos-e-chamadas-de-revistas-philosophy-of-brazilian-religions",
@@ -2886,9 +3199,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-amada-para-cadernos-de-filosofia-alema-critica-e-modernidade",
@@ -2925,9 +3238,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--xxx-da-association-internationale-des-amis-de-hobbes-franca",
@@ -2964,9 +3277,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-adas-de-revistas-phainomenon-volume-39-2025-issue-1-nov-2025",
@@ -3003,9 +3316,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-e-revistas-edicao-especial-medicina-e-politica-em-john-locke",
@@ -3042,9 +3355,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-me-dustan-bareback-pornografia-sorosercao-e-texto-terrorismo",
@@ -3081,9 +3394,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas--revistas-v-7-n-1-2026-phenomenology-humanities-and-sciences",
@@ -3120,9 +3433,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-as-de-revistas-chamada-para-cadernos-de-filosofia-alema-2026",
@@ -3159,9 +3472,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-camentos-e-chamadas-de-revistas-chamada-para-pareceristas-a2",
@@ -3198,9 +3511,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-e-chamadas-de-revistas-chamada-para-submissoes-fim-do-futuro",
@@ -3237,9 +3550,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-s-e-chamadas-de-revistas-chamada-cadernos-de-filosofia-alema",
@@ -3276,9 +3589,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-ria-26642026-cnpq-declaracao-credit-ia-por-virtualia-journal",
@@ -3315,9 +3628,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-nda-lancamentos-e-chamadas-de-revistas-diaphonia-v12-n1-2026",
@@ -3354,9 +3667,9 @@
       "vencida": false,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-e-chamadas-de-revistas-o-ensaio-nas-fronteiras-da-filosofia2",
@@ -3375,6 +3688,84 @@
       "publicado": "",
       "texto": "O ensaio nas fronteiras da filosofia | ANPOF\n11/02/2026\nO ensaio nas fronteiras da filosofia\nRio de Janeiro\nFoi prorrogada a submissão de artigos para o número   59  da revista  O que nos faz pensar , do departamento de Filosofia da PUC-Rio, em número especial sob o título de \" O ensaio nas fronteiras da filosofia \".\nO dossiê será organizado por Manuela Fantinato (UNIRIO) e Tomaz de Tassis (PUC-Rio).\nResumo da proposta:  No início do célebre \"Ensaio como forma\", Theodor Adorno argumenta que a corporação acadêmica só tolera como filosofia aquilo que se veste com a dignidade do universal, e que apenas se preocupa com uma obra particular quando ela pode ser usada para exemplificar categorias universais. A escrita ensaística, ao contrário, rejeitaria as regras da ciência, afastando-se das ideias absolutas e eternizando o transitório ao elevar a experiência ao estatuto de conhecimento. Sua natureza contestadora e anti-sistemática a articula à liberdade de espírito moderna, ao passo que a afirmação de sua natureza material de escrita a aproxima da literatura. Da prosa ensaística de Sérgio Buarque de Holanda ou Octavio Paz às considerações críticas e estéticas de Georg Lukacs, Walter Benjamin ou Max Bense, o ensaio abre caminhos para múltiplas formas do saber, configurando-se como uma forma abrangente de dialogar com a realidade social, cultural e espiritual, permitindo explorar fronteiras entre a filosofia e outras ciências humanas em um exercício ao mesmo tempo poético e hermenêutico. Convidamos pesquisadoras e pesquisadores a se debruçar sobre o ensaio como expressão formal e ‘’modo de vida’’, salientando sua importância para a constituição das reflexões sobre a filosofia contemporânea e, particularmente, das humanidades latino-americanas.\nA revista  O que nos faz pensar  está avaliada com o  Qualis A1  na nova classificação da CAPES.\nO  prazo final para submissões foi prorrogado   até o dia  1 5/03/26 .\nA  publicação do número 59  está prevista para  dezembro/26 .\nLink: https://oquenosfazpensar.com.br/oqnfp/announcement/view/22",
       "visto_em": "2026-09-07",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "outro",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-agenda-lancamentos-e-chamadas-de-revistas-polifonia-em-foco",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/polifonia-em-foco",
+      "titulo": "Polifonia em Foco",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Polifonia em Foco | ANPOF\n01/01/2026\nPolifonia em Foco\nSão Luís, MA\nPolifonia em Foco - Chamada para a submissão de artigo em fluxo contínuo.\nLink: https://periodicos.ifma.edu.br/",
+      "visto_em": "2026-09-14",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "outro",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false
+    },
+    {
+      "id": "anpof-chamadas-revistas-perspectivas-contemporaneas-em-filosofia-da-logica2",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/perspectivas-contemporaneas-em-filosofia-da-logica2",
+      "titulo": "Perspectivas Contemporâneas em Filosofia da Lógica",
+      "instituicao": "Programa de Pós-graduação de Filosofia da UFPE",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Perspectivas Contemporâneas em Filosofia da Lógica | ANPOF\n05/12/2025\nPerspectivas Contemporâneas em Filosofia da Lógica\nNome da revista: Perspectiva Filosófica.\nInstituição à qual está vinculada: Programa de Pós-graduação de Filosofia da UFPE\nLink para acesso: https://periodicos.ufpe.br/revistas/perspectivafilosofica/issue/view/3822\nNúmero, volume e ano da revista: V. 52 n.2 (2025)\nE-mail para contato: revistaperspectivafilosofica@gmail.com\nSumário com títulos dos textos e autores/autoras, editores/editoras da revista:\n“Logical practice and the exceptionality of logic”, Diego Tajer\n“Anti-exceptionalism about logic and the a priori/a posteriori divide”, Jonas Rafael Becker Arenhart e Sanderson Molick\n“Alguns limites do preditivismo lógico”, Jéssica Caren da Silva Melo\n“Reconciling Logical Pluralism and Meaning-Theoretical Stability: Revisiting Logical Exceptionality by Rereading Dummett’s Theory of Meaning and Inference”, Lucas Ribeiro Vollet\n“Comprometimentos filosóficos implícitos na tradução-cálculo de argumentos informais”, Daniel Alves da Silva Lopes Diniz\n“Investigating Quine’s ontological relativity through prolog: a for-malization of proxy functions in peano arithmetic and the von neumann set hi-erarchy”, Júlio Cesar da Silva\n“Modelling Deontic Inconsistency in Moral Dilemmas”, Mahan Vaz e Gabriel Maruchi\n“Paraconsistent Paradoxes: the price of consistency”, Rafael Ongaratto\n“Paraconsistência e ramificação temporal: os tipos e aplicações de contradições em árvores de instantes possíveis”, Vítor Medeiros Costa\nEditores Convidados:\nEvelyn Erickson - Universidade Federal de Santa Catarina (UFSC); Ederson Safra Melo - Universidade Federal do Maranhão (UFMA)\nQualis: B1",
+      "visto_em": "2026-09-14",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "outro",
@@ -3419,10 +3810,10 @@
       ],
       "extracao": "suspeita",
       "tipo": "outro",
-      "descartado": true,
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
       "veredicto": "rejeitado",
-      "porque_veredicto": "sem aderencia no cabeca (titulo/AOS/AOC)"
+      "porque_veredicto": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "descartado": true,
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)"
     },
     {
       "id": "anpof-chamadas-e-revistas-chamada-para-publicacao-revista-outramargem-v8-n1",
@@ -3450,16 +3841,16 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -7,
+      "dias_ate_prazo": -14,
       "urgente": false,
       "marcas": [],
       "novo": true,
       "vencida": true,
       "avisos_extracao": [],
       "extracao": "ok",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "descartado": false
     },
     {
       "id": "philevents-146753",
@@ -3487,7 +3878,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -6,
+      "dias_ate_prazo": -13,
       "urgente": false,
       "marcas": [
         "pais nao lido"
@@ -3498,46 +3889,9 @@
         "pais nao lido"
       ],
       "extracao": "suspeita",
-      "descartado": false,
       "veredicto": "revisar",
-      "porque_veredicto": "extracao suspeita"
-    },
-    {
-      "id": "anpof-chamadas-ep-disagreements-40-years-of-the-logic-of-deep-disagreements",
-      "fonte": "anpof-chamadas",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/-deep-disagreements-40-years-of-the-logic-of-deep-disagreements",
-      "titulo": "Deep Disagreements: 40 Years of The Logic of Deep Disagreements",
-      "instituicao": "",
-      "aos": "",
-      "aoc": "",
-      "local": "",
-      "categoria": "",
-      "contrato": "",
-      "pais": "Brasil",
-      "prazo": "2026-08-30",
-      "prazo_brando": false,
-      "publicado": "",
-      "texto": "Deep Disagreements: 40 Years of The Logic of Deep Disagreements | ANPOF\n03/06/2026\nDeep Disagreements: 40 Years of The Logic of Deep Disagreements\nPrincipia: an international journal of epistemology (UFSC)\nDear all,\nCFP: Deep Disagreements: 40 Years of The Logic of Deep Disagreements\nSubmission deadline:  August 30, 2026.\nThe special issue  Deep Disagreements: 40 Years of The Logic of Deep Disagreements , conceived as a space for critical reflection and intellectual production devoted to this topic, aims to bring together research exploring the multiple dimensions of deep disagreements from different philosophical perspectives. We therefore invite all those interested in this debate, from the most diverse areas of philosophy, to contribute to this special volume of the journal Principia.\nGuest  Editors:  Paloma Xavier (PUC-Rio/CAPES), Vinícius Perenha (UERJ/CAPES), and Marcos Silva (UFPE/CNPq).\nVisit our website to read the  full announcement .\nLink: https://periodicos.ufsc.br/index.php/principia/announcement/view/2205\nANPOF no Facebook\nAnpof - associação nacional de pós-graduação em filosofia\nANPOF no X\nTweets by anpof\nANPOF no YouTube\nA Associação Nacional de Pós-Graduação em Filosofia (Anpof) foi fundada em 1983 durante uma reunião sobre pesquisa em Filosofia promovida pelo CNPq, em Brasília. Segundo o Art. 3º de seu Estatuto, seus objetivos eram \"promover maior integração dos cursos de pós-gradu",
-      "visto_em": "2026-08-25",
-      "tipo": "outro",
-      "porque": "chamada brasileira sem area no titulo",
-      "relevancia": "aberto",
-      "uf": "",
-      "forma": "evento",
-      "bloco": null,
-      "esforco": "",
-      "elegibilidade": "Aberto",
-      "idioma": "EN",
-      "dias_ate_prazo": -8,
-      "urgente": false,
-      "marcas": [],
-      "novo": true,
-      "vencida": true,
-      "avisos_extracao": [],
-      "extracao": "ok",
-      "descartado": false,
-      "veredicto": "revisar",
-      "porque_veredicto": "chamada brasileira sem area no titulo"
+      "porque_veredicto": "extracao suspeita",
+      "descartado": false
     }
   ]
 }
