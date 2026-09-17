@@ -7,7 +7,7 @@
 
 ## Sobre o projeto
 
-Portal estudantil de filosofia para 6 turmas do Ensino Médio do C.E. Professor Joel de Oliveira (SEEDUC-RJ), cobrindo o 2º e 3º Trimestres de 2026. Cada turma tem uma página própria com cronograma de aulas, descrição das avaliações e links para os materiais de estudo em PDF.
+Portal estudantil de filosofia para 6 turmas do Ensino Médio do C.E. Professor Joel de Oliveira (SEEDUC-RJ), cobrindo o 2º e o 3º Trimestres de 2026. Cada turma tem uma página própria com cronograma de aulas, descrição das avaliações e links para os materiais de estudo em PDF.
 
 ---
 
@@ -45,35 +45,50 @@ filosofia_joel-2026/
 
 ## Turmas e conteúdos
 
-| Arquivo | Turma | Horário | Unidade 1 |
+| Arquivo | Turma | Horário | Unidade 2 · 3º Trimestre |
 |---|---|---|---|
-| `em1_quinta.html` | IMAT_CN_1002 | Quinta 10h35–12h15 | Mito e Filosofia |
-| `em2_quinta.html` | IF_SE_2001 | Quinta 08h40–10h20 | Instrumentos do Pensar Filosófico |
-| `em3_3003_quinta.html` | IF_SE_3003 | Quinta 07h00–08h40 | A Dimensão Ética |
-| `em3_3006_quinta.html` | IT_GD_3006 | Quinta 12h45–14h25 | A Dimensão Ética |
-| `em3_3001_sexta.html` | IF_SE_3001 | Sexta 07h00–08h40 | A Dimensão Ética |
-| `em3_3002_sexta.html` | IT_GD_3002 | Sexta 08h40–10h20 | A Dimensão Ética |
+| `em1_quinta.html` | IMAT_CN_1002 | Quinta 10h35–12h15 | O que é o Ser Humano? |
+| `em2_quinta.html` | IF_SE_2001 | Quinta 08h40–10h20 | Filosofia e Ciência |
+| `em3_3003_quinta.html` | IF_SE_3003 | Quinta 07h00–08h40 | A Dimensão Política |
+| `em3_3006_quinta.html` | IT_GD_3006 | Quinta 12h45–14h25 | A Dimensão Política |
+| `em3_3001_sexta.html` | IF_SE_3001 | Sexta 07h00–08h40 | A Dimensão Política |
+| `em3_3002_sexta.html` | IT_GD_3002 | Sexta 08h40–10h20 | A Dimensão Política |
 
 ---
 
 ## Modelo de avaliação por série
 
-### EM1 e EM2 — Modelo Padrão (5,0 pts)
+> **Atualizado em 2026-09-12.** A nota é do **trimestre**, não de cada unidade: a escola
+> marca uma Semana de Provas única e cobra o modelo da prova em data fixa.
+
+### Composição da nota do trimestre
+
+| Instrumento | Valor | Soma |
+|---|---|---|
+| Teste de Meio — performático, na 3ª aula de conteúdo | 3,0 | sim |
+| Avaliação Final do trimestre | 5,0 | sim |
+| Prova de Recuperação — 10 objetivas × 0,2 | 2,0 | sim |
+| **TOTAL** | **10,0** | |
+| Teste de Meio — trabalho escrito | até 3,0 | **não — compensatório** |
+
+### EM1 e EM2 — Avaliação Final, Modelo Padrão (5,0 pts)
 
 | Tipo | Qtd | Nível | Valor | Total |
 |---|---|---|---|---|
-| Múltipla escolha (5 opções) | 3 | Fácil | 1,0 pt | 3,0 pts |
-| Discursiva intermediária | 1 | Intermediário | 1,0 pt | 1,0 pt |
-| Discursiva difícil | 1 | Difícil | 1,0 pt | 1,0 pt |
+| Múltipla escolha (5 opções) | 7 | 4 fáceis, 3 intermediárias | 0,5 pt | 3,5 pts |
+| Discursiva | 1 | Difícil | 1,5 pt | 1,5 pt |
 | **TOTAL** | | | | **5,0 pts** |
 
-### EM3 — Modelo ENEM (5,0 pts)
+### EM3 — Avaliação Final, Modelo ENEM (5,0 pts)
 
 | Tipo | Qtd | Descrição | Total |
 |---|---|---|---|
 | Texto motivador | 1 | Trecho filosófico ou situação-problema | — |
-| Questões objetivas (modelo ENEM) | 10 | Competências C1–C5, uma por questão | 5,0 pts |
+| Questões objetivas (modelo ENEM) | 10 | 0,5 pt cada · competências C1–C5 | 5,0 pts |
 | **TOTAL** | | | **5,0 pts** |
+
+O valor de cada questão aparece no título da questão. O gabarito é sempre documento
+separado.
 
 ---
 
@@ -157,3 +172,14 @@ Cada aula no cronograma é um `<div class="aula-item">`. Para aulas com data def
 ---
 
 *Última atualização: 29 jun 2026*
+
+---
+
+## Pendências conhecidas · 2026-09-12
+
+- **Nome dos Programas em PDF.** O Portal publica `Programa_EM*_2026_2-3Trim.pdf`; o vault
+  usa `Programa_EM*_2026_2-4Bim.md`. Um dos dois nomes está errado, e o conteúdo do vault
+  é organizado por bimestre. Resolver antes de republicar os PDFs.
+- **PDFs da U2 pendentes:** textos-base das três séries e as versões de aluno dos novos
+  Testes de Meio.
+- **Unidade 3 não será ministrada em 2026.** Decisão registrada em `CONCLUIDO_EM.md`.
