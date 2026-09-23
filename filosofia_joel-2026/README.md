@@ -120,10 +120,11 @@ separado.
 - EM3: descrição atualizada para o modelo ENEM (texto motivador + 10 questões objetivas C1–C5)
 - **Botão "Avaliação Final"** removido da seção Materiais de Estudo em todas as páginas (PDF não disponibilizado previamente à prova)
 
-### v1.3 — 23 set 2026 · Ponto Cego
+### v1.3 — 23 set 2026 · Ponto Cego e tema claro
 - **Ponto Cego**: área do núcleo extraclasse em `ponto-cego/`, com página de entrada, molde de sessão, cartão «Fora da aula» no index e pílula própria na navbar
 - **Navbar em duas linhas até 820px**: marca e Ponto Cego em cima, turmas embaixo. Em 360px a barra fixa caiu de 149px para 87px
 - **Hero do index no tema claro**: «Portal de Filosofia» sumia (texto escuro sobre fundo escuro)
+- **Tema claro nas turmas**: o título do cabeçalho sumia pelo mesmo motivo. Cada página redefine `--header-from`, `--header-to` e `--accent2` dentro de `@media (prefers-color-scheme: light)`
 
 ---
 
@@ -232,10 +233,6 @@ de apagado. Por isso:
 - **PDFs da U2 pendentes:** textos-base das três séries e as versões de aluno dos novos
   Testes de Meio.
 - **Unidade 3 não será ministrada em 2026.** Decisão registrada em `CONCLUIDO_EM.md`.
-- **Tema claro das turmas · 23/09.** No tema claro, o título do cabeçalho de cada turma
-  some: `--header-from` e `--header-to` só têm os tons escuros. A correção é redefinir
-  esses dois tokens e `--accent2` dentro de `@media (prefers-color-scheme: light)` em cada
-  página. Fora de produção por decisão do autor.
 - **Status das aulas e fuso · 23/09.** O script das turmas monta a data com
   `new Date('aaaa-mm-dd')`, que o JavaScript lê como UTC: em Brasília, a aula do dia aparece
   como «✓ Concluída» desde a meia-noite. A correção é `new Date(ano, mês - 1, dia)`. Fora de
