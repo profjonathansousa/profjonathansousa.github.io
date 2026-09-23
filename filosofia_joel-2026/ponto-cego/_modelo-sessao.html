@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!--
+  MOLDE DA PÁGINA DE SESSÃO · Ponto Cego
+  O nome começa com «_»: o GitHub Pages não publica este arquivo.
+
+  PUBLICAR A SESSÃO N (prazo: 48 horas depois do encontro)
+    1. Copie este arquivo para sessao-N.html, apague este comentário e troque
+       cada marcador de preenchimento. A fonte é a nota da sessão no vault;
+       a página é essa nota editada.
+    2. sessao-(N-1).html: o gancho vira link — troque <div class="pc-gancho">
+       por <a class="pc-gancho" href="sessao-N.html"> (e o </div> por </a>).
+    3. ponto-cego/index.html:
+       · pergunta vigente → o tema da sessão N+1 e a data dele;
+       · cronograma → a sessão N perde «atual» e ganha «concluida» com
+         <span class="tag tag-ok">✓ Publicada</span>; a sessão N+1 ganha o
+         tema, «atual» e <span class="tag tag-agora">▶ Próximo encontro</span>;
+       · sessões publicadas → um bloco novo, no alto da lista (na primeira
+         vez, apague a linha «A primeira sessão é publicada aqui…»):
+         <a href="sessao-N.html" class="mat-btn">
+           <div>
+             <div class="mat-type">Sessão N · dd mmm · [tema]</div>
+             <div class="mat-name">[o impasse]</div>
+           </div>
+           <div class="mat-icon">→</div>
+         </a>
+    4. ../index.html: no cartão «Fora da aula», a pergunta e a data.
+    5. Card do WhatsApp (opcional): salve como img/sessao-N.jpg para a prévia.
+    6. Rode  python3 scripts/teste_ponto_cego.py  e só publique com zero falhas.
+
+  REGRAS
+    · Nenhum nome de aluno, nem de quem trouxe o caso: o crédito fica no impresso.
+    · Com a lente «a escola», narre o caso em termos gerais: ninguém deve ser
+      identificável pelo contexto.
+    · Do texto lido, só autor, obra, locus e a frase-chave. Nunca o texto integral.
+    · Nenhum tema além do da sessão N+1, em lugar nenhum do repositório
+      (nem em comentário, nem em mensagem de commit): o repositório é público.
+    · A palavra é «impasse».
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[PREENCHER: tema] · Ponto Cego · Sessão [N]</title>
+  <meta name="description" content="[PREENCHER: o impasse, numa frase]">
+  <meta name="robots" content="noindex">
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Ponto Cego · Núcleo de Filosofia">
+  <meta property="og:title" content="[PREENCHER: tema] — Ponto Cego, sessão [N]">
+  <meta property="og:description" content="[PREENCHER: o impasse, numa frase]">
+  <meta property="og:url" content="https://jonathansousa.com.br/filosofia_joel-2026/ponto-cego/sessao-[N].html">
+  <!-- Prévia no WhatsApp: o card da sessão, salvo em img/sessao-N.jpg. Sem card, apague a linha. -->
+  <meta property="og:image" content="https://jonathansousa.com.br/filosofia_joel-2026/ponto-cego/img/sessao-[N].jpg">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="pc-pagina">
+
+<nav class="navbar">
+  <a href="../index.html" class="navbar-brand">🎓 Filosofia · Joel 2026</a>
+  <div class="navbar-links">
+    <a href="../em1_quinta.html"      class="nav-pill em1">EM1 · 5ª</a>
+    <a href="../em2_quinta.html"      class="nav-pill em2">EM2 · 5ª</a>
+    <a href="../em3_3003_quinta.html" class="nav-pill em3">3003 · 5ª</a>
+    <a href="../em3_3006_quinta.html" class="nav-pill em3">3006 · 5ª</a>
+    <a href="../em3_3001_sexta.html"  class="nav-pill em3">3001 · 6ª</a>
+    <a href="../em3_3002_sexta.html"  class="nav-pill em3">3002 · 6ª</a>
+  </div>
+  <a href="index.html" class="nav-pill pc active">Ponto Cego</a>
+</nav>
+
+<!-- 1 · Manchete: a pergunta do tema, igual à do card e do cartaz.
+     2 · Identificação: discreta. -->
+<div class="header" data-glyph="◌">
+  <div class="eyebrow">Ponto Cego · Sessão [N]</div>
+  <div class="header-title">[PREENCHER: a pergunta do tema]</div>
+  <div class="header-sub">[PREENCHER: dd] de [PREENCHER: mês] de 2026 · lente: [PREENCHER: o mundo | a escola]</div>
+</div>
+
+<!-- 3 · O caso: 3 a 4 linhas, sem interpretação. -->
+<div class="section" style="margin-top:14px;">
+  <div class="section-label">O caso</div>
+  <p>[PREENCHER]</p>
+</div>
+
+<!-- 4 · O impasse: a pergunta exata que o grupo não resolveu, numa frase.
+     É o elemento mais pesado da página; nunca se corta. -->
+<div class="section">
+  <div class="pc-impasse">
+    <div class="pc-impasse-label">O impasse · onde o grupo parou</div>
+    <div class="pc-impasse-texto">[PREENCHER]</div>
+    <!-- Opcional: até duas linhas de contexto. Sem elas, apague a div. -->
+    <div class="pc-impasse-nota">[PREENCHER ou apagar]</div>
+  </div>
+</div>
+
+<!-- 5 · As posições: 2 ou 3, cada uma defensável. Escreva sem aspas:
+     o <q> já põe as angulares. -->
+<div class="section">
+  <div class="section-label">As posições em disputa</div>
+  <ul class="pc-posicoes">
+    <li><q>[PREENCHER]</q></li>
+    <li><q>[PREENCHER]</q></li>
+  </ul>
+</div>
+
+<!-- 6 · O texto lido: autor, obra, locus exato e a frase que virou a chave. -->
+<div class="section">
+  <div class="section-label">O texto lido</div>
+  <p><strong>[PREENCHER: autor]</strong>, <em>[PREENCHER: obra]</em>, [PREENCHER: locus]</p>
+  <blockquote>[PREENCHER: a frase-chave, sem aspas]</blockquote>
+</div>
+
+<!-- 7 · A virada: 3 a 4 linhas, no que a pergunta se transformou. -->
+<div class="section">
+  <div class="section-label">A virada</div>
+  <p>[PREENCHER]</p>
+</div>
+
+<!-- 8 · Ficou em aberto: 1 a 2 linhas. -->
+<div class="section">
+  <div class="problema-card">
+    <div class="problema-label">Ficou em aberto</div>
+    <div class="problema-text">[PREENCHER]</div>
+  </div>
+</div>
+
+<!-- 9 · O gancho: tema e data da sessão seguinte; nunca se corta.
+     Vira <a class="pc-gancho" href="sessao-[N+1].html"> quando ela for publicada.
+     Na sessão 4, o gancho é o fechamento de 03/12. -->
+<div class="section">
+  <div class="section-label">O próximo encontro</div>
+  <div class="pc-gancho">
+    <div class="pc-gancho-label">Sessão [N+1] · [PREENCHER: dd de mês]</div>
+    <div class="pc-gancho-tema" data-pc="gancho">[PREENCHER: a pergunta do próximo tema]</div>
+    <div class="pc-gancho-data">Quinta, 12h15</div>
+  </div>
+</div>
+
+<!-- 10 · Responda: nunca se corta. -->
+<div class="section">
+  <div class="pc-responda">
+    <div class="pc-responda-titulo">Responda</div>
+    <p>Tem uma resposta para o impasse? Ela é lida na abertura do próximo encontro, com crédito. Estudante, professor ou funcionário: qualquer um pode responder.</p>
+    <ul>
+      <li>fale com o professor no fim da aula;</li>
+      <li>escreva no grupo da sua turma;</li>
+      <li>deixe um bilhete no cartaz do corredor;</li>
+      <li>ou mande um e-mail para <a href="mailto:jonathan.51763826@prof.educa.rj.gov.br">jonathan.51763826@<wbr>prof.educa.rj.gov.br</a>.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <a href="index.html" class="mat-btn">
+    <div>
+      <div class="mat-name">Ponto Cego · o núcleo e todas as sessões</div>
+      <div class="mat-type">Quintas, 12h15 · 1º, 2º e 3º ano · não vale nota</div>
+    </div>
+    <div class="mat-icon">→</div>
+  </a>
+</div>
+
+<div class="divider" style="margin-top:18px;"></div>
+
+<div class="section">
+  <div class="section-label">Professor</div>
+  <div class="prof-card">
+    <div class="prof-avatar">👨‍🏫</div>
+    <div>
+      <div class="prof-name">Prof. Dr. Jonathan Sousa</div>
+      <div class="prof-sub">Filosofia · C.E. Professor Joel de Oliveira</div>
+      <div class="prof-sub" style="margin-top:3px;">✉ jonathan.51763826@prof.educa.rj.gov.br</div>
+    </div>
+  </div>
+</div>
+
+<div class="spacer"></div>
+</body>
+</html>

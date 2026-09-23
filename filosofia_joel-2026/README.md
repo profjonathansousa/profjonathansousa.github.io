@@ -26,6 +26,11 @@ filosofia_joel-2026/
 ├── em3_3001_sexta.html         # 3º Ano · IF_SE_3001  · Sexta  07h00
 ├── em3_3002_sexta.html         # 3º Ano · IT_GD_3002  · Sexta  08h40
 │
+├── ponto-cego/                 # Ponto Cego · núcleo extraclasse
+│   ├── index.html              # entrada do núcleo
+│   ├── _modelo-sessao.html     # molde da página de sessão (não é publicado)
+│   └── sessao-N.html           # uma por sessão, criada depois do encontro
+│
 └── pdf/
     ├── em1/
     │   ├── Programa_EM1_2026_2-3Trim.pdf
@@ -115,6 +120,11 @@ separado.
 - EM3: descrição atualizada para o modelo ENEM (texto motivador + 10 questões objetivas C1–C5)
 - **Botão "Avaliação Final"** removido da seção Materiais de Estudo em todas as páginas (PDF não disponibilizado previamente à prova)
 
+### v1.3 — 23 set 2026 · Ponto Cego
+- **Ponto Cego**: área do núcleo extraclasse em `ponto-cego/`, com página de entrada, molde de sessão, cartão «Fora da aula» no index e pílula própria na navbar
+- **Navbar em duas linhas até 820px**: marca e Ponto Cego em cima, turmas embaixo. Em 360px a barra fixa caiu de 149px para 87px
+- **Hero do index no tema claro**: «Portal de Filosofia» sumia (texto escuro sobre fundo escuro)
+
 ---
 
 ## Como atualizar o cronograma
@@ -171,7 +181,46 @@ Cada aula no cronograma é um `<div class="aula-item">`. Para aulas com data def
 
 ---
 
-*Última atualização: 29 jun 2026*
+## Ponto Cego — núcleo extraclasse
+
+Área do núcleo de filosofia fora da aula, em `ponto-cego/`. Não é turma: tem cor própria
+(os tokens `--pc-*` do `style.css`, definidos no tema escuro e no claro) e entra na navbar
+depois de um divisor. As páginas do núcleo usam `<body class="pc-pagina">`.
+
+O núcleo publica a pergunta em que parou, não o que concluiu. Na página de cada sessão, o
+elemento mais pesado é o impasse.
+
+### Publicar uma sessão (até 48 horas depois do encontro)
+
+O checklist completo está no comentário do topo de `ponto-cego/_modelo-sessao.html`. Cada
+publicação mexe em quatro arquivos:
+
+1. `ponto-cego/sessao-N.html`, copiado do molde;
+2. `ponto-cego/sessao-(N-1).html`, cujo gancho vira link para a sessão nova;
+3. `ponto-cego/index.html`: pergunta vigente, cronograma e lista de sessões publicadas;
+4. `index.html`: a pergunta e a data do cartão «Fora da aula».
+
+Antes do commit, rode `python3 scripts/teste_ponto_cego.py` e só publique com zero falhas.
+O script confere links, a pergunta vigente igual onde aparece, a regra de revelação,
+marcadores esquecidos, os blocos que nunca se cortam (impasse, gancho, responda), a navbar,
+as cores e o vocabulário.
+
+### Regras que valem também para o repositório
+
+O repositório é público, e o histórico guarda tudo o que um dia foi comitado, mesmo depois
+de apagado. Por isso:
+
+- **Nenhum tema antes da hora.** Cada tema aparece só depois de revelado, no fim da sessão
+  anterior: nem em comentário, nem em arquivo de dados, nem em mensagem de commit.
+- **Nenhum nome de aluno.** O crédito fica no impresso.
+- **Nenhuma nota de trabalho em Markdown no repositório.** O GitHub Pages publica `.md`
+  como página, este README inclusive. As notas das sessões ficam no vault.
+- **Do texto lido, só autor, obra, locus e a frase-chave.**
+- **O endereço de uma sessão não muda depois que o QR do cartaz foi impresso.**
+
+---
+
+*Última atualização: 23 set 2026*
 
 ---
 
@@ -183,3 +232,11 @@ Cada aula no cronograma é um `<div class="aula-item">`. Para aulas com data def
 - **PDFs da U2 pendentes:** textos-base das três séries e as versões de aluno dos novos
   Testes de Meio.
 - **Unidade 3 não será ministrada em 2026.** Decisão registrada em `CONCLUIDO_EM.md`.
+- **Tema claro das turmas · 23/09.** No tema claro, o título do cabeçalho de cada turma
+  some: `--header-from` e `--header-to` só têm os tons escuros. A correção é redefinir
+  esses dois tokens e `--accent2` dentro de `@media (prefers-color-scheme: light)` em cada
+  página. Fora de produção por decisão do autor.
+- **Status das aulas e fuso · 23/09.** O script das turmas monta a data com
+  `new Date('aaaa-mm-dd')`, que o JavaScript lê como UTC: em Brasília, a aula do dia aparece
+  como «✓ Concluída» desde a meia-noite. A correção é `new Date(ano, mês - 1, dia)`. Fora de
+  produção por decisão do autor.

@@ -18,6 +18,15 @@
   --teal-bg: #0E1A12;
   --teal-border: #1A3A22;
 
+  /* Ponto Cego — o teal do material impresso, em tokens próprios:
+     não herda nada de --teal-*, que é a cor do Teste de Meio */
+  --pc:        #2DD4BF;
+  --pc2:       #5EEAD4;
+  --pc-bg:     #0A2422;
+  --pc-border: #134E4A;
+  --pc-header-from: #061A19;
+  --pc-header-to:   #0A2E2B;
+
   /* cor de acento por turma — sobrescrita em cada página */
   --accent:  #10B981;
   --accent2: #6EE7B7;
@@ -72,6 +81,13 @@
     --teal:    #0D9488;
     --teal-bg: #F0FDFA;
     --teal-border: #99F6E4;
+
+    --pc:        #0D9488;
+    --pc2:       #0F766E;
+    --pc-bg:     #F0FDFA;
+    --pc-border: #99F6E4;
+    --pc-header-from: #F0FDFA;
+    --pc-header-to:   #CCFBF1;
 
     --navbar-bg: rgba(244,245,247,0.92);
 
@@ -143,6 +159,7 @@ body {
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  margin-left: auto;
 }
 .nav-pill {
   font-size: 10px;
@@ -161,6 +178,23 @@ body {
 .nav-pill.em2            { --pill-accent: #0EA5E9; }
 .nav-pill.em3            { --pill-accent: #7C6AF0; }
 .nav-pill.active         { color: var(--pill-accent, var(--accent)); border-color: var(--pill-accent, var(--accent)); background: color-mix(in srgb, var(--pill-accent, var(--accent)) 12%, transparent); }
+
+/* Ponto Cego: não é turma, então fica fora da fileira das turmas,
+   depois de um divisor */
+.nav-pill.pc        { color: var(--pc2); border-color: var(--pc-border); background: var(--pc-bg); position: relative; margin-left: 8px; }
+.nav-pill.pc::before { content: ""; position: absolute; left: -11px; top: 3px; bottom: 3px; width: 1px; background: var(--border); }
+.nav-pill.pc:hover  { color: var(--pc); border-color: var(--pc); }
+.nav-pill.pc.active { color: var(--pc); border-color: var(--pc); background: color-mix(in srgb, var(--pc) 14%, transparent); }
+
+/* Até 820px a marca e o Ponto Cego dividem a primeira linha, e as turmas
+   ganham a largura inteira na segunda. Numa linha só, a marca espremia as
+   pílulas numa coluna: em 360px eram seis linhas e 149px de barra fixa. */
+@media (max-width: 820px) {
+  .navbar              { flex-wrap: wrap; row-gap: 8px; }
+  .nav-pill.pc         { order: 1; margin-left: auto; }
+  .nav-pill.pc::before { display: none; }
+  .navbar-links        { order: 2; flex: 1 0 100%; justify-content: flex-start; margin-left: 0; }
+}
 
 /* ── HEADER ── */
 .header {
@@ -451,6 +485,108 @@ body {
 .index-hero h1 span { color: #7C6AF0; }
 .index-hero .sub    { font-size: 13px; color: var(--muted); margin-top: 8px; }
 .index-hero .year   { display: inline-block; margin-top: 14px; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--year-border); color: var(--muted); }
+
+/* ── PONTO CEGO · núcleo extraclasse ──
+   Toda cor vem dos tokens --pc-* do :root. As páginas do núcleo usam
+   <body class="pc-pagina">, que aponta os acentos do portal para eles. */
+.pc-pagina {
+  --accent:        var(--pc);
+  --accent2:       var(--pc2);
+  --accent-bg:     var(--pc-bg);
+  --accent-border: var(--pc-border);
+  --header-from:   var(--pc-header-from);
+  --header-to:     var(--pc-header-to);
+  quotes: "«" "»" "“" "”";
+}
+
+/* As páginas do núcleo são para ler, não para consultar: texto corrido
+   em 16px e coluna de leitura no computador. */
+.pc-pagina .section          { max-width: 720px; margin-left: auto; margin-right: auto; }
+.pc-pagina .header           { padding-left: max(18px, calc((100% - 720px) / 2 + 16px)); }
+.pc-pagina .eyebrow          { text-wrap: balance; }
+.pc-pagina .section p        { font-size: 16px; line-height: 1.6; color: var(--text); }
+.pc-pagina .section p + p    { margin-top: 10px; }
+.pc-pagina .section p a      { color: var(--pc2); overflow-wrap: anywhere; }
+.pc-pagina blockquote        { margin-top: 10px; padding-left: 14px; border-left: 3px solid var(--pc-border); font-size: 17px; line-height: 1.55; font-style: italic; color: var(--text); }
+.pc-pagina blockquote::before { content: open-quote; }
+.pc-pagina blockquote::after  { content: close-quote; }
+.pc-pagina .aula-topic       { font-size: 14px; }
+.pc-pagina .aula-detail      { font-size: 13px; }
+.pc-pagina .problema-text    { font-size: 16px; }
+.pc-pagina .mat-name         { font-size: 15px; }
+.pc-pagina .mat-type         { font-size: 11px; }
+
+/* O impasse: o elemento mais pesado da página de sessão */
+.pc-impasse {
+  background: var(--pc-bg);
+  border: 1px solid var(--pc-border);
+  border-left: 5px solid var(--pc);
+  border-radius: 14px;
+  padding: 20px 18px;
+}
+.pc-impasse-label { font-size: 10px; color: var(--pc2); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.pc-impasse-texto { font-size: 22px; font-weight: 800; line-height: 1.3; color: var(--text); text-wrap: balance; }
+.pc-impasse-nota  { font-size: 15px; line-height: 1.55; color: var(--text); opacity: .8; margin-top: 12px; }
+
+/* As posições em disputa: o <q> põe as aspas angulares */
+.pc-posicoes { list-style: none; display: grid; gap: 8px; }
+.pc-posicoes li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--pc);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* O gancho: tema e data do próximo encontro. Vira <a> quando a página
+   da sessão seguinte existe. Na entrada do núcleo, .vigente é a pergunta
+   em destaque máximo. */
+.pc-gancho {
+  display: block;
+  position: relative;
+  background: linear-gradient(135deg, var(--pc-header-from), var(--pc-header-to));
+  border: 1px solid var(--pc-border);
+  border-radius: 14px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+a.pc-gancho          { padding-right: 42px; transition: border-color .15s; }
+a.pc-gancho::after   { content: "→"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--pc); }
+a.pc-gancho:hover    { border-color: var(--pc); }
+.pc-gancho.vigente   { padding: 22px 18px; border-left: 5px solid var(--pc); }
+.pc-gancho-label     { font-size: 10px; color: var(--pc2); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.pc-gancho-tema      { font-size: 19px; font-weight: 800; line-height: 1.25; color: var(--header-title-color); text-wrap: balance; }
+.pc-gancho.vigente .pc-gancho-tema { font-size: 26px; }
+.pc-gancho-data      { font-size: 13px; color: var(--pc2); font-weight: 600; margin-top: 8px; }
+
+/* Responda e Como participar: o convite, sem formulário */
+.pc-responda {
+  background: var(--surface);
+  border: 1px dashed var(--pc);
+  border-radius: 14px;
+  padding: 16px;
+}
+.pc-responda-titulo { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.pc-responda ul     { margin: 8px 0 0 20px; }
+.pc-responda li     { font-size: 15px; line-height: 1.6; color: var(--text); }
+.pc-responda a      { color: var(--pc2); overflow-wrap: anywhere; }
+
+/* O cartão do núcleo no index: a linguagem das turmas, com a pergunta
+   no lugar do nome */
+.turma-card.pc             { border-top: 3px solid var(--pc); }
+.turma-card.pc:hover       { border-color: var(--pc); }
+.turma-card.pc .turma-ano  { color: var(--pc2); }
+.turma-card.pc .turma-nome { font-size: 20px; line-height: 1.25; padding-right: 28px; margin: 2px 0 6px; }
+
+@media (min-width: 600px) {
+  .pc-impasse-texto                  { font-size: 26px; }
+  .pc-gancho-tema                    { font-size: 21px; }
+  .pc-gancho.vigente .pc-gancho-tema { font-size: 30px; }
+}
 
 /* ── RESPONSIVE ── */
 @media (max-width: 480px) {

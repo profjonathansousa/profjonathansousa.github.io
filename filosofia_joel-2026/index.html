@@ -52,63 +52,6 @@
     .prox-date  { font-size: 10px; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
     .prox-title { font-size: 12px; color: var(--text); }
     .prox-turma { font-size: 10px; color: var(--muted); }
-    .turma-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 18px 16px 0;
-    }
-    @media (max-width: 400px) { .turma-grid { grid-template-columns: 1fr; } }
-    .turma-card {
-      display: block;
-      text-decoration: none;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 14px;
-      transition: transform .15s, border-color .15s;
-      position: relative;
-      overflow: hidden;
-    }
-    .turma-card::before {
-      content: attr(data-glyph);
-      position: absolute;
-      right: 8px; bottom: -10px;
-      font-size: 64px;
-      opacity: .06;
-      pointer-events: none;
-      font-style: italic;
-    }
-    .turma-card:hover { transform: translateY(-2px); }
-    .turma-card.em1 { border-top: 3px solid #10B981; }
-    .turma-card.em1:hover { border-color: #10B981; }
-    .turma-card.em2 { border-top: 3px solid #0EA5E9; }
-    .turma-card.em2:hover { border-color: #0EA5E9; }
-    .turma-card.em3 { border-top: 3px solid #7C6AF0; }
-    .turma-card.em3:hover { border-color: #7C6AF0; }
-    .turma-ano  { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
-    .turma-nome { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-    .turma-cod  { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
-    .turma-info { font-size: 11px; color: var(--muted); line-height: 1.4; }
-    .turma-tema { font-size: 10px; margin-top: 8px; font-style: italic; color: var(--muted); }
-    .turma-arrow { font-size: 18px; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); opacity: .3; }
-    .em1 .turma-ano { color: #10B981; }
-    .em1 .turma-cod { color: #10B981; }
-    .em2 .turma-ano { color: #0EA5E9; }
-    .em2 .turma-cod { color: #0EA5E9; }
-    .em3 .turma-ano { color: #7C6AF0; }
-    .em3 .turma-cod { color: #A78BFA; }
-    .index-hero {
-      background: linear-gradient(160deg, #071020 0%, #0A1428 60%, var(--bg) 100%);
-      padding: 36px 18px 28px;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-    }
-    .index-hero .school { font-size: 9px; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
-    .index-hero h1      { font-size: 28px; font-weight: 900; color: var(--text); line-height: 1.1; }
-    .index-hero h1 span { color: #7C6AF0; }
-    .index-hero .sub    { font-size: 13px; color: var(--muted); margin-top: 8px; }
-    .index-hero .year   { display: inline-block; margin-top: 14px; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px; border: 1px solid #1E2235; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -123,6 +66,7 @@
     <a href="em3_3001_sexta.html"  class="nav-pill em3">3001 · 6ª</a>
     <a href="em3_3002_sexta.html"  class="nav-pill em3">3002 · 6ª</a>
   </div>
+  <a href="ponto-cego/index.html" class="nav-pill pc">Ponto Cego</a>
 </nav>
 
 <div class="index-hero">
@@ -192,6 +136,19 @@
     <div class="turma-arrow">→</div>
   </a>
 
+</div>
+
+<!-- Ponto Cego: a cada sessão publicada, trocar a pergunta e a data
+     (checklist em ponto-cego/_modelo-sessao.html) -->
+<div class="section">
+  <div class="section-label">Fora da aula</div>
+  <a href="ponto-cego/index.html" class="turma-card pc" data-glyph="◌">
+    <div class="turma-ano">Ponto Cego · núcleo de filosofia</div>
+    <div class="turma-nome" data-pc="pergunta-vigente">Quem pensa por mim?</div>
+    <div class="turma-info">Próximo encontro: 08 de outubro</div>
+    <div class="turma-tema">quintas, 12h15 · 1º, 2º e 3º ano · não vale nota</div>
+    <div class="turma-arrow">→</div>
+  </a>
 </div>
 
 <div class="info-grid">
