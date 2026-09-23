@@ -122,6 +122,7 @@ separado.
 
 ### v1.3 — 23 set 2026 · Ponto Cego e tema claro
 - **Ponto Cego**: área do núcleo extraclasse em `ponto-cego/`, com página de entrada, molde de sessão, cartão «Fora da aula» no index e pílula própria na navbar
+- **Texto corrido justificado** nas páginas do núcleo, com hifenização automática: sem ela, a coluna estreita do celular abriria buracos entre as palavras
 - **Navbar em duas linhas até 820px**: marca e Ponto Cego em cima, turmas embaixo. Em 360px a barra fixa caiu de 149px para 87px
 - **Hero do index no tema claro**: «Portal de Filosofia» sumia (texto escuro sobre fundo escuro)
 - **Tema claro nas turmas**: o título do cabeçalho sumia pelo mesmo motivo. Cada página redefine `--header-from`, `--header-to` e `--accent2` dentro de `@media (prefers-color-scheme: light)`

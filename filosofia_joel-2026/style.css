@@ -510,6 +510,13 @@ body {
 .pc-pagina blockquote        { margin-top: 10px; padding-left: 14px; border-left: 3px solid var(--pc-border); font-size: 17px; line-height: 1.55; font-style: italic; color: var(--text); }
 .pc-pagina blockquote::before { content: open-quote; }
 .pc-pagina blockquote::after  { content: close-quote; }
+
+/* Texto corrido justificado. A hifenização é o que impede a coluna estreita
+   do celular de abrir buracos entre as palavras; o e-mail nunca se parte.
+   Títulos, perguntas, posições e listas ficam alinhados à esquerda. */
+.pc-pagina .section p,
+.pc-pagina blockquote        { text-align: justify; -webkit-hyphens: auto; hyphens: auto; }
+.pc-pagina .section p a      { -webkit-hyphens: none; hyphens: none; }
 .pc-pagina .aula-topic       { font-size: 14px; }
 .pc-pagina .aula-detail      { font-size: 13px; }
 .pc-pagina .problema-text    { font-size: 16px; }
