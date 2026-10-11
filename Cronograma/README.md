@@ -2568,18 +2568,17 @@ antigo no `main` não recusa o pedido.
 1. GitHub → Settings → Developer settings → *Fine-grained tokens* → novo token,
    com acesso **só** a este repositório e **uma** permissão: *Actions: Read and
    write*. A validade mais longa que o GitHub oferecer.
-2. Supabase → SQL Editor:
-   ```sql
-   select vault.create_secret('<o token>', 'github_avisos_token',
-                              'Dispara o avisos.yml do Cronograma');
-   ```
+2. Supabase → SQL Editor: o bloco do `sql/cron_avisos.sql` (seção 3), com o
+   token colado no lugar de `COLE_AQUI_O_TOKEN`. Ele cria ou atualiza, e se
+   recusa a rodar sem o token — a primeira versão desta instrução gravou o
+   texto de exemplo no Vault.
 3. Para conferir no dia seguinte: `select id, status_code, created from
    net._http_response order by created desc limit 10;` — **204** é disparado,
    **401** é token errado ou vencido.
 
-Sem o token, a função não faz nada e não reclama, e a rede de segurança diária
-do GitHub continua mandando vagas, chamadas e datas. Quando o token vencer, troca
-com `vault.update_secret` (ver o arquivo).
+Sem o token — ou com qualquer coisa que não tenha forma de token —, a função não
+faz nada e não reclama, e a rede de segurança diária do GitHub continua mandando
+vagas, chamadas e datas. Quando o token vencer, o mesmo bloco o troca.
 
 ### O que já foi avisado
 

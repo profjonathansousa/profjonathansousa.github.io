@@ -54,16 +54,28 @@ revoke all on schema cron_interno from public, anon, authenticated;
 
 -- O TOKEN MORA NO VAULT, nunca neste arquivo e nunca no repositório. É um
 -- fine-grained token do GitHub com UMA permissão — "Actions: Read and write" —
--- e UM repositório. Para guardá-lo (no SQL Editor do Supabase, uma vez):
+-- e UM repositório. Para guardá-lo, e também para TROCÁ-LO quando vencer, o
+-- mesmo bloco serve (SQL Editor do Supabase): ele cria se não existe, atualiza
+-- se existe, e se recusa a rodar sem o token colado.
 --
---     select vault.create_secret('<o token>', 'github_avisos_token',
---                                'Dispara o avisos.yml do Cronograma');
+--     do $$
+--     declare
+--       tok text := trim('COLE_AQUI_O_TOKEN');
+--     begin
+--       if tok not like 'github_pat_%' and tok not like 'ghp_%' then
+--         raise exception 'Cole o token do GitHub (começa com github_pat_) no lugar de COLE_AQUI_O_TOKEN antes de rodar.';
+--       end if;
+--       if exists (select 1 from vault.secrets where name = 'github_avisos_token') then
+--         perform vault.update_secret((select id from vault.secrets where name = 'github_avisos_token'), tok);
+--       else
+--         perform vault.create_secret(tok, 'github_avisos_token', 'Dispara o avisos.yml do Cronograma');
+--       end if;
+--     end $$;
 --
--- Para trocar quando vencer:
---
---     select vault.update_secret(
---       (select id from vault.secrets where name = 'github_avisos_token'),
---       '<o token novo>');
+-- A PRIMEIRA VERSÃO DESTA INSTRUÇÃO ERA UM `create_secret('<o token>', ...)`, e
+-- em 11/10/2026 ela foi rodada sem a troca: o Vault guardou o texto de exemplo,
+-- e a segunda tentativa caiu em "duplicate key". Daí o bloco acima, e daí a
+-- função abaixo recusar o que não tem forma de token.
 --
 -- SEM O SEGREDO, A FUNÇÃO NÃO FAZ NADA e não reclama: os jobs abaixo podem
 -- existir antes do token, e o aviso diário de reserva do GitHub continua.
@@ -81,6 +93,12 @@ begin
     from vault.decrypted_secrets where name = 'github_avisos_token' limit 1;
   if tok is null or tok = '' then
     raise log 'cron_interno.disparar_avisos: falta o segredo github_avisos_token no Vault';
+    return null;
+  end if;
+  -- Texto que não é token (o exemplo da instrução, um espaço colado) não vai
+  -- ao GitHub: seria só um 401 por disparo, quatro por dia.
+  if tok not like 'github_pat_%' and tok not like 'ghp_%' then
+    raise log 'cron_interno.disparar_avisos: o segredo github_avisos_token nao tem forma de token do GitHub';
     return null;
   end if;
   select net.http_post(
