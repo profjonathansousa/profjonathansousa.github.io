@@ -396,6 +396,13 @@ ok(post && post[0] === '/cron_aviso_enviado' && /ignore-duplicates/.test(post[1]
 await N.gravarEnviados(apiReg, [], '2026-10-08');
 ok(pedidos.filter((p) => p[1] && p[1].method === 'POST').length === 1, '    nada a gravar, nenhum pedido');
 
+const logs = [];
+await N.rodar({ vagas: [], lote: null, eventos: {}, dia: avManha }, { enviados: {} }, INSCR, '2026-10-08',
+              { ...espiao([{}]), log: (m) => logs.push(m) });
+ok(logs.length && logs.every((m) => !/Pagar a conta|Lutero e Spinoza/.test(m)) && /corpo omitido/.test(logs[0]),
+   '(log) o corpo do resumo do dia NUNCA vai ao log público do Actions', logs);
+ok(/Journal A/.test(N.textoDoLog(dCh[0])), '    e o das chamadas, que é público, continua indo');
+
 const yml = fs.readFileSync(path.join(RAIZ_D, '.github', 'workflows', 'avisos.yml'), 'utf8');
 ok(!/git push/.test(yml) && /contents: read/.test(yml),
    '(reg) o workflow não escreve mais no repositório');

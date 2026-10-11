@@ -1490,13 +1490,22 @@ function desinscreverAvisos(){
    de desligar. Fica fora do prefixo cron: porque e do aparelho e nao vai para o
    backup. */
 var AVISOS_DESLIGADOS_KEY = "avisos:desligados";
+/* Republicar uma vez por DIA basta: o emissor so apaga a linha num envio, e
+   envios sao quatro por dia. Sem a trava, cada abertura do app seria um POST. */
+var AVISOS_REPUBLICADA_KEY = "avisos:republicada";
 var AVISOS_PERDIDOS = false;
 function curarInscricao(){
   if(!temPush() || !avisosConfigurados()) return Promise.resolve("sem-push");
   return inscricaoAtual().then(function(sub){
     if(sub){
       AVISOS_PERDIDOS = false;
-      return publicarInscricao(sub).then(function(){ return "ok"; }, function(){ return "sem-rede"; });
+      var hoje = ymd(new Date()), ultima = null;
+      try{ ultima = localStorage.getItem(AVISOS_REPUBLICADA_KEY); }catch(e){}
+      if(ultima === hoje) return "ok";
+      return publicarInscricao(sub).then(function(){
+        try{ localStorage.setItem(AVISOS_REPUBLICADA_KEY, hoje); }catch(e){}
+        return "ok";
+      }, function(){ return "sem-rede"; });
     }
     var desligou = false;
     try{ desligou = localStorage.getItem(AVISOS_DESLIGADOS_KEY) === "1"; }catch(e){}

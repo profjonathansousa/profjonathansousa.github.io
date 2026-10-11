@@ -2610,8 +2610,8 @@ segunda, as prioridades da semana passada. Agora:
 ### A inscrição que some em silêncio
 
 O navegador descarta inscrições sem avisar, e o iPhone não dispara
-`pushsubscriptionchange`. Na abertura, o app **republica** a inscrição que tem
-(o 409 quer dizer "já estava lá") e, se a permissão continua dada mas a
+`pushsubscriptionchange`. Na abertura, uma vez por dia (`avisos:republicada`), o
+app **republica** a inscrição que tem (o 409 quer dizer "já estava lá") e, se a permissão continua dada mas a
 inscrição sumiu, o **Hoje diz** — com um botão de religar, porque inscrever pede
 um gesto seu. Desligar de propósito grava `avisos:desligados` no aparelho, para
 que o Hoje não peça para religar o que você acabou de desligar. Essa chave não é
@@ -2665,8 +2665,14 @@ comum do Safari o `PushManager` não existe e o botão nem aparece — a limita�
 do sistema.
 
 **Nada disto tocou as fases anteriores:** nenhum tipo de toque novo, nenhuma
-seção nova no `estado.json`, e o `dobrar_toques.py` intocado. A única chave
-nova de `localStorage` é `avisos:desligados` (ver acima).
+seção nova no `estado.json`, e o `dobrar_toques.py` intocado. As únicas chaves
+novas de `localStorage` são `avisos:desligados` e `avisos:republicada` (ver
+acima), as duas fora do prefixo `cron:`.
+
+**O corpo do resumo do dia nunca vai ao log do Actions.** O repositório é
+público, e o log do Actions também: escrever ali as prioridades publicaria por
+outra porta o que a base privada guarda. O log mostra o título (que vem do
+`00-config.js`, já versionado) e quantas linhas o aviso tinha.
 
 ---
 

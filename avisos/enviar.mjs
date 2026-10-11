@@ -276,12 +276,26 @@ export async function enviarAviso(aviso, inscricoes, dep) {
   return { entregues, mortos, falhos };
 }
 
+/* O LOG DO ACTIONS É PÚBLICO, porque o repositório é. Vagas, chamadas e
+   datas públicas já são públicas — o texto delas pode ir ao log. O resumo do
+   dia NÃO: as prioridades e as rotinas moram numa base privada justamente para
+   não morar num repositório aberto, e escrevê-las no log as publicaria por
+   outra porta. Dele, o log mostra só o título (que vem do 00-config.js, já
+   versionado) e o tamanho. */
+export function textoDoLog(aviso) {
+  if (aviso.tag === 'dia') {
+    return aviso.titulo + ' — [corpo omitido: ' + String(aviso.corpo || '').split('\n').length +
+           ' linha(s); o log do Actions é público]';
+  }
+  return aviso.titulo + ' — ' + aviso.corpo;
+}
+
 export async function rodar(dados, estado, inscricoes, hojeISO, dep) {
   const avisos = decidir(dados, estado, hojeISO);
   const novo = { enviados: { ...((estado && estado.enviados) || {}) } };
   let total = { entregues: 0, mortos: 0, falhos: 0 };
   for (const aviso of avisos) {
-    dep.log(aviso.titulo + ' — ' + aviso.corpo);
+    dep.log(textoDoLog(aviso));
     if (dep.seco) continue;
     const r = await enviarAviso(aviso, inscricoes, dep);
     total = { entregues: total.entregues + r.entregues, mortos: total.mortos + r.mortos,

@@ -239,7 +239,7 @@
       "ligada": false,
       "metodo": "rss",
       "url": "https://call-for-papers.sas.upenn.edu/rss.xml",
-      "_nota": "NAO VERIFICADA. Confirme o endereco antes de ligar."
+      "_nota": "MEDIDO 2026-10-11 no runner do Actions (diagnostico): HTTP 200, application/rss+xml, mas o feed esta VAZIO (307 bytes, 0 <item>). Continua desligada; ligar agora so poria uma fonte muda no batimento."
     }
   ],
 

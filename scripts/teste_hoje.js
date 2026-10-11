@@ -1873,6 +1873,8 @@ async function curas() {
   ok(r1cura === "ok" && ped1.length === 1 && /cron_push_inscricao/.test(ped1[0][0]) &&
      ped1[0][1].method === "POST" && CUR1.AVISOS_PERDIDOS === false,
      "inscricao viva: republica (o 409 quer dizer que ja estava la)", [r1cura, ped1.length]);
+  await CUR1.curarInscricao();
+  ok(ped1.length === 1, "  e no mesmo dia nao republica de novo", ped1.length);
   const CUR2 = criarAparelho("cura-2");
   comPush(CUR2, null, "granted");
   ok(await CUR2.curarInscricao() === "perdida" && CUR2.AVISOS_PERDIDOS === true,
