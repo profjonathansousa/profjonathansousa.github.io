@@ -778,6 +778,61 @@ it = {"aos": u"] junto aos orgaos competentes"}
 C.reextrair_cabeca(it, u"Edital\n*Area de Conhecimento:* Filosofia da Religiao", "lista_html")
 ok(it["aos"] == u"Filosofia da Religiao", "e a releitura substitui quando acha", it["aos"])
 
+print("\n=== 27. A chamada brasileira: o corpo anota, so o nicho elege (2026-10-11) ===")
+def chamada_anpof(titulo, texto):
+    it = {"id": "anpof-chamadas-x", "fonte": "anpof-chamadas", "titulo": titulo,
+          "texto": texto, "url": "https://anpof.org.br/x", "pais": "Brasil",
+          "visto_em": C.hoje().isoformat()}
+    C.descarte_barato(it, crit_c)
+    C.classificar(it, crit_c, "vaga")
+    C.veredicto(it, crit_c)
+    return it
+it = chamada_anpof("Chamada para publicação - Dossiê temático",
+                   "Revista X. Dossiê sobre religião e secularização. Aceitam-se "
+                   "artigos de filosofia da religião e teologia política.")
+ok(it.get("relevancia") == "nicho" and (it.get("porque") or "").startswith("nicho no corpo")
+   and it.get("veredicto") == "relevante",
+   "nicho no CORPO da chamada brasileira elege", (it.get("relevancia"), it.get("porque"), it.get("veredicto")))
+it = chamada_anpof("Chamada para publicação - Revista Y",
+                   "A revista recebe artigos de ética, filosofia política e epistemologia.")
+ok(it.get("relevancia") == "aberto" and (it.get("porque") or "").startswith("chamada brasileira; no corpo:")
+   and it.get("veredicto") == "revisar",
+   "competencia no corpo so ANOTA: continua em revisar", (it.get("relevancia"), it.get("porque"), it.get("veredicto")))
+it = chamada_anpof("Chamada para publicação - Revista Z", "Submissões até o fim do mês.")
+ok(it.get("porque") == "chamada brasileira sem area no titulo" and it.get("veredicto") == "revisar",
+   "corpo mudo: o comportamento de antes, intacto", it.get("porque"))
+ordem = C.ordenar([{"relevancia": "aberto", "porque": "chamada brasileira sem area no titulo", "forma": "publicacao", "id": "mudo"},
+                   {"relevancia": "aberto", "porque": "chamada brasileira; no corpo: etica", "forma": "publicacao", "id": "anotada"}])
+ok([i["id"] for i in ordem] == ["anotada", "mudo"],
+   "e a anotada sobe na fila de triagem", [i["id"] for i in ordem])
+
+print("\n=== 28. O teto de sondas e por fonte, e diz quando bate (2026-10-11) ===")
+class _Resp:
+    status_code = 200
+    def __init__(self, url): self.url = url; self.text = "<title>Lecturer, Some University - PhilJobs</title>Deadline: 2026-12-01"
+class _Sessao:
+    def __init__(self): self.n = 0
+    def get(self, url, **k): self.n += 1; return _Resp(url.replace("/x/", "/show/"))
+_pausa = C.PAUSA; C.PAUSA = 0
+try:
+    sess = _Sessao(); bat = {"fontes": {}, "avisos": []}; est = {"ultimo_id": 100}
+    novos = C._sondar_familia_philpapers(sess, {"nome": "fonte-x", "base": "https://e.x", "caminho": "/show/",
+                                                "max_sondas": 7}, est, bat)
+    ok(sess.n == 7 and len(novos) == 7 and est["ultimo_id"] == 107,
+       "o max_sondas da fonte manda, e nao o global", (sess.n, len(novos), est["ultimo_id"]))
+    ok(any("teto de 7 sondas atingido" in a for a in bat["avisos"]),
+       "e bater o teto vira aviso no batimento", bat["avisos"])
+    sess2 = _Sessao(); bat2 = {"fontes": {}, "avisos": []}
+    C._sondar_familia_philpapers(sess2, {"nome": "fonte-y", "base": "https://e.x", "caminho": "/show/"},
+                                 {"ultimo_id": 1}, bat2)
+    ok(sess2.n == C.MAX_SONDAS, "sem max_sondas, vale o global", sess2.n)
+finally:
+    C.PAUSA = _pausa
+crit_v2 = C.ler_json(os.path.join(C.RAIZ, "criterios_vagas.json"), {})
+ok([f for f in crit_c["fontes"] if f["nome"] == "philevents"][0].get("max_sondas") == 360 and
+   [f for f in crit_v2["fontes"] if f["nome"] == "philjobs"][0].get("max_sondas") == 240,
+   "PhilEvents le 360 por rodada, PhilJobs 240")
+
 print("\n" + ("=" * 62))
 print("FALHAS: %d" % len(falhas))
 for f in falhas: print("  - " + f)

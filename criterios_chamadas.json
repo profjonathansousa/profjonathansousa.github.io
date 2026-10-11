@@ -213,6 +213,8 @@
       "metodo": "sonda_id",
       "base": "https://philevents.org",
       "caminho": "/event/show/",
+      "max_sondas": 360,
+      "_max_sondas_MEDIDO_2026-10-11": "Com o teto global de 120, a fonte avancava exatamente +120 por rodada desde 10/09: lia menos do que se publicava. A cada sonda ha PAUSA de 1,2 s; 360 sondas cabem no timeout do job.",
       "semente": 146200,
       "unidade": "vaga",
       "_nota": "Mesma plataforma do PhilJobs: /event/show/<id> e publico e permitido; a lista vem por /ajax/, que o robots.txt pede para nao acessar. Ids sequenciais por data de publicacao, por volta de 146300 em agosto de 2026."

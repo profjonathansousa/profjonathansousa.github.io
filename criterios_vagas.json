@@ -359,6 +359,8 @@
       "metodo": "sonda_id",
       "base": "https://philjobs.org",
       "caminho": "/job/show/",
+      "max_sondas": 240,
+      "_max_sondas_MEDIDO_2026-10-11": "Com o teto global de 120, a fonte encostou no teto na rodada de 21/09 (+120) e passou perto nas outras (+112, +116). Folga, e nao correcao: 240. A cada sonda ha PAUSA de 1,2 s; cabe no timeout do job.",
       "semente": 31580,
       "unidade": "vaga",
       "bloco_padrao": null,
