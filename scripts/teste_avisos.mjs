@@ -266,6 +266,148 @@ ok(!/function enviarToques/.test(nucleo) && !/function gravarNoGitHub/.test(nucl
 ok(!/function buscarEstado/.test(nucleo) && !/function aplicar\w+DoEstado/.test(nucleo),
    '(9G-3) e a descida também: buscarEstado e os aplicar*DoEstado não existem mais');
 
+/* ================= O resumo do dia ================= */
+console.log('\n=== Dia. Os quatro momentos ===');
+const D = await import('../avisos/dia.mjs');
+const em = (h, m) => new Date(2026, 9, 8, h, m);          /* quinta, 08/10 */
+ok(D.momentoDaHora(em(6, 30)) === 'manha', '(dia) 06:30 é a manhã');
+ok(D.momentoDaHora(em(6, 28)) === 'manha', '    e o disparo de 06:28 também (folga de 15 min)');
+ok(D.momentoDaHora(em(6, 14)) === null, '    mas 06:14 ainda não é nada');
+ok(D.momentoDaHora(em(7, 59)) === 'manha' && D.momentoDaHora(em(8, 0)) === null,
+   '    e a manhã fecha 90 min depois: atrasado demais não sai');
+ok(D.momentoDaHora(em(12, 58)) === 'tarde' && D.momentoDaHora(em(18, 58)) === 'noite' &&
+   D.momentoDaHora(em(22, 58)) === 'fim', '    tarde, noite e fim nos disparos do pg_cron');
+ok(D.momentoDaHora(em(10, 17)) === null,
+   '    a rede de segurança do GitHub fora da janela não manda resumo');
+
+console.log('\n=== Dia. O aplicativo carregado, com linhas do cron_estado ===');
+const RAIZ_D = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const FONTE_APP = D.fonteDoApp(RAIZ_D);
+const ENTRADA = fs.readFileSync(path.join(RAIZ_D, 'Cronograma', 'entrada.json'), 'utf8');
+const L = (dominio, chave, valor, extra) => Object.assign(
+  { dominio, chave, valor, del: false, em: '2026-10-07T12:00:00.000Z', aparelho: 'outro',
+    servidor_em: '2026-10-07T12:00:01.000000Z' }, extra || {});
+const LINHAS_DIA = [
+  L('prioridade', '2026-W41/p1', { tipo: 'livre', t: 'Pagar a conta', feito_em: '' }),
+  L('prioridade', '2026-W41/p2', { tipo: 'livre', t: 'Feita ontem', feito_em: '2026-10-07' }),
+  L('prioridade', '2026-W41/p3', { tipo: 'livre', t: 'Apagada', feito_em: '' }, { del: true }),
+  L('prioridade', '2026-W41/p4', { tipo: 'trilho', painel: 'pipeline', projId: 'a01', t: 'Lutero e Spinoza', feito_em: '' }),
+  L('rotina', '2026-10-08/qui-rec', { feito: true }),
+  L('rotina', '2026-10-07/qua-aula', { feito: true })
+];
+const appQui = D.carregarApp({ fonte: FONTE_APP, entrada: ENTRADA, linhas: LINHAS_DIA,
+                               instante: em(6, 30).getTime() });
+const rQui = D.resumoDoDia(appQui);
+ok(rQui.data === '2026-10-08' && rQui.nome === 'Quinta', '(dia) o contexto vive na data pedida', [rQui.data, rQui.nome]);
+const nomesPr = rQui.prioridades.map((p) => p.nome);
+ok(nomesPr.indexOf('Pagar a conta') > -1, '    a prioridade da semana chegou pelo SYNC.aplicarRemoto', nomesPr);
+ok(nomesPr.indexOf('Feita ontem') < 0, '    a livre cumprida ontem sai, como no Hoje', nomesPr);
+ok(nomesPr.indexOf('Apagada') < 0, '    e a lápide vale', nomesPr);
+const trilho = rQui.prioridades.find((p) => p.nome === 'Lutero e Spinoza');
+ok(trilho && trilho.aberta && trilho.etapa === appQui.estagioDoTrilho('pipeline', 'a01').subT,
+   '    a de trilho traz o ESTÁGIO REAL, lido do trilho', trilho);
+const rotQui = rQui.rotinas.find((x) => x.id === 'qui-rec');
+ok(rotQui && rotQui.feita, '    a rotina marcada em outro aparelho vem marcada', rQui.rotinas);
+ok(rQui.rotinas.some((x) => /^TOEFL · Writing/.test(x.titulo)),
+   '    e a rotina de processo vira a ação do dia (quinta: Writing)', rQui.rotinas.map((x) => x.titulo));
+ok(rQui.ancoras.length === 1 && /7h–14h30/.test(rQui.ancoras[0]), '    com a âncora da aula', rQui.ancoras);
+
+const appSab = D.carregarApp({ fonte: FONTE_APP, entrada: ENTRADA, linhas: LINHAS_DIA,
+                               instante: D.instanteDeAmanha(new Date(2026, 9, 9, 23, 0)) });
+const rSab = D.resumoDoDia(appSab);
+ok(rSab.data === '2026-10-10' && rSab.nome === 'Sábado', '(dia) amanhã é outro contexto, ao meio-dia', [rSab.data, rSab.nome]);
+ok(!rSab.rotinas.some((x) => /TOEFL/.test(x.titulo)), '    e no sábado o TOEFL não pede nada');
+const appSeg = D.carregarApp({ fonte: FONTE_APP, entrada: ENTRADA, linhas: LINHAS_DIA,
+                               instante: new Date(2026, 9, 12, 12, 0).getTime() });
+const rSeg = D.resumoDoDia(appSeg);
+ok(rSeg.prioridades.length === 0, '(dia) segunda é semana nova: as prioridades da W41 não vêm junto', rSeg.prioridades);
+
+console.log('\n=== Dia. Os textos ===');
+const avManha = D.montarAvisoDoDia('manha', rQui, null);
+ok(avManha.titulo === 'Quinta · ' + rQui.eixo, '(dia) manhã: o título é o dia e o eixo', avManha.titulo);
+ok(/Pagar a conta/.test(avManha.corpo) && /Lutero e Spinoza → /.test(avManha.corpo),
+   '    com as prioridades abertas', avManha.corpo);
+ok(!/Livre a partir das 16h/.test(avManha.corpo), '    sem a rotina já marcada', avManha.corpo);
+ok(avManha.tag === 'dia' && avManha.ttl === 2 * 3600 && avManha.urgencia === 'high',
+   '    tag única do dia, TTL curto e urgência alta', [avManha.tag, avManha.ttl, avManha.urgencia]);
+ok(JSON.stringify(avManha.ids) === '["dia:2026-10-08:manha"]', '    identidade dia:<data>:<momento>', avManha.ids);
+
+const tudoFeito = { ...rQui, prioridades: [], rotinas: rQui.rotinas.map((x) => ({ ...x, feita: true })) };
+ok(D.montarAvisoDoDia('tarde', tudoFeito, null) === null && D.montarAvisoDoDia('noite', tudoFeito, null) === null,
+   '(dia) tarde e noite: nada aberto, nada a dizer');
+const avTarde = D.montarAvisoDoDia('tarde', rQui, null);
+ok(avTarde && /\(1 de 2 feitas\)/.test(avTarde.corpo), '    com algo aberto, diz quanto já foi', avTarde && avTarde.corpo);
+
+const avFim = D.montarAvisoDoDia('fim', { ...rSab, dia: 0, nome: 'Domingo' }, rSeg);
+ok(/amanhã é segunda/.test(avFim.titulo), '(dia) 23h: o fechamento olha para amanhã', avFim.titulo);
+ok(/Segunda é decisão/.test(avFim.corpo), '    e na véspera de segunda lembra de eleger as prioridades', avFim.corpo);
+ok(/Rotinas de amanhã: Manutenção ministerial/.test(avFim.corpo), '    com as rotinas de amanhã', avFim.corpo);
+
+const dadosComDia = { vagas: [], lote: null, eventos: {}, dia: avManha };
+ok(N.decidir(dadosComDia, { enviados: {} }, '2026-10-08')[0] === avManha,
+   '(dia) o resumo entra primeiro no decidir');
+ok(N.decidir(dadosComDia, { enviados: { 'dia:2026-10-08:manha': '2026-10-08' } }, '2026-10-08').length === 0,
+   '    e o mesmo momento do mesmo dia não sai duas vezes');
+
+console.log('\n=== Chamadas ===');
+const CH = [
+  { id: 'c1', veredicto: 'relevante', titulo: 'Journal A', prazo: '2026-10-20' },
+  { id: 'c2', veredicto: 'relevante', titulo: 'Revista B' },
+  { id: 'c3', veredicto: 'revisar',   titulo: 'Revisar C' },
+  { id: 'c4', veredicto: 'relevante', titulo: 'Vencida D', prazo: '2026-10-01', vencida: true },
+  { id: 'c5', veredicto: 'relevante', titulo: 'Triada E' },
+  { id: 'c6', veredicto: 'relevante', titulo: 'Passou F', prazo: '2026-10-07' }
+];
+const TRI = { c5: 2 };
+const paraAvisar = N.chamadasParaAvisar(CH, TRI, '2026-10-08').map((c) => c.id);
+ok(JSON.stringify(paraAvisar) === '["c1","c2"]',
+   '(ch) só relevante, não vencida, não triada e com prazo por vir', paraAvisar);
+const dCh = N.decidir({ vagas: [], lote: null, eventos: {}, chamadas: CH, triagem: TRI }, { enviados: {} }, '2026-10-08');
+ok(dCh.length === 1 && /2 chamadas relevantes/.test(dCh[0].titulo), '(ch) UM aviso agregado', dCh[0] && dCh[0].titulo);
+ok(/Journal A \(vence em 12 dias\)/.test(dCh[0].corpo) && dCh[0].corpo.indexOf('Journal A') < dCh[0].corpo.indexOf('Revista B'),
+   '    o prazo mais curto primeiro, com o prazo dito', dCh[0].corpo);
+ok(JSON.stringify(dCh[0].ids) === '["chamada:c1","chamada:c2"]', '    identidade por item, não por lote', dCh[0].ids);
+ok(N.decidir({ vagas: [], lote: null, eventos: {}, chamadas: CH, triagem: TRI },
+             { enviados: { 'chamada:c1': 'x', 'chamada:c2': 'x' } }, '2026-10-08').length === 0,
+   '    e a chamada curada revista toda semana não toca de novo');
+ok(JSON.stringify(N.triagemDeLinhas([{ dominio: 'triagem', chave: 'c5', valor: { st: 2 } },
+                                     { dominio: 'rotina', chave: 'x', valor: {} }])) === '{"c5":2}',
+   '(ch) a triagem vem do cron_estado');
+
+console.log('\n=== Envio: urgência, TTL e o registro no Supabase ===');
+const opcoesVistas = [];
+const espiaoOpc = { webpush: { sendNotification: async (a, c, o) => { opcoesVistas.push(o); } },
+                    api: async () => null, log: () => {} };
+await N.enviarAviso(avManha, INSCR, espiaoOpc);
+await N.enviarAviso({ titulo: 'x', corpo: 'y', tag: 'vagas', url: '.', ids: ['vagas:z'] }, INSCR, espiaoOpc);
+ok(opcoesVistas[0].TTL === 7200 && opcoesVistas[0].urgency === 'high', '(env) o resumo vai com TTL 2h e urgência alta', opcoesVistas[0]);
+ok(opcoesVistas[1].TTL === N.TTL && !opcoesVistas[1].urgency, '    e os outros como sempre', opcoesVistas[1]);
+
+const pedidos = [];
+const apiReg = async (c, o) => { pedidos.push([c, o]); return c.indexOf('/cron_aviso_enviado?') === 0 ? [{ id: 'dia:2026-10-08:manha', enviado_em: '2026-10-08' }] : null; };
+const lidos = await N.lerEnviados(apiReg, { enviados: { 'vagas:2026-09-28': '2026-09-28' } });
+ok(lidos.enviados['vagas:2026-09-28'] && lidos.enviados['dia:2026-10-08:manha'],
+   '(reg) o que já foi avisado = arquivo antigo + tabela', lidos.enviados);
+await N.gravarEnviados(apiReg, ['dia:2026-10-08:tarde'], '2026-10-08');
+const post = pedidos.find((p) => p[1] && p[1].method === 'POST');
+ok(post && post[0] === '/cron_aviso_enviado' && /ignore-duplicates/.test(post[1].headers.Prefer) &&
+   JSON.parse(post[1].body)[0].id === 'dia:2026-10-08:tarde',
+   '    e o novo vai para a tabela, sem duplicar', post);
+await N.gravarEnviados(apiReg, [], '2026-10-08');
+ok(pedidos.filter((p) => p[1] && p[1].method === 'POST').length === 1, '    nada a gravar, nenhum pedido');
+
+const logs = [];
+await N.rodar({ vagas: [], lote: null, eventos: {}, dia: avManha }, { enviados: {} }, INSCR, '2026-10-08',
+              { ...espiao([{}]), log: (m) => logs.push(m) });
+ok(logs.length && logs.every((m) => !/Pagar a conta|Lutero e Spinoza/.test(m)) && /corpo omitido/.test(logs[0]),
+   '(log) o corpo do resumo do dia NUNCA vai ao log público do Actions', logs);
+ok(/Journal A/.test(N.textoDoLog(dCh[0])), '    e o das chamadas, que é público, continua indo');
+
+const yml = fs.readFileSync(path.join(RAIZ_D, '.github', 'workflows', 'avisos.yml'), 'utf8');
+ok(!/git push/.test(yml) && /contents: read/.test(yml),
+   '(reg) o workflow não escreve mais no repositório');
+ok(/TZ: America\/Sao_Paulo/.test(yml), '    e roda no fuso de São Paulo');
+
 console.log('\n' + '='.repeat(62));
 console.log('FALHAS: ' + falhas.length);
 falhas.forEach((f) => console.log('  - ' + f));

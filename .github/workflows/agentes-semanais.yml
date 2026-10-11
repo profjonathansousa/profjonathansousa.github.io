@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: '0 11 * * 1'
   workflow_dispatch:
+    inputs:
+      diagnostico:
+        description: 'So diagnosticar as fontes (inclusive as RSS desligadas), sem gravar nada'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -20,7 +25,10 @@ concurrency:
 jobs:
   coletar:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 25 bastava com 120 sondas por fonte. Com o teto por fonte (360 no
+    # PhilEvents, 240 no PhilJobs, ver os criterios) a coleta sobe para perto
+    # de 20 minutos; 45 deixa folga sem deixar um job travado correr solto.
+    timeout-minutes: 45
 
     steps:
       - name: Baixar o repositorio
@@ -37,13 +45,13 @@ jobs:
       - name: Coletar VAGAS
         id: vagas
         continue-on-error: true
-        run: python scripts/coletor.py vagas
+        run: python scripts/coletor.py vagas ${{ inputs.diagnostico && '--diagnostico' || '' }}
 
       - name: Coletar CHAMADAS
         id: chamadas
         if: always()
         continue-on-error: true
-        run: python scripts/coletor.py chamadas
+        run: python scripts/coletor.py chamadas ${{ inputs.diagnostico && '--diagnostico' || '' }}
 
       # POR QUE UM LACO, E POR QUE REAPLICAR EM VEZ DE REBASEAR.
       # Ate agora este passo fazia commit -> pull --rebase -> push, uma vez so.
@@ -65,7 +73,7 @@ jobs:
       # novo naqueles caminhos. Vale porque o coletor so escreve — nao apaga
       # arquivo nenhum —, entao "o que ele produziu" e sempre um acrescimo.
       - name: Gravar no repositorio
-        if: always()
+        if: ${{ always() && !inputs.diagnostico }}
         run: |
           git config user.name  "agente-semanal"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -806,7 +806,27 @@ def classificar(item, criterios, unidade="vaga"):
             # ('Politica, Comunidade e Emancipacao', 'Philosophy of Brazilian
             # Religions', 'Dossie Ensino de Filosofia'), sem termo nenhum no
             # titulo. Entra marcado e por ultimo; quem tria e o usuario.
-            estado, item["porque"] = "aberto", "chamada brasileira sem area no titulo"
+            #
+            # O CORPO ANOTA, E SO O NICHO ELEGE (2026-10-11). Com o cabeca mudo,
+            # 102 de 116 chamadas caiam em revisar e a lista deixava de separar
+            # qualquer coisa. O `texto` desta fonte e o corpo do proprio item,
+            # com a moldura do site ja podada — nao a pagina inteira que fazia
+            # 'Historico da ANPOF' virar nicho no edital. Ainda assim, so os
+            # termos de NICHO, que sao especificos, promovem: MEDIDO no lote de
+            # 2026-10-09, 6 das 102 traziam nicho no corpo, 4 delas do recorte
+            # ('Religiao, transumanismo...', 'Philosophy of Brazilian
+            # Religions'). Os de competencia ('etica', 'politica') aparecem em
+            # qualquer descricao de revista: 20 das 102. Esses so ANOTAM o
+            # porque e sobem na fila de triagem; nao viram relevantes.
+            corpo = normalizar(item.get("texto") or "")
+            nicho_c = casa((rel.get("nicho") or {}).get("termos"), corpo)
+            comp_c = casa((rel.get("competencia") or {}).get("termos"), corpo)
+            if nicho_c:
+                estado, item["porque"] = "nicho", "nicho no corpo: " + ", ".join(nicho_c[:3])
+            elif comp_c:
+                estado, item["porque"] = "aberto", "chamada brasileira; no corpo: " + ", ".join(comp_c[:3])
+            else:
+                estado, item["porque"] = "aberto", "chamada brasileira sem area no titulo"
         else:
             item["descartado"] = True
             item["motivo_saida"] = "sem aderencia no cabeca (titulo/AOS/AOC)"
@@ -976,9 +996,14 @@ def _sondar_familia_philpapers(sessao, cfg, estado_fonte, batimento):
     rotulo = cfg["nome"]
     base, caminho = cfg["base"], cfg["caminho"]
     ultimo = int(estado_fonte.get("ultimo_id") or 0) or int(cfg.get("semente") or 31580)
+    # O TETO E POR FONTE (2026-10-11). Com 120 para todas, o PhilEvents bateu
+    # o teto em todas as rodadas desde 10/09 — avancava exatamente +120 por
+    # semana, ou seja, lia menos do que se publicava e ficava cada vez mais
+    # atrasado. O criterio de cada fonte diz o seu; sem nada, vale o global.
+    teto = int(cfg.get("max_sondas") or MAX_SONDAS)
 
     novos, vazios, sondados, ident = [], 0, 0, ultimo
-    while vazios < MAX_VAZIOS and sondados < MAX_SONDAS:
+    while vazios < MAX_VAZIOS and sondados < teto:
         ident += 1
         sondados += 1
         url = "%s%s%d" % (base, caminho, ident)
@@ -1033,6 +1058,11 @@ def _sondar_familia_philpapers(sessao, cfg, estado_fonte, batimento):
     estado_fonte["ultimo_id"] = ident - vazios
     estado_fonte["ultima_sondagem"] = agora_sp().isoformat()
     batimento["fontes"][rotulo] = "ok · %d sondados · %d novos" % (sondados, len(novos))
+    # Parar pelo TETO, e nao pelos vazios, quer dizer que a fonte tinha mais.
+    # Isto ficou mudo por um mes; agora sai no batimento e no log do Actions.
+    if sondados >= teto and vazios < MAX_VAZIOS:
+        batimento["avisos"].append("%s: teto de %d sondas atingido — ha mais anuncios "
+                                   "do que esta rodada leu" % (rotulo, teto))
     return novos
 
 
@@ -1402,6 +1432,9 @@ def ordenar(itens):
         0 if i.get("urgente") else 1,
         peso_grupo.get(i.get("bloco") or i.get("forma"), 3),
         peso_rel.get(i.get("relevancia"), 9),
+        # Dentro de 'aberto', a chamada cujo corpo citou a competencia vem antes
+        # da que nao disse nada. Ver o comentario de 2026-10-11 no classificar.
+        0 if "no corpo:" in (i.get("porque") or "") else 1,
         i.get("prazo") or "9999-99-99",
     ))
 
@@ -1428,10 +1461,16 @@ def executar(modo, diagnostico=False):
     coletados, unidade_de, porta_de = [], {}, {}
     for cfg in (criterios.get("fontes") or []):
         nome = cfg.get("nome", "?")
-        if not cfg.get("ligada"):
+        metodo = cfg.get("metodo")
+        # NO DIAGNOSTICO, O RSS DESLIGADO TAMBEM E TENTADO. As quatro fontes RSS
+        # estao desligadas por 'NAO VERIFICADA', e verificar daqui de fora nao
+        # da: a rede de onde se edita o repositorio nem sempre alcanca os
+        # sites. O runner alcanca. O diagnostico nao escreve nada, e o
+        # resultado sai marcado como de fonte desligada.
+        testar_desligada = diagnostico and metodo == "rss"
+        if not cfg.get("ligada") and not testar_desligada:
             batimento["fontes"][nome] = "desligada"
             continue
-        metodo = cfg.get("metodo")
         try:
             if metodo == "sonda_id":
                 if diagnostico:
@@ -1443,6 +1482,20 @@ def executar(modo, diagnostico=False):
                 itens = fonte_lista_html(sessao, cfg, conhecidos, batimento, diagnostico)
             elif metodo == "rss":
                 itens = fonte_rss(sessao, cfg, batimento)
+                if not cfg.get("ligada"):
+                    batimento["fontes"][nome] = "(desligada) " + batimento["fontes"].get(nome, "")
+                    # O QUE CHEGOU, quando chegou e nao virou item: Atom no lugar de
+                    # RSS, pagina HTML, desafio anti-robo. E o que decide o conserto.
+                    try:
+                        r = sessao.get(cfg["url"], timeout=TIMEOUT)
+                        batimento["avisos"].append("%s: HTTP %s · %s · %d bytes · <item> %d · <entry> %d · %s" % (
+                            nome, r.status_code, r.headers.get("content-type", "?"), len(r.text),
+                            len(re.findall(r"(?i)<item[\s>]", r.text)), len(re.findall(r"(?i)<entry[\s>]", r.text)),
+                            re.sub(r"\s+", " ", r.text[:160])))
+                    except Exception as e:
+                        batimento["avisos"].append("%s: %s" % (nome, e))
+                    for it in itens[:3]:
+                        batimento["avisos"].append("%s amostra: %s" % (nome, (it.get("titulo") or "")[:90]))
             elif metodo == "manual":
                 itens = fonte_manual(cfg, batimento)
             else:

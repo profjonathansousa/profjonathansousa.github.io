@@ -62,9 +62,8 @@ Cinco blocos, nesta ordem:
 > `cron:prioridades:AAAA-Wnn` no aparelho, mas o estado **compartilhado** passou
 > a ser o `cron_estado` do Supabase, domínio `prioridade`, chave
 > `AAAA-Wnn/prid`. Quando a sincronia está ligada, uma alteração aparece no
-> outro aparelho em segundos, sem recarregar. O caminho de toques continua
-> emitindo em paralelo até a Fase 9G. Ver *Fase 9 — Estado compartilhado
-> online*.
+> outro aparelho em segundos, sem recarregar. O caminho de toques foi cortado
+> na 9G. Ver *Fase 9 — Estado compartilhado online*.
 O que **você** elegeu para a semana. Sempre no topo. Duas formas:
 
 - **de trilho** — aponta para um projeto; o texto exibido é o **estágio real do
@@ -93,7 +92,7 @@ domingo. O que muda é só o que disputa a sua atenção hoje.
 fechar uma etapa a faz avançar para a seguinte, não sair. Ela deixa a tela
 quando a semana acaba.
 
-**Atravessa aparelhos** pelo toque `prioridade` (ver Sincronização), `feito_em`
+**Atravessa aparelhos** pelo domínio `prioridade` do `cron_estado`, `feito_em`
 incluído: cumprir no computador aparece cumprido no celular.
 
 **Precedência**: `prioridadesDoDia()` devolve `{manuais, sugeridas}` e os dois
@@ -101,7 +100,8 @@ blocos são desenhados separados, manuais primeiro. Ver *Motor de prioridades*.
 
 ### 2. Rotinas
 As tarefas fixas do dia (`DIAS[diaDaSemana].tasks`). Marcação por data
-(`cron:checks:AAAA-MM-DD`), local ao aparelho.
+(`cron:checks:AAAA-MM-DD`), e desde a 9D.4 ela atravessa aparelhos pelo domínio
+`rotina` do `cron_estado`.
 
 Duas regras duras:
 
@@ -2436,22 +2436,14 @@ decidido. O aviso de confirmação diz quantas alterações estão esperando.
 
 ### Estado atual
 
-**9A concluída: infraestrutura no ar.**
-**9B concluída: Prioridades é o primeiro domínio conectado, e há tela para ligá-lo.** Falta aplicar o `sql/cron_estado.sql` ao projeto e popular a
-`cron_dono` — as duas coisas são operações de banco, feitas uma vez:
+**A Fase 9 está fechada (9A a 9G-3).** O estado mora no `cron_estado` do
+Supabase, os nove domínios sobem e descem pelo SYNC, e o GitHub deixou de ser
+caminho de sincronização entre aparelhos nos dois sentidos. O `sql/cron_estado.sql`
+está aplicado e a `cron_dono` tem a sua conta. Um aparelho só sincroniza depois
+de *Entrar* em **Sincronização → Estado online**.
 
-```sql
-insert into public.cron_dono (uid, rotulo)
-select id, 'jonathan' from auth.users where email = '<o seu e-mail>';
-```
-
-Depois disso, ligar num aparelho é `SYNC.entrar(email, senha)`. **Enquanto o SQL
-não for aplicado e a sincronia não for ligada, nada muda**: `tocarPrioridade`
-verifica `SYNC.ligado()` antes de escrever online, e sem isso um aparelho que
-nunca entrou acumularia fila para sempre, sem nada que a drenasse.
-
-**9C ainda não começou.** Metas, Eventos, TOEFL, Vagas, Retomadas, Trilhos e
-Rotinas continuam viajando só pelo caminho de toques.
+O que ainda depende de decisão sua está em *A marcação pelo artefato* (o `slug`
+no gerador do `entrada.json`) e no **Roadmap**.
 
 ---
 
@@ -2470,49 +2462,160 @@ Dois eixos, que não se confundem:
 `AOS: Open` nunca é eliminado e nunca é promovido — vai para **revisar**.
 Extração suspeita também.
 
+**A chamada brasileira não declara área no título.** Por isso ela entra como
+`aberto`, em vez de morrer nos rejeitados (medido em 26/08: 17 de 43 eram do
+recorte). Desde 11/10/2026 o **corpo** dela também é lido: termo de **nicho** no
+corpo elege (`nicho no corpo: …`); termo de **competência** só anota o porquê
+(`chamada brasileira; no corpo: …`) e sobe na fila de triagem, porque "ética" e
+"política" aparecem em qualquer descrição de revista.
+
+**O teto de sondas é por fonte** (`max_sondas` no critério): 360 no PhilEvents,
+que avançava exatamente +120 por semana e ficava cada vez mais atrasado, e 240
+no PhilJobs. Bater o teto vira aviso no batimento.
+
+**Diagnóstico sem gravar nada:** Actions → *Agentes semanais* → *Run workflow*
+com **diagnostico** marcado. Ele tenta também as fontes RSS desligadas por "NÃO
+VERIFICADA" e mostra, no log, se respondem e três títulos de amostra.
+
 ---
 
 ## Avisos
 
-**Domingo é informação, segunda é decisão — e o telefone só toca quando há o que
-dizer.** No máximo **um** aviso de vagas e **um** de datas por execução, sempre
-agregados. Nunca um por tarefa: quem recebe um aviso por item aprende a ignorar
-todos.
+**O telefone só toca quando há o que dizer — e, desde 11/10/2026, há quatro
+momentos do dia em que há.** Cada assunto vira **um** aviso agregado, nunca um
+por item: quem recebe um aviso por tarefa aprende a ignorar todos.
 
 ```
 navegador (PWA na Tela de Início)
   └─ botão "Avisar neste aparelho" → pushManager.subscribe(VAPID pública)
        └─ INSERT em cron_push_inscricao        (o anon insere; ninguém lê)
 
-GitHub Actions — avisos.yml, diário às 13h UTC
-  └─ lê dados/vagas.json, eventos/vagas_<data>.json e Cronograma/estado.json
+Supabase — pg_cron, 06:28 · 12:58 · 18:58 · 22:58 (Brasília)
+  └─ cron_interno.disparar_avisos()  → workflow_dispatch do avisos.yml
+                                       (token fine-grained guardado no Vault)
+
+GitHub Actions — avisos.yml (só leitura no repositório)
+  └─ descobre o MOMENTO pela hora de São Paulo (avisos/dia.mjs)
+  └─ carrega o aplicativo num vm e aplica as linhas do cron_estado
+  └─ lê dados/vagas.json, dados/chamadas.json e o lote em eventos/
   └─ SELECT nas inscrições com service_role    (só ela enxerga)
   └─ web-push → 404/410 apaga a linha morta
-  └─ grava as identidades em scripts/estado_notificador.json
+  └─ grava as identidades em cron_aviso_enviado
 ```
 
-**Duas fontes, e só duas.** Vagas com `veredicto: "relevante"` do lote da
-semana, e eventos públicos dentro de 14 dias. **Retomadas ficam de fora**: o
-progresso dos subitens é local por aparelho — `estado.itens` carrega uma fração
-deles —, e o servidor não tem como calculá-las. Não se inventa sincronização
-para viabilizá-las.
+### O resumo do dia
+
+| momento | hora | o que diz |
+|---|---|---|
+| manhã | 06:30 | o dia inteiro: âncoras, prioridades abertas, rotinas; no domingo, a revisão |
+| tarde | 13:00 | o que ainda está aberto, com quantas rotinas já foram |
+| noite | 19:00 | o que ainda dá para fazer hoje |
+| fim | 23:00 | o que ficou sem marca, e o que amanhã pede |
+
+Todos os dias, domingo incluído. Tarde e noite **não saem** quando não há nada
+aberto. Na véspera e na manhã de segunda, sem prioridade eleita, o aviso lembra
+que **segunda é decisão**, com a sugestão do motor se houver.
+
+**O aviso não tem regra própria.** `avisos/dia.mjs` carrega os arquivos do
+aplicativo — os mesmos, na ordem do `index.html` — num contexto do `vm`, como o
+`teste_hoje.js` já fazia, e pergunta a ele: `prioridadesDoDia()`,
+`estagioDoTrilho()`, `acaoDoDiaDoProcesso()`. As linhas do `cron_estado` entram
+por `SYNC.aplicarRemoto`, a mesma porta do iPhone. A prioridade de trilho chega
+ao telefone com o **estágio real** do trilho, e uma mudança no motor muda o
+aviso junto com a tela.
+
+**Uma tag para os quatro** (`dia`): o aviso das 13h substitui o da manhã na
+central de notificações. **TTL de 2 horas e urgência alta**: o iPhone entrega na
+hora, e o resumo da manhã nunca chega à tarde.
+
+**A janela de cada momento vai de 15 minutos antes a 90 depois.** Fora dela o
+resumo não sai — é isso que deixa a rede de segurança do GitHub (o `schedule`
+diário, que atrasa de três a oito horas) rodar sem mandar o resumo errado.
+
+**O texto aparece na tela bloqueada.** Isso é do iOS: Ajustes → Notificações →
+Mostrar Pré-visualizações → Sempre. Às 23h, um Foco de sono pode segurar o
+aviso; para que ele passe, inclua o Cronograma nos apps permitidos do Foco.
+
+### As outras três fontes
+
+- **Vagas** com `veredicto: "relevante"` do lote da semana — identidade
+  `vagas:<data-do-lote>`.
+- **Chamadas** relevantes que você **ainda não triou**, sem as vencidas e com o
+  prazo mais curto primeiro — identidade **por item** (`chamada:<id>`), porque
+  a chamada curada é revista toda semana e ganha `visto_em` novo a cada coleta.
+- **Datas** públicas dentro de 14 dias — identidade `evento:<id>:<data>`.
 
 **Evento com o cadeado fechado (`priv:true`) sai por inteiro.** Não vira aviso,
 não empresta o título, não empresta a data e não vira "1 compromisso": a
 existência dele também é informação. O filtro é o primeiro de todos, não um
-cuidado na hora de escrever o texto.
+cuidado na hora de escrever o texto. O resumo do dia não fala de datas.
 
 **Veredicto ausente não é "notificar tudo".** O campo só passou a existir com a
 Vagas 2; dado coletado antes dela não tem veredicto, e tratar a ausência como
 relevante encheria o telefone de uma vez.
 
-### Deduplicação
+### O relógio mora no Supabase
 
-Identidades `vagas:<data-do-lote>` e `evento:<id>:<data>`, guardadas em
-`scripts/estado_notificador.json` — **só identidades, nunca endpoints**. E a
-identidade **só é gravada se algo chegou**: envio que falhou em todos os
+O `schedule` do GitHub entra numa fila: entre 20/09 e 09/10/2026 o aviso marcado
+para as 10h saiu entre 13h40 e 17h56. Por isso quem aperta o botão é o
+**pg_cron** (`sql/cron_avisos.sql`, aplicado em produção), dois minutos antes de
+cada momento, chamando o `workflow_dispatch` — que começa em segundos. O disparo
+**não leva input**: o notificador descobre o momento pela hora, e um workflow
+antigo no `main` não recusa o pedido.
+
+**Ligar o relógio é uma operação de uma vez**, e a única que exige você:
+
+1. GitHub → Settings → Developer settings → *Fine-grained tokens* → novo token,
+   com acesso **só** a este repositório e **uma** permissão: *Actions: Read and
+   write*. A validade mais longa que o GitHub oferecer.
+2. Supabase → SQL Editor: o bloco do `sql/cron_avisos.sql` (seção 3), com o
+   token colado no lugar de `COLE_AQUI_O_TOKEN`. Ele cria ou atualiza, e se
+   recusa a rodar sem o token — a primeira versão desta instrução gravou o
+   texto de exemplo no Vault.
+3. Para conferir no dia seguinte: `select id, status_code, created from
+   net._http_response order by created desc limit 10;` — **204** é disparado,
+   **401** é token errado ou vencido.
+
+Sem o token — ou com qualquer coisa que não tenha forma de token —, a função não
+faz nada e não reclama, e a rede de segurança diária do GitHub continua mandando
+vagas, chamadas e datas. Quando o token vencer, o mesmo bloco o troca.
+
+### O que já foi avisado
+
+Mora na tabela **`cron_aviso_enviado`**, só da `service_role`. Até 10/10/2026
+morava em `scripts/estado_notificador.json`, e cada aviso virava um commit no
+`main` com um `git push` sem nova tentativa e fora do grupo de concorrência da
+coleta: numa segunda de corrida, o job caía e o mesmo aviso voltava no dia
+seguinte. O arquivo ficou **congelado e só é lido**, para não repetir nada do que
+foi avisado antes da troca. O `avisos.yml` não escreve mais no repositório.
+
+A identidade **só é gravada se algo chegou**: envio que falhou em todos os
 aparelhos não conta como enviado, e a execução seguinte tenta de novo. É a
-diferença entre "já avisei" e "tentei avisar".
+diferença entre "já avisei" e "tentei avisar". As linhas `dia:` saem com um mês
+(job `cronograma-avisos-poda`); as outras ficam.
+
+### O toque no aviso abre o dia certo, na aba certa
+
+O aplicativo lê a data uma vez, no carregamento, e o iPhone guarda o app na
+memória por horas. Sem cuidado, o aviso das 6h30 abria o Hoje de ontem — e, na
+segunda, as prioridades da semana passada. Agora:
+
+- voltar ao app (`visibilitychange`, `pageshow`) **recarrega se o dia virou**,
+  e o app aberto na tela confere a cada minuto, nunca no meio de uma digitação;
+- com o app já aberto, o service worker **manda o destino por mensagem** em vez
+  de só trazer a janela para a frente;
+- o `#vagas` do endereço **abre a aba Vagas** (antes o app ignorava o `#`).
+
+### A inscrição que some em silêncio
+
+O navegador descarta inscrições sem avisar, e o iPhone não dispara
+`pushsubscriptionchange`. Na abertura, uma vez por dia (`avisos:republicada`), o
+app **republica** a inscrição que tem (o 409 quer dizer "já estava lá") e, se a permissão continua dada mas a
+inscrição sumiu, o **Hoje diz** — com um botão de religar, porque inscrever pede
+um gesto seu. Desligar de propósito grava `avisos:desligados` no aparelho, para
+que o Hoje não peça para religar o que você acabou de desligar. Essa chave não é
+uma segunda verdade da inscrição — quem diz se o aparelho está inscrito continua
+sendo o `PushManager` —, e fica fora do prefixo `cron:` para não ir ao backup.
 
 ### O service worker não tem `fetch`
 
@@ -2560,11 +2663,15 @@ apagar as inscrições.
 comum do Safari o `PushManager` não existe e o botão nem aparece — a limitação é
 do sistema.
 
-**Nada disto tocou as fases anteriores:** nenhum tipo de toque novo (seguem
-sete), nenhuma seção nova no `estado.json`, nenhuma chave nova de
-`localStorage` — a fonte da verdade da inscrição é o próprio `PushManager` —, e
-`dobrar_toques.py`, `coletor.py` e os dois workflows existentes não foram
-tocados.
+**Nada disto tocou as fases anteriores:** nenhum tipo de toque novo, nenhuma
+seção nova no `estado.json`, e o `dobrar_toques.py` intocado. As únicas chaves
+novas de `localStorage` são `avisos:desligados` e `avisos:republicada` (ver
+acima), as duas fora do prefixo `cron:`.
+
+**O corpo do resumo do dia nunca vai ao log do Actions.** O repositório é
+público, e o log do Actions também: escrever ali as prioridades publicaria por
+outra porta o que a base privada guarda. O log mostra o título (que vem do
+`00-config.js`, já versionado) e quantas linhas o aviso tinha.
 
 ---
 
@@ -2590,11 +2697,14 @@ tocados.
 | `Cronograma/sw.js` | service worker: só push e notificationclick |
 | `Cronograma/manifest.webmanifest`, `Cronograma/icones/` | o que o iOS exige para instalar o app |
 | `avisos/enviar.mjs` | o emissor dos avisos, roda só no Actions |
+| `avisos/dia.mjs` | o resumo do dia: os quatro momentos e o aplicativo carregado num vm |
+| `avisos/package-lock.json` | as versões exatas do `web-push`, para o `npm ci` |
 | `sql/cron_push.sql` | a tabela das inscrições, com RLS |
+| `sql/cron_avisos.sql` | o relógio dos avisos: `cron_aviso_enviado`, pg_cron, pg_net e o disparo |
 | `sql/cron_estado.sql` | Fase 9A: estado, registro e base da estrutura, com RLS |
 | `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
 | `scripts/teste_publicar_estrutura.py` | Fase 9G-0 B1: a publicação da estrutura e a base |
-| `scripts/estado_notificador.json` | o que já foi avisado |
+| `scripts/estado_notificador.json` | o que foi avisado até 10/10/2026; congelado, só lido |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
 sobrescreve progresso, conclusão ou ciclo de vida.
@@ -2631,11 +2741,17 @@ toque novo, nenhuma regra de CSS reescrita.
 ```bash
 python3 scripts/teste_coletor.py     # pipeline de vagas
 node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
+node     scripts/teste_avisos.mjs    # notificador: resumo do dia, chamadas, registro
 python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
 node     scripts/prova_dupla_escrita.js  # Fase 9F/9G-2: a fronteira entre caminhos
 python3  scripts/teste_publicar_estrutura.py  # Fase 9G-0 B1: entrada.json + a base
 ```
+
+**O relógio do `teste_hoje.js` é fixo numa quarta-feira** (2026-10-07). O Hoje
+muda com o dia da semana, e com o relógio real a suíte falhava em todo sábado,
+domingo e segunda por causa do calendário. Para medir outro dia:
+`TESTE_HOJE=2026-10-10 node scripts/teste_hoje.js`.
 
 O `teste_hoje.js` lê do próprio `index.html` a lista de `<script src>`, carrega
 os cinco arquivos **na ordem em que o HTML os declara** e avalia o resultado num
@@ -2679,6 +2795,7 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9G-1 — notificador lê os eventos do `cron_estado` | concluída |
 | 9G-2 — subida legada cortada | concluída |
 | 9G-3 — cortar a descida (`buscarEstado`, `estado.json`) e aposentar o acervo | concluída |
+| 10 — Resumo do dia em quatro momentos, relógio no Supabase, chamadas no push | concluída (o relógio espera o token no Vault) |
 
 ### Previsto e ainda não implementado
 

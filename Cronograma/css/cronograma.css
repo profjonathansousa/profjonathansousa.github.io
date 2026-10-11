@@ -529,3 +529,7 @@
 .avisos:active{background:#EFEDE2;}
 .avisos.ligado{border-color:var(--gold-line);color:var(--gold);}
 .avisos.bloqueado{opacity:.6;cursor:default;}
+.avisos-perdidos{margin:2px 0 14px;padding:10px 14px;border:1px solid var(--gold-soft);
+  background:#F6EFDD;border-radius:11px;font-size:12.5px;color:var(--ink-soft);}
+.avisos-perdidos b{font-family:var(--display);color:var(--gold);}
+.avisos-perdidos span{display:block;margin:2px 0 8px;color:var(--muted);}

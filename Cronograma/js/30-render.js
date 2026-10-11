@@ -574,6 +574,7 @@ function renderHoje(){
   html+=`<p class="plate-eixo">${d.eixo}</p>`;
   html+=`<p class="plate-date">${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}</p>`;
   d.anchors.forEach(a=>{html+=`<div class="anchor"><span class="t">${a.t}</span><span class="n">${a.n}</span></div>`;});
+  html+=renderAvisosPerdidos();
   if(phase!=="livre"){
     html+=`<div class="sprint-card"><div class="lead">Sprint EBD — material do próximo mês</div>`;
     if(phase==="ebd1"){
@@ -1735,6 +1736,14 @@ function setView(v){
   if(v==="semana") renderSemana();   /* os numeros mudam a cada marcacao */
   if(v==="vagas") vgAbrir();
   try{window.scrollTo(0,0);}catch(e){}}
+/* O AVISO PEDE UMA ABA PELO ENDERECO: o de vagas e das chamadas aponta para
+   `index.html#vagas`. Ate aqui o app nao lia o `#`, e o toque abria sempre o
+   Hoje. Vale na abertura, no `hashchange` e na mensagem que o service worker
+   manda quando o app ja estava aberto. So aceita as abas que existem. */
+function abrirPeloEndereco(u){
+  var h = String(u || "").split("#")[1] || "";
+  if(["hoje","processos","revisao","semana","trilhos","vagas"].indexOf(h) >= 0) setView(h);
+}
 /* LIMPAR E DESMARCAR UMA A UMA, e nao esvaziar a gaveta. Zerar o objeto
    apagava as marcas sem dizer a ninguem que elas cairam: o outro aparelho
    continuaria mostrando o dia cheio, e a proxima descida traria tudo de volta.
@@ -1927,6 +1936,19 @@ function renderBackupAviso(){
    Um botao so, que liga e desliga, e que diz sempre em que estado esta. Ele
    nao aparece quando o aparelho nao suporta (numa aba comum do iOS o
    PushManager nem existe) nem quando as chaves nao foram preenchidas. */
+/* O Hoje DIZ quando os avisos pararam (ver curarInscricao, no 10-nucleo.js).
+   Um toque religa — e o toque e obrigatorio: no iPhone, inscrever pede gesto. */
+function renderAvisosPerdidos(){
+  if(!AVISOS_PERDIDOS) return "";
+  return '<div class="avisos-perdidos"><b>Os avisos pararam neste aparelho.</b>' +
+    '<span>O navegador descartou a inscri\u00e7\u00e3o. Um toque religa.</span>' +
+    '<button class="avisos" onclick="religarAvisos()">Religar os avisos</button></div>';
+}
+function religarAvisos(){
+  inscreverAvisos().then(function(){ AVISOS_PERDIDOS = false; }, function(e){
+    alert("N\u00e3o deu certo: " + ((e && e.message) || e));
+  }).then(function(){ renderHoje(); renderAvisos(); });
+}
 function renderAvisos(){
   var b = document.getElementById("btn-avisos");
   var nota = document.getElementById("avisos-estado");

@@ -12,7 +12,7 @@
      sem estar instalado nao existe Web Push no iOS. -->
 <link rel="manifest" href="manifest.webmanifest">
 <title>Cronograma</title>
-<link rel="stylesheet" href="css/cronograma.css?v=2026-09-11-ordem-da-entrada">
+<link rel="stylesheet" href="css/cronograma.css?v=2026-10-11-avisos-do-dia">
 </head>
 <body>
 <div id="ptr">Puxe para atualizar</div>
@@ -48,7 +48,7 @@
     <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importarDados(this)"><br>
     <span class="backup-aviso" id="backup-aviso"></span>
     <details class="sync" id="sync">
-      <summary>Sincroniza\u00e7\u00e3o</summary>
+      <summary>Sincronização</summary>
       <div class="s-body">
         <!-- ENXUTO DESDE 10/09. O painel virou um manual: explicava o desenho da
              sincronia, o isolamento das tabelas, o cadeado, o historico e o
@@ -56,7 +56,7 @@
              a tela onde se entra e se sai de uma conta. O que ficou e o que se
              OPERA daqui; o porque continua inteiro no README. -->
         <div class="s-online">
-          <p class="s-nota">Com a conta ligada, o que voc\u00ea marca num aparelho
+          <p class="s-nota">Com a conta ligada, o que você marca num aparelho
             aparece nos outros em segundos.</p>
           <input type="email" id="sync-email" placeholder="E-mail"
                  autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
@@ -71,9 +71,10 @@
         <div class="s-sec">Avisos neste aparelho</div>
         <div class="s-linha"><button class="avisos" id="btn-avisos" hidden></button></div>
         <span class="backup-aviso" id="avisos-estado"></span>
-        <p class="s-nota">No m\u00e1ximo um aviso de vagas e um de datas por dia.
-          Datas com o cadeado fechado nunca s\u00e3o avisadas.</p>
-        <p class="s-nota">No iPhone, s\u00f3 com o Cronograma na Tela de In\u00edcio.</p>
+        <p class="s-nota">O resumo do dia chega às 6h30, 13h, 19h e 23h. Vagas,
+          chamadas e datas, só quando há novidade. Datas com o cadeado fechado
+          nunca são avisadas.</p>
+        <p class="s-nota">No iPhone, só com o Cronograma na Tela de Início.</p>
       </div>
     </details>
     <span id="ver"></span>
@@ -88,11 +89,11 @@
      nucleo, depois regras, depois desenho, e o boot por ultimo. Scripts
      classicos, nao modulos: o escopo global compartilhado e o que mantem a
      superficie publica intacta. -->
-<script src="js/00-config.js?v=2026-09-11-ordem-da-entrada"></script>
-<script src="js/10-nucleo.js?v=2026-09-11-ordem-da-entrada"></script>
-<script src="js/15-sync.js?v=2026-09-11-ordem-da-entrada"></script>
-<script src="js/20-regras.js?v=2026-09-11-ordem-da-entrada"></script>
-<script src="js/30-render.js?v=2026-09-11-ordem-da-entrada"></script>
-<script src="js/40-app.js?v=2026-09-11-ordem-da-entrada"></script>
+<script src="js/00-config.js?v=2026-10-11-avisos-do-dia"></script>
+<script src="js/10-nucleo.js?v=2026-10-11-avisos-do-dia"></script>
+<script src="js/15-sync.js?v=2026-10-11-avisos-do-dia"></script>
+<script src="js/20-regras.js?v=2026-10-11-avisos-do-dia"></script>
+<script src="js/30-render.js?v=2026-10-11-avisos-do-dia"></script>
+<script src="js/40-app.js?v=2026-10-11-avisos-do-dia"></script>
 </body>
 </html>

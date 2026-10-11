@@ -5,17 +5,25 @@ name: Testar Web Push
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   testar:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: avisos/package-lock.json
       - name: Instalar dependencias
         working-directory: avisos
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Enviar um aviso de teste
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}

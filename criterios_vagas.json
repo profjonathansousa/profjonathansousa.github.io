@@ -359,6 +359,8 @@
       "metodo": "sonda_id",
       "base": "https://philjobs.org",
       "caminho": "/job/show/",
+      "max_sondas": 240,
+      "_max_sondas_MEDIDO_2026-10-11": "Com o teto global de 120, a fonte encostou no teto na rodada de 21/09 (+120) e passou perto nas outras (+112, +116). Folga, e nao correcao: 240. A cada sonda ha PAUSA de 1,2 s; cabe no timeout do job.",
       "semente": 31580,
       "unidade": "vaga",
       "bloco_padrao": null,
@@ -443,21 +445,21 @@
       "ligada": false,
       "metodo": "rss",
       "url": "https://www.jobs.ac.uk/jobs/philosophy/rss",
-      "_nota": "NAO VERIFICADA. O endereco testado em 2026-08-24 deu 404. Confirme no navegador antes de ligar."
+      "_nota": "MEDIDO 2026-10-11 no runner do Actions (diagnostico): HTTP 200, mas text/html — a URL devolve a pagina de vagas, nao um feed (0 <item>, 0 <entry>). Continua desligada; para religar, achar o endereco RSS real no site e rodar o diagnostico de novo."
     },
     {
       "nome": "academicjobsonline",
       "ligada": false,
       "metodo": "rss",
       "url": "https://academicjobsonline.org/ajo/jobs/rss",
-      "_nota": "NAO VERIFICADA."
+      "_nota": "MEDIDO 2026-10-11 no runner do Actions (diagnostico): HTTP 200, mas text/html ('Job Listings') — nao e feed (0 <item>, 0 <entry>). Continua desligada; o AJO publica feeds por categoria, e o de Filosofia teria de ser achado no site."
     },
     {
       "nome": "h-net",
       "ligada": false,
       "metodo": "rss",
       "url": "https://networks.h-net.org/rss/jobs",
-      "_nota": "NAO VERIFICADA."
+      "_nota": "MEDIDO 2026-10-11 no runner do Actions (diagnostico): HTTP 404. O endereco nao existe mais. Continua desligada."
     }
   ],
 

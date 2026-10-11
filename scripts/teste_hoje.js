@@ -15,6 +15,28 @@ const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 
+/* O RELOGIO DO TESTE E FIXO, numa quarta-feira. O Hoje muda com o dia da
+   semana — o TOEFL nao pede nada no sabado, e o domingo traz a revisao inteira
+   para dentro da tela —, e este arquivo media o que a pagina desenha HOJE.
+   Rodado no dia errado, ele falhava por causa do calendario e nao do codigo:
+   duas asserções no sabado, quatro no domingo e cinco na segunda (as que usam
+   "ontem" como se fosse da mesma semana). Um teste que muda de veredicto com o
+   dia nao prova nada em dia nenhum.
+
+   O relogio ANDA a partir do instante fixo, em vez de parar: ha asserções que
+   dependem de dois toques seguidos terem instantes diferentes. O processo
+   inteiro ve a mesma data — o codigo do teste e os contextos do vm, que recebem
+   este `Date` pelo criarAparelho. Para medir outro dia:
+       TESTE_HOJE=2026-10-10 node scripts/teste_hoje.js */
+const DIA_DO_TESTE = process.env.TESTE_HOJE || "2026-10-07";
+const DataReal = Date;
+const INICIO_REAL = DataReal.now();
+const INSTANTE_DO_TESTE = new DataReal(DIA_DO_TESTE + "T12:00:00").getTime();
+global.Date = class extends DataReal {
+  constructor(...a) { if (a.length === 0) super(INSTANTE_DO_TESTE + (DataReal.now() - INICIO_REAL)); else super(...a); }
+  static now() { return INSTANTE_DO_TESTE + (DataReal.now() - INICIO_REAL); }
+};
+
 const RAIZ = path.dirname(__dirname);
 const HTML = fs.readFileSync(path.join(RAIZ, "Cronograma", "index.html"), "utf8");
 /* OS SCRIPTS REAIS, NA ORDEM DO HTML (Fase 7). O <script> inline deixou de
@@ -1792,7 +1814,84 @@ ok(/<link[^>]+rel="manifest"/.test(HTML), "e o HTML o referencia");
   ok(fs.existsSync(path.join(RAIZ, "Cronograma", "icones", n)), "o icone " + n + " existe");
 });
 
-console.log("\n" + "=".repeat(62));
-console.log("FALHAS: " + falhas.length);
-falhas.forEach(f => console.log("  - " + f));
-process.exit(falhas.length ? 1 : 0);
+console.log("\n=== O aviso abre a aba certa, no dia certo ===");
+const NAV = criarAparelho("aba-pelo-endereco");
+NAV.abrirPeloEndereco("./index.html#vagas");
+ok(NAV.document.getElementById("view-vagas").hidden === false &&
+   NAV.document.getElementById("view-hoje").hidden === true,
+   "o #vagas do aviso abre a aba Vagas");
+NAV.abrirPeloEndereco("./index.html#qualquer-coisa");
+ok(NAV.document.getElementById("view-vagas").hidden === false,
+   "e um endereco que nao e aba nao mexe em nada");
+ok(/postMessage\(\{\s*tipo:\s*'abrir'/.test(SW_BRUTO),
+   "com o app ja aberto, o service worker manda o destino por mensagem");
+
+const VIRA = criarAparelho("virada-do-dia");
+const trocas = [];
+VIRA.location.replace = (u) => trocas.push(u);
+ok(VIRA.diaVirou() === false && VIRA.recarregarSeODiaVirou() === false && !trocas.length,
+   "no mesmo dia, nada recarrega");
+const DataDoContexto = VIRA.Date;
+VIRA.Date = class extends DataDoContexto {
+  constructor(...a) { if (a.length === 0) super(DataDoContexto.now() + 86400000); else super(...a); }
+};
+ok(VIRA.diaVirou() === true, "o app aberto desde ontem sabe que o dia virou");
+ok(VIRA.recarregarSeODiaVirou("./index.html#vagas") === true &&
+   /\?v=\d+#vagas$/.test(trocas[0] || ""),
+   "e recarrega, preservando a aba que o aviso pediu", trocas);
+
+console.log("\n=== Os avisos que param em silencio ===");
+const PERD = criarAparelho("inscricao-perdida");
+PERD.AVISOS_PERDIDOS = true;
+PERD.renderHoje();
+ok(/Os avisos pararam neste aparelho/.test(PERD.document.getElementById("view-hoje").innerHTML) &&
+   /religarAvisos\(\)/.test(PERD.document.getElementById("view-hoje").innerHTML),
+   "inscricao perdida: o Hoje diz, com o botao de religar");
+PERD.AVISOS_PERDIDOS = false;
+PERD.renderHoje();
+ok(!/Os avisos pararam/.test(PERD.document.getElementById("view-hoje").innerHTML),
+   "e sem perda, nao diz nada");
+
+/* Um navegador com push, de mentira: so o que curarInscricao consulta. */
+function comPush(ctx, sub, permissao) {
+  const pedidos = [];
+  ctx.PushManager = function(){};
+  ctx.Notification = { permission: permissao };
+  ctx.navigator.serviceWorker = { getRegistration: () => Promise.resolve({
+    pushManager: { getSubscription: () => Promise.resolve(sub) } }) };
+  ctx.fetch = (u, o) => { pedidos.push([u, o]); return Promise.resolve({ ok: false, status: 409 }); };
+  return pedidos;
+}
+const SUB = { endpoint: "https://push.exemplo/x",
+              toJSON: () => ({ keys: { p256dh: "p", auth: "a" } }) };
+/* curarInscricao devolve promessa, e este arquivo e CommonJS: sem await no
+   topo. O resumo final espera por ela. */
+async function curas() {
+  const CUR1 = criarAparelho("cura-1");
+  const ped1 = comPush(CUR1, SUB, "granted");
+  const r1cura = await CUR1.curarInscricao();
+  ok(r1cura === "ok" && ped1.length === 1 && /cron_push_inscricao/.test(ped1[0][0]) &&
+     ped1[0][1].method === "POST" && CUR1.AVISOS_PERDIDOS === false,
+     "inscricao viva: republica (o 409 quer dizer que ja estava la)", [r1cura, ped1.length]);
+  await CUR1.curarInscricao();
+  ok(ped1.length === 1, "  e no mesmo dia nao republica de novo", ped1.length);
+  const CUR2 = criarAparelho("cura-2");
+  comPush(CUR2, null, "granted");
+  ok(await CUR2.curarInscricao() === "perdida" && CUR2.AVISOS_PERDIDOS === true,
+     "permissao dada e inscricao sumida: perdida");
+  const CUR3 = criarAparelho("cura-3", { storage: { "avisos:desligados": "1" } });
+  comPush(CUR3, null, "granted");
+  ok(await CUR3.curarInscricao() === "nunca" && CUR3.AVISOS_PERDIDOS === false,
+     "mas se VOCE desligou, nao e perda — o Hoje nao pede para religar");
+  const CUR4 = criarAparelho("cura-4");
+  comPush(CUR4, null, "default");
+  ok(await CUR4.curarInscricao() === "nunca", "e quem nunca ligou tambem nao ve aviso nenhum");
+}
+
+function concluir() {
+  console.log("\n" + "=".repeat(62));
+  console.log("FALHAS: " + falhas.length);
+  falhas.forEach(f => console.log("  - " + f));
+  process.exit(falhas.length ? 1 : 0);
+}
+curas().then(concluir, function(e){ falhas.push("curarInscricao lancou: " + e); concluir(); });

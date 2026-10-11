@@ -13,3 +13,6 @@ __pycache__/
 # Copias que o patch deixa ao lado do arquivo. O device_bash nao apaga,
 # entao ficam onde estao — mas nunca entram no repositorio.
 *.antes-*
+
+# Dependencias instaladas (o avisos/ usa npm ci no Actions)
+node_modules/

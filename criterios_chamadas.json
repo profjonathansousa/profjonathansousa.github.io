@@ -213,6 +213,8 @@
       "metodo": "sonda_id",
       "base": "https://philevents.org",
       "caminho": "/event/show/",
+      "max_sondas": 360,
+      "_max_sondas_MEDIDO_2026-10-11": "Com o teto global de 120, a fonte avancava exatamente +120 por rodada desde 10/09: lia menos do que se publicava. A cada sonda ha PAUSA de 1,2 s; 360 sondas cabem no timeout do job.",
       "semente": 146200,
       "unidade": "vaga",
       "_nota": "Mesma plataforma do PhilJobs: /event/show/<id> e publico e permitido; a lista vem por /ajax/, que o robots.txt pede para nao acessar. Ids sequenciais por data de publicacao, por volta de 146300 em agosto de 2026."
@@ -237,7 +239,7 @@
       "ligada": false,
       "metodo": "rss",
       "url": "https://call-for-papers.sas.upenn.edu/rss.xml",
-      "_nota": "NAO VERIFICADA. Confirme o endereco antes de ligar."
+      "_nota": "MEDIDO 2026-10-11 no runner do Actions (diagnostico): HTTP 200, application/rss+xml, mas o feed esta VAZIO (307 bytes, 0 <item>). Continua desligada; ligar agora so poria uma fonte muda no batimento."
     }
   ],
 
