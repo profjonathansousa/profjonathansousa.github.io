@@ -1457,6 +1457,7 @@ function inscreverAvisos(){
   }).then(function(reg){
     return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveVapid() });
   }).then(function(sub){
+    try{ localStorage.removeItem(AVISOS_DESLIGADOS_KEY); }catch(e){}
     return publicarInscricao(sub).catch(function(e){
       /* Nao deixa inscricao orfa: se o registro falhou, desfaz no navegador. */
       return sub.unsubscribe().then(function(){ throw e; });
@@ -1468,5 +1469,51 @@ function inscreverAvisos(){
    inscricao morre, e o proximo envio recebe 404/410: e o emissor que remove a
    linha, no Actions, com a service_role. */
 function desinscreverAvisos(){
-  return inscricaoAtual().then(function(sub){ return sub ? sub.unsubscribe() : false; });
+  return inscricaoAtual().then(function(sub){ return sub ? sub.unsubscribe() : false; })
+    .then(function(r){ try{ localStorage.setItem(AVISOS_DESLIGADOS_KEY, "1"); }catch(e){} return r; });
+}
+
+/* A INSCRICAO SE CURA NA ABERTURA, ate onde da para curar sem um toque seu.
+   Dois casos, e so um tem conserto automatico:
+     · o navegador ainda tem a inscricao, mas a linha sumiu da tabela (o emissor
+       apaga em 404/410). Publicar de novo e o mesmo INSERT de sempre, e o 409
+       continua querendo dizer "ja estava la";
+     · a permissao continua dada, mas o navegador descartou a inscricao — e ele
+       descarta, sem aviso. Ai nao ha conserto sem voce: no iPhone, inscrever
+       pede um gesto. O que da para fazer e DIZER, no Hoje, em vez de deixar os
+       avisos pararem em silencio.
+
+   O MARCADOR DE "DESLIGADO" NAO E UMA SEGUNDA VERDADE DA INSCRICAO. Quem diz
+   se este aparelho esta inscrito continua sendo o PushManager. O marcador
+   guarda outra coisa: que VOCE desligou. Sem ele, desligar de proposito
+   pareceria inscricao perdida, e o Hoje pediria para religar o que voce acabou
+   de desligar. Fica fora do prefixo cron: porque e do aparelho e nao vai para o
+   backup. */
+var AVISOS_DESLIGADOS_KEY = "avisos:desligados";
+var AVISOS_PERDIDOS = false;
+function curarInscricao(){
+  if(!temPush() || !avisosConfigurados()) return Promise.resolve("sem-push");
+  return inscricaoAtual().then(function(sub){
+    if(sub){
+      AVISOS_PERDIDOS = false;
+      return publicarInscricao(sub).then(function(){ return "ok"; }, function(){ return "sem-rede"; });
+    }
+    var desligou = false;
+    try{ desligou = localStorage.getItem(AVISOS_DESLIGADOS_KEY) === "1"; }catch(e){}
+    AVISOS_PERDIDOS = (Notification.permission === "granted") && !desligou;
+    return AVISOS_PERDIDOS ? "perdida" : "nunca";
+  }).catch(function(){ return "erro"; });
+}
+
+/* O DIA VIRA COM O APP ABERTO. `now`, `dateKey` e `semanaAtual` sao lidos uma
+   vez, no carregamento, e tudo o que e "hoje" sai deles. O iPhone guarda o app
+   na memoria por horas: sem isto, o aviso das 6h30 abria o Hoje de ontem — e
+   na segunda, as prioridades da semana passada. Recarregar e o mesmo gesto do
+   puxar-para-atualizar, e o `destino` preserva a aba que o aviso pediu. */
+function diaVirou(){ return ymd(new Date()) !== dateKey; }
+function recarregarSeODiaVirou(destino){
+  if(!diaVirou()) return false;
+  var h = destino ? (String(destino).split("#")[1] || "") : String(location.hash || "").replace(/^#/, "");
+  location.replace(baseUrl() + "?v=" + Date.now() + (h ? "#" + h : ""));
+  return true;
 }

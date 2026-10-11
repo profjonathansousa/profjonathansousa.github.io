@@ -3,24 +3,36 @@
    resolve para o papel service_role e ignora a RLS de propósito: é o único que
    pode ler as inscrições.
 
-   DUAS FONTES, E SÓ DUAS: vagas relevantes do lote novo (arquivo do coletor),
-   e eventos públicos do `cron_estado` (domínio `evento`) — eventos públicos
-   que entraram na janela. Retomadas ficam de fora porque o servidor não tem o
-   progresso dos subitens — quase todo ele é local por aparelho.
+   QUATRO FONTES:
+     · o resumo do dia (avisos/dia.mjs) — prioridades e rotinas, em quatro
+       momentos: 06:30, 13:00, 19:00 e 23:00;
+     · vagas relevantes do lote novo (arquivo do coletor);
+     · chamadas relevantes ainda não triadas (arquivo do coletor);
+     · eventos públicos do `cron_estado` (domínio `evento`) que entraram na
+       janela.
 
-   NO MÁXIMO DOIS AVISOS POR EXECUÇÃO, cada um agregando o seu assunto. Nunca
-   um por vaga ou por evento: quem recebe um aviso por item aprende a ignorar
-   todos.
+   UM AVISO POR ASSUNTO, cada um agregando o seu. Nunca um por vaga ou por
+   evento: quem recebe um aviso por item aprende a ignorar todos.
+
+   O QUE JÁ FOI AVISADO MORA NO SUPABASE (`cron_aviso_enviado`), e não mais num
+   commit por aviso. O scripts/estado_notificador.json ficou congelado e só é
+   lido: ele guarda o que foi avisado antes da troca.
 
    Variáveis esperadas:
      SUPABASE_URL, SUPABASE_SECRET_KEY,
      VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
    Opcionais:
      HOJE=2026-09-10  força a data (para testar)
+     MOMENTO=manha    força o momento do resumo (manha, tarde, noite, fim)
      SECO=1           calcula e mostra, mas não envia e não grava nada
 */
+/* O DIA É O DE SÃO PAULO. O runner do GitHub vive em UTC, e o resumo das 23h
+   sai às 02h UTC — já "amanhã" para ele. Fixado antes de qualquer Date. */
+process.env.TZ = process.env.TZ || 'America/Sao_Paulo';
+
 import fs from 'node:fs';
 import path from 'node:path';
+import * as DIA from './dia.mjs';
 
 export const JANELA_DIAS = 14;   /* mesmo horizonte da revisão dominical */
 export const TTL = 12 * 3600;
@@ -65,6 +77,58 @@ export function montarAvisoVagas(vagas, lote) {
   const resto = n - nomes.length;
   const corpo = nomes.join(' · ') + (resto > 0 ? ' e mais ' + resto : '');
   return { titulo, corpo, tag: 'vagas', url: './index.html#vagas', id: 'vagas:' + lote };
+}
+
+/* ---------- chamadas ----------
+   A IDENTIDADE É DO ITEM, e não do lote. As chamadas curadas são revistas a
+   cada coleta e ganham `visto_em` novo toda semana; contar por lote faria a
+   mesma chamada de fluxo contínuo tocar o telefone toda segunda.
+
+   SÓ O QUE VOCÊ AINDA NÃO TRIOU. Uma chamada que você já marcou — candidatar,
+   descartar ou arquivar — não precisa de lembrete. E nada vencido: a carência
+   de 21 dias do coletor serve para você arquivar, não para ser avisado. */
+export function chamadasParaAvisar(itens, triagem, hojeISO) {
+  return (itens || []).filter((i) => {
+    if (!i || !i.id || i.veredicto !== 'relevante') return false;
+    if (i.vencida || i.descartado) return false;
+    const st = (triagem || {})[i.id];
+    if (st && st !== 0) return false;
+    if (i.prazo) {
+      const d = diasAte(i.prazo, hojeISO);
+      if (d !== null && d < 0) return false;
+    }
+    return true;
+  });
+}
+
+export function montarAvisoChamadas(chamadas, hojeISO) {
+  const n = chamadas.length;
+  if (n === 0) return null;
+  const titulo = n === 1 ? '1 chamada relevante' : n + ' chamadas relevantes';
+  /* O prazo mais curto primeiro: é ele que pode passar sem ser visto. */
+  const ord = chamadas.slice().sort((a, b) => {
+    const da = a.prazo ? diasAte(a.prazo, hojeISO) : 9999;
+    const db = b.prazo ? diasAte(b.prazo, hojeISO) : 9999;
+    return da - db;
+  });
+  const nomes = ord.slice(0, 3).map((c) => {
+    const t = c.titulo || c.instituicao || c.id;
+    if (!c.prazo) return t;
+    const d = diasAte(c.prazo, hojeISO);
+    return t + ' (' + (d === 0 ? 'vence hoje' : d === 1 ? 'vence amanhã' : 'vence em ' + d + ' dias') + ')';
+  });
+  const resto = n - nomes.length;
+  const corpo = nomes.join(' · ') + (resto > 0 ? ' e mais ' + resto : '');
+  return { titulo, corpo, tag: 'chamadas', url: './index.html#vagas',
+           ids: chamadas.map((c) => 'chamada:' + c.id) };
+}
+
+export function triagemDeLinhas(linhas) {
+  const t = {};
+  (linhas || []).forEach((l) => {
+    if (l && l.dominio === 'triagem' && l.chave) t[l.chave] = (l.valor && l.valor.st) || 0;
+  });
+  return t;
 }
 
 /* ---------- eventos ----------
@@ -113,13 +177,23 @@ export function eventosDeLinhas(linhas) {
 
 /* Traz os eventos do dono do Cronograma. Dois donos seria ambiguidade, e o
    notificador para em vez de escolher — mesma regra do publicador da estrutura. */
-export async function buscarEventos(api) {
+export async function buscarDono(api) {
   const donos = await api('/cron_dono?select=uid&limit=2');
   if (!Array.isArray(donos) || donos.length !== 1) {
     throw new Error('cron_dono tem ' + ((donos || []).length) + ' linha(s); esperava exatamente 1');
   }
-  const linhas = await api('/cron_estado?select=chave,valor,del&dominio=eq.evento&dono=eq.' + donos[0].uid);
+  return donos[0].uid;
+}
+export async function buscarEventos(api, uid) {
+  const dono = uid || await buscarDono(api);
+  const linhas = await api('/cron_estado?select=chave,valor,del&dominio=eq.evento&dono=eq.' + dono);
   return eventosDeLinhas(linhas);
+}
+/* As linhas na forma que o aplicativo recebe pelo delta, e na MESMA ordem
+   (servidor_em): o relógio do SYNC decide entre versões, mas a ordem é a dele. */
+export async function buscarLinhas(api, uid, dominios) {
+  return api('/cron_estado?select=dominio,chave,valor,del,em,aparelho,servidor_em' +
+             '&dono=eq.' + uid + '&dominio=in.(' + dominios.join(',') + ')&order=servidor_em.asc');
 }
 
 export function montarAvisoEventos(eventos) {
@@ -145,8 +219,17 @@ export function decidir(dados, estado, hojeISO) {
     throw new Error('decidir: faltam os eventos — use buscarEventos(api) antes.');
   }
   const avisos = [];
+  /* O resumo do dia vem pronto (ele precisa do aplicativo carregado, e isso é
+     do principal) e entra primeiro: é o único que tem hora certa. */
+  if (dados.dia && !dados.dia.ids.some((id) => jaEnviado(estado, id))) avisos.push(dados.dia);
   const av = montarAvisoVagas(vagasDoLote(dados.vagas, dados.lote), dados.lote);
   if (av && !jaEnviado(estado, av.id)) avisos.push({ ...av, ids: [av.id] });
+  if (Array.isArray(dados.chamadas)) {
+    const novas = chamadasParaAvisar(dados.chamadas, dados.triagem, hojeISO)
+      .filter((c) => !jaEnviado(estado, 'chamada:' + c.id));
+    const ac = montarAvisoChamadas(novas, hojeISO);
+    if (ac) avisos.push(ac);
+  }
   const nosPrazos = eventosNaJanela(dados.eventos, hojeISO).filter(
     (e) => !jaEnviado(estado, 'evento:' + e.id + ':' + e.data));
   const ae = montarAvisoEventos(nosPrazos);
@@ -163,11 +246,16 @@ export function decidir(dados, estado, hojeISO) {
    diferença entre "já avisei" e "tentei avisar". */
 export async function enviarAviso(aviso, inscricoes, dep) {
   const carga = JSON.stringify({ titulo: aviso.titulo, corpo: aviso.corpo, tag: aviso.tag, url: aviso.url });
+  /* O resumo do dia vai com urgência alta: o iPhone entrega na hora, e não
+     quando lhe convier poupar bateria. E com TTL curto: o da manhã não serve à
+     tarde. Os outros seguem como sempre. */
+  const opcoes = { TTL: aviso.ttl || TTL };
+  if (aviso.urgencia) opcoes.urgency = aviso.urgencia;
   let entregues = 0, mortos = 0, falhos = 0;
   for (const i of inscricoes) {
     const alvo = { endpoint: i.endpoint, keys: { p256dh: i.p256dh, auth: i.auth } };
     try {
-      await dep.webpush.sendNotification(alvo, carga, { TTL });
+      await dep.webpush.sendNotification(alvo, carga, opcoes);
       entregues++;
       await dep.api('/cron_push_inscricao?id=eq.' + i.id, { method: 'PATCH',
         body: JSON.stringify({ ultimo_envio: new Date().toISOString(), falhas: 0, ultimo_erro: null }) });
@@ -210,11 +298,43 @@ export async function rodar(dados, estado, inscricoes, hojeISO, dep) {
    buscá-los, e esquecer disso quebra em vez de emudecer. */
 export function lerDados(raiz, hojeISO) {
   const j = (p, d) => { try { return JSON.parse(fs.readFileSync(path.join(raiz, p), 'utf8')); } catch (e) { return d; } };
-  const vagasArq = j('dados/vagas.json', {});
-  const itens = Array.isArray(vagasArq) ? vagasArq : (vagasArq.itens || []);
+  const itensDe = (arq) => (Array.isArray(arq) ? arq : (arq.itens || []));
+  const itens = itensDe(j('dados/vagas.json', {}));
+  const chamadas = itensDe(j('dados/chamadas.json', {}));
   let nomes = [];
   try { nomes = fs.readdirSync(path.join(raiz, 'eventos')); } catch (e) { nomes = []; }
-  return { vagas: itens, lote: loteMaisRecente(nomes), hoje: hojeISO };
+  return { vagas: itens, chamadas, lote: loteMaisRecente(nomes), hoje: hojeISO };
+}
+
+/* ---------- o que já foi avisado ----------
+   A TABELA É A FONTE, e o arquivo antigo é só lido. Até aqui cada aviso virava
+   um commit no main com um `git push` sem nova tentativa, fora do grupo de
+   concorrência dos outros jobs: numa segunda em que a coleta gravasse no mesmo
+   minuto, o job caía e o mesmo aviso voltava no dia seguinte. Com quatro
+   resumos por dia, seriam quatro commits por dia. */
+export async function lerEnviados(api, legado) {
+  const enviados = { ...((legado && legado.enviados) || {}) };
+  const linhas = await api('/cron_aviso_enviado?select=id,enviado_em');
+  (linhas || []).forEach((l) => { enviados[l.id] = l.enviado_em; });
+  return { enviados };
+}
+export async function gravarEnviados(api, ids, hojeISO) {
+  if (!ids.length) return;
+  await api('/cron_aviso_enviado', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+    body: JSON.stringify(ids.map((id) => ({ id, enviado_em: hojeISO })))
+  });
+}
+
+/* O instante que o resumo descreve. Com HOJE e MOMENTO (teste à mão), é a hora
+   daquele momento naquele dia; sem eles, é agora. */
+export function instanteDoResumo(agora, hojeISO, momento) {
+  if (!hojeISO) return agora;
+  const [y, m, d] = hojeISO.split('-').map(Number);
+  const mo = DIA.MOMENTOS.find((x) => x.id === momento);
+  const [hh, mm] = (mo ? mo.hora : '12:00').split(':').map(Number);
+  return new Date(y, m - 1, d, hh, mm);
 }
 
 async function principal() {
@@ -222,28 +342,54 @@ async function principal() {
   const RAIZ = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
   const URL_BASE = process.env.SUPABASE_URL, CHAVE = process.env.SUPABASE_SECRET_KEY;
   const SECO = process.env.SECO === '1';
-  const hojeISO = process.env.HOJE || ymd(new Date());
+  const pedido = (process.env.MOMENTO || '').trim();
+  if (pedido && !DIA.MOMENTOS.some((m) => m.id === pedido)) {
+    console.error('MOMENTO desconhecido: ' + pedido + ' (use manha, tarde, noite ou fim)'); process.exit(1);
+  }
+  const agora = instanteDoResumo(new Date(), process.env.HOJE, pedido);
+  const hojeISO = ymd(agora);
+  const momento = pedido || DIA.momentoDaHora(agora);
   if (!URL_BASE || !CHAVE) { console.error('Faltam SUPABASE_URL / SUPABASE_SECRET_KEY.'); process.exit(1); }
   webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:ninguem@exemplo.com',
                           process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
   const cabecalho = { apikey: CHAVE, Authorization: 'Bearer ' + CHAVE, 'Content-Type': 'application/json' };
   const api = async (caminho, opcoes = {}) => {
-    const r = await fetch(URL_BASE + '/rest/v1' + caminho, { ...opcoes, headers: cabecalho });
+    const r = await fetch(URL_BASE + '/rest/v1' + caminho,
+                          { ...opcoes, headers: { ...cabecalho, ...(opcoes.headers || {}) } });
     if (!r.ok) throw new Error(caminho + ' -> ' + r.status + ' ' + (await r.text()).slice(0, 200));
-    return r.status === 204 ? null : r.json();
+    return (r.status === 204 || r.status === 201) ? null : r.json();
   };
-  const ARQ_ESTADO = path.join(RAIZ, 'scripts', 'estado_notificador.json');
-  let estado = { enviados: {} };
-  try { estado = JSON.parse(fs.readFileSync(ARQ_ESTADO, 'utf8')); } catch (e) {}
+  let legado = { enviados: {} };
+  try { legado = JSON.parse(fs.readFileSync(path.join(RAIZ, 'scripts', 'estado_notificador.json'), 'utf8')); } catch (e) {}
+  const estado = await lerEnviados(api, legado);
+
   const dados = lerDados(RAIZ, hojeISO);
-  dados.eventos = await buscarEventos(api);        /* Fase 9G-1: do cron_estado */
+  const uid = await buscarDono(api);
+  dados.eventos = await buscarEventos(api, uid);   /* Fase 9G-1: do cron_estado */
+  const linhas = await buscarLinhas(api, uid, DIA.DOMINIOS_DO_DIA.concat(['triagem']));
+  dados.triagem = triagemDeLinhas(linhas);
+
+  if (momento) {
+    const fonte = DIA.fonteDoApp(RAIZ);
+    const entrada = fs.readFileSync(path.join(RAIZ, 'Cronograma', 'entrada.json'), 'utf8');
+    const doDia = linhas.filter((l) => l.dominio !== 'triagem');
+    const hoje = DIA.resumoDoDia(DIA.carregarApp({ fonte, entrada, linhas: doDia, instante: agora.getTime() }));
+    const amanha = momento === 'fim'
+      ? DIA.resumoDoDia(DIA.carregarApp({ fonte, entrada, linhas: doDia, instante: DIA.instanteDeAmanha(agora) }))
+      : null;
+    dados.dia = DIA.montarAvisoDoDia(momento, hoje, amanha);
+  }
+
   const inscricoes = await api('/cron_push_inscricao?select=id,endpoint,p256dh,auth,falhas');
-  console.log('hoje: ' + hojeISO + ' | lote de vagas: ' + (dados.lote || 'nenhum') +
+  console.log('hoje: ' + hojeISO + ' | momento: ' + (momento || 'nenhum') +
+              ' | lote de vagas: ' + (dados.lote || 'nenhum') +
               ' | aparelhos inscritos: ' + inscricoes.length);
+  if (momento && !dados.dia) console.log('resumo do dia: nada aberto, nada a dizer.');
   const r = await rodar(dados, estado, inscricoes, hojeISO,
                         { webpush, api, log: (m) => console.log(m), seco: SECO });
   if (!r.avisos.length) console.log('nada a avisar.');
-  if (!SECO) fs.writeFileSync(ARQ_ESTADO, JSON.stringify(r.estado, null, 2) + '\n');
+  const novos = Object.keys(r.estado.enviados).filter((id) => !estado.enviados[id]);
+  if (!SECO) await gravarEnviados(api, novos, hojeISO);
   console.log('avisos: ' + r.avisos.length + ' | entregues: ' + r.entregues +
               ' | mortos removidos: ' + r.mortos + ' | falhas: ' + r.falhos);
   if (r.falhos > 0) process.exitCode = 1;

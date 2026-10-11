@@ -39,6 +39,17 @@ try{
   var _btnAvisos = document.getElementById("btn-avisos");
   if(_btnAvisos) _btnAvisos.addEventListener("click", alternarAvisos);
   renderAvisos();
+  curarInscricao().then(function(r){ if(r === "perdida") renderHoje(); });
+  /* O toque num aviso com o app JA ABERTO nao recarrega a pagina: o service
+     worker so traz a janela para a frente e manda o destino por mensagem. */
+  if(navigator.serviceWorker && navigator.serviceWorker.addEventListener){
+    navigator.serviceWorker.addEventListener("message", function(ev){
+      var d = (ev && ev.data) || {};
+      if(d.tipo !== "abrir") return;
+      if(recarregarSeODiaVirou(d.url)) return;
+      abrirPeloEndereco(d.url);
+    });
+  }
 }catch(e){ console.error("avisos:", e); }
 renderBackupAviso();
 /* O GITHUB SAIU DOS DOIS LADOS. A subida legada foi na 9G-2 — o `enviarToques`
@@ -101,6 +112,10 @@ if(LS("cron:metas-seed", null) !== METAS_SEED){
   save("cron:metas-seed", METAS_SEED);
 }
 renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();
+try{
+  abrirPeloEndereco(location.hash);
+  window.addEventListener("hashchange", function(){ abrirPeloEndereco(location.hash); });
+}catch(e){ console.error("endereco:", e); }
 checkUpdate();
 
 /* ---- Entrada: o Cowork escreve, a pagina mescla ----
@@ -133,11 +148,25 @@ try{
      chega a quem recarrega e meia correcao. */
   document.addEventListener("visibilitychange", function(){
     if(document.visibilityState !== "visible") return;
+    /* A virada do dia vem ANTES da trava de 20s: voltar ao app na manha
+       seguinte tem de mostrar a manha seguinte. Ver recarregarSeODiaVirou. */
+    if(recarregarSeODiaVirou()) return;
     var agora = Date.now();
     if(agora - ULTIMA_BUSCA < 20000) return;
     ULTIMA_BUSCA = agora;
     try{ checkUpdate(); }catch(e){}
   });
+  /* A pagina que volta do cache do navegador nao dispara visibilitychange. */
+  window.addEventListener("pageshow", function(){ recarregarSeODiaVirou(); });
+  /* E o app aberto na tela a meia-noite. Nunca no meio de uma digitacao: o
+     render da 9A ja se recusa a destruir o que se esta escrevendo, e a virada
+     do dia nao tem por que ser mais apressada que ele. */
+  setInterval(function(){
+    if(document.visibilityState !== "visible") return;
+    var foco = document.activeElement;
+    if(foco && (/^(INPUT|TEXTAREA|SELECT)$/.test(foco.tagName || "") || foco.isContentEditable)) return;
+    recarregarSeODiaVirou();
+  }, 60000);
 }catch(e){ console.error("busca da entrada falhou:", e); }
 
 /* ---- Fase 9A: a sincronia online, se este aparelho a tiver ligado ----

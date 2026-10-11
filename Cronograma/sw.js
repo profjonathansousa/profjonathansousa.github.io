@@ -38,6 +38,11 @@ self.addEventListener('notificationclick', function (ev) {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (abas) {
       for (var i = 0; i < abas.length; i++) {
         if (abas[i].url.indexOf(self.registration.scope) === 0 && 'focus' in abas[i]) {
+          /* O app ja estava aberto: ele recebe o destino por mensagem, troca de
+             aba e, se o dia virou desde que abriu, recarrega antes. Sem isto o
+             toque so trazia a janela para a frente, na aba e no dia em que
+             ela tinha ficado. */
+          abas[i].postMessage({ tipo: 'abrir', url: destino });
           return abas[i].focus();
         }
       }
