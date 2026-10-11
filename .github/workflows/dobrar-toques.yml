@@ -17,8 +17,14 @@ on:
       - 'Cronograma/toques/**'
   # Rede de seguranca: se uma rodada falhar (rede, corrida com o coletor), a
   # proxima varredura pega os toques que ficaram para tras.
+  #
+  # UMA VEZ POR DIA, e nao mais a cada 15 minutos (2026-10-11). Desde a 9G-2 o
+  # aplicativo nao escreve toque nenhum: o unico escritor que sobrou e o
+  # pipeline (--registrar, derivar_diario.sh), e o push dele ja dispara este
+  # workflow pelo gatilho acima. As 96 rodadas agendadas por dia — das quais o
+  # GitHub executava umas cinco — nao dobravam nada desde 10/09.
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '41 6 * * *'
   workflow_dispatch:
 
 permissions:

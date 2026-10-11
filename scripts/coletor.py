@@ -1484,6 +1484,16 @@ def executar(modo, diagnostico=False):
                 itens = fonte_rss(sessao, cfg, batimento)
                 if not cfg.get("ligada"):
                     batimento["fontes"][nome] = "(desligada) " + batimento["fontes"].get(nome, "")
+                    # O QUE CHEGOU, quando chegou e nao virou item: Atom no lugar de
+                    # RSS, pagina HTML, desafio anti-robo. E o que decide o conserto.
+                    try:
+                        r = sessao.get(cfg["url"], timeout=TIMEOUT)
+                        batimento["avisos"].append("%s: HTTP %s · %s · %d bytes · <item> %d · <entry> %d · %s" % (
+                            nome, r.status_code, r.headers.get("content-type", "?"), len(r.text),
+                            len(re.findall(r"(?i)<item[\s>]", r.text)), len(re.findall(r"(?i)<entry[\s>]", r.text)),
+                            re.sub(r"\s+", " ", r.text[:160])))
+                    except Exception as e:
+                        batimento["avisos"].append("%s: %s" % (nome, e))
                     for it in itens[:3]:
                         batimento["avisos"].append("%s amostra: %s" % (nome, (it.get("titulo") or "")[:90]))
             elif metodo == "manual":
