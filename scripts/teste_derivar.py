@@ -285,13 +285,18 @@ MAPA_ESTEIRA = {"objetivos": {"esteira": {"painel": "pipeline", "subitens": [
 VAZIO = {"motivo": "", "voltar_em": "", "vidaDesde": ""}
 
 
-def producao_e_entrada(tmp):
+def producao_e_entrada(tmp, lugar_do_mapa=os.path.join("08_SISTEMA", "configuracao")):
+    """A pasta de producao com a forma de hoje: o mapa em 08_SISTEMA/configuracao/
+    desde a reorganizacao de 15/09."""
     prod = os.path.join(tmp, "producao")
     os.makedirs(os.path.join(prod, "07_NORMAS_REFERENCIAS"))
     for slug in ("patriotismo-cristao-lutero", "consciencia-lutero-spinoza"):
         open(os.path.join(prod, "07_NORMAS_REFERENCIAS", "corpus_%s.md" % slug), "w").write("x")
-    with open(os.path.join(prod, "mapa_portal.json"), "w", encoding="utf-8") as f:
-        json.dump(MAPA_ESTEIRA, f)
+    if lugar_do_mapa is not None:
+        os.makedirs(os.path.join(prod, lugar_do_mapa), exist_ok=True)
+        with open(os.path.join(prod, lugar_do_mapa, "mapa_portal.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump(MAPA_ESTEIRA, f)
     entrada = os.path.join(tmp, "entrada.json")
     with open(entrada, "w", encoding="utf-8") as f:
         json.dump(ENTRADA_REAL_FORMA, f, ensure_ascii=False)
@@ -390,6 +395,37 @@ with tempfile.TemporaryDirectory() as tmp:
            "27. rodar de novo nao remarca: o banco ja diz st=2", r2.stdout[-300:])
     finally:
         b.parar()
+
+print("\n=== 13. O mapa no lugar novo (08_SISTEMA/configuracao/) ===")
+# Desde a reorganizacao de 15/09 o mapa nao mora mais na raiz, e o script dizia
+# "nada a derivar" com codigo 0 todo dia. As tres situacoes, contra o main().
+for v in ("SUPABASE_URL", "SUPABASE_SECRET_KEY"):
+    os.environ.pop(v, None)
+with tempfile.TemporaryDirectory() as tmp:
+    prod, entrada = producao_e_entrada(tmp)
+    cod, saida = rodar_main(prod, entrada)
+    ok(cod == 0 and "Mapa: 08_SISTEMA/configuracao/mapa_portal.json" in saida
+       and "ARTEFATO PRESENTE (2)" in saida,
+       "28. o mapa e achado em 08_SISTEMA/configuracao/, e a conferencia acontece",
+       saida[:400])
+with tempfile.TemporaryDirectory() as tmp:
+    prod, entrada = producao_e_entrada(tmp, lugar_do_mapa="")
+    cod, saida = rodar_main(prod, entrada)
+    ok(cod == 0 and "Mapa: mapa_portal.json" in saida,
+       "29. uma pasta ainda nao reorganizada, com o mapa na raiz, continua valendo",
+       saida[:300])
+    os.makedirs(os.path.join(prod, "08_SISTEMA", "configuracao"))
+    with open(os.path.join(prod, "08_SISTEMA", "configuracao", "mapa_portal.json"), "w") as f:
+        json.dump({"objetivos": {}}, f)
+    # O do lugar novo e VAZIO de proposito: se ele vencer, nao ha artefato.
+    cod, saida = rodar_main(prod, entrada)
+    ok("08_SISTEMA/configuracao/mapa_portal.json" in saida and "nao declarou" in saida,
+       "    e com os dois presentes, vale o do lugar novo", saida[:300])
+with tempfile.TemporaryDirectory() as tmp:
+    prod, entrada = producao_e_entrada(tmp, lugar_do_mapa=None)
+    cod, saida = rodar_main(prod, entrada)
+    ok(cod == 1 and "Sem mapa_portal.json" in saida and "08_SISTEMA" in saida,
+       "30. pasta presente e mapa ausente e ERRO, dizendo onde procurou", (cod, saida))
 
 print("\n=== 5. Pasta ausente sai limpo, codigo 0 ===")
 import subprocess

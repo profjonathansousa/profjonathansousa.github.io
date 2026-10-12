@@ -24,6 +24,11 @@ não enxerga o iCloud, e por isso a derivação NÃO pode viver no
 dobrar-toques.yml: ausência da pasta não é erro, é o caso normal de lá — o
 script sai limpo, com código 0, sem escrever nada.
 
+O MAPA mora em 08_SISTEMA/configuracao/mapa_portal.json desde a reorganização
+da pasta de produção de 15/09 (antes, na raiz; os dois lugares valem, nessa
+ordem). Pasta presente e mapa ausente é erro, com código 1: foi o silêncio de
+um "nada a derivar" com código 0 que escondeu a mudança de lugar.
+
 O ESTADO É O DO BANCO (correção de 2026-10-12). Até aqui ele decidia pelo
 Cronograma/estado.json, que parou em 10/09, quando a 9G-3 cortou a dobra dos
 aparelhos: dava como "a fazer" etapas que você já tinha fechado no celular.
@@ -82,9 +87,24 @@ VAR_PASTA = "PASTA_PRODUCAO"
 PASTA_PADRAO = os.path.expanduser(
     "~/Library/Mobile Documents/com~apple~CloudDocs/06_PRODUCAO_COWORK")
 
+# ONDE O MAPA MORA, em ordem: o primeiro que existir vale. A reorganizacao da
+# pasta de producao de 15/09 levou o mapa da raiz para 08_SISTEMA/configuracao/,
+# e este script continuou procurando na raiz: dizia "nada a derivar" e saia com
+# codigo 0, todo dia, sem ninguem saber. A raiz fica como segundo lugar, para
+# uma pasta que ainda nao tenha sido reorganizada.
+LUGARES_DO_MAPA = (os.path.join("08_SISTEMA", "configuracao", "mapa_portal.json"),
+                   "mapa_portal.json")
+
 
 def pasta_producao():
     return os.environ.get(VAR_PASTA) or PASTA_PADRAO
+
+
+def achar_mapa(raiz):
+    for rel in LUGARES_DO_MAPA:
+        if os.path.isfile(os.path.join(raiz, rel)):
+            return rel
+    return None
 
 
 def ler_json(caminho, padrao=None):
@@ -339,10 +359,17 @@ def main():
         print("Para apontar outra, defina %s no ambiente." % VAR_PASTA)
         return 0
 
-    mapa = ler_json(os.path.join(raiz, "mapa_portal.json"))
-    if mapa is None:
-        print("Sem mapa_portal.json em %s — nada a derivar." % raiz)
-        return 0
+    # PASTA PRESENTE E MAPA AUSENTE E CONFIGURACAO QUEBRADA, e nao "nada a
+    # derivar". A ausencia da PASTA e o caso normal do Actions; a do mapa, com a
+    # pasta ali, e exatamente o silencio que escondeu a mudanca de 15/09.
+    rel_mapa = achar_mapa(raiz)
+    if rel_mapa is None:
+        print("Sem mapa_portal.json em %s." % raiz)
+        print("Procurado em: %s." % ", ".join(LUGARES_DO_MAPA))
+        print("A pasta de producao existe e o mapa nao: nada foi derivado, e isso")
+        print("e um erro de configuracao, nao 'esta tudo em dia'.")
+        return 1
+    mapa = ler_json(os.path.join(raiz, rel_mapa))
 
     entrada = ler_json(ARQ_ENTRADA)
     if entrada is None:
@@ -350,7 +377,7 @@ def main():
         return 0
     arte = mapa_dos_artefatos(mapa)
     if not arte:
-        print("O mapa_portal.json nao declarou nenhum `artefato`. Nada a derivar.")
+        print("O mapa (%s) nao declarou nenhum `artefato`. Nada a derivar." % rel_mapa)
         return 0
 
     # O ESTADO DE AGORA, do banco. Sem ele, aplicar seria decidir as cegas, e
@@ -366,6 +393,7 @@ def main():
     candidatos, divergentes, pulados, sem_mapa = avaliar(entrada, estado, arte, raiz)
 
     print("Pasta de producao: %s" % raiz)
+    print("Mapa: %s" % rel_mapa)
     print("Subitens com artefato declarado no mapa: %d" % len(arte))
     print("Casaram com o Cronograma: %d" % (len(candidatos) + len(divergentes) + len(pulados)))
     if estado is None:

@@ -2370,6 +2370,13 @@ Só roda no Mac. O Actions não enxerga o iCloud, e por isso a derivação não 
 no `dobrar-toques.yml`: ausência de pasta não é erro, é o caso normal de lá — o
 script sai limpo, código 0, sem escrever nada.
 
+**O mapa mora em `08_SISTEMA/configuracao/mapa_portal.json`** desde a
+reorganização da pasta de produção de 15/09 — antes ficava na raiz, e os dois
+lugares valem, nessa ordem. O script continuou procurando só na raiz e, sem
+achar, dizia *"nada a derivar"* com código 0, todo dia: a derivação estava
+desligada e o relatório parecia calmo. Agora pasta presente e mapa ausente é
+**erro**, com código 1, dizendo onde procurou.
+
 As regras duras, cada uma com um caso concreto por trás:
 
 | regra | por quê |
