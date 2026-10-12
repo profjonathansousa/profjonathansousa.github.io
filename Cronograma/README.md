@@ -2363,12 +2363,17 @@ escreve.
 
 Em vez de esperar que alguém se lembre, o script pergunta ao disco: para cada
 subitem de prova `maquina`, resolve o caminho do artefato e testa a existência.
-Roda uma vez por dia pelo launchd e **resgata retroativamente** tudo o que ficou
-para trás — não é preciso caçar os "não" nos CONCLUIDO.
+Roda uma vez por dia e **resgata retroativamente** tudo o que ficou para trás —
+não é preciso caçar os "não" nos CONCLUIDO.
 
-Só roda no Mac. O Actions não enxerga o iCloud, e por isso a derivação não vive
-no `dobrar-toques.yml`: ausência de pasta não é erro, é o caso normal de lá — o
-script sai limpo, código 0, sem escrever nada.
+**Onde roda.** Até 2026-10-12, só no Mac: o Actions não enxergava o iCloud. A
+pasta de produção agora tem espelho no GitHub (o salvamento das 19h), e a
+derivação roda no `derivar-marcacao.yml`, todo dia às 20h37 de Brasília, com a
+pasta baixada só para leitura (ver *Como ligar a marcação*, abaixo). O launchd
+do Mac (`scripts/derivar_diario.sh` e o `.plist`) continua valendo como
+alternativa. Onde a pasta não existe — a dobra do `dobrar-toques.yml`, por
+exemplo —, a ausência não é erro: o script sai limpo, código 0, sem escrever
+nada.
 
 **O mapa mora em `08_SISTEMA/configuracao/mapa_portal.json`** desde a
 reorganização da pasta de produção de 15/09 — antes ficava na raiz, e os dois
@@ -2385,9 +2390,9 @@ As regras duras, cada uma com um caso concreto por trás:
 | nunca rebaixa | um artefato apagado por engano não pode apagar o histórico — divergência é **reportada**, não corrigida |
 | nunca passa por cima de etapa que não está ativa | `inaplicavel` nem é avaliada (o `a00-3` é o caso: o mapa argumentativo não existe e não deve existir). Adiada, abandonada ou arquivada com o artefato presente é **pulada com aviso**, todo dia, até você decidir no aplicativo |
 | nunca lê nem edita o `estado.json` | o escritor único continua sendo o `dobrar_toques.py`, por toque; e o estado de agora é o do banco (abaixo) |
-| nunca adivinha o `slug` | o mapa usa `[slug]` no caminho e o `entrada.json` identifica por título; casar por heurística erraria em silêncio. Projeto sem `slug` é **pulado com aviso** |
+| nunca adivinha a ligação peça ↔ artigo | ela vem do CONCLUIDO de cada artigo (abaixo) e, na falta, do `slug` do `entrada.json`; existindo os dois, têm de concordar. Casar título com slug por heurística erraria em silêncio. Peça sem ligação, ou com ligação ambígua, é **pulada com aviso** |
 | nunca marca por caminho `confirmar: true` | o próprio mapa diz que o caminho não foi conferido no disco |
-| nunca usa caminho sem `[slug]` numa etapa descrita por padrão | `drafts/draft_1.3apl.md` seria o mesmo arquivo para as treze peças: se existisse, marcaria o `aNN-4` de todas de uma vez. É **pulado com aviso** |
+| nunca usa caminho sem `[slug]` nem `[drafts]` numa etapa descrita por padrão | seria o mesmo arquivo para as treze peças: se existisse, marcaria a etapa de todas de uma vez. É **pulado com aviso** |
 
 O `teste_derivar.py` prova as regras contra o código real, com uma pasta de
 produção falsa e um PostgREST de mentira (`scripts/postgrest_de_mentira.py`).
@@ -2429,28 +2434,82 @@ A correção, e cada ponto tem teste (`teste_registrar.py`, `teste_derivar.py`):
 | o banco primeiro | o arquivo de toque só é gravado depois de a linha entrar. Sem a publicação, nada é gravado e o código de saída é 1 — o `derivar` imprime `FALHOU`, e não `ok` |
 | sem credenciais | o `--aplicar` recusa antes de decidir qualquer coisa; o modo seco ainda confere o mapa e o disco, mas avisa que não leu o estado e não diz o que marcaria |
 
-#### O que ainda falta, e depende de decisão
+#### A ligação peça ↔ artigo, e os rascunhos de cada peça (2026-10-12)
 
-O `slug` precisa nascer no **gerador** do `entrada.json`, não no arquivo: o
-Cowork o reescreve a cada geração, e o que for posto à mão se perde. Enquanto
-não existir, os projetos do pipeline são pulados com aviso — que é o
-comportamento correto, e não uma falha silenciosa.
+O mapa descreve os artefatos com `[slug]` no caminho, e o Cronograma conhece as
+peças por id. Até aqui a ponte era um campo `slug` no `entrada.json` — que o
+Cowork deveria gerar e que nenhuma sessão do Cowork consegue publicar, porque o
+`--publicar-estrutura` exige o Portal e as credenciais. Só o `a00` o tinha.
 
-O portão `aNN-4b` (NotebookLM) da Correção 3 do briefing tem o mesmo problema e
-o mesmo caminho.
+**Decidido pelo autor: a ligação vem do CONCLUIDO.** Na Janela 0 (Passo 5), o
+`CONCLUIDO_FILOSOFICO.md` de cada artigo já registrava a linha `Slug:` e a linha
+`Id no Cronograma: aNN`. O script lê as duas, no CONCLUIDO da bancada e nos das
+caixas (`ligacao` no `mapa_portal.json`). As instruções do FILOSÓFICO (v1.2)
+dizem que essa linha agora tem consequência: só o id, uma vez, conferido ou
+perguntado ao autor, nunca deduzido. O `slug` do `entrada.json`, quando existe,
+tem de concordar. Ambiguidade é **pulada com aviso**, nunca escolhida: o mesmo id
+em dois artigos, o mesmo artigo em duas peças, a caixa cujo slug não é o do
+nome dela.
 
-**Os rascunhos no mapa não têm endereço por peça.** O `aNN-3`, o `aNN-4` e o
-`aNN-5` apontam para `drafts/…` na raiz da pasta de produção, que não existe. Os
-rascunhos moram em `02_PIPELINE/04_FILOSOFICO/drafts/` enquanto o artigo está na
-bancada — sem `slug` no nome, porque cabe um artigo nela — e vão para
-`00_CONCLUIDO/_pausado/FILOSOFICO_[slug]/drafts/` quando ele é pausado. Até o
-mapa dizer como achar o rascunho de **uma** peça, só o `aNN-2` (o corpus) é
-derivável: 39 das 52 etapas `maquina` ficam puladas com aviso, pela regra 7.
+**Os rascunhos ganharam endereço por peça.** O `aNN-3`, o `aNN-4` e o `aNN-5`
+apontavam para `drafts/…` na raiz da pasta de produção, que não existe, e sem
+`[slug]`. Agora apontam para `[drafts]/…`: a pasta de rascunhos **daquela**
+peça. É a bancada (`02_PIPELINE/04_FILOSOFICO/drafts/`) quando o slug da entrada
+e o do CONCLUIDO dela são o do artigo, ou a caixa dele em `_pausado/` ou
+`_arquivo/` (`rascunhos` no mapa). Os nomes dos drafts continuam sem slug, de
+propósito: quem aprendeu a achar o rascunho foi o script, e não o pipeline que
+mudou. Bancada com os dois arquivos discordando não é de ninguém, e os rascunhos
+dela não contam para peça nenhuma.
 
-**Onde rodar.** O agendamento do launchd continua sendo um modelo que ninguém
-instalou. A pasta de produção agora tem espelho no GitHub (o salvamento das
-19h), e o Actions deste repositório já tem as duas credenciais: dá para rodar
-na nuvem, com um token de leitura daquele repositório.
+**O nome final é a prova da etapa.** O script marca pela existência do arquivo
+com o nome final (`draft_1.3apl.md`), e as instruções já mandavam gravar
+`_temp` ou `_parcial` enquanto a etapa não termina. A v1.2 diz que é disso que a
+marcação depende, e estende a regra ao `draft_1.0_mapa.md`.
+
+O relatório começa dizendo cada ligação, de onde ela veio e de quem é a
+bancada — *"Bancada de pipeline: consciencia-lutero-spinoza — ainda sem peça: o
+CONCLUIDO dela não registra o 'Id no Cronograma'"* —, que é o que explica um
+*PULADO* antes que ele apareça.
+
+#### Como ligar a marcação
+
+O `derivar-marcacao.yml` precisa de um segredo que só você pode criar: um token
+de **leitura** do repositório da pasta de produção, que é privado. Sem ele, o
+workflow deixa um aviso (*Marcação desligada*) e não roda.
+
+1. No GitHub: foto do perfil → **Settings** → **Developer settings** →
+   **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+2. Nome: *Portal lê a pasta de produção*. Validade: a mais longa oferecida —
+   anote a data: quando vencer, a rodada falha e o GitHub avisa por e-mail.
+3. **Repository access** → *Only select repositories* →
+   `profjonathansousa/06_PRODUCAO_COWORK`.
+4. **Permissions** → *Repository permissions* → **Contents: Read-only**. Nada
+   mais (o *Metadata: Read-only* vem junto, sozinho).
+5. Gere e copie o token.
+6. Neste repositório: **Settings** → **Secrets and variables** → **Actions** →
+   **New repository secret**. Nome `PRODUCAO_TOKEN`; valor, o token.
+7. Para conferir sem esperar as 20h37: **Actions** → *Marcar os Trilhos pelo
+   artefato* → **Run workflow**.
+
+**O log do Actions é público**, porque este repositório é. Com `LOG_PUBLICO=1`,
+que o workflow liga, todo slug lido da pasta de produção sai como `<slug>`; peça,
+etapa e título continuam, porque já são públicos no `entrada.json`. Rodado no
+Mac, o relatório sai completo.
+
+A marcação é a escrita online, e ela acontece antes de qualquer `git`: o
+workflow só grava depois a trilha (os toques dobrados no `estado.json`). Se essa
+gravação perder a corrida com outro escritor do `main`, as marcações já estão no
+Supabase; o que falta é só o registro em arquivo daquela rodada.
+
+#### O que ainda falta
+
+- **O token** (acima). É o único passo que depende de você.
+- **A Janela 0 do artigo da bancada** registrar `Id no Cronograma: a01` — a
+  consciência é a peça `a01` na semente do Cronograma. Até lá, nada dela é
+  marcado, e o relatório diz por quê.
+- **Depois que a marcação rodar todo dia**, tirar das instruções do FILOSÓFICO os
+  comandos `--registrar` das Janelas 0, 1 e 2 e a conferência dos "não" no Passo
+  final. Até lá, registrar "não" continua sendo o certo.
 
 ### Como ligar, e o que a tela diz
 
@@ -2757,6 +2816,7 @@ outra porta o que a base privada guarda. O log mostra o título (que vem do
 | `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
 | `scripts/teste_publicar_estrutura.py` | Fase 9G-0 B1: a publicação da estrutura e a base |
 | `scripts/derivar_do_pipeline.py` | a marcação pelo artefato: lê a pasta de produção e o `cron_estado`, e emite pelo `--registrar` |
+| `.github/workflows/derivar-marcacao.yml` | roda a marcação todo dia às 20h37, com a pasta de produção baixada só para leitura (`PRODUCAO_TOKEN`) |
 | `scripts/teste_derivar.py`, `scripts/teste_registrar.py` | as regras da derivação e do `--registrar`, contra o código real |
 | `scripts/postgrest_de_mentira.py` | o `cron_estado` e o `cron_registro` em memória, com o gatilho do relógio, para os testes |
 | `scripts/estado_notificador.json` | o que foi avisado até 10/10/2026; congelado, só lido |
