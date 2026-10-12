@@ -2370,25 +2370,57 @@ Só roda no Mac. O Actions não enxerga o iCloud, e por isso a derivação não 
 no `dobrar-toques.yml`: ausência de pasta não é erro, é o caso normal de lá — o
 script sai limpo, código 0, sem escrever nada.
 
-As cinco regras duras, cada uma com um caso concreto por trás:
+As regras duras, cada uma com um caso concreto por trás:
 
 | regra | por quê |
 |---|---|
 | nunca toca em `estrela` | a conclusão é decisão do autor; o relógio do Cowork a venceria e apagaria |
 | nunca rebaixa | um artefato apagado por engano não pode apagar o histórico — divergência é **reportada**, não corrigida |
-| nunca sobrescreve `inaplicavel` | o `a00-3` é o caso: o mapa argumentativo não existe e não deve existir |
-| nunca edita o `estado.json` | o escritor único continua sendo o `dobrar_toques.py`; o script fala com ele por toque |
+| nunca passa por cima de etapa que não está ativa | `inaplicavel` nem é avaliada (o `a00-3` é o caso: o mapa argumentativo não existe e não deve existir). Adiada, abandonada ou arquivada com o artefato presente é **pulada com aviso**, todo dia, até você decidir no aplicativo |
+| nunca lê nem edita o `estado.json` | o escritor único continua sendo o `dobrar_toques.py`, por toque; e o estado de agora é o do banco (abaixo) |
 | nunca adivinha o `slug` | o mapa usa `[slug]` no caminho e o `entrada.json` identifica por título; casar por heurística erraria em silêncio. Projeto sem `slug` é **pulado com aviso** |
+| nunca marca por caminho `confirmar: true` | o próprio mapa diz que o caminho não foi conferido no disco |
+| nunca usa caminho sem `[slug]` numa etapa descrita por padrão | `drafts/draft_1.3apl.md` seria o mesmo arquivo para as treze peças: se existisse, marcaria o `aNN-4` de todas de uma vez. É **pulado com aviso** |
 
-O `teste_derivar.py` prova as cinco contra o código real, com uma pasta de
-produção falsa. Quatro mutações o derrubam — apagar a regra da `estrela`, a do
-`inaplicavel`, a do não-rebaixar e a do `slug`.
+O `teste_derivar.py` prova as regras contra o código real, com uma pasta de
+produção falsa e um PostgREST de mentira (`scripts/postgrest_de_mentira.py`).
+Quatro mutações o derrubavam desde o início — apagar a regra da `estrela`, a do
+`inaplicavel`, a do não-rebaixar e a do `slug` —, e agora também a da etapa não
+ativa e a do caminho sem `[slug]`.
 
 **Uma lição de teste registrada aqui porque voltou a acontecer:** a primeira
 versão da asserção do `inaplicavel` passava sem provar nada — o `a00-3` estava
 sendo excluído por falta de artefato, não pela regra, e a mutação que apagava a
 regra passou incólume. O fixture precisou ganhar o arquivo para que a regra
 fosse a **única** coisa que excluía o item.
+
+#### O estado de agora é o do banco (2026-10-12)
+
+Auditado em 11/10/2026: os dois scripts **decidiam pelo `estado.json`**, e ele
+parou em 10/09, quando a 9G-3 cortou a dobra dos aparelhos. Naquele dia ele dava
+o `a00-2` como "em andamento" e o `a01-2` como "a fazer", e nem conhecia o
+`a00-4`, o `a00-4b`, o `a00-5` e o `a00-6` — todos concluídos no `cron_estado`.
+Ligada assim, a derivação faria três coisas erradas:
+
+- **remarcaria** o que você já tinha fechado, com um `de` falso no registro;
+- **apagaria decisões suas.** O `publicar_online` montava o valor do zero — vida
+  `ativo`, motivo e datas vazios —, e o banco troca o valor **inteiro**: marcar
+  uma etapa adiada desfazia o adiamento e apagava o motivo;
+- **diria "ok" sem ter marcado.** Com a rede fora, o `--registrar` gravava o
+  toque, avisava e saía com código 0 — e o arquivo não leva nada a aparelho
+  nenhum desde a 9G-3.
+
+A correção, e cada ponto tem teste (`teste_registrar.py`, `teste_derivar.py`):
+
+| o quê | como |
+|---|---|
+| o estado de agora | o `--registrar` lê a linha do item, e o `derivar` lê o painel inteiro numa consulta, no `cron_estado`. O `estado.json` deixa de ser lido para decidir |
+| só o `st` muda | o valor publicado é o de agora com o `st` novo: vida, motivo, data de volta e `vidaDesde` ficam. A vida só muda com `--vida`, dito de propósito — o padrão era `ativo`, e reativava o que você tinha adiado |
+| só etapa ativa | adiada, abandonada, arquivada ou "não se aplica" é **recusada** pelo `--registrar` e **pulada com aviso** pelo `derivar` (decidido em 2026-10-12). O `--forcar` passa, e mesmo assim nada se apaga |
+| escrita condicional | o `PATCH` filtra pelo `em` lido: se você mexeu no item entre a leitura e a escrita, nada é gravado e a sua decisão fica |
+| a resposta é conferida | `return=representation`: o descarte silencioso do gatilho do relógio não passa mais por sucesso |
+| o banco primeiro | o arquivo de toque só é gravado depois de a linha entrar. Sem a publicação, nada é gravado e o código de saída é 1 — o `derivar` imprime `FALHOU`, e não `ok` |
+| sem credenciais | o `--aplicar` recusa antes de decidir qualquer coisa; o modo seco ainda confere o mapa e o disco, mas avisa que não leu o estado e não diz o que marcaria |
 
 #### O que ainda falta, e depende de decisão
 
@@ -2399,6 +2431,19 @@ comportamento correto, e não uma falha silenciosa.
 
 O portão `aNN-4b` (NotebookLM) da Correção 3 do briefing tem o mesmo problema e
 o mesmo caminho.
+
+**Os rascunhos no mapa não têm endereço por peça.** O `aNN-3`, o `aNN-4` e o
+`aNN-5` apontam para `drafts/…` na raiz da pasta de produção, que não existe. Os
+rascunhos moram em `02_PIPELINE/04_FILOSOFICO/drafts/` enquanto o artigo está na
+bancada — sem `slug` no nome, porque cabe um artigo nela — e vão para
+`00_CONCLUIDO/_pausado/FILOSOFICO_[slug]/drafts/` quando ele é pausado. Até o
+mapa dizer como achar o rascunho de **uma** peça, só o `aNN-2` (o corpus) é
+derivável: 39 das 52 etapas `maquina` ficam puladas com aviso, pela regra 7.
+
+**Onde rodar.** O agendamento do launchd continua sendo um modelo que ninguém
+instalou. A pasta de produção agora tem espelho no GitHub (o salvamento das
+19h), e o Actions deste repositório já tem as duas credenciais: dá para rodar
+na nuvem, com um token de leitura daquele repositório.
 
 ### Como ligar, e o que a tela diz
 
@@ -2704,6 +2749,9 @@ outra porta o que a base privada guarda. O log mostra o título (que vem do
 | `sql/cron_estado.sql` | Fase 9A: estado, registro e base da estrutura, com RLS |
 | `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
 | `scripts/teste_publicar_estrutura.py` | Fase 9G-0 B1: a publicação da estrutura e a base |
+| `scripts/derivar_do_pipeline.py` | a marcação pelo artefato: lê a pasta de produção e o `cron_estado`, e emite pelo `--registrar` |
+| `scripts/teste_derivar.py`, `scripts/teste_registrar.py` | as regras da derivação e do `--registrar`, contra o código real |
+| `scripts/postgrest_de_mentira.py` | o `cron_estado` e o `cron_registro` em memória, com o gatilho do relógio, para os testes |
 | `scripts/estado_notificador.json` | o que foi avisado até 10/10/2026; congelado, só lido |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
@@ -2746,6 +2794,8 @@ python3 scripts/teste_sincronia.py   # round-trip real página → dobra → pá
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
 node     scripts/prova_dupla_escrita.js  # Fase 9F/9G-2: a fronteira entre caminhos
 python3  scripts/teste_publicar_estrutura.py  # Fase 9G-0 B1: entrada.json + a base
+python3  scripts/teste_registrar.py  # o --registrar decide pelo banco e não apaga decisão
+python3  scripts/teste_derivar.py    # a marcação pelo artefato, de ponta a ponta
 ```
 
 **O relógio do `teste_hoje.js` é fixo numa quarta-feira** (2026-10-07). O Hoje

@@ -466,20 +466,31 @@ titulo("=== 8. O pipeline escreve nos dois caminhos, e não vira espelho ===");
   ok(/aparelho": "cowork"/.test(corpo),
      "assinando como `cowork` também online — um aparelho, não uma autoridade");
 
-  /* O toque é o artefato durável: publicar vem DEPOIS de gravar, e falhar em
-     publicar não pode custar o toque. */
-  /* A ordem que importa é a da rodada de verdade. O `--seco` também chama o
-     publicador, antes — mas para dizer que não publicou nada, e ele retorna
-     sem escrever arquivo nenhum. Medir a primeira ocorrência mediria isso. */
+  /* A ORDEM SE INVERTEU EM 2026-10-12: o banco primeiro, o arquivo depois.
+     Até a 9G-3 o toque era o artefato durável e publicar era melhor esforço.
+     Desde então o arquivo não leva nada a aparelho nenhum: gravado sem a
+     publicação, ele só afirmaria uma marcação que ninguém vê — e o
+     derivar_do_pipeline.py contava a rodada como "ok". O `--seco` sai antes
+     dos dois, e não chama o publicador. */
   const reg = pipe.split("def registrar(")[1];
-  const daRodadaReal = reg.split("os.makedirs(DIR_TOQUES")[1] || "";
-  ok(daRodadaReal.indexOf("json.dump") >= 0 &&
-     daRodadaReal.indexOf("json.dump") < daRodadaReal.indexOf("publicar_online"),
-     "na rodada de verdade, grava o arquivo de toque ANTES de tentar publicar");
-  ok(/if seco:[\s\S]{0,220}return 0/.test(reg),
+  const iPublica = reg.indexOf("publicar_online(");
+  const iArquivo = reg.indexOf("os.makedirs(DIR_TOQUES");
+  ok(iPublica > 0 && iArquivo > iPublica,
+     "na rodada de verdade, publica ANTES de gravar o arquivo de toque",
+     {publica: iPublica, arquivo: iArquivo});
+  ok(/if seco:[\s\S]{0,220}return 0/.test(reg) &&
+     reg.search(/if seco:[\s\S]{0,220}return 0/) < iPublica,
      "e o --seco sai antes de escrever qualquer coisa");
-  ok(/except Exception as e:[\s\S]{0,200}nao publicado online/.test(reg),
-     "e uma rede fora não custa o toque: diz o que não fez e segue");
+  const entreOsDois = reg.slice(iPublica, iArquivo);
+  ok(/except Exception as e:[\s\S]{0,300}return 1/.test(entreOsDois) &&
+     /if not gravado:[\s\S]{0,300}return 1/.test(entreOsDois),
+     "e se a publicação falha ou não pega, sai com erro sem gravar o toque");
+  /* E o que vai para o banco é o valor de AGORA com o `st` novo — o valor
+     montado do zero (vida "ativo", motivo e datas vazios) apagava decisões. */
+  ok(!/"motivo": "", "voltar_em": "", "vidaDesde": ""/.test(corpo),
+     "o publicador não monta o valor do item do zero");
+  ok(/em=eq\./.test(corpo) && /return=representation/.test(corpo),
+     "e só grava se a linha ainda estiver como foi lida, conferindo a resposta");
 
   /* Nenhum segredo no repositório: só leitura do ambiente. */
   ok(/os\.environ\.get\(API_URL\)/.test(pipe) && /os\.environ\.get\(API_CHAVE\)/.test(pipe),
