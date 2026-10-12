@@ -54,18 +54,30 @@ AS REGRAS DURAS, e cada uma existe por um caso concreto:
      2026-10-12).
   4. NUNCA lê nem edita o estado.json. O escritor único continua sendo o
      dobrar_toques.py, e este script fala com ele por toque, como um aparelho.
-  5. NUNCA adivinha o slug. O mapa descreve os artefatos com [slug] no caminho e
-     o entrada.json identifica as peças por título; casar os dois por heurística
-     erraria em silêncio. Projeto sem `slug` é PULADO com aviso.
+  5. NUNCA adivinha a ligação peça <-> artigo. Ela vem do CONCLUIDO de cada
+     artigo — as linhas "Slug:" e "Id no Cronograma:", escritas na Janela 0 — e,
+     na falta, do campo slug do entrada.json; existindo os dois, têm de
+     concordar. Casar título com slug por heurística erraria em silêncio. Peça
+     sem ligação, ou com ligação ambígua, é PULADA com aviso.
   6. NUNCA marca por caminho que o próprio mapa diz não conferido
      (`confirmar: true`). É PULADO com a nota do mapa.
-  7. NUNCA usa um caminho sem [slug] para uma etapa que o mapa descreve por
-     padrão (aNN-4). Ele seria o mesmo arquivo para as treze peças, e, se
-     existisse, marcaria a etapa de todas de uma vez. É PULADO com aviso.
+  7. NUNCA usa um caminho sem [slug] nem [drafts] para uma etapa que o mapa
+     descreve por padrão (aNN-4). Ele seria o mesmo arquivo para as treze
+     peças, e, se existisse, marcaria a etapa de todas de uma vez. É PULADO.
+
+A LIGAÇÃO E OS RASCUNHOS (2026-10-12). Os rascunhos não levam slug no nome,
+de propósito: a bancada guarda um artigo por vez. Por isso o mapa diz [drafts]
+— a pasta de rascunhos DAQUELA peça: a bancada, quando o slug da entrada e o do
+CONCLUIDO dela são o do artigo, ou a caixa dele em _pausado/ ou _arquivo/. A
+bancada cujos dois arquivos discordam não é de ninguém, e o rascunho dela não
+conta para peça nenhuma. Onde ler a ligação e onde moram os rascunhos é dado do
+mapa (`ligacao` e `rascunhos`), e não deste código: a próxima reorganização da
+pasta muda o mapa, e não o script.
 
 O MODO PADRÃO É SECO, e imprime sempre a lista do que faria.
 """
 
+import glob
 import json
 import os
 import re
@@ -173,21 +185,226 @@ def mapa_dos_artefatos(mapa):
     return fora
 
 
-def subitens_do_cronograma(entrada, estado):
-    """Devolve a lista de (pid, proj, projT, slug, sub) que o Cronograma conhece."""
+def subitens_do_cronograma(entrada, estado, slugs=None):
+    """Devolve a lista de (pid, proj, projT, slug, sub) que o Cronograma conhece.
+
+    `slugs` e a ligacao ja resolvida, {(pid, proj_id): slug}. Sem ela vale o
+    campo `slug` do entrada.json, que foi a unica fonte ate 2026-10-12."""
     fora = []
     for pid, projs in (entrada.get("paineis") or {}).items():
         for pr in (projs or []):
+            slug = (slugs.get((pid, pr.get("id"))) if slugs is not None
+                    else pr.get("slug"))
             for sub in (pr.get("subs") or []):
                 fora.append({
                     "pid": pid,
                     "proj_id": pr.get("id"),
                     "projT": pr.get("t") or "",
-                    "slug": pr.get("slug"),
+                    "slug": slug,
                     "sub": sub,
                     "chave": "%s/%s/%s" % (pid, pr.get("id"), sub.get("id")),
                 })
     return fora
+
+
+# =============== A LIGACAO PECA <-> ARTIGO, e os rascunhos (2026-10-12) ===============
+# O mapa descreve os artefatos com [slug] e [drafts] no caminho, e o Cronograma
+# conhece as pecas por id (a00, a01...). Quem sabe que a peca a01 e o artigo
+# `consciencia-lutero-spinoza` e o pipeline: na Janela 0, o CONCLUIDO do artigo
+# registra a linha "Slug:" e a linha "Id no Cronograma: aNN". Ate aqui a
+# ligacao era um campo `slug` no Cronograma/entrada.json, que nenhuma sessao do
+# Cowork consegue publicar — e por isso so o a00 o tinha. Agora ela e lida de
+# onde o pipeline ja a escreve (`ligacao` no mapa), e o campo do entrada.json,
+# quando existir, tem de concordar.
+#
+# AMBIGUIDADE NAO E ESCOLHA. O mesmo id com dois slugs, o mesmo artigo em duas
+# pecas, uma caixa cujo slug nao e o do nome dela: a peca e PULADA, com o
+# motivo. E a regra 5 — nada aqui adivinha.
+#
+# Casa "Id no Cronograma: a01", "- **Id no Cronograma:** a01" e "Id no
+# Cronograma: **a00** — titulo". O placeholder ("[aNN]", "[registrar na
+# Janela 0]") nao casa: artigo sem id ainda nao e peca nenhuma.
+RE_ID_NO_CRONOGRAMA = re.compile(r"Id no Cronograma\W*([a-z]+\d{2})\b", re.I)
+# "- Slug: x" no CONCLUIDO; "- **Slug do artigo:** x" no entrada_FILOSOFICO.md.
+RE_SLUG = re.compile(r"^[ \t>*-]*Slug(?: do artigo)?\s*\**\s*:\s*\**\s*`?"
+                     r"([a-z0-9]+(?:-[a-z0-9]+)*)`?\s*$", re.I | re.M)
+
+SEM_LIGACAO = ("peca sem ligacao a um artigo: nenhum CONCLUIDO registra o 'Id no "
+               "Cronograma' dela (Janela 0, Passo 5), e o entrada.json nao tem slug")
+
+# Todo slug que a leitura da pasta de producao encontrou. E o que o LOG_PUBLICO
+# esconde (ver _Redigido, abaixo do main).
+VISTOS = set()
+
+
+def ler_texto(caminho):
+    try:
+        with open(caminho, encoding="utf-8", errors="replace") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def slugs_do_texto(texto):
+    return sorted(set(m.lower() for m in RE_SLUG.findall(texto or "")))
+
+
+def objetivo_do_painel(mapa, pid):
+    """O objetivo do mapa que descreve o painel `pid` — a esteira e o `pipeline`."""
+    for obj in ((mapa or {}).get("objetivos") or {}).values():
+        if isinstance(obj, dict) and obj.get("painel") == pid:
+            return obj
+    return None
+
+
+def _slug_da_caixa(padrao, rel):
+    """O pedaco do caminho que o * do padrao casou: em
+    `_pausado/FILOSOFICO_*/CONCLUIDO_FILOSOFICO.md`, o slug que a caixa diz ser."""
+    for p, r in zip(padrao.split("/"), rel.replace(os.sep, "/").split("/")):
+        if "*" in p:
+            antes, _, depois = p.partition("*")
+            return r[len(antes):len(r) - len(depois)]
+    return None
+
+
+def ler_ligacoes(raiz, registros):
+    """Le, em cada CONCLUIDO, a linha "Slug:" e a linha "Id no Cronograma:".
+
+    Devolve ({aNN: [(slug, caminho)]}, avisos). Registro sem id e artigo que
+    ainda nao passou pela Janela 0: isso nao e aviso, e o estado normal dele."""
+    por_id, avisos = {}, []
+    for padrao in registros or []:
+        for caminho in sorted(glob.glob(os.path.join(raiz, padrao))):
+            rel = os.path.relpath(caminho, raiz)
+            texto = ler_texto(caminho)
+            slugs = slugs_do_texto(texto)
+            da_caixa = _slug_da_caixa(padrao, rel)
+            VISTOS.update(slugs + ([da_caixa] if da_caixa else []))
+            ids = sorted(set(m.lower() for m in RE_ID_NO_CRONOGRAMA.findall(texto or "")))
+            if not ids:
+                continue
+            if len(ids) > 1:
+                avisos.append("%s registra mais de um Id no Cronograma (%s): ignorado"
+                              % (rel, ", ".join(ids)))
+                continue
+            if len(slugs) != 1:
+                avisos.append("%s registra o Id %s, mas %s: ignorado" % (
+                    rel, ids[0], "nenhum Slug" if not slugs
+                    else "mais de um Slug (%s)" % ", ".join(slugs)))
+                continue
+            if da_caixa is not None and da_caixa != slugs[0]:
+                avisos.append("%s diz Slug %s, mas a caixa e de %s: ignorado"
+                              % (rel, slugs[0], da_caixa))
+                continue
+            por_id.setdefault(ids[0], []).append((slugs[0], rel))
+    return por_id, avisos
+
+
+def preparar_rascunhos(cfg, raiz, avisos):
+    """Onde moram os rascunhos das pecas de um painel, e de quem e a bancada.
+    None quando o mapa nao declara `rascunhos` para o painel.
+
+    A BANCADA SO E DE ALGUEM QUANDO OS DOIS ARQUIVOS CONCORDAM. E o Passo 0 de
+    toda janela (instrucoes_FILOSOFICO.md, "A bancada"): o slug da entrada e o
+    do CONCLUIDO, iguais. Discordando, os rascunhos dela nao contam para peca
+    nenhuma — atribui-los a um dos dois seria escolher. Faltando um dos dois, a
+    bancada esta vazia ou o artigo acabou de abrir, e ainda nao e de ninguem."""
+    if not isinstance(cfg, dict):
+        return None
+    vistos = []
+    for rel in cfg.get("slug_da_bancada_em") or []:
+        texto = ler_texto(os.path.join(raiz, rel))
+        if texto is None:
+            vistos = []
+            break
+        s = slugs_do_texto(texto)
+        VISTOS.update(s)
+        vistos.append((rel, s[0] if len(s) == 1 else None))
+    dono = None
+    if vistos:
+        unicos = set(s for _, s in vistos)
+        if len(unicos) == 1 and None not in unicos:
+            dono = unicos.pop()
+        else:
+            avisos.append("a bancada nao e de ninguem: %s. Os rascunhos dela nao "
+                          "contam para peca nenhuma." % ", ".join(
+                              "%s diz %s" % (r, s or "?") for r, s in vistos))
+    return {"bancada": cfg.get("bancada"), "dono_da_bancada": dono,
+            "caixas": list(cfg.get("caixas") or [])}
+
+
+def preparar_ligacao(mapa, entrada, raiz):
+    """Resolve o slug do artigo de cada peca do entrada.json e onde moram os
+    rascunhos de cada painel. Devolve (contexto, avisos), e o contexto e o que o
+    avaliar() recebe."""
+    slugs, origem, motivos, rascunhos, avisos = {}, {}, {}, {}, []
+    for pid, projs in (entrada.get("paineis") or {}).items():
+        obj = objetivo_do_painel(mapa, pid) or {}
+        lig = obj.get("ligacao") if isinstance(obj.get("ligacao"), dict) else {}
+        por_id, av = ler_ligacoes(raiz, lig.get("registros"))
+        avisos.extend(av)
+        pecas_do_artigo = {}
+        for aid, lista in por_id.items():
+            for slug, _ in lista:
+                pecas_do_artigo.setdefault(slug, set()).add(aid)
+        for pr in (projs or []):
+            pr_id = str(pr.get("id") or "")
+            k = (pid, pr.get("id"))
+            achados = por_id.get(pr_id.lower(), [])
+            do_concluido = sorted(set(s for s, _ in achados))
+            da_entrada = pr.get("slug")
+            if da_entrada:
+                VISTOS.add(da_entrada)
+            if len(do_concluido) > 1:
+                motivos[k] = ("ligacao ambigua: o CONCLUIDO liga %s a mais de um "
+                              "artigo (%s)" % (pr_id, ", ".join(do_concluido)))
+            elif do_concluido:
+                s = do_concluido[0]
+                outras = sorted(pecas_do_artigo.get(s, set()) - {pr_id.lower()})
+                if outras:
+                    motivos[k] = ("ligacao ambigua: o artigo %s esta ligado tambem a %s"
+                                  % (s, ", ".join(outras)))
+                elif da_entrada and da_entrada != s:
+                    motivos[k] = ("ligacao em conflito: o CONCLUIDO diz %s e o "
+                                  "entrada.json diz %s" % (s, da_entrada))
+                else:
+                    slugs[k], origem[k] = s, achados[0][1]
+            elif da_entrada:
+                slugs[k], origem[k] = da_entrada, "Cronograma/entrada.json"
+        rascunhos[pid] = preparar_rascunhos(obj.get("rascunhos"), raiz, avisos)
+    return ({"slugs": slugs, "origem": origem, "motivos": motivos,
+             "rascunhos": rascunhos}, avisos)
+
+
+def caminhos_da_peca(artefato, slug, rasc):
+    """Onde o artefato DESTA peca pode estar, relativo a pasta de producao. O
+    [drafts] e a bancada, se ela for do artigo, e as caixas dele."""
+    if "[drafts]" not in artefato:
+        return [artefato.replace("[slug]", slug)]
+    pastas = []
+    if rasc.get("bancada") and rasc.get("dono_da_bancada") == slug:
+        pastas.append(rasc["bancada"])
+    pastas.extend(c.replace("[slug]", slug) for c in rasc.get("caixas") or [])
+    return [artefato.replace("[drafts]", p).replace("[slug]", slug) for p in pastas]
+
+
+def imprimir_ligacao(contexto, avisos):
+    """Diz, antes de tudo, quais pecas estao ligadas a qual artigo e de quem e a
+    bancada: e o que explica um "PULADO" la embaixo antes que ele apareca."""
+    slugs, origem = contexto.get("slugs") or {}, contexto.get("origem") or {}
+    if slugs:
+        print("Ligacoes peca <-> artigo:")
+        for (pid, proj), slug in sorted(slugs.items()):
+            print("  %s  %-34s (%s)" % (proj, slug, origem.get((pid, proj), "?")))
+    for pid, rasc in sorted((contexto.get("rascunhos") or {}).items()):
+        dono = (rasc or {}).get("dono_da_bancada")
+        if not dono:
+            continue
+        pecas = sorted(proj for (p, proj), s in slugs.items() if p == pid and s == dono)
+        print("Bancada de %s: %s%s" % (pid, dono, (", peca %s" % pecas[0]) if pecas else
+              " — ainda sem peca: o CONCLUIDO dela nao registra o 'Id no Cronograma'"))
+    for a in avisos:
+        print("AVISO  " + a)
 
 
 def ler_estado_online(entrada):
@@ -219,17 +436,24 @@ ROTULO_DA_VIDA = {"adiado": "adiada", "abandonado": "abandonada",
                   "arquivado": "arquivada"}
 
 
-def avaliar(entrada, estado, arte, raiz_producao):
+def avaliar(entrada, estado, arte, raiz_producao, contexto=None):
     """Sem efeito colateral: classifica cada subitem e devolve as listas.
 
     `estado` e {"itens": {chave: valor}} LIDO DO cron_estado, ou None quando
     nao foi possivel le-lo. Sem estado, o `de` dos candidatos e None: o
     artefato existe, mas ninguem sabe se a etapa ja esta marcada — e quem chama
-    tem de dizer isso, em vez de chamar o candidato de "a marcar"."""
+    tem de dizer isso, em vez de chamar o candidato de "a marcar".
+
+    `contexto` e o que o preparar_ligacao() resolveu: o slug de cada peca e onde
+    moram os rascunhos. Sem ele, o slug e o do entrada.json e [drafts] nao se
+    resolve."""
     candidatos, divergentes, pulados, sem_mapa = [], [], [], []
     itens = None if estado is None else (estado.get("itens") or {})
+    contexto = contexto or {}
+    motivos = contexto.get("motivos") or {}
+    rascunhos = contexto.get("rascunhos") or {}
 
-    for it in subitens_do_cronograma(entrada, estado):
+    for it in subitens_do_cronograma(entrada, estado, contexto.get("slugs")):
         sub = it["sub"]
         sid = str(sub.get("id") or "")
         # A PONTE. O mapa fala por PADRAO (aNN-2), o Cronograma por INSTANCIA
@@ -281,25 +505,39 @@ def avaliar(entrada, estado, arte, raiz_producao):
             continue                                   # regra 3
 
         caminho_rel = info["artefato"]
-        if "[slug]" in caminho_rel:
+        if "[slug]" in caminho_rel or "[drafts]" in caminho_rel:
             if not it["slug"]:
-                pulados.append((it["chave"], "projeto sem `slug` no entrada.json"))
+                pulados.append((it["chave"],
+                                motivos.get((it["pid"], it["proj_id"])) or SEM_LIGACAO))
                 continue                               # regra 5
-            caminho_rel = caminho_rel.replace("[slug]", it["slug"])
+            rasc = rascunhos.get(it["pid"])
+            if "[drafts]" in caminho_rel and not rasc:
+                pulados.append((it["chave"], "o mapa usa [drafts], mas nao declara "
+                                "`rascunhos` para o painel %s" % it["pid"]))
+                continue
+            caminhos = caminhos_da_peca(caminho_rel, it["slug"], rasc)
+            if not caminhos:
+                pulados.append((it["chave"], "o mapa usa [drafts], mas `rascunhos` "
+                                "nao declara pasta nenhuma"))
+                continue
         elif padrao:
             # REGRA 7 — UM CAMINHO PARA TODAS AS PECAS NAO PROVA NENHUMA. O mapa
-            # descreve a etapa uma vez so (aNN-4), e sem [slug] o caminho e o
-            # mesmo para as treze pecas. Hoje ele aponta para um lugar que nao
-            # existe e o defeito dorme; no dia em que alguem o "consertar"
-            # apontando para os rascunhos da bancada, o mesmo arquivo marcaria
-            # a etapa de todas as pecas de uma vez.
+            # descreve a etapa uma vez so (aNN-4), e sem [slug] nem [drafts] o
+            # caminho e o mesmo para as treze pecas. Ate 2026-10-12 os rascunhos
+            # da esteira eram assim, e o defeito dormia porque o lugar nao
+            # existia; no dia em que alguem o "consertasse" apontando para a
+            # bancada, o mesmo arquivo marcaria a etapa de todas as pecas.
             pulados.append((it["chave"],
                             "o mapa descreve %s por padrao, e o caminho nao tem "
-                            "[slug]: %s seria o mesmo arquivo para todas as pecas"
-                            % (padrao, caminho_rel)))
+                            "[slug] nem [drafts]: %s seria o mesmo arquivo para "
+                            "todas as pecas" % (padrao, caminho_rel)))
             continue
+        else:
+            caminhos = [caminho_rel]
 
-        existe = os.path.exists(os.path.join(raiz_producao, caminho_rel))
+        achados = [c for c in caminhos if os.path.exists(os.path.join(raiz_producao, c))]
+        existe = bool(achados)
+        caminho_rel = achados[0] if achados else " ou ".join(caminhos)
         pendente = st is None or st < 2
 
         # A OUTRA METADE DA REGRA 3 (decidida pelo autor em 2026-10-12): etapa
@@ -336,8 +574,24 @@ def imprimir_pulados(pulados):
     for motivo in ordem:
         chaves = por_motivo[motivo]
         print("PULADO (%d)  %s" % (len(chaves), motivo))
-        print(textwrap.fill("  ".join(chaves), width=78,
+        print(textwrap.fill(_resumo_das_chaves(chaves), width=78,
                             initial_indent="    ", subsequent_indent="    "))
+
+
+def _resumo_das_chaves(chaves):
+    """Ate seis subitens, por extenso. Mais que isso, por peca: o mesmo motivo
+    em 48 etapas de 12 pecas se le como 12 pecas, e nao como 48 linhas."""
+    if len(chaves) <= 6:
+        return "  ".join(chaves)
+    ordem, conta = [], {}
+    for c in chaves:
+        peca = c.rsplit("/", 1)[0]
+        if peca not in conta:
+            conta[peca] = 0
+            ordem.append(peca)
+        conta[peca] += 1
+    return "  ".join("%s (%d %s)" % (p, conta[p], "etapa" if conta[p] == 1 else "etapas")
+                     for p in ordem)
 
 
 def emitir(chave, aplicar):
@@ -350,6 +604,38 @@ def emitir(chave, aplicar):
 
 
 def main():
+    saida = sys.stdout
+    try:
+        return _main()
+    finally:
+        sys.stdout = saida
+
+
+class _Redigido(object):
+    """O LOG DO ACTIONS E PUBLICO, porque este repositorio e (a mesma razao do
+    avisos/enviar.mjs, que tira do log o resumo do dia). A pasta de producao e
+    privada: com LOG_PUBLICO=1, todo slug que a leitura dela encontrou sai como
+    <slug> — nas ligacoes, nos caminhos e nos avisos. Peca, etapa e titulo ficam:
+    ja sao publicos no entrada.json."""
+
+    def __init__(self, destino, segredos):
+        self.destino = destino
+        self.segredos = sorted((s for s in segredos if s and len(s) >= 4),
+                               key=len, reverse=True)
+
+    def write(self, texto):
+        for s in self.segredos:
+            texto = texto.replace(s, "<slug>")
+        return self.destino.write(texto)
+
+    def flush(self):
+        return self.destino.flush()
+
+
+VAR_LOG_PUBLICO = "LOG_PUBLICO"
+
+
+def _main():
     aplicar = "--aplicar" in sys.argv
     raiz = pasta_producao()
 
@@ -390,10 +676,15 @@ def main():
         print("Para so conferir o mapa e o disco, rode sem --aplicar.")
         return 1
 
-    candidatos, divergentes, pulados, sem_mapa = avaliar(entrada, estado, arte, raiz)
+    contexto, avisos_da_ligacao = preparar_ligacao(mapa, entrada, raiz)
+    candidatos, divergentes, pulados, sem_mapa = avaliar(entrada, estado, arte, raiz,
+                                                         contexto)
+    if os.environ.get(VAR_LOG_PUBLICO):
+        sys.stdout = _Redigido(sys.stdout, VISTOS)
 
     print("Pasta de producao: %s" % raiz)
     print("Mapa: %s" % rel_mapa)
+    imprimir_ligacao(contexto, avisos_da_ligacao)
     print("Subitens com artefato declarado no mapa: %d" % len(arte))
     print("Casaram com o Cronograma: %d" % (len(candidatos) + len(divergentes) + len(pulados)))
     if estado is None:

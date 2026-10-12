@@ -427,6 +427,184 @@ with tempfile.TemporaryDirectory() as tmp:
     ok(cod == 1 and "Sem mapa_portal.json" in saida and "08_SISTEMA" in saida,
        "30. pasta presente e mapa ausente e ERRO, dizendo onde procurou", (cod, saida))
 
+# =================== A LIGACAO PELO CONCLUIDO, E OS RASCUNHOS ===================
+# Decidido pelo autor em 2026-10-12: a ligacao peca <-> artigo e lida das linhas
+# "Slug:" e "Id no Cronograma:" de cada CONCLUIDO, e nao de um campo do
+# entrada.json que nenhuma sessao do Cowork consegue publicar. E os rascunhos de
+# uma peca moram na bancada (se o artigo estiver nela) ou na caixa dele.
+MAPA_V2 = {"objetivos": {"esteira": {
+    "painel": "pipeline",
+    "ligacao": {"registros": [
+        "00_CONCLUIDO/CONCLUIDO_FILOSOFICO.md",
+        "00_CONCLUIDO/_pausado/FILOSOFICO_*/CONCLUIDO_FILOSOFICO.md",
+        "00_CONCLUIDO/_arquivo/FILOSOFICO_*/CONCLUIDO_FILOSOFICO.md"]},
+    "rascunhos": {
+        "bancada": "02_PIPELINE/04_FILOSOFICO/drafts",
+        "slug_da_bancada_em": ["01_ENTRADA/entrada_FILOSOFICO.md",
+                               "00_CONCLUIDO/CONCLUIDO_FILOSOFICO.md"],
+        "caixas": ["00_CONCLUIDO/_pausado/FILOSOFICO_[slug]/drafts",
+                   "00_CONCLUIDO/_arquivo/FILOSOFICO_[slug]/drafts"]},
+    "subitens": [
+        {"id": "aNN-1", "prova": "estrela", "artefato": "entrada_FILOSOFICO.md"},
+        {"id": "aNN-2", "prova": "maquina", "artefato": "07_NORMAS_REFERENCIAS/corpus_[slug].md"},
+        {"id": "aNN-4", "prova": "maquina", "artefato": "[drafts]/draft_1.3apl.md"}]}}}
+ENTRADA_V2 = {"paineis": {"pipeline": [
+    {"id": pid, "t": "Peca " + pid,
+     "subs": [{"id": pid + "-2", "t": "Corpus", "prova": "maquina"},
+              {"id": pid + "-4", "t": "Draft 1.3-APL", "prova": "maquina"}]}
+    for pid in ("a00", "a01", "a02")]}}
+PATRIOTISMO = "patriotismo-cristao-lutero"
+CONSCIENCIA = "consciencia-lutero-spinoza"
+CAIXA_A00 = "00_CONCLUIDO/_pausado/FILOSOFICO_%s" % PATRIOTISMO
+
+
+def escrever(prod, rel, texto="x"):
+    alvo = os.path.join(prod, rel)
+    os.makedirs(os.path.dirname(alvo), exist_ok=True)
+    with open(alvo, "w", encoding="utf-8") as f:
+        f.write(texto)
+
+
+def producao_v2(tmp, id_da_bancada="a01", slug_da_entrada=CONSCIENCIA,
+                rascunho_da_bancada="draft_1.3apl.md"):
+    """A forma real: o patriotismo pausado na caixa (com o Id escrito como no
+    CONCLUIDO de verdade, em negrito e com o titulo), a consciencia na bancada."""
+    prod = os.path.join(tmp, "producao")
+    escrever(prod, "08_SISTEMA/configuracao/mapa_portal.json", json.dumps(MAPA_V2))
+    escrever(prod, CAIXA_A00 + "/CONCLUIDO_FILOSOFICO.md",
+             "## Artigo em producao\n- Slug: %s\n\n...\n- Id no Cronograma: **a00** — "
+             "\"Ago · Confusao de reinos\"\n" % PATRIOTISMO)
+    escrever(prod, CAIXA_A00 + "/drafts/draft_1.3apl.md")
+    escrever(prod, "00_CONCLUIDO/CONCLUIDO_FILOSOFICO.md",
+             "- Slug: %s\n- **Id no Cronograma:** %s\n" % (CONSCIENCIA, id_da_bancada))
+    escrever(prod, "01_ENTRADA/entrada_FILOSOFICO.md",
+             "## Secao 1\n- **Slug do artigo:** %s\n" % slug_da_entrada)
+    if rascunho_da_bancada:
+        escrever(prod, "02_PIPELINE/04_FILOSOFICO/drafts/" + rascunho_da_bancada)
+    for slug in (PATRIOTISMO, CONSCIENCIA):
+        escrever(prod, "07_NORMAS_REFERENCIAS/corpus_%s.md" % slug)
+    return prod
+
+
+def avaliar_v2(prod, entrada=None, estado=None):
+    entrada = entrada or ENTRADA_V2
+    contexto, avisos = D.preparar_ligacao(MAPA_V2, entrada, prod)
+    cand, div, pul, smapa = D.avaliar(entrada, estado or {"itens": {}},
+                                      D.mapa_dos_artefatos(MAPA_V2), prod, contexto)
+    return contexto, avisos, [c["chave"] for c in cand], div, pul
+
+
+print("\n=== 14. A ligacao peca <-> artigo vem do CONCLUIDO ===")
+achar = lambda texto: [m.lower() for m in D.RE_ID_NO_CRONOGRAMA.findall(texto)]
+ok(achar('- Id no Cronograma: **a00** — "Ago · Confusao de reinos"') == ["a00"] and
+   achar("- **Id no Cronograma:** a01") == ["a01"],
+   "31. o id e lido como o CONCLUIDO o escreve: em negrito, com titulo, ou rotulado")
+ok(achar("- Id no Cronograma: [aNN]") == [] and
+   achar("- Id no Cronograma: [registrar na Janela 0]") == [],
+   "    e o marcador de lugar NAO vira id: artigo sem Janela 0 nao e peca nenhuma")
+ok(D.slugs_do_texto("- Slug: %s" % CONSCIENCIA) == [CONSCIENCIA] and
+   D.slugs_do_texto("- **Slug do artigo:** %s" % CONSCIENCIA) == [CONSCIENCIA] and
+   D.slugs_do_texto("- Slug:\n- **Slug do artigo:** [slug]") == [],
+   "32. o slug e lido do CONCLUIDO e da entrada, e o modelo vazio nao conta")
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp)
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok(ctx["slugs"] == {("pipeline", "a00"): PATRIOTISMO, ("pipeline", "a01"): CONSCIENCIA},
+       "33. a00 ligado pela caixa, a01 pela bancada — sem slug nenhum no entrada.json",
+       ctx["slugs"])
+    ok(sorted(cand) == ["pipeline/a00/a00-2", "pipeline/a00/a00-4",
+                        "pipeline/a01/a01-2", "pipeline/a01/a01-4"],
+       "34. corpus e rascunho de cada peca, cada um achado no lugar dela", cand)
+    ok(any(c == "pipeline/a02/a02-2" and "sem ligacao" in m for c, m in pul),
+       "    e a peca sem ligacao e PULADA, dizendo onde a ligacao devia estar", pul)
+    ok(avisos == [], "    sem aviso nenhum quando tudo concorda", avisos)
+    arq_entrada = os.path.join(tmp, "entrada_v2.json")
+    with open(arq_entrada, "w", encoding="utf-8") as f:
+        json.dump(ENTRADA_V2, f)
+    cod, saida = rodar_main(prod, arq_entrada)
+    ok("a00  " + PATRIOTISMO in saida and "Bancada de pipeline: %s, peca a01" % CONSCIENCIA in saida,
+       "35. o relatorio diz cada ligacao, de onde veio, e de quem e a bancada", saida[:700])
+    # O LOG DO ACTIONS E PUBLICO. A mesma rodada, com LOG_PUBLICO=1, nao pode
+    # levar para la nenhum slug da pasta de producao, que e privada.
+    os.environ["LOG_PUBLICO"] = "1"
+    try:
+        cod, publico = rodar_main(prod, arq_entrada)
+    finally:
+        os.environ.pop("LOG_PUBLICO", None)
+    ok(PATRIOTISMO not in publico and CONSCIENCIA not in publico and "<slug>" in publico
+       and "a00  <slug>" in publico and "pipeline/a01/a01-4" in publico,
+       "    com LOG_PUBLICO=1, nenhum slug vai ao log; peca e etapa continuam", publico[:700])
+    ok(sys.stdout is sys.__stdout__ or not isinstance(sys.stdout, D._Redigido),
+       "    e o redator sai de cena quando o main termina")
+
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp, id_da_bancada="[registrar na Janela 0]")
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok(("pipeline", "a01") not in ctx["slugs"] and
+       not any(c.startswith("pipeline/a01/") for c in cand),
+       "36. sem o Id no CONCLUIDO da bancada, a01 nao e ligado, e nada dele e marcado", cand)
+    ok(ctx["rascunhos"]["pipeline"]["dono_da_bancada"] == CONSCIENCIA and
+       "pipeline/a00/a00-4" in cand,
+       "    e o rascunho da bancada nao vai parar em outra peca", cand)
+
+print("\n=== 15. [drafts]: o rascunho de cada peca, e de ninguem mais ===")
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp, slug_da_entrada="outro-artigo")
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok("pipeline/a01/a01-4" not in cand and "pipeline/a01/a01-2" in cand,
+       "37. entrada e CONCLUIDO da bancada discordam: o rascunho dela nao conta,"
+       " e o corpus (que nao depende dela) sim", cand)
+    ok(any("bancada nao e de ninguem" in a for a in avisos),
+       "    e a discordancia e AVISADA, com os dois slugs", avisos)
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp, rascunho_da_bancada="draft_1.3apl_parcial.md")
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok("pipeline/a01/a01-4" not in cand,
+       "38. o rascunho PARCIAL nao prova a etapa: so o nome final prova", cand)
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp)
+    os.remove(os.path.join(prod, CAIXA_A00, "drafts", "draft_1.3apl.md"))
+    est = {"itens": {"pipeline/a00/a00-4": {"st": 2, "vida": "ativo"}}}
+    ctx, avisos, cand, div, pul = avaliar_v2(prod, estado=est)
+    ok([c for c, _ in div] == ["pipeline/a00/a00-4"] and CAIXA_A00 in div[0][1],
+       "39. marcada e sem o rascunho em lugar nenhum: DIVERGE, dizendo onde procurou", div)
+
+print("\n=== 16. Ligacao ambigua e PULADA, nunca escolhida ===")
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp)
+    escrever(prod, "00_CONCLUIDO/_pausado/FILOSOFICO_outro/CONCLUIDO_FILOSOFICO.md",
+             "- Slug: outro\n- Id no Cronograma: a00\n")
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok(not any(c.startswith("pipeline/a00/") for c in cand) and
+       any(c.startswith("pipeline/a00/") and "ambigua" in m for c, m in pul),
+       "40. o mesmo id em dois artigos: a peca e PULADA, com os dois slugs", pul)
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp)
+    escrever(prod, "00_CONCLUIDO/_pausado/FILOSOFICO_%s/CONCLUIDO_FILOSOFICO.md" % CONSCIENCIA,
+             "- Slug: %s\n- Id no Cronograma: a02\n" % CONSCIENCIA)
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok(not any(c.startswith(("pipeline/a01/", "pipeline/a02/")) for c in cand),
+       "41. o mesmo artigo em duas pecas: as duas sao PULADAS", cand)
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp)
+    escrever(prod, "00_CONCLUIDO/_pausado/FILOSOFICO_caixa-x/CONCLUIDO_FILOSOFICO.md",
+             "- Slug: outro-y\n- Id no Cronograma: a02\n")
+    ctx, avisos, cand, div, pul = avaliar_v2(prod)
+    ok(("pipeline", "a02") not in ctx["slugs"] and
+       any("a caixa e de caixa-x" in a for a in avisos),
+       "42. a caixa cujo slug nao e o do nome dela e IGNORADA, com aviso", avisos)
+with tempfile.TemporaryDirectory() as tmp:
+    prod = producao_v2(tmp)
+    entC = json.loads(json.dumps(ENTRADA_V2))
+    entC["paineis"]["pipeline"][0]["slug"] = "slug-antigo"
+    ctx, avisos, cand, div, pul = avaliar_v2(prod, entrada=entC)
+    ok(not any(c.startswith("pipeline/a00/") for c in cand) and
+       any("conflito" in m and "slug-antigo" in m for _, m in pul),
+       "43. CONCLUIDO e entrada.json discordam: PULADA, com os dois", pul)
+    entC["paineis"]["pipeline"][0]["slug"] = PATRIOTISMO
+    ctx, avisos, cand, div, pul = avaliar_v2(prod, entrada=entC)
+    ok("pipeline/a00/a00-2" in cand, "    e concordando, vale", cand)
+
 print("\n=== 5. Pasta ausente sai limpo, codigo 0 ===")
 import subprocess
 amb = dict(os.environ, PASTA_PRODUCAO=os.path.join(tempfile.gettempdir(), "nao-existe-xyz"))
