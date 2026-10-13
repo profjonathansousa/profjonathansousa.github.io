@@ -1,11 +1,11 @@
 {
-  "_gerado_em": "2026-10-13T11:11:42.421091-03:00",
+  "_gerado_em": "2026-10-13T15:39:57.524691-03:00",
   "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_VAGAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-10-13T11:11:42.421091-03:00",
+    "quando": "2026-10-13T15:39:57.524691-03:00",
     "fontes": {
       "curadas": "ok · 2 curados · atualizado em 2026-10-13",
-      "philjobs": "ok · 25 sondados · 0 novos",
+      "philjobs": "ok · 33 sondados · 1 novos",
       "anpof": "ok · 509 links · moldura podada: 67217 chars",
       "docentefederal": "ok · 6 links · moldura podada: 2514 chars",
       "faperj": "ok · 66 links · moldura podada: 121673 chars",
@@ -21,7 +21,7 @@
       "faperj: teto de 40 itens novos atingido",
       "165 itens ja vivos reclassificados (sem rede, sem remocao)"
     ],
-    "resumo": "167 vivos (A:42 B:11 C:114) · 16 urgentes · 1 novos · 6 arquivados por prazo · 85 barrados"
+    "resumo": "168 vivos (A:42 B:11 C:115) · 16 urgentes · 1 novos · 6 arquivados por prazo · 85 barrados"
   },
   "itens": [
     {
@@ -61,7 +61,6 @@
       ],
       "veredicto": "relevante",
       "porque_veredicto": "edital de efetivo, area nao declarada",
-      "novo": true,
       "vencida": false
     },
     {
@@ -4752,6 +4751,47 @@
       "novo": true,
       "vencida": false,
       "descartado": false
+    },
+    {
+      "id": "philjobs-32593",
+      "fonte": "philjobs",
+      "url": "https://philjobs.org/job/show/32593",
+      "titulo": "Assistant or Associate Professor, Metaphysics/Epistemology",
+      "instituicao": "University of Arizona",
+      "aos": "Metaphysics & Epistemology",
+      "aoc": "Open",
+      "local": "Tucson, Arizona, United States",
+      "categoria": "Faculty (open rank) / Tenure-track or similar",
+      "contrato": "",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Assistant or Associate Professor, Metaphysics/Epistemology, University of Arizona\n - PhilJobs:JFP \n Assistant or Associate Professor, Metaphysics/Epistemology, University of Arizona\n Sign in \n PhilPapers \n PhilArchive \n PhilEvents \n PhilJobs \n PhilPeople \n APA \n Appointments \n Browse Ads \n Post an Ad \n My Jobs \n My Searches \n Help \n About \n Contact \n Job not found with id 32592\n Assistant or Associate Professor, Metaphysics/Epistemology \n Department of Philosophy, University of Arizona\n Job category\n Faculty (open rank) / Tenure-track or similar\n AOS\n Metaphysics & Epistemology\n AOS categories\n Epistemology\n Metaphysics\n AOC\n Open\n Workload\n Full time\n Vacancies\n 1\n Organization's reference number\n Req27244\n Location\n Tucson, Arizona, United States \n Start date\n August 2027\n Job description\n The Department of Philosophy at the University of Arizona invites applications for a full-time faculty position in metaphysics or epistemology in the analytic tradition, broadly construed. The position may be filled at the rank of tenure-track Assistant Professor, or tenured Associate Professor, with an anticipated start date of August 1, 2027.\n The successful candidate will teach undergraduate",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "tenure-track",
+      "porque": "competencia: epistemology, metaphysics",
+      "relevancia": "competencia",
+      "pais": "United States",
+      "uf": "",
+      "bloco": "C",
+      "esforco": "Alto",
+      "elegibilidade": "Provavel c/ patrocinio",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido",
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philjobs-32073",
