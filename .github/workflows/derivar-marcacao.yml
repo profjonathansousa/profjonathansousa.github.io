@@ -1,35 +1,49 @@
-name: Marcar os Trilhos pelo artefato
+name: Conferir os Trilhos pelo artefato
 
-# POR QUE ESTE WORKFLOW EXISTE.
-# O derivar_do_pipeline.py marca no Cronograma a etapa cujo artefato existe na
-# pasta de producao. Ate 2026-10-12 ele so podia rodar no Mac, porque a pasta
-# morava so no iCloud — e o agendamento do launchd que o rodaria nunca foi
-# instalado. A pasta agora tem espelho no GitHub (o salvamento das 19h), e este
-# repositorio ja tem as duas credenciais do Supabase. Entao a derivacao roda
-# aqui, uma vez por dia, sem depender de aparelho ligado.
+# O QUE ESTE WORKFLOW E, DESDE 2026-10-13: o BOTAO DE CONFERENCIA. Ele so roda
+# quando alguem aperta Run workflow — nao ha agendamento.
+#
+# A MARCACAO DO DIA A DIA NAO PASSA POR AQUI. No fim de cada janela do pipeline,
+# o Cowork chama a funcao do banco cron_pipeline_marcar pelo conector do
+# Supabase, e a etapa aparece nos aparelhos no mesmo instante. Foi o desenho que
+# o autor decidiu: a marcacao acontece quando ELE dispara o fluxo no Cowork, e
+# nao numa rodada das 20h37 (que este workflow fazia ate 2026-10-12).
+#
+# PARA QUE SERVE ENTAO: varrer a pasta de producao inteira e marcar o que ficou
+# para tras — uma janela que fechou sem a chamada, uma sessao que caiu no meio.
+# A varredura e o derivar_do_pipeline.py, e cada marcacao dele passa pela MESMA
+# funcao, com as mesmas recusas (prova estrela, etapa que nao esta ativa). Com
+# "so conferir" marcado, ele so diz o que marcaria.
+#
+# NADA VAI PARA O REPOSITORIO. Ate 2026-10-12 este job gravava a trilha (os
+# toques dobrados no Cronograma/estado.json) num commit no main. A copia publica
+# do historico saiu a pedido do autor: o historico mora no cron_registro, que e
+# privado. Por isso o job so le este repositorio (contents: read).
 #
 # O QUE ELE PRECISA: o segredo PRODUCAO_TOKEN, um token de LEITURA do
 # repositorio profjonathansousa/06_PRODUCAO_COWORK, que e privado. Sem ele, o
-# workflow avisa e nao roda: nao e falha, e falta de configuracao. O passo a
-# passo esta no Cronograma/README.md, em "A marcacao pelo artefato".
+# workflow avisa e nao roda. O passo a passo esta no Cronograma/README.md, em
+# "A marcacao pelo artefato".
 #
 # O LOG E PUBLICO, porque o repositorio e. LOG_PUBLICO=1 faz o script trocar
-# por <slug> todo slug que ele le da pasta de producao.
+# por <slug> todo slug que ele le da pasta de producao, e tira do log o titulo
+# dos projetos.
 
 on:
-  schedule:
-    # 20h37 em Brasilia: depois do salvamento das 19h, que leva ao GitHub o que
-    # foi produzido no dia. Minuto quebrado de proposito: no :00 o GitHub atrasa.
-    - cron: '37 23 * * *'
   workflow_dispatch:
+    inputs:
+      so_conferir:
+        description: 'So conferir: dizer o que marcaria, sem marcar nada'
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
+  contents: read
 
-# Mesmo grupo da dobra e do coletor: dois jobs empurrando para o main ao mesmo
-# tempo e a unica corrida que este desenho ainda pode perder.
+# Duas conferencias ao mesmo tempo nao estragariam nada (a funcao trava a linha
+# e responde "ja_estava" a segunda), mas tambem nao servem para nada.
 concurrency:
-  group: escrita-no-main
+  group: derivar-marcacao
   cancel-in-progress: false
 
 jobs:
@@ -44,7 +58,7 @@ jobs:
           PRODUCAO_TOKEN: ${{ secrets.PRODUCAO_TOKEN }}
         run: |
           if [ -z "$PRODUCAO_TOKEN" ]; then
-            echo "::warning title=Marcacao desligada::Falta o segredo PRODUCAO_TOKEN (leitura de 06_PRODUCAO_COWORK). Nada foi derivado. Ver Cronograma/README.md, 'A marcacao pelo artefato'."
+            echo "::warning title=Conferencia desligada::Falta o segredo PRODUCAO_TOKEN (leitura de 06_PRODUCAO_COWORK). Nada foi conferido. Ver Cronograma/README.md, 'A marcacao pelo artefato'."
             echo "pronto=nao" >> "$GITHUB_OUTPUT"
           else
             echo "pronto=sim" >> "$GITHUB_OUTPUT"
@@ -53,9 +67,10 @@ jobs:
       - name: Baixar este repositorio
         if: steps.token.outputs.pronto == 'sim'
         uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
-      # SO LEITURA, e sem guardar a credencial no disco: este job escreve no
-      # Portal, e nunca na pasta de producao.
+      # SO LEITURA, e sem guardar a credencial no disco.
       - name: Baixar a pasta de producao
         if: steps.token.outputs.pronto == 'sim'
         uses: actions/checkout@v5
@@ -71,49 +86,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Derivar e gravar a trilha
+      - name: Conferir e marcar
         if: steps.token.outputs.pronto == 'sim'
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           PASTA_PRODUCAO: ${{ github.workspace }}/_producao
           LOG_PUBLICO: '1'
+          SO_CONFERIR: ${{ inputs.so_conferir }}
         run: |
-          git config user.name  "marcacao-pelo-artefato"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # A MARCACAO E A ESCRITA ONLINE, e ela ja aconteceu quando este passo
-          # chega ao git: o --registrar publica no Supabase antes de gravar o
-          # toque. O que segue e so a trilha auditavel, os toques dobrados no
-          # estado.json — e por isso uma falha aqui nao desfaz marcacao nenhuma.
-          set +e
-          python scripts/derivar_do_pipeline.py --aplicar
-          codigo=$?
-          set -e
-
-          # SO O QUE A DOBRA ESCREVE. O _producao/ nao entra: ele e so leitura.
-          git add -A -- Cronograma/estado.json
-          if [ -d Cronograma/toques ] || [ -n "$(git ls-files -- Cronograma/toques)" ]; then
-            git add -A -- Cronograma/toques
+          if [ "$SO_CONFERIR" = "true" ]; then
+            python scripts/derivar_do_pipeline.py
+          else
+            python scripts/derivar_do_pipeline.py --aplicar
           fi
-          if git diff --staged --quiet; then
-            echo "Nenhum toque novo: nada a gravar na trilha."
-            exit $codigo
-          fi
-          git commit -q -m "derivacao: etapas fechadas pelo artefato"
-
-          for tentativa in 1 2 3; do
-            if git push --quiet origin HEAD:main; then
-              echo "Trilha gravada no main."
-              exit $codigo
-            fi
-            echo "Push recusado (tentativa $tentativa): trazendo o main e reaplicando."
-            git fetch --quiet origin main
-            if ! git rebase --quiet FETCH_HEAD; then
-              git rebase --abort
-              echo "::error::A trilha desta rodada nao entrou: o estado.json mudou no main enquanto ela rodava. As marcacoes ja estao no Supabase; o que faltou foi so o registro em arquivo."
-              exit 1
-            fi
-          done
-          echo "::error::Tres tentativas sem gravar a trilha. As marcacoes ja estao no Supabase."
-          exit 1

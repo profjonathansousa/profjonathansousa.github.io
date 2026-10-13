@@ -2363,17 +2363,17 @@ escreve.
 
 Em vez de esperar que alguém se lembre, o script pergunta ao disco: para cada
 subitem de prova `maquina`, resolve o caminho do artefato e testa a existência.
-Roda uma vez por dia e **resgata retroativamente** tudo o que ficou para trás —
-não é preciso caçar os "não" nos CONCLUIDO.
+Quando roda, **resgata retroativamente** tudo o que ficou para trás — não é
+preciso caçar os "não" nos CONCLUIDO.
 
 **Onde roda.** Até 2026-10-12, só no Mac: o Actions não enxergava o iCloud. A
 pasta de produção agora tem espelho no GitHub (o salvamento das 19h), e a
-derivação roda no `derivar-marcacao.yml`, todo dia às 20h37 de Brasília, com a
-pasta baixada só para leitura (ver *Como ligar a marcação*, abaixo). O launchd
-do Mac (`scripts/derivar_diario.sh` e o `.plist`) continua valendo como
-alternativa. Onde a pasta não existe — a dobra do `dobrar-toques.yml`, por
-exemplo —, a ausência não é erro: o script sai limpo, código 0, sem escrever
-nada.
+derivação roda no `derivar-marcacao.yml`, com a pasta baixada só para leitura
+(ver *Como ligar a marcação*, abaixo). **Desde 2026-10-13 ela é um botão, e não
+uma rodada diária**: a marcação do dia a dia é a do Cowork, no fim de cada
+janela (*A marcação instantânea pelo Cowork*, abaixo), e o botão varre o que
+tiver ficado para trás. Onde a pasta não existe, a ausência não é erro: o
+script sai limpo, código 0, sem escrever nada.
 
 **O mapa mora em `08_SISTEMA/configuracao/mapa_portal.json`** desde a
 reorganização da pasta de produção de 15/09 — antes ficava na raiz, e os dois
@@ -2389,7 +2389,7 @@ As regras duras, cada uma com um caso concreto por trás:
 | nunca toca em `estrela` | a conclusão é decisão do autor; o relógio do Cowork a venceria e apagaria |
 | nunca rebaixa | um artefato apagado por engano não pode apagar o histórico — divergência é **reportada**, não corrigida |
 | nunca passa por cima de etapa que não está ativa | `inaplicavel` nem é avaliada (o `a00-3` é o caso: o mapa argumentativo não existe e não deve existir). Adiada, abandonada ou arquivada com o artefato presente é **pulada com aviso**, todo dia, até você decidir no aplicativo |
-| nunca lê nem edita o `estado.json` | o escritor único continua sendo o `dobrar_toques.py`, por toque; e o estado de agora é o do banco (abaixo) |
+| nunca lê nem escreve o `estado.json` | o estado de agora é o do banco (abaixo), e quem marca é a função `cron_pipeline_marcar`, pedida pelo `--registrar`. Nada vai para o repositório (2026-10-13) |
 | nunca adivinha a ligação peça ↔ artigo | ela vem do CONCLUIDO de cada artigo (abaixo) e, na falta, do `slug` do `entrada.json`; existindo os dois, têm de concordar. Casar título com slug por heurística erraria em silêncio. Peça sem ligação, ou com ligação ambígua, é **pulada com aviso** |
 | nunca marca por caminho `confirmar: true` | o próprio mapa diz que o caminho não foi conferido no disco |
 | nunca usa caminho sem `[slug]` nem `[drafts]` numa etapa descrita por padrão | seria o mesmo arquivo para as treze peças: se existisse, marcaria a etapa de todas de uma vez. É **pulado com aviso** |
@@ -2434,6 +2434,11 @@ A correção, e cada ponto tem teste (`teste_registrar.py`, `teste_derivar.py`):
 | o banco primeiro | o arquivo de toque só é gravado depois de a linha entrar. Sem a publicação, nada é gravado e o código de saída é 1 — o `derivar` imprime `FALHOU`, e não `ok` |
 | sem credenciais | o `--aplicar` recusa antes de decidir qualquer coisa; o modo seco ainda confere o mapa e o disco, mas avisa que não leu o estado e não diz o que marcaria |
 
+> **Superado em 2026-10-13** naquilo que era do `--registrar`: as regras desta
+> tabela passaram para a função do banco `cron_pipeline_marcar`, o `--vida` e o
+> `--forcar` saíram, e não há mais arquivo de toque. Ver *A marcação
+> instantânea pelo Cowork*, abaixo.
+
 #### A ligação peça ↔ artigo, e os rascunhos de cada peça (2026-10-12)
 
 O mapa descreve os artefatos com `[slug]` no caminho, e o Cronograma conhece as
@@ -2467,15 +2472,85 @@ com o nome final (`draft_1.3apl.md`), e as instruções já mandavam gravar
 marcação depende, e estende a regra ao `draft_1.0_mapa.md`.
 
 O relatório começa dizendo cada ligação, de onde ela veio e de quem é a
-bancada — *"Bancada de pipeline: consciencia-lutero-spinoza — ainda sem peça: o
-CONCLUIDO dela não registra o 'Id no Cronograma'"* —, que é o que explica um
-*PULADO* antes que ele apareça.
+bancada — *"Bancada de pipeline: `<slug>` — ainda sem peça: o CONCLUIDO dela
+não registra o 'Id no Cronograma'"* —, que é o que explica um *PULADO* antes que
+ele apareça.
+
+#### A marcação instantânea pelo Cowork, e o fim da cópia pública (2026-10-13)
+
+**Decidido pelo autor: a marcação acontece quando ele dispara o fluxo no
+Cowork**, no fim de cada janela, e não numa rodada agendada. A rodada das 20h37
+saiu.
+
+O caminho tinha de ser outro, porque o Cowork roda atrás de um proxy que recusa o
+`supabase.co` e o `api.github.com` (medido em 2026-10-13: nem o `--registrar`
+nem um `curl` saem de lá). O **conector do Supabase** sai. Então, no fim de cada
+janela, o Cowork roda pelo conector uma linha só:
+
+```sql
+select public.cron_pipeline_marcar('pipeline/a01/a01-3');
+```
+
+e a etapa aparece concluída nos aparelhos no mesmo instante, pelo Realtime, como
+se fosse mais um aparelho marcando.
+
+**As regras moram na função, e só nela** (`sql/cron_pipeline_marcar.sql`). O
+conector tem acesso total a um banco compartilhado com o CONTAS_CASA; um
+`UPDATE` redigido por um modelo a cada janela é o tipo de coisa que funciona
+noventa e nove vezes. A função recebe só a chave da etapa e:
+
+| regra | como |
+|---|---|
+| só prova `maquina` | lida da `cron_estrutura_base`, a estrutura publicada. `estrela` é decisão do autor, e é recusada |
+| só etapa ativa | adiada, abandonada, arquivada, "não se aplica" ou apagada é recusada, e fica como está |
+| só concluir | não há `st` nem vida como parâmetro, nem porta de exceção. Voltar uma etapa ou mudar a vida dela se faz no aplicativo |
+| o valor de agora | só o `st` muda; vida, motivo, data de volta e `vidaDesde` ficam |
+| a linha travada | `FOR UPDATE` da leitura à escrita: duas chamadas ao mesmo tempo marcam uma vez, e a segunda responde `ja_estava` |
+| o relógio | o `em` é o do servidor, no milissegundo; se a linha tiver um `em` adiantado (aparelho com o relógio à frente), vale 1 ms depois dele — senão o gatilho engoliria a marcação em silêncio |
+| o registro junto | a linha do `cron_registro` entra na mesma transação do item, com o dia de Brasília |
+| quem chama | o conector (papel `postgres`) e a `service_role`. Nunca o aplicativo: o `EXECUTE` sai de `public`, `anon` e `authenticated` |
+
+Ela devolve sempre um objeto — `marcada`, `ja_estava`, `recusada` (com o porquê)
+ou, com o segundo parâmetro `true`, `marcaria` sem escrever nada —, e o Cowork
+registra a resposta no CONCLUIDO.
+
+**O `--registrar` chama a mesma função**, pela API: um lugar só para as regras,
+dois caminhos até ele. O `--para 0|1`, o `--vida` e o `--forcar` saíram; o
+`--seco` virou a conferência da função. **O botão** é o `derivar-marcacao.yml`,
+agora só manual (*Actions → Conferir os Trilhos pelo artefato → Run workflow*):
+ele varre a pasta inteira e marca, pela mesma função, o que tiver ficado para
+trás. Com *só conferir* marcado, só diz o que marcaria.
+
+**A cópia pública do histórico saiu.** O `estado.json` era a dobra dos toques
+num repositório público: título dos projetos, motivos, datas. O aplicativo não
+o lia desde a 9G-3, e o único escritor que sobrava era o `--registrar`. Saíram o
+arquivo, a pasta `toques/`, o `dobrar-toques.yml` que os dobrava, e o
+`derivar_diario.sh` com o `.plist` do launchd, que nunca foi instalado e
+commitaria os dois todo dia. O `.gitignore` barra os dois caminhos. O histórico
+mora no `cron_registro`, que é privado.
+
+**As versões antigas continuam no histórico do git**, e sair do `main` não as
+apaga de lá: qualquer um pode abrir um commit antigo. Apagar de verdade é
+reescrever o histórico do repositório, o que muda todos os commits e exige
+acertar o clone do Mac. É decisão do autor, e não foi feita.
+
+Testes: o `teste_marcar_no_banco.py` sobe um Postgres descartável, carrega o
+`cron_estado.sql` e o `cron_pipeline_marcar.sql` de verdade e prova cada regra —
+inclusive as duas chamadas simultâneas e as permissões —; doze mutações da
+função, uma por regra, o derrubam. Sem Postgres na máquina, ele diz *PULADO*. Os
+outros testes falam com um arremedo da função no `postgrest_de_mentira.py`, e o
+mesmo teste compara os dois, caso a caso.
 
 #### Como ligar a marcação
 
-O `derivar-marcacao.yml` precisa de um segredo que só você pode criar: um token
-de **leitura** do repositório da pasta de produção, que é privado. Sem ele, o
-workflow deixa um aviso (*Marcação desligada*) e não roda.
+**No Cowork, nada a ligar:** o conector do Supabase já está conectado, e a
+função já está no banco. As instruções do FILOSÓFICO (v1.3) dizem em que passo
+chamá-la.
+
+**O botão de conferência** (`derivar-marcacao.yml`) precisa de um segredo que só
+você pode criar: um token de **leitura** do repositório da pasta de produção,
+que é privado. Sem ele, o workflow deixa um aviso (*Conferência desligada*) e
+não roda.
 
 1. No GitHub: foto do perfil → **Settings** → **Developer settings** →
    **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
@@ -2488,28 +2563,24 @@ workflow deixa um aviso (*Marcação desligada*) e não roda.
 5. Gere e copie o token.
 6. Neste repositório: **Settings** → **Secrets and variables** → **Actions** →
    **New repository secret**. Nome `PRODUCAO_TOKEN`; valor, o token.
-7. Para conferir sem esperar as 20h37: **Actions** → *Marcar os Trilhos pelo
-   artefato* → **Run workflow**.
+7. Para rodar: **Actions** → *Conferir os Trilhos pelo artefato* → **Run
+   workflow**. Marque *só conferir* para ver o que seria marcado sem marcar.
 
 **O log do Actions é público**, porque este repositório é. Com `LOG_PUBLICO=1`,
-que o workflow liga, todo slug lido da pasta de produção sai como `<slug>`; peça,
-etapa e título continuam, porque já são públicos no `entrada.json`. Rodado no
-Mac, o relatório sai completo.
+que o workflow liga, todo slug lido da pasta de produção sai como `<slug>`, e o
+título dos projetos não sai; a chave e o nome da etapa continuam. Rodado no Mac,
+o relatório sai completo.
 
-A marcação é a escrita online, e ela acontece antes de qualquer `git`: o
-workflow só grava depois a trilha (os toques dobrados no `estado.json`). Se essa
-gravação perder a corrida com outro escritor do `main`, as marcações já estão no
-Supabase; o que falta é só o registro em arquivo daquela rodada.
+O workflow não escreve nada no repositório (`contents: read`): a marcação é a
+escrita no banco, feita pela função.
 
 #### O que ainda falta
 
-- **O token** (acima). É o único passo que depende de você.
-- **A Janela 0 do artigo da bancada** registrar `Id no Cronograma: a01` — a
-  consciência é a peça `a01` na semente do Cronograma. Até lá, nada dela é
-  marcado, e o relatório diz por quê.
-- **Depois que a marcação rodar todo dia**, tirar das instruções do FILOSÓFICO os
-  comandos `--registrar` das Janelas 0, 1 e 2 e a conferência dos "não" no Passo
-  final. Até lá, registrar "não" continua sendo o certo.
+- **A Janela 0 de cada artigo** registrar `Id no Cronograma: aNN` no CONCLUIDO.
+  Sem essa linha, a peça não tem ligação: o botão a pula e diz por quê. A
+  chamada do Cowork não depende dela, porque o Cowork já diz a chave.
+- **Apagar as versões antigas do `estado.json` do histórico do git**, se o autor
+  quiser (ver acima). Não foi feito.
 
 ### Como ligar, e o que a tela diz
 
@@ -2799,9 +2870,7 @@ outra porta o que a base privada guarda. O log mostra o título (que vem do
 | `Cronograma/js/30-render.js` | os `render*` e os handlers presos ao DOM |
 | `Cronograma/js/40-app.js` | bootstrap: migrações, sementes, primeiros desenhos, ouvintes |
 | `Cronograma/entrada.json` | estrutura das peças. Escrita pelo Cowork |
-| `Cronograma/estado.json` | estado consolidado. Escrito só pelo dobrar_toques |
-| `Cronograma/toques/` | fila de eventos |
-| `scripts/dobrar_toques.py` | consolida os toques |
+| `scripts/dobrar_toques.py` | o `--registrar` (pede a marcação à `cron_pipeline_marcar`), o `--publicar-estrutura` e a dobra, parada desde 2026-10-13 |
 | `scripts/coletor.py` | coletor semanal de vagas e chamadas |
 | `criterios_vagas.json`, `criterios_chamadas.json` | critérios (na raiz) |
 | `dados/`, `eventos/` | saída do coletor |
@@ -2816,9 +2885,11 @@ outra porta o que a base privada guarda. O log mostra o título (que vem do
 | `scripts/prova_dupla_escrita.js` | Fase 9F: a prova de que os dois caminhos concordam |
 | `scripts/teste_publicar_estrutura.py` | Fase 9G-0 B1: a publicação da estrutura e a base |
 | `scripts/derivar_do_pipeline.py` | a marcação pelo artefato: lê a pasta de produção e o `cron_estado`, e emite pelo `--registrar` |
-| `.github/workflows/derivar-marcacao.yml` | roda a marcação todo dia às 20h37, com a pasta de produção baixada só para leitura (`PRODUCAO_TOKEN`) |
-| `scripts/teste_derivar.py`, `scripts/teste_registrar.py` | as regras da derivação e do `--registrar`, contra o código real |
-| `scripts/postgrest_de_mentira.py` | o `cron_estado` e o `cron_registro` em memória, com o gatilho do relógio, para os testes |
+| `.github/workflows/derivar-marcacao.yml` | o botão de conferência: só manual, com a pasta de produção baixada só para leitura (`PRODUCAO_TOKEN`). Não escreve no repositório |
+| `sql/cron_pipeline_marcar.sql` | a função que marca uma etapa como concluída: a que o Cowork chama pelo conector e o `--registrar` pela API |
+| `scripts/teste_marcar_no_banco.py` | a função contra um Postgres de verdade, e o arremedo dela comparado caso a caso |
+| `scripts/teste_derivar.py`, `scripts/teste_registrar.py` | as regras da derivação e o que o `--registrar` faz com a função, contra o código real |
+| `scripts/postgrest_de_mentira.py` | o `cron_estado` e o `cron_registro` em memória, com o gatilho do relógio e o arremedo da `cron_pipeline_marcar`, para os testes |
 | `scripts/estado_notificador.json` | o que foi avisado até 10/10/2026; congelado, só lido |
 
 **Estrutura e estado são coisas separadas.** A mesclagem da estrutura nunca
@@ -2857,12 +2928,13 @@ toque novo, nenhuma regra de CSS reescrita.
 python3 scripts/teste_coletor.py     # pipeline de vagas
 node     scripts/teste_hoje.js       # Hoje, Processos e motor; dois aparelhos
 node     scripts/teste_avisos.mjs    # notificador: resumo do dia, chamadas, registro
-python3 scripts/teste_sincronia.py   # round-trip real página → dobra → página
+python3 scripts/teste_sincronia.py   # o --registrar marca, e o aparelho recebe
 node     scripts/teste_sync.js       # Fase 9A: relógio, fila offline, Realtime, RLS
 node     scripts/prova_dupla_escrita.js  # Fase 9F/9G-2: a fronteira entre caminhos
 python3  scripts/teste_publicar_estrutura.py  # Fase 9G-0 B1: entrada.json + a base
-python3  scripts/teste_registrar.py  # o --registrar decide pelo banco e não apaga decisão
+python3  scripts/teste_registrar.py  # o --registrar pede a marcação à função, e só a ela
 python3  scripts/teste_derivar.py    # a marcação pelo artefato, de ponta a ponta
+python3  scripts/teste_marcar_no_banco.py  # a cron_pipeline_marcar num Postgres de verdade
 ```
 
 **O relógio do `teste_hoje.js` é fixo numa quarta-feira** (2026-10-07). O Hoje
@@ -2945,7 +3017,8 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 8. Não quebrar o GitHub Actions semanal.
 9. Não quebrar o mecanismo de toques.
 10. Não criar um segundo mecanismo de conclusão.
-11. Não editar `estado.json` diretamente.
+11. Não recriar a cópia pública do estado (`estado.json`, `toques/`): o estado
+    mora no Supabase.
 12. Não apagar datas antigas porque a tela mostra cinco.
 13. Não colocar dados pessoais sensíveis no repositório público.
 14. **Prioridade manual prevalece sobre prioridade automática.**

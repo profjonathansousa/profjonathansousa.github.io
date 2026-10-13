@@ -16,3 +16,10 @@ __pycache__/
 
 # Dependencias instaladas (o avisos/ usa npm ci no Actions)
 node_modules/
+
+# A copia publica do historico do Cronograma saiu do repositorio em 2026-10-13,
+# a pedido do autor: o estado e o historico moram no Supabase (cron_estado e
+# cron_registro), que e privado. Nada aqui deve recria-la — nem a dobra
+# (scripts/dobrar_toques.py), se um toque antigo reaparecer.
+Cronograma/estado.json
+Cronograma/toques/
