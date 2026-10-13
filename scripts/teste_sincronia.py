@@ -179,18 +179,36 @@ ok(not os.path.exists(os.path.join(TMP2, "Cronograma", "toques")) or
    not [x for x in os.listdir(os.path.join(TMP2, "Cronograma", "toques")) if x.endswith(".json")],
    "   e nao deixa arquivo de toque para tras")
 
-# COM AS CREDENCIAIS PRESENTES, escreve. O endereco aponta para uma porta morta
-# de proposito: o que a regra exige e que as credenciais EXISTAM, e a publicacao
-# online segue sendo melhor esforco depois de o arquivo estar gravado. Assim
-# esta secao prova as duas coisas de uma vez, sem rede nenhuma.
+# COM AS CREDENCIAIS PRESENTES E A REDE FORA, tambem recusa — e isso mudou em
+# 2026-10-12. Ate ali, com a rede fora, ele gravava o toque, dizia que nao tinha
+# publicado e saia com sucesso. Desde a 9G-3 o toque gravado nao leva nada a
+# aparelho nenhum, e agora o --registrar precisa LER o estado de agora antes de
+# decidir (o estado.json parou em 10/09). Sem banco, nada e gravado.
 os.environ[dobrar_toques.API_URL] = "http://127.0.0.1:9"
 os.environ[dobrar_toques.API_CHAVE] = "chave-de-mentira-do-teste"
 buf = _io.StringIO()
 with contextlib.redirect_stdout(buf):
-    cod = dobrar_toques.registrar("pipeline/a00/a00-4", 2, "ativo", False, False)
+    cod_rede = dobrar_toques.registrar("pipeline/a00/a00-4", 2, None, False, False)
+ok(cod_rede != 0, "com a rede fora o --registrar RECUSA, em vez de gravar so o toque",
+   buf.getvalue()[-200:])
+ok(not os.path.exists(os.path.join(TMP2, "Cronograma", "toques")) or
+   not [x for x in os.listdir(os.path.join(TMP2, "Cronograma", "toques")) if x.endswith(".json")],
+   "   e nao deixa arquivo de toque para tras")
+
+# COM O BANCO RESPONDENDO (um PostgREST de mentira, em localhost), escreve: a
+# linha entra primeiro, e so depois o arquivo de toque que a dobra consome.
+from postgrest_de_mentira import Banco
+BANCO = Banco().subir()
+os.environ[dobrar_toques.API_URL] = BANCO.url
+buf = _io.StringIO()
+with contextlib.redirect_stdout(buf):
+    cod = dobrar_toques.registrar("pipeline/a00/a00-4", 2, None, False, False)
+BANCO.parar()
+for _v in (dobrar_toques.API_URL, dobrar_toques.API_CHAVE):
+    os.environ.pop(_v, None)
 ok(cod == 0, "o --registrar do pipeline escreve o toque", buf.getvalue()[-200:])
-ok("nao publicado online" in buf.getvalue(),
-   "   e diz que nao publicou quando a rede falha, sem perder o toque")
+ok((BANCO.item("pipeline/a00/a00-4") or {}).get("valor", {}).get("st") == 2,
+   "   depois de a linha entrar no banco", BANCO.item("pipeline/a00/a00-4"))
 # registrar() SO ESCREVE O TOQUE. Quem consolida e a dobra seguinte — no uso
 # real o proprio main() encadeia as duas na mesma execucao.
 est5 = dobrar_em(TMP2)
