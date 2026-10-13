@@ -15,6 +15,13 @@ apagaria se nao as tivesse:
     cliente que reenviasse o texto sem codificar o "+" mandaria um espaco — e
     aqui, como la, a linha nao casaria.
 
+E, desde 2026-10-13, a FUNCAO QUE MARCA: o POST em /rpc/cron_pipeline_marcar
+responde pelo arremedo `marcar()` abaixo, que segue a funcao de verdade
+(sql/cron_pipeline_marcar.sql) recusa por recusa, com as mesmas mensagens. Um
+arremedo pode divergir do original sem ninguem ver — por isso o
+teste_marcar_no_banco.py roda os mesmos casos nos dois, contra um Postgres de
+verdade, e compara as respostas.
+
 Nada de rede de verdade: sobe em 127.0.0.1, numa porta livre.
 """
 import datetime
@@ -59,6 +66,7 @@ class Banco(object):
         self.donos = [{"uid": dono}]
         self.linhas = {}            # (dominio, chave) -> linha do cron_estado
         self.registros = {}         # id -> linha do cron_registro
+        self.base = {}              # chave -> {"tipo", "valor"}: a cron_estrutura_base
         self.chamadas = []          # (metodo, tabela), na ordem
         self.falhar = {}            # "METODO tabela" -> codigo HTTP
         # Chamada no comeco de cada escrita no cron_estado, ANTES de o filtro
@@ -72,6 +80,22 @@ class Banco(object):
             "dono": self.dono, "dominio": dominio, "chave": chave,
             "valor": json.loads(json.dumps(valor)), "del": apagada,
             "em": como_postgres(em), "aparelho": aparelho, "expira_em": None}
+
+    def publicar(self, entrada):
+        """A cron_estrutura_base de um entrada.json, como o --publicar-estrutura
+        a grava: e dela que a funcao de marcar le a prova de cada etapa."""
+        self.base = {}
+        for pid, projetos in (entrada.get("paineis") or {}).items():
+            for pr in (projetos or []):
+                self.base["%s/%s" % (pid, pr["id"])] = {
+                    "tipo": "projeto",
+                    "valor": {k: pr[k] for k in ("t", "n", "mes") if k in pr}}
+                for sub in (pr.get("subs") or []):
+                    self.base["%s/%s/%s" % (pid, pr["id"], sub["id"])] = {
+                        "tipo": "subitem",
+                        "valor": {k: sub[k] for k in ("t", "n", "onde", "prova", "medida", "ordem")
+                                  if k in sub}}
+        return self
 
     def item(self, chave):
         return self.linhas.get(("item", chave))
@@ -141,6 +165,10 @@ class Banco(object):
                 tabela, _f, corpo, prefer = self._pedido("POST")
                 if self._falha("POST", tabela):
                     return
+                if tabela == "rpc/cron_pipeline_marcar":
+                    corpo = corpo or {}
+                    return self._responder(marcar(banco, corpo.get("p_chave"),
+                                                  corpo.get("p_seco", False)))
                 if tabela == "cron_registro":
                     for r in (corpo or []):
                         banco.registros.setdefault(r["id"], dict(r))
@@ -218,3 +246,108 @@ def _aplicar(linha, corpo):
 def _publica(linha):
     return {"chave": linha["chave"], "valor": linha["valor"],
             "del": linha.get("del", False), "em": linha["em"]}
+
+
+# ================== O ARREMEDO DA cron_pipeline_marcar ==================
+# Na mesma ordem da funcao de verdade, com as mesmas mensagens e as mesmas
+# chaves na resposta. Ver o teste_marcar_no_banco.py, secao 12, que os compara.
+_RE_CHAVE = re.compile(r"^[A-Za-z0-9_-]+/[A-Za-z0-9_-]+/[A-Za-z0-9_-]+$")
+_FUSO_BRASILIA = datetime.timedelta(hours=-3)   # sem horario de verao desde 2019
+
+
+def _ms(t):
+    return t.replace(microsecond=t.microsecond // 1000 * 1000)
+
+
+def _iso_ms(t):
+    return t.strftime("%Y-%m-%dT%H:%M:%S.") + "%03dZ" % (t.microsecond // 1000)
+
+
+def marcar(banco, chave, seco=False, agora=None):
+    """A cron_pipeline_marcar, em memoria. `agora` existe para o teste fixar o
+    relogio; sem ele, e o instante de agora, como o clock_timestamp()."""
+    if not isinstance(chave, str) or not _RE_CHAVE.match(chave):
+        return {"resultado": "recusada", "chave": chave, "para": 2,
+                "mensagem": "Chave inválida: use painel/projeto/etapa, por exemplo "
+                            "pipeline/a01/a01-3. Nada foi escrito."}
+    pid, proj_id, sub_id = chave.split("/")
+    if len(banco.donos) != 1:
+        return {"resultado": "recusada", "chave": chave, "para": 2,
+                "mensagem": "O Cronograma tem %d dono(s) cadastrado(s), e eu esperava "
+                            "exatamente 1. Nada foi escrito." % len(banco.donos)}
+    sub = banco.base.get(chave)
+    if not sub or sub["tipo"] != "subitem":
+        return {"resultado": "recusada", "chave": chave, "para": 2,
+                "mensagem": "Esta etapa não está na estrutura publicada do Cronograma. "
+                            "Confira o código (por exemplo pipeline/a01/a01-3). "
+                            "Nada foi escrito."}
+    proj = banco.base.get("%s/%s" % (pid, proj_id))
+    proj_t = (proj or {}).get("valor", {}).get("t") if (proj or {}).get("tipo") == "projeto" else None
+    resp = {"chave": chave, "projeto": proj_t, "etapa": sub["valor"].get("t"), "para": 2}
+
+    prova = sub["valor"].get("prova") or ""
+    if prova == "estrela":
+        return dict(resp, resultado="recusada",
+                    mensagem="Prova estrela: a conclusão desta etapa é decisão do autor, "
+                             "e não do artefato. Ele marca no aplicativo. Nada foi escrito.")
+    if prova != "maquina":
+        return dict(resp, resultado="recusada",
+                    mensagem='A etapa não tem prova "maquina" na estrutura publicada, e a '
+                             "máquina só marca etapa assim. Nada foi escrito.")
+
+    linha = banco.linhas.get(("item", chave))
+    atual = json.loads(json.dumps((linha or {}).get("valor") or {}))
+    # COMO O `->>` DO POSTGRES LE: o texto do campo, e o `st` so vale se esse
+    # texto for so digitos (2 e "2" valem; 2.0, true e -1 nao).
+    v = atual.get("vida")
+    vida = "ativo" if v is None or v == "" else (v if isinstance(v, str) else json.dumps(v))
+    st = atual.get("st")
+    st_txt = st if isinstance(st, str) else (None if st is None else json.dumps(st))
+    de = int(st_txt) if st_txt is not None and st_txt.isdigit() and st_txt.isascii() else None
+    resp = dict(resp, de=de, vida=vida)
+
+    if linha and linha.get("del"):
+        return dict(resp, resultado="recusada",
+                    mensagem="A etapa foi apagada no aplicativo, e a máquina não a traz "
+                             "de volta. Nada foi escrito.")
+    if vida != "ativo":
+        return dict(resp, resultado="recusada",
+                    mensagem='A etapa está com vida "%s" no aplicativo. Adiar, '
+                             "abandonar, arquivar ou dizer que não se aplica é "
+                             "decisão do autor, e a máquina só marca etapa ativa. "
+                             "Nada foi escrito." % vida)
+    if (de or 0) >= 2:
+        return dict(resp, resultado="ja_estava",
+                    mensagem="A etapa já estava concluída. Nada foi escrito.")
+    if seco:
+        return dict(resp, resultado="marcaria",
+                    mensagem="Conferência: a etapa seria marcada como concluída. "
+                             "Nada foi escrito.")
+
+    novo = dict(atual, st=2, vida=vida)
+    for campo in ("motivo", "voltar_em", "vidaDesde"):
+        if not isinstance(novo.get(campo), str):
+            novo[campo] = ""
+    em = _ms(agora or datetime.datetime.now(datetime.timezone.utc))
+    if linha and em <= instante(linha["em"]):
+        em = _ms(instante(linha["em"])) + datetime.timedelta(milliseconds=1)
+
+    if linha:
+        linha.update({"valor": novo, "del": False, "em": como_postgres(_iso_ms(em)),
+                      "aparelho": "cowork"})
+    else:
+        banco.linhas[("item", chave)] = {
+            "dono": banco.dono, "dominio": "item", "chave": chave, "valor": novo,
+            "del": False, "em": como_postgres(_iso_ms(em)), "aparelho": "cowork",
+            "expira_em": None}
+
+    ident = _iso_ms(em).replace(":", "-").replace(".", "-") + "-cowork-" + chave.replace("/", "-")
+    if ident in banco.registros:
+        raise RuntimeError("duplicate key value violates unique constraint (cron_registro)")
+    banco.registros[ident] = {
+        "id": ident, "dono": banco.dono, "d": (em + _FUSO_BRASILIA).date().isoformat(),
+        "pid": pid, "proj_id": proj_id, "sub_id": sub_id, "proj_t": proj_t,
+        "sub_t": sub["valor"].get("t"), "de": de, "para": 2, "vida": vida,
+        "motivo": "", "aparelho": "cowork"}
+    return dict(resp, resultado="marcada", em=como_postgres(_iso_ms(em)),
+                mensagem="Etapa marcada como concluída. Ela já aparece nos aparelhos.")

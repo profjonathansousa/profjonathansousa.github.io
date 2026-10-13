@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Prova de ponta a ponta da sincronia de PRIORIDADES (Fase 2), do GUIA DO
-TOEFL (Fase 6A) e das RETOMADAS SILENCIADAS (Fase 6B).
+"""Prova de ponta a ponta do PIPELINE ate a tela: o --registrar marca, e o
+aparelho recebe.
 
     python3 scripts/teste_sincronia.py
 
-Os outros testes exercitam um lado de cada vez: o teste_hoje.js prova o que a
-pagina faz, e nada prova o que acontece ENTRE os dois aparelhos. Este aqui
-atravessa a fronteira das duas linguagens, com o codigo de verdade dos dois
-lados e nada simulado no meio:
+Os outros testes exercitam um lado de cada vez: o teste_registrar.py prova o
+comando, o teste_marcar_no_banco.py a funcao do banco, o teste_sync.js os
+aparelhos. Este atravessa a fronteira das duas linguagens, com o codigo de
+verdade dos dois lados:
 
-    node (pagina, aparelho "mac")  ->  toque
-        -> scripts/dobrar_toques.py (o script de verdade, nao uma copia)
-            -> estado.json
-                -> node (pagina, aparelho "celular")  ->  prioridade na tela
+    scripts/dobrar_toques.py --registrar (o script de verdade)
+        -> /rpc/cron_pipeline_marcar (o arremedo da funcao, que o
+           teste_marcar_no_banco.py compara com a de verdade)
+            -> a linha `item` no cron_estado
+                -> node (pagina, aparelho "celular"): aplicarItemOnline -> trilho
 
-Nada e escrito no repositorio: a rodada inteira acontece num diretorio
-temporario com a mesma forma do repositorio.
+Ate 2026-10-13 o caminho passava por um toque, pela dobra e pelo estado.json;
+a copia publica do historico saiu, e o caminho e este. Nada e escrito no
+repositorio: a rodada inteira acontece num diretorio temporario.
 """
 import json
 import os
@@ -93,7 +95,7 @@ def node(corpo, raiz):
 
 def montar_repo_falso():
     tmp = tempfile.mkdtemp(prefix="cronograma-sinc-")
-    os.makedirs(os.path.join(tmp, "Cronograma", "toques"))
+    os.makedirs(os.path.join(tmp, "Cronograma"))
     for nome in ("index.html", "entrada.json"):
         shutil.copy(os.path.join(RAIZ, "Cronograma", nome),
                     os.path.join(tmp, "Cronograma", nome))
@@ -103,57 +105,25 @@ def montar_repo_falso():
     return tmp
 
 
-def dobrar_em(tmp):
-    """Roda o dobrar_toques.py DE VERDADE, so com os caminhos apontados para o
-    diretorio temporario. Recarregado a cada chamada porque os caminhos sao
-    constantes de modulo."""
-    import importlib
-    import dobrar_toques
-    importlib.reload(dobrar_toques)
-    dobrar_toques.DIR_TOQUES = os.path.join(tmp, "Cronograma", "toques")
-    dobrar_toques.DIR_DOBRADOS = os.path.join(tmp, "Cronograma", "toques", "_dobrados")
-    dobrar_toques.ARQ_ESTADO = os.path.join(tmp, "Cronograma", "estado.json")
-    dobrar_toques.ARQ_ENTRADA = os.path.join(tmp, "Cronograma", "entrada.json")
-    argv = sys.argv
-    sys.argv = ["dobrar_toques.py"]
-    try:
-        import io as _io
-        import contextlib
-        buf = _io.StringIO()
-        with contextlib.redirect_stdout(buf):
-            codigo = dobrar_toques.main()
-    finally:
-        sys.argv = argv
-    if codigo != 0:
-        raise SystemExit("dobrar_toques.main() devolveu %s" % codigo)
-    with open(os.path.join(tmp, "Cronograma", "estado.json"), encoding="utf-8") as f:
-        return json.load(f)
-
-
-def gravar_toques(tmp, toques, nome):
-    caminho = os.path.join(tmp, "Cronograma", "toques", nome)
-    with open(caminho, "w", encoding="utf-8") as f:
-        json.dump({"v": 1, "lote": nome, "toques": toques}, f, ensure_ascii=False)
+def disco(tmp):
+    """O que existe no Cronograma temporario alem do que foi copiado para la."""
+    copiados = {"index.html", "entrada.json"}
+    return sorted(a for a in os.listdir(os.path.join(tmp, "Cronograma"))
+                  if a not in copiados and a != "js")
 
 
 # ============================================================
-# O QUE SOBROU DESTE TESTE, e por que (Fase 9G-2)
+# O QUE ESTE ARQUIVO E (2026-10-13)
 # ============================================================
-# Ele provava o round-trip INTEIRO do caminho legado: pagina -> toques ->
-# dobrar_toques.py -> estado.json -> pagina, para prioridade, TOEFL, retomada e
-# os quatro tipos antigos. A 9G-2 cortou a subida legada do APLICATIVO: a
-# pagina nao emite mais toque nenhum, entao aquelas secoes ficaram sem sujeito
-# — nao "quebraram", deixaram de ter o que medir.
-#
-# NAO HOUVE PERDA DE COBERTURA. Os mesmos dominios sao provados entre dois
-# aparelhos pelo teste_sync.js, agora pelo caminho que existe de verdade.
-#
-# O QUE CONTINUA VALENDO e o que este arquivo passou a ser: o round-trip do
-# PIPELINE, que segue emitindo toque pelo `--registrar` e depende da dobra e da
-# descida. Enquanto a 9G-3 nao cortar a descida, este e o unico teste que
-# atravessa as duas linguagens com o codigo de verdade dos dois lados.
+# Ele provava o round-trip do caminho legado: pagina -> toques ->
+# dobrar_toques.py -> estado.json -> pagina. A 9G-2 tirou a pagina desse
+# caminho (os dominios dela sao provados entre dois aparelhos pelo
+# teste_sync.js), e em 2026-10-13 o pipeline tambem saiu: o --registrar marca
+# pela funcao do banco, e o estado.json deixou o repositorio. O que sobra para
+# provar aqui e a ponta que so este teste atravessa: o que o pipeline escreve
+# chega a tela de um aparelho.
 TMP2 = montar_repo_falso()
-print("\n=== 5. pipeline -> --registrar -> estado -> trilho ===")
+print("\n=== 5. pipeline -> --registrar -> funcao do banco -> trilho ===")
 import importlib
 import dobrar_toques
 importlib.reload(dobrar_toques)
@@ -164,76 +134,64 @@ dobrar_toques.ARQ_ENTRADA = os.path.join(TMP2, "Cronograma", "entrada.json")
 import io as _io
 import contextlib
 
-# SEM CREDENCIAIS, ELE RECUSA — e a regra nasceu com a 9G-3. Enquanto o
-# aplicativo lia o estado.json, gravar o toque bastava: ele chegava aos
-# aparelhos pelo repositorio mesmo que a publicacao online falhasse. Nao chega
-# mais. Gravar sem poder publicar produziria um comando que termina com sucesso
-# e uma marcacao que ninguem ve, e e disso que esta assercao e a guarda.
+
+def registrar(alvo):
+    buf = _io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        codigo = dobrar_toques.registrar(alvo)
+    return codigo, buf.getvalue()
+
+
+# SEM CREDENCIAIS, ELE RECUSA: quem marca e a funcao do banco, e sem as duas
+# variaveis nao ha como chama-la. Nada vai para o disco no lugar.
 for _v in (dobrar_toques.API_URL, dobrar_toques.API_CHAVE):
     os.environ.pop(_v, None)
-buf = _io.StringIO()
-with contextlib.redirect_stdout(buf):
-    cod_sem = dobrar_toques.registrar("pipeline/a00/a00-4", 2, "ativo", False, False)
-ok(cod_sem != 0, "sem credenciais o --registrar RECUSA (9G-3)", buf.getvalue()[-160:])
-ok(not os.path.exists(os.path.join(TMP2, "Cronograma", "toques")) or
-   not [x for x in os.listdir(os.path.join(TMP2, "Cronograma", "toques")) if x.endswith(".json")],
-   "   e nao deixa arquivo de toque para tras")
+cod_sem, saida = registrar("pipeline/a00/a00-4")
+ok(cod_sem != 0, "sem credenciais o --registrar RECUSA", saida[-160:])
+ok(disco(TMP2) == [], "   e nao deixa nada no disco (nem toque, nem estado.json)", disco(TMP2))
 
-# COM AS CREDENCIAIS PRESENTES E A REDE FORA, tambem recusa — e isso mudou em
-# 2026-10-12. Ate ali, com a rede fora, ele gravava o toque, dizia que nao tinha
-# publicado e saia com sucesso. Desde a 9G-3 o toque gravado nao leva nada a
-# aparelho nenhum, e agora o --registrar precisa LER o estado de agora antes de
-# decidir (o estado.json parou em 10/09). Sem banco, nada e gravado.
+# COM A REDE FORA, tambem recusa, e tambem nao escreve nada.
 os.environ[dobrar_toques.API_URL] = "http://127.0.0.1:9"
 os.environ[dobrar_toques.API_CHAVE] = "chave-de-mentira-do-teste"
-buf = _io.StringIO()
-with contextlib.redirect_stdout(buf):
-    cod_rede = dobrar_toques.registrar("pipeline/a00/a00-4", 2, None, False, False)
-ok(cod_rede != 0, "com a rede fora o --registrar RECUSA, em vez de gravar so o toque",
-   buf.getvalue()[-200:])
-ok(not os.path.exists(os.path.join(TMP2, "Cronograma", "toques")) or
-   not [x for x in os.listdir(os.path.join(TMP2, "Cronograma", "toques")) if x.endswith(".json")],
-   "   e nao deixa arquivo de toque para tras")
+cod_rede, saida = registrar("pipeline/a00/a00-4")
+ok(cod_rede != 0, "com a rede fora o --registrar RECUSA", saida[-200:])
+ok(disco(TMP2) == [], "   e nao deixa nada no disco", disco(TMP2))
 
-# COM O BANCO RESPONDENDO (um PostgREST de mentira, em localhost), escreve: a
-# linha entra primeiro, e so depois o arquivo de toque que a dobra consome.
+# COM O BANCO RESPONDENDO (um PostgREST de mentira, em localhost, com a
+# estrutura do entrada.json de verdade publicada nele), a funcao marca.
 from postgrest_de_mentira import Banco
-BANCO = Banco().subir()
+with open(os.path.join(TMP2, "Cronograma", "entrada.json"), encoding="utf-8") as _f:
+    BANCO = Banco().subir().publicar(json.load(_f))
 os.environ[dobrar_toques.API_URL] = BANCO.url
-buf = _io.StringIO()
-with contextlib.redirect_stdout(buf):
-    cod = dobrar_toques.registrar("pipeline/a00/a00-4", 2, None, False, False)
+cod, saida = registrar("pipeline/a00/a00-4")
+cod_estrela, saida_estrela = registrar("pipeline/a00/a00-1")
 BANCO.parar()
 for _v in (dobrar_toques.API_URL, dobrar_toques.API_CHAVE):
     os.environ.pop(_v, None)
-ok(cod == 0, "o --registrar do pipeline escreve o toque", buf.getvalue()[-200:])
-ok((BANCO.item("pipeline/a00/a00-4") or {}).get("valor", {}).get("st") == 2,
-   "   depois de a linha entrar no banco", BANCO.item("pipeline/a00/a00-4"))
-# registrar() SO ESCREVE O TOQUE. Quem consolida e a dobra seguinte — no uso
-# real o proprio main() encadeia as duas na mesma execucao.
-est5 = dobrar_em(TMP2)
-ok(est5["itens"].get("pipeline/a00/a00-4", {}).get("st") == 2,
-   "e a dobra fecha a etapa no estado", est5["itens"].get("pipeline/a00/a00-4"))
-ok(est5["itens"]["pipeline/a00/a00-4"].get("aparelho") == "cowork",
-   "com o aparelho 'cowork'", est5["itens"].get("pipeline/a00/a00-4"))
+linha = BANCO.item("pipeline/a00/a00-4") or {}
+ok(cod == 0, "o --registrar do pipeline marca", saida[-200:])
+ok((linha.get("valor") or {}).get("st") == 2 and linha.get("aparelho") == "cowork",
+   "   a linha `item` fecha a etapa, assinada como `cowork`", linha)
+ok(disco(TMP2) == [], "   e o disco continua intocado", disco(TMP2))
+ok(cod_estrela != 0 and "estrela" in saida_estrela,
+   "e ele RECUSA etapa de prova 'estrela' (decisao sua)", saida_estrela[-160:])
+
+# E O APARELHO RECEBE A LINHA COMO RECEBE A DE QUALQUER OUTRO: pelo
+# aplicarItemOnline, a descida do Supabase.
 depois = node("""
-const est = %s;
+const linha = %s;
 const d = aparelho("celular", {"cron:aparelho":JSON.stringify("celular")}, null);
+const renders = d.aplicarItemOnline(linha);
 const ps = d.getProjs("pipeline"), pr = ps.filter(x=>x.id==="a00")[0];
-const alvo = est.itens["pipeline/a00/a00-4"];
 const sx = pr.subs.filter(x=>x.id==="a00-4")[0];
-if((sx.em||"") < alvo.quando){ sx.st = alvo.st; sx.em = alvo.quando; d.setProjs("pipeline", ps); }
-console.log(JSON.stringify({fechada: sx.st, fila: (d.LS("cron:sync-fila", []) || []).length,
+console.log(JSON.stringify({fechada: sx.st, renders: renders.length,
+                            fila: (d.LS("cron:sync-fila", []) || []).length,
                             estagio: (d.estagioDoTrilho("pipeline","a00")||{}).subId}));
-""" % json.dumps(est5), RAIZ)
-ok(depois["fechada"] == 2, "e o aparelho recebe a etapa fechada", depois)
+""" % json.dumps(linha), RAIZ)
+ok(depois["fechada"] == 2 and depois["renders"] > 0, "e o aparelho recebe a etapa fechada", depois)
 ok(depois["estagio"] != "a00-4", "e ja aponta para a seguinte", depois["estagio"])
 ok(depois["fila"] == 0, "sem escrever de volta (sem eco)", depois["fila"])
-buf = _io.StringIO()
-with contextlib.redirect_stdout(buf):
-    cod_estrela = dobrar_toques.registrar("pipeline/a00/a00-1", 2, "ativo", False, False)
-ok(cod_estrela != 0, "e ele RECUSA etapa de prova 'estrela' (decisao sua)",
-   buf.getvalue()[-160:])
+shutil.rmtree(TMP2, ignore_errors=True)
 
 print("\n" + "=" * 62)
 print("FALHAS: %d" % len(falhas))

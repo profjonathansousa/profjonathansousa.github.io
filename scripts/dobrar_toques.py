@@ -3,6 +3,15 @@
 """
 dobrar_toques.py — dobra os toques do Cronograma em estado.json.
 
+DESDE 2026-10-13 A DOBRA ESTA PARADA, e o estado.json saiu do repositorio. O
+estado mora no Supabase desde a Fase 9; o aplicativo deixou de escrever toque
+na 9G-2 e de ler o estado.json na 9G-3; e o --registrar, ultimo escritor de
+toque, passou a marcar direto no banco pela cron_pipeline_marcar. A copia
+publica do historico, num repositorio publico, nao servia mais a ninguem, e o
+autor pediu que ela parasse. O que segue descreve a dobra como ela foi — o
+codigo fica para toque antigo que reapareca, e o que ela escrever fica fora do
+git (.gitignore).
+
 O DESENHO, em uma frase: o aparelho escreve toques (arquivo novo, nunca
 editado), e este script os dobra num estado só. É o Passo 5 da reforma.
 
@@ -53,11 +62,9 @@ USO:
     python3 scripts/dobrar_toques.py            # dobra e relata
     python3 scripts/dobrar_toques.py --seco     # só relata, não escreve nada
 
-    # a sessão do Cowork marcando uma etapa que o pipeline fechou:
-    python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-4 --para 2
-    python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-5 --para 1 --seco
-    # mudar a vida também, de propósito (sem --vida, a vida fica como está):
-    python3 scripts/dobrar_toques.py --registrar pipeline/a00/a00-3 --para 0 --vida inaplicavel
+    # marcar como concluída uma etapa que o pipeline fechou (pela função do banco):
+    python3 scripts/dobrar_toques.py --registrar pipeline/a01/a01-3 --para 2
+    python3 scripts/dobrar_toques.py --registrar pipeline/a01/a01-3 --seco
 
     # o Cowork publicando a estrutura que acabou de montar:
     python3 scripts/dobrar_toques.py --publicar-estrutura /tmp/entrada-nova.json
@@ -70,46 +77,26 @@ se não puder registrar a base: publicar só metade deixaria a base mentindo, e 
 merge de três vias viraria de duas em silêncio. Exige SUPABASE_URL e
 SUPABASE_SECRET_KEY no ambiente.
 
-O --registrar escreve um toque com aparelho "cowork" e dobra em seguida: grava o
-arquivo na pasta conectada e lê de volta no mesmo comando. É a metade que faltava
-do elo pipeline -> Cronograma.
+O --registrar MARCA UMA ETAPA COMO CONCLUÍDA, e quem marca é a função do banco
+cron_pipeline_marcar (sql/cron_pipeline_marcar.sql) — a mesma que o Cowork chama
+pelo conector do Supabase no fim de cada janela (2026-10-13). As regras moram
+nela, e só nela:
+  · só etapa de prova "maquina" na estrutura publicada. Prova "estrela" é
+    decisão do autor — a escolha entre as opções A/B/C, o portão do NotebookLM,
+    o "pronto para submeter" —, e a máquina não a marca;
+  · só etapa ATIVA. Adiada, abandonada, arquivada, "não se aplica" ou apagada
+    fica como está, com o motivo e as datas (decidido em 2026-10-12);
+  · só CONCLUIR. O --para 0|1, o --vida e o --forcar saíram: voltar uma etapa,
+    mudar a vida dela ou passar por cima de uma recusa se faz no aplicativo;
+  · o valor é o de agora com o `st` novo, a linha fica travada da leitura à
+    escrita, o relógio do banco é respeitado, e a linha do cron_registro entra
+    na mesma transação do item.
 
-DESDE A FASE 9G-0 ele também publica o MESMO toque no estado compartilhado (uma
-linha `item` e uma linha de registro). E desde a 9G-3 isso deixou de ser melhor
-esforço e passou a ser CONDIÇÃO: sem SUPABASE_URL e SUPABASE_SECRET_KEY no
-ambiente, ele RECUSA e não grava nada.
-
-A razão está no que a 9G-3 cortou. Enquanto o aplicativo lia o estado.json, um
-toque gravado chegava aos aparelhos pelo repositório mesmo que a publicação
-online falhasse. Ele não lê mais. O arquivo de toque continua existindo e
-continua sendo dobrado — é artefato e trilha auditável —, mas não é mais um
-canal: nada nele alcança um aparelho. Gravar sem poder publicar produziria um
-comando que termina com sucesso e uma marcação que ninguém vê. É o mesmo
-argumento do --publicar-estrutura. Para conferir o alvo sem escrever, use --seco.
-
-DESDE 2026-10-12 ele decide pelo estado do BANCO, e não pelo estado.json. Desde
-a 9G-3 nada mais dobra toque de aparelho, e o estado.json parou em 10/09: ele
-dava como "a fazer" etapas que você já tinha fechado no celular. O --registrar
-lia o `st` anterior dali, e publicava um valor montado do zero — vida "ativo",
-motivo e datas vazios — que o banco põe no lugar do valor inteiro. Marcar uma
-etapa adiada apagava o adiamento e o motivo. Agora ele:
-  · lê a linha do item no cron_estado antes de escrever, e o `de` é o dela;
-  · muda só o `st`: vida, motivo, data de volta e vidaDesde ficam como estão
-    (a vida só muda com --vida, dito de propósito);
-  · grava só se a linha ainda estiver como foi lida, e confere a resposta;
-  · publica ANTES de gravar o arquivo de toque, e sai com erro, sem gravar
-    nada, quando a publicação não acontece.
-
-REGRA DURA DO --registrar: ele RECUSA subitem de prova "estrela". O mapa_portal.json
-marca assim as etapas cuja conclusão é decisão do autor e não artefato — a escolha
-entre as opções A/B/C, o portão do NotebookLM, o "pronto para submeter". Escrever
-toque sobre elas faria o relógio do Cowork vencer a decisão do autor e apagá-la. O
-campo prova viaja no Cronograma/entrada.json. Para insistir mesmo assim: --forcar.
-
-E RECUSA etapa que não esteja ativa no banco — adiada, abandonada, arquivada ou
-"não se aplica" —, pela mesma razão: cada uma dessas é decisão do autor, e o
-Cowork só marca etapa ativa (decidido em 2026-10-12). O --forcar também passa por
-cima desta recusa, e mesmo assim a vida, o motivo e as datas ficam.
+Ele não escreve nada no disco: nem toque, nem estado.json. Sem SUPABASE_URL e
+SUPABASE_SECRET_KEY no ambiente, recusa; com --seco, pede à função só a
+conferência ("marcaria"), e sem credenciais mostra o alvo sem consultar nada.
+Sai com 0 quando a etapa foi marcada, já estava concluída ou (--seco) seria
+marcada; com 1 quando a função recusa ou o banco não responde.
 """
 
 import json
@@ -557,53 +544,46 @@ def publicar_estrutura(caminho_novo, seco):
 
 
 # ======================= O CAMINHO ONLINE DO --registrar =======================
-# Fase 9G-0. O pipeline sempre foi um segundo escritor REAL, e nao um espelho: ele
-# afirma um fato que so ele verifica (o artefato existe), e o afirma pela mesma
-# porta por onde o iPhone entra. Ate aqui essa porta era so o arquivo de toque.
-# Enquanto o caminho do GitHub existir isso basta; no dia em que ele sair, o
-# pipeline ficaria sem interlocutor. Esta e a metade que faltava, e ela e
-# preparada AGORA justamente para que a 9G nao precise inventar nada depois.
+# O pipeline e um segundo escritor REAL, e nao um espelho: ele afirma um fato que
+# so ele verifica (o artefato existe), e o afirma pela mesma porta por onde o
+# iPhone entra — o dominio `item` do cron_estado, com aparelho "cowork".
 #
-# O QUE ELE PUBLICA, e nada alem disso:
-#   · uma linha `item` em cron_estado — o progresso, com o ciclo de vida que ja
-#     estava la preservado;
-#   · uma linha em cron_registro, com o id DO TOQUE como chave primaria.
-# Nao publica estrutura. A separacao entre progresso e estrutura e do esquema, e
-# a base de tres vias (cron_estrutura_base) tem dono proprio e outro momento.
+# DESDE 2026-10-13 QUEM MARCA E UMA FUNCAO DO BANCO, a cron_pipeline_marcar
+# (sql/cron_pipeline_marcar.sql), e este comando so a chama. A razao e o Cowork:
+# ele roda atras de um proxy que recusa o supabase.co e o api.github.com, e o
+# unico caminho que sai de la e o conector do Supabase. O autor decidiu que a
+# marcacao acontece no fim de cada janela, quando ELE dispara o fluxo — e nao
+# numa rodada agendada. Entao o Cowork chama a funcao pelo conector, e este
+# comando (o botao de conferencia do Actions, ou um terminal) chama a MESMA
+# funcao pela API. Um lugar so para as regras, e dois caminhos ate ele:
+#   · so etapa de prova "maquina" na estrutura publicada — "estrela" e decisao
+#     do autor, e a recusa nao depende mais do entrada.json que este repositorio
+#     tiver no disco;
+#   · so etapa ativa: adiada, abandonada, arquivada, "nao se aplica" ou apagada
+#     fica como esta, com o motivo e as datas;
+#   · so CONCLUIR. O --para 0|1, o --vida e o --forcar sairam: voltar uma etapa,
+#     mudar a vida dela ou passar por cima de uma recusa e coisa do aplicativo,
+#     na mao do autor;
+#   · o valor e o de agora com o `st` novo, a linha travada da leitura a escrita,
+#     o relogio respeitado, e o registro na mesma transacao do item.
 #
-# O MESMO `em` NOS DOIS CAMINHOS: o `agora` que carimba o toque e o mesmo que
-# sobe na linha. Sem isso o LWW de um caminho decidiria diferente do outro, e a
-# prova da 9F nao teria o que comparar.
-#
-# A FRONTEIRA CONTINUA ANTES: a recusa de prova "estrela" e a de etapa que nao
-# esta ativa acontecem la em cima, no registrar(), e nada aqui as alcanca.
-# Publicar e o ultimo passo de um toque que ja foi autorizado — nunca uma
-# segunda chance para um que nao foi.
-#
-# O ESTADO DE AGORA E O DO BANCO (correcao de 2026-10-12). Ate aqui o `de` e a
-# decisao vinham do estado.json, que parou em 10/09 quando a 9G-3 cortou a
-# dobra dos aparelhos. E o valor publicado era montado do zero — vida "ativo",
-# motivo e datas vazios —, e o banco troca o valor INTEIRO: marcar uma etapa
-# adiada apagava o adiamento e o motivo. Agora a linha e lida antes, so o `st`
-# muda, e a escrita so vale se a linha ainda estiver como foi lida.
-#
-# O RELOGIO DO SERVIDOR RECUSA O ATRASADO: o gatilho cron_estado_relogio()
-# descarta a escrita cujo `em` nao seja mais novo. O pipeline nao pode desfazer
-# uma decisao mais recente sua, nem que tente. E o descarte e SILENCIOSO no
-# banco — por isso a escrita pede a linha de volta, e sem ela diz que nao gravou.
-#
-# O BANCO PRIMEIRO, O ARQUIVO DEPOIS. Ate a 9G-3 o arquivo de toque era o
-# artefato duravel e publicar era melhor esforco. Desde entao o arquivo nao
-# leva nada a aparelho nenhum: gravado sem a publicacao, ele so afirmaria uma
-# marcacao que ninguem ve. Entao ele so e gravado depois de a linha entrar, como
-# trilha auditavel do que de fato aconteceu.
+# SEM ARQUIVO DE TOQUE. Ate aqui, depois de a linha entrar, o comando gravava um
+# toque em Cronograma/toques/ e a dobra o levava ao estado.json — a copia
+# publica do historico, num repositorio publico. O autor pediu que ela parasse
+# (2026-10-13): o historico mora no cron_registro, que e privado. Nada aqui
+# escreve no disco.
 API_URL   = "SUPABASE_URL"
 API_CHAVE = "SUPABASE_SECRET_KEY"
 
-# Os valores que o aplicativo da a `vida` de um subitem (ver normSub, ciclarVida
-# e estaArquivado em Cronograma/js/). Um --vida fora desta lista criaria um
-# estado que nenhuma tela sabe desenhar.
-VIDAS = ("ativo", "adiado", "abandonado", "arquivado", "inaplicavel")
+RPC_MARCAR = "/rpc/cron_pipeline_marcar"
+
+# O que cada resposta da funcao vira em codigo de saida. "recusada" e erro: quem
+# chamou pediu uma marcacao que nao aconteceu, e precisa saber.
+RESULTADOS_OK = ("marcada", "ja_estava", "marcaria")
+
+# O LOG DO ACTIONS E PUBLICO. Com LOG_PUBLICO=1 (o derivar-marcacao.yml), o
+# titulo do projeto nao sai na tela: a chave e a etapa bastam para ler o log.
+VAR_LOG_PUBLICO = "LOG_PUBLICO"
 
 
 def _credenciais():
@@ -655,224 +635,64 @@ def _itens(url, chave, dono, filtro):
     return {l["chave"]: l for l in (linhas or []) if l.get("chave")}
 
 
-def item_online(url, chave, dono, chave_item):
-    """A linha de agora de UM item, ou None se ele nunca foi tocado online."""
-    return _itens(url, chave, dono, "eq." + chave_item).get(chave_item)
-
-
 def itens_do_painel(url, chave, dono, pid):
     """Todas as linhas de um painel, numa consulta so. E o que o
-    derivar_do_pipeline.py le para decidir, no lugar do estado.json."""
+    derivar_do_pipeline.py le para decidir quais etapas ainda faltam."""
     return _itens(url, chave, dono, "like." + pid + "/*")
 
 
-def publicar_online(toque, url, chave, dono, linha, valor):
-    """Sobe o MESMO toque para o estado compartilhado, e so se o item ainda
-    estiver como foi lido. Devolve (gravado, aviso): gravado False quer dizer
-    que NADA foi escrito; o aviso diz o que falhou depois de o item entrar.
-
-    `linha` e a linha lida antes (None se o item nunca foi tocado), e `valor` e
-    o que vai no lugar dela: o valor de agora com o `st` novo, e nao um montado
-    do zero — montar do zero era o que apagava a vida, o motivo e as datas."""
-    from urllib.parse import quote
-    d = toque["dados"]
-    chave_item = "%s/%s/%s" % (d["pid"], d["projId"], d["subId"])
-
-    if linha:
-        # ESCRITA CONDICIONAL. O filtro pelo `em` lido faz o PATCH valer so se
-        # ninguem tocou no item depois da leitura. Se voce mexeu nele no
-        # celular nesse meio-tempo, a linha nao casa, nada e escrito, e a
-        # decisao sua fica.
-        filtro = ("?dono=eq.%s&dominio=eq.item&chave=eq.%s&em=eq.%s"
-                  % (quote(str(dono), safe=""), quote(chave_item, safe=""),
-                     quote(str(linha.get("em") or ""), safe="")))
-        feitas = _pedir(url, chave, "/cron_estado" + filtro, "PATCH", {
-            "valor": valor, "del": False, "em": toque["quando"], "aparelho": "cowork",
-        }, prefer="return=representation")
-    else:
-        # ITEM NUNCA TOCADO: cria a linha, e so se ela continuar nao existindo.
-        # Com ignore-duplicates, uma linha criada nesse meio-tempo vence.
-        feitas = _pedir(url, chave, "/cron_estado", "POST", [{
-            "dono": dono, "dominio": "item", "chave": chave_item,
-            "valor": valor, "del": False, "em": toque["quando"], "aparelho": "cowork",
-            "expira_em": None,
-        }], prefer="resolution=ignore-duplicates,return=representation")
-
-    # A LINHA VOLTA, OU NAO HOUVE ESCRITA. Com return=minimal, o descarte do
-    # gatilho do relogio passava por sucesso, e o comando dizia "publicado".
-    if len(feitas or []) != 1:
-        return (False, None)
-
-    # `cron_registro`: a chave e o id DO TOQUE, a mesma que o caminho do GitHub
-    # grava em `tid`. E o que faz as duas descidas reconhecerem a mesma linha e
-    # nao duplica-la. ignore-duplicates porque reenviar tem de ser silencio.
-    #
-    # SO DEPOIS DO ITEM, e uma falha aqui nao desfaz o item: o registro e
-    # historico, e uma linha de historico sobre uma mudanca que nao entrou
-    # seria pior do que uma linha a menos. Quem chama diz o que faltou.
-    try:
-        _pedir(url, chave, "/cron_registro", "POST", [{
-            "id": toque["id"], "dono": dono, "d": d["d"],
-            "pid": d["pid"], "proj_id": d["projId"], "sub_id": d["subId"],
-            "proj_t": d.get("projT") or "", "sub_t": d.get("subT") or "",
-            "de": d.get("de"), "para": d["para"], "vida": d.get("vida") or "ativo",
-            "motivo": "", "aparelho": "cowork",
-        }], prefer="resolution=ignore-duplicates,return=minimal")
-    except Exception as e:
-        return (True, "a etapa foi marcada, mas a linha do registro nao subiu "
-                      "(%s). O estado esta certo; falta so o historico." % e)
-    return (True, None)
+def marcar_online(url, chave, chave_item, seco):
+    """Pede a marcacao a cron_pipeline_marcar e devolve a resposta dela: um
+    objeto com `resultado` e `mensagem`. A funcao confere e escreve numa
+    transacao so; daqui sai so o pedido. Com `seco`, ela confere e nao escreve."""
+    resp = _pedir(url, chave, RPC_MARCAR, "POST",
+                  {"p_chave": chave_item, "p_seco": bool(seco)})
+    if not isinstance(resp, dict) or "resultado" not in resp:
+        raise RuntimeError("resposta inesperada da cron_pipeline_marcar: %r" % (resp,))
+    return resp
 
 
-def registrar(alvo, para, vida, forcar, seco):
-    """Escreve UM toque, como se o Cowork fosse mais um aparelho.
-
-    `vida` None quer dizer "a que ja esta la": o pipeline afirma progresso, e
-    so mexe no ciclo de vida de uma etapa quando alguem manda, com --vida."""
+def registrar(alvo, seco=False):
+    """Marca UMA etapa como concluida, pela cron_pipeline_marcar. Devolve o
+    codigo de saida: 0 marcada, ja concluida ou (com `seco`) conferida; 1
+    recusada ou sem resposta do banco."""
     partes = (alvo or "").split("/")
-    if len(partes) != 3:
-        print("Alvo invalido: %r. Use painel/projeto/subitem, ex.: pipeline/a00/a00-4" % alvo)
+    if len(partes) != 3 or not all(partes):
+        print("Alvo invalido: %r. Use painel/projeto/etapa, ex.: pipeline/a01/a01-3" % alvo)
         return 1
     pid, proj_id, sub_id = partes
-    chave_item = "%s/%s/%s" % (pid, proj_id, sub_id)
-
     projT, subT, prova = procurar_na_entrada(pid, proj_id, sub_id)
-    if prova is None and projT is None:
-        print("AVISO: %s nao esta no Cronograma/entrada.json." % alvo)
-        print("Se o id estiver errado, o toque nao vai aparecer em lugar nenhum.")
-    if prova == "estrela" and not forcar:
-        print("RECUSADO: %s tem prova 'estrela'." % alvo)
-        print("Etapa cuja conclusao e decisao do autor, nao artefato. O Cowork nao")
-        print("escreve toque sobre ela: o relogio dele venceria a decisao do autor e")
-        print("a apagaria. Se for mesmo o caso, repita com --forcar.")
-        return 1
+    publico = bool(os.environ.get(VAR_LOG_PUBLICO))
 
-    # SEM CREDENCIAIS, RECUSA — e a razao mudou na 9G-3.
-    #
-    # Ate a 9G-2 publicar online era melhor esforco legitimo: se falhasse, o
-    # toque ainda viajava pelo estado.json, que o aplicativo lia no boot. A 9G-3
-    # cortou essa leitura. O arquivo de toque continua existindo e continua
-    # sendo dobrado — e artefato e trilha auditavel —, mas NAO e mais um canal:
-    # nada nele alcanca um aparelho.
-    #
-    # Entao gravar sem poder publicar produz o pior resultado possivel: um
-    # comando que termina com sucesso, um arquivo que existe, um estado.json
-    # que muda, e uma marcacao que nunca aparece na tela de ninguem. E o mesmo
-    # argumento do --publicar-estrutura, que ja recusa sem credenciais: publicar
-    # so metade deixa o outro lado mentindo.
-    #
-    # O --seco escapa porque nao grava nada: ele existe para conferir o alvo.
     url, chave = _credenciais()
-    if not seco and not url:
-        print("\nRECUSADO: faltam %s e/ou %s no ambiente." % (API_URL, API_CHAVE))
-        print("Desde a Fase 9G-3 o aplicativo nao le mais o estado.json: o unico")
-        print("caminho que leva uma marcacao aos aparelhos e a escrita online.")
-        print("Gravar o toque agora criaria um arquivo que nao alcanca ninguem,")
-        print("e o comando diria que deu certo.")
-        print("")
-        print("Rode onde as duas variaveis existam. Para so conferir o alvo sem")
-        print("escrever nada, use --seco.")
+    if not url:
+        if seco:
+            # O --seco SEM BANCO so mostra o alvo. Quem decide e a funcao, e ela
+            # nao foi consultada: o "marcaria" nao pode sair daqui.
+            print("Conferencia sem banco: faltam %s e/ou %s no ambiente." % (API_URL, API_CHAVE))
+            print("  %s   %s   prova=%s" % (alvo, subT or "?", prova or "?"))
+            print("  A cron_pipeline_marcar nao foi consultada: nada diz se marcaria.")
+            return 0
+        print("RECUSADO: faltam %s e/ou %s no ambiente." % (API_URL, API_CHAVE))
+        print("Quem marca e a cron_pipeline_marcar, no banco; sem as credenciais nao")
+        print("ha como chama-la, e nada foi escrito. No Cowork, a mesma funcao e")
+        print("chamada pelo conector do Supabase. Para so conferir o alvo, use --seco.")
         return 1
 
-    # O ESTADO DE AGORA E O DO BANCO. O estado.json parou em 10/09 e dava como
-    # "a fazer" etapas ja fechadas no celular; decidir por ele era decidir
-    # contra o que voce fez. Sem conseguir ler, a rodada de verdade recusa: sem
-    # o estado de agora, a marcacao poderia apagar uma decisao sua.
-    linha, lido, dono = None, False, None
-    if url:
-        try:
-            dono = _dono(url, chave)
-            linha = item_online(url, chave, dono, chave_item)
-            lido = True
-        except Exception as e:
-            print("Nao foi possivel ler o estado atual de %s: %s" % (alvo, e))
-            if not seco:
-                print("RECUSADO: sem o estado de agora, a marcacao poderia apagar uma")
-                print("decisao sua. Nada foi escrito.")
-                return 1
-    atual = (linha or {}).get("valor") or {}
-    vida_atual = atual.get("vida") or "ativo"
-    apagada = bool(linha and linha.get("del"))
-
-    # SO ETAPA ATIVA (decidido pelo autor em 2026-10-12). Adiar, abandonar,
-    # arquivar e "nao se aplica" sao decisoes dele, como a prova "estrela": o
-    # Cowork nao as atravessa sozinho. --forcar passa, e mesmo assim a vida, o
-    # motivo e as datas ficam como estao.
-    if (apagada or vida_atual != "ativo") and not forcar:
-        print("RECUSADO: %s esta %s." % (
-            alvo, "apagada" if apagada else "com vida '%s'" % vida_atual))
-        print("Adiar, abandonar, arquivar ou dizer que nao se aplica e decisao do")
-        print("autor. O Cowork so marca etapa ativa: escrever aqui passaria por cima")
-        print("dela. Se for mesmo o caso, repita com --forcar (motivo e datas ficam).")
-        return 1
-
-    agora = os.environ.get("TOQUE_AGORA") or _agora_iso()
-
-    # O VALOR E O DE AGORA, com o `st` novo. O banco troca o valor INTEIRO, e
-    # um valor montado do zero apagaria o que nao veio nele.
-    vida_nova = vida or vida_atual
-    valor = dict(atual)
-    valor["st"] = para
-    valor["vida"] = vida_nova
-    for campo in ("motivo", "voltar_em", "vidaDesde"):
-        if not isinstance(valor.get(campo), str):
-            valor[campo] = ""
-    if vida_nova != vida_atual:
-        # A vida mudou por --vida: o mesmo que o ciclarVida do aparelho faz. A
-        # data e a de hoje, e voltar a ativa limpa o motivo e a data de volta.
-        valor["vidaDesde"] = agora[:10]
-        if vida_nova == "ativo":
-            valor["motivo"] = ""
-            valor["voltar_em"] = ""
-    de = atual.get("st") if lido else None
-
-    ident = agora.replace(":", "-").replace(".", "-") + "-cowork"
-    toque = {"v": 1, "id": ident, "quando": agora, "aparelho": "cowork",
-             "app": "dobrar_toques.py", "tipo": "registro",
-             "dados": {"d": agora[:10], "pid": pid, "projId": proj_id, "subId": sub_id,
-                       "projT": projT, "subT": subT, "de": de, "para": para,
-                       "vida": vida_nova, "temMotivo": bool(valor["motivo"])}}
-
-    print("Toque a escrever:")
-    print("  %s   %s / %s" % (alvo, projT or "?", subT or "?"))
-    print("  st %s -> %s   vida=%s   prova=%s" % (de if lido else "?", para,
-                                                  vida_nova, prova or "?"))
-    if valor["motivo"] or valor["voltar_em"]:
-        print("  o motivo e a data de volta que ja estavam la ficam")
-    if seco:
-        print("\n--seco: nada foi escrito, nem no disco nem online.")
-        if not lido:
-            print("  (estado online nao lido: o `st` atual e desconhecido)")
-        return 0
-
-    # 1. O BANCO PRIMEIRO. Se a linha nao entrar, nada e gravado: o arquivo de
-    #    toque nao leva nada a aparelho nenhum desde a 9G-3, e gravado sozinho
-    #    afirmaria uma marcacao que ninguem ve.
     try:
-        gravado, aviso = publicar_online(toque, url, chave, dono, linha, valor)
+        r = marcar_online(url, chave, alvo, seco)
     except Exception as e:
-        print("\nNAO PUBLICADO: %s" % e)
-        print("Nada foi escrito, nem online nem no disco. Rode de novo com rede.")
+        print("NAO MARCADO: %s" % e)
+        print("Nada foi escrito. Rode de novo com rede.")
         return 1
-    if not gravado:
-        print("\nNAO GRAVADO: %s mudou depois da leitura, ou o banco ja tem uma" % alvo)
-        print("decisao mais nova. Nada foi escrito: rode de novo para decidir sobre")
-        print("o estado de agora.")
-        return 1
-    print("\nPublicado online: item %s e uma linha de registro (%s)." % (chave_item, ident))
-    if aviso:
-        print("  AVISO: " + aviso)
 
-    # 2. DEPOIS, o arquivo de toque: a trilha auditavel do que ja entrou.
-    os.makedirs(DIR_TOQUES, exist_ok=True)
-    caminho = os.path.join(DIR_TOQUES, ident + ".json")
-    with open(caminho, "w", encoding="utf-8") as f:
-        json.dump({"v": 1, "lote": ident, "quando": agora, "aparelho": "cowork",
-                   "app": "dobrar_toques.py", "toques": [toque]},
-                  f, ensure_ascii=False, indent=1)
-        f.write("\n")
-    print("Escrito em %s" % os.path.relpath(caminho, RAIZ))
-    return 0
+    etapa = r.get("etapa") or subT or "?"
+    if publico:
+        print("%s   %s" % (alvo, etapa))
+    else:
+        print("%s   %s / %s" % (alvo, r.get("projeto") or projT or "?", etapa))
+    print("  %s: %s" % (r.get("resultado"), r.get("mensagem") or ""))
+    return 0 if r.get("resultado") in RESULTADOS_OK else 1
 
 
 def arg(nome, padrao=None):
@@ -902,25 +722,27 @@ def main():
             return 1
 
     if "--registrar" in sys.argv:
+        # SO CONCLUIR, E SO PELA FUNCAO (2026-10-13). O --para 2 continua aceito
+        # porque e o que o derivar_do_pipeline.py emite; o resto saiu.
         para = arg("--para")
-        if para is None:
-            print("Falta --para 0|1|2 (a fazer, em andamento, concluida).")
+        sairam = [f for f in ("--vida", "--forcar") if f in sys.argv]
+        if para not in (None, "2"):
+            sairam.insert(0, "--para %s" % para)
+        if sairam:
+            print("RECUSADO: %s saiu em 2026-10-13." % ", ".join(sairam))
+            print("A maquina so conclui etapa ativa (--para 2). Voltar uma etapa, mudar")
+            print("a vida dela ou passar por cima de uma recusa e decisao do autor, e se")
+            print("faz no aplicativo. Nada foi escrito.")
             return 1
-        # SEM --vida, A VIDA FICA. O padrao era "ativo", e com ele toda marcacao
-        # do pipeline reativava a etapa que voce tinha adiado ou arquivado.
-        vida = arg("--vida")
-        if vida is not None and vida not in VIDAS:
-            print("--vida %r nao existe. Use uma destas: %s." % (vida, ", ".join(VIDAS)))
-            return 1
-        r = registrar(arg("--registrar"), int(para), vida,
-                      "--forcar" in sys.argv, seco)
-        if r or seco:
-            return r
-        print("")   # e segue direto para a dobra, no mesmo comando
+        return registrar(arg("--registrar"), seco)
 
+    # A DOBRA ESTA PARADA (2026-10-13). Nada mais escreve toque: o aplicativo
+    # parou na 9G-2 e o --registrar marca direto no banco. Ela fica para toque
+    # antigo que reapareca, e o estado.json que ela escreve nao vai mais ao
+    # repositorio — o .gitignore o barra.
     if not os.path.isdir(DIR_TOQUES):
-        print("Nao existe %s. Rode um `git pull` primeiro: os toques sobem do" % DIR_TOQUES)
-        print("aparelho direto para o GitHub, e a copia local so os ve depois do pull.")
+        print("Nenhum toque a dobrar: nao existe %s." % os.path.relpath(DIR_TOQUES, RAIZ))
+        print("Desde 2026-10-13 nada escreve toque: o --registrar marca direto no banco.")
         return 0
 
     arquivos = sorted(a for a in os.listdir(DIR_TOQUES)
