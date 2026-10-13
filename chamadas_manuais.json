@@ -4,7 +4,7 @@
   "_como_manter": "Quando chegar o boletim seguinte, abra uma sessao com o PDF e peca para atualizar este arquivo. Remova o que ja venceu, acrescente o que e novo, atualize '_atualizado_em'. Quatro vezes por ano.",
   "_porque_arquivo_e_nao_conector": "O arquivo vive no repositorio, entao o Actions e a tarefa semanal leem os dois pelo raw.githubusercontent, sem token e sem OAuth. Um conector de e-mail numa sessao agendada pode nao estar disponivel — e a chamada sumiria em silencio, que e a falha mais cara deste desenho (secao 4.11).",
   "_repositorio_publico": "Nada de e-mail pessoal de editor aqui. O caminho de submissao esta na pagina do periodico; quem julga o encaixe contra os recortes e o prompt da tarefa 3c (decisao 4.8).",
-  "_atualizado_em": "2026-08-25",
+  "_atualizado_em": "2026-10-13",
   "itens": [
     {
       "id": "lsn-promissio-2028-law-gospel",
@@ -55,6 +55,137 @@
       "pais": "Estados Unidos",
       "prazo": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Resenhas de 1.000 a 1.500 palavras, de livros recentes que contribuam para a reflexao teologica ou a deliberacao etica na igreja e na sociedade — inclusive livros que nao sejam teologicos em si. O livro NAO precisa ser do tema do numero. Envia-se a proposta (o livro e a direcao da resenha) ao editor de resenhas, William Rodriguez, com 'Book Review' no assunto; tambem se pode pedir cadastro como resenhista, indicando areas de interesse. ESFORCO BAIXO, porta de entrada: e o item mais barato deste boletim."
+    },
+    {
+      "id": "manual-rev-jaar",
+      "titulo": "Journal of the American Academy of Religion (JAAR) — periodico-alvo da esteira, fluxo continuo (religious studies, theology)",
+      "url": "https://academic.oup.com/jaar",
+      "instituicao": "Oxford University Press / American Academy of Religion",
+      "aos": "religious studies, theology, philosophy of religion, ethics",
+      "pais": "Estados Unidos",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles."
+    },
+    {
+      "id": "manual-rev-mtsr",
+      "titulo": "Method & Theory in the Study of Religion (MTSR) — periodico-alvo da esteira, fluxo continuo (religious studies, category of religion)",
+      "url": "https://brill.com/view/journals/mtsr/mtsr-overview.xml",
+      "instituicao": "Brill / North American Association for the Study of Religion",
+      "aos": "religious studies, theory of religion, method",
+      "pais": "Paises Baixos",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles."
+    },
+    {
+      "id": "manual-rev-religion",
+      "titulo": "Religion — periodico-alvo da esteira, fluxo continuo (religious studies)",
+      "url": "https://www.tandfonline.com/journals/rrel20",
+      "instituicao": "Taylor & Francis",
+      "aos": "religious studies, history of religions, theory of religion",
+      "pais": "Reino Unido",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles."
+    },
+    {
+      "id": "manual-rev-jre",
+      "titulo": "Journal of Religious Ethics — periodico-alvo da esteira, fluxo continuo (religious ethics)",
+      "url": "https://onlinelibrary.wiley.com/journal/14679795",
+      "instituicao": "Wiley",
+      "aos": "religious ethics, christian ethics, theological ethics, comparative ethics",
+      "pais": "Estados Unidos",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles."
+    },
+    {
+      "id": "manual-rev-numen-brill",
+      "titulo": "Numen: International Review for the History of Religions — periodico-alvo da esteira, fluxo continuo (religious studies)",
+      "url": "https://brill.com/view/journals/nu/nu-overview.xml",
+      "instituicao": "Brill / International Association for the History of Religions",
+      "aos": "history of religions, religious studies, theory of religion",
+      "pais": "Paises Baixos",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles. Nao confundir com a Numen da UFJF, onde ja ha artigo publicado."
+    },
+    {
+      "id": "manual-rev-ijpt",
+      "titulo": "International Journal of Public Theology — periodico-alvo da esteira, fluxo continuo (political theology)",
+      "url": "https://brill.com/view/journals/ijpt/ijpt-overview.xml",
+      "instituicao": "Brill",
+      "aos": "public theology, political theology, theology",
+      "pais": "Paises Baixos",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles."
+    },
+    {
+      "id": "manual-rev-ihr",
+      "titulo": "Intellectual History Review — periodico-alvo da esteira, fluxo continuo (early modern, toleration)",
+      "url": "https://www.tandfonline.com/journals/rihr20",
+      "instituicao": "Taylor & Francis",
+      "aos": "intellectual history, early modern philosophy, history of ideas, toleration",
+      "pais": "Reino Unido",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles."
+    },
+    {
+      "id": "manual-rev-jems",
+      "titulo": "Journal of Early Modern Studies — periodico-alvo da esteira, fluxo continuo (early modern)",
+      "url": "https://modernthought.unibuc.ro/",
+      "instituicao": "Universidade de Bucareste / Zeta Books",
+      "aos": "early modern philosophy, history of philosophy, philosophy of religion",
+      "pais": "Romenia",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Ingles. Alterna numeros tematicos e abertos: conferir na pagina se o proximo numero e aberto."
+    },
+    {
+      "id": "manual-rev-kriterion",
+      "titulo": "Kriterion: Revista de Filosofia — periodico-alvo da esteira, fluxo continuo (historia da filosofia, filosofia moderna)",
+      "url": "https://periodicos.ufmg.br/index.php/kriterion/about",
+      "instituicao": "UFMG",
+      "aos": "filosofia, historia da filosofia, filosofia moderna",
+      "pais": "Brasil",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Portugues, ingles e outras linguas."
+    },
+    {
+      "id": "manual-rev-sintese",
+      "titulo": "Sintese: Revista de Filosofia — periodico-alvo da esteira, fluxo continuo (filosofia da religiao)",
+      "url": "https://www.faje.edu.br/periodicos/index.php/Sintese",
+      "instituicao": "FAJE",
+      "aos": "filosofia, filosofia da religiao, hermeneutica",
+      "pais": "Brasil",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Portugues."
+    },
+    {
+      "id": "manual-rev-horizonte",
+      "titulo": "Horizonte: Revista de Estudos de Teologia e Ciencias da Religiao — periodico-alvo da esteira, fluxo continuo (teologia, ciencias da religiao)",
+      "url": "https://periodicos.pucminas.br/horizonte/about/submissions",
+      "instituicao": "PUC Minas",
+      "aos": "teologia, ciencias da religiao, filosofia da religiao",
+      "pais": "Brasil",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Qualis A1. Normas verificadas em 2026-07-29: 40.000 a 60.000 caracteres, APA 7, resumo trilingue (portugues, ingles e espanhol)."
+    },
+    {
+      "id": "manual-rev-estudos-teologicos",
+      "titulo": "Estudos Teologicos — periodico-alvo da esteira, fluxo continuo (teologia, luterano)",
+      "url": "https://revistas.est.edu.br/ET",
+      "instituicao": "Faculdades EST",
+      "aos": "teologia, teologia luterana, ciencias da religiao",
+      "pais": "Brasil",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Portugues."
+    },
+    {
+      "id": "manual-rev-analytica",
+      "titulo": "Analytica: Revista de Filosofia — periodico-alvo da esteira, fluxo continuo (historia da filosofia, filosofia medieval)",
+      "url": "https://revistas.ufrj.br/index.php/analytica/about/submissions",
+      "instituicao": "UFRJ",
+      "aos": "filosofia, historia da filosofia, filosofia antiga e medieval",
+      "pais": "Brasil",
+      "prazo": "",
+      "texto": "Periodico academico com avaliacao por pares que recebe artigos em FLUXO CONTINUO, o ano todo, sem chamada. Destino-alvo da esteira de artigos. Normas, extensao e sistema de submissao na pagina do periodico. Portugues e outras linguas."
     }
-  ]
+  ],
+  "_revistas_da_esteira": "Desde 2026-10-13 o arquivo tambem guarda os PERIODICOS-ALVO da esteira de artigos (ids 'manual-rev-*'). Eles recebem artigos o ano todo e nunca publicam chamada; sem este cadastro, o painel de chamadas nao mostraria o destino de nenhum texto da esteira. Nao vencem: saem do painel por um toque de arquivar."
 }
