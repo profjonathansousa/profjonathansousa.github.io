@@ -2782,21 +2782,27 @@ console.log("\n=== 64. Dois escritores: voce e o pipeline (9E) ===");
   ok(x.st === 2, "e o st fica onde estava", x.st);
   ok(A.mesclarItem(x, {quando: x.em, st: 0}) === false, "empate exato tambem fica como esta");
 
-  /* 3. A FRONTEIRA NAO E O DESEMPATE, e ela esta no dado: o --registrar RECUSA
-        subitem de prova "estrela". Isso e do pipeline, e a 9E nao o move. */
+  /* 3. A FRONTEIRA NAO E O DESEMPATE, e ela esta no dado: o pipeline RECUSA
+        subitem de prova "estrela". Isso e do pipeline, e a 9E nao o move.
+        Desde 2026-10-13 a recusa mora na funcao do banco que o --registrar e
+        o Cowork chamam (sql/cron_pipeline_marcar.sql), ANTES de qualquer
+        escrita — e nao ha mais --forcar que a atravesse. */
   const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
-  ok(/prova == "estrela" and not forcar/.test(pipe),
-     "o --registrar recusa subitem de prova `estrela`");
-  ok(/RECUSADO/.test(pipe), "e diz por que recusou");
-  ok(/aparelho": "cowork"/.test(pipe) || /"aparelho": "cowork"/.test(pipe),
+  const fn = fs.readFileSync(path.join(RAIZ, "sql", "cron_pipeline_marcar.sql"), "utf8")
+    .split("as $$")[1].split("$$;")[0];
+  const iEstrela = fn.indexOf("= 'estrela' then");
+  const iEscrita = fn.indexOf("update public.cron_estado");
+  ok(iEstrela > 0 && iEscrita > iEstrela, "a funcao recusa subitem de prova `estrela` antes de escrever",
+     {estrela: iEstrela, escrita: iEscrita});
+  ok(/decisão do autor/.test(fn) && !/p_forcar/.test(fn), "e diz por que, sem porta de excecao");
+  ok(/aparelho = 'cowork'/.test(fn) && /'cowork', null\)/.test(fn),
      "e escreve como um aparelho a mais, e nao como autoridade");
-  /* SUPERADO PELA 9G-0, que deu ao pipeline o caminho online que faltava. O que
-     a 9E guardava aqui continua guardado, e com mais precisao: ele publica o
-     MESMO toque, num dominio so, e nao vira espelho de estado. */
-  ok(/def publicar_online/.test(pipe),
-     "o pipeline publica o proprio toque online desde a 9G-0");
-  ok(/"dominio": "item"/.test(pipe) && !/"dominio": "(?!item)/.test(pipe),
-     "e so no dominio `item`: continua afirmando um fato seu, nao espelhando estado");
+  ok(/RPC_MARCAR = "\/rpc\/cron_pipeline_marcar"/.test(pipe) && !/def publicar_online/.test(pipe),
+     "o --registrar so pede a marcacao a funcao; o publicador proprio saiu");
+  const dominios = (fn.match(/dominio = '(\w+)'|values \(v_dono, '(\w+)'/g) || [])
+    .map(x => x.match(/'(\w+)'/)[1]);
+  ok(dominios.length >= 2 && dominios.every(d => d === "item"),
+     "e so no dominio `item`: continua afirmando um fato seu, nao espelhando estado", dominios);
 
   /* 4. Receber nao e tocar: aplicar um item remoto nao gera toque nem fila. */
   const B = criarAparelho("celular", srv).__conectar();

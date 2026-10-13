@@ -1,24 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""teste_registrar.py — o --registrar decide pelo BANCO e nao apaga decisao sua.
+"""teste_registrar.py — o --registrar marca pela funcao do banco, e so por ela.
 
     python3 scripts/teste_registrar.py
 
-A correcao de 2026-10-12, provada contra o dobrar_toques.py de verdade e um
-PostgREST de mentira (scripts/postgrest_de_mentira.py). Nao toca a rede nem o
-repositorio: o Cronograma inteiro e montado num diretorio temporario.
+Desde 2026-10-13 quem marca e a cron_pipeline_marcar (sql/cron_pipeline_marcar.sql),
+a mesma que o Cowork chama pelo conector no fim de cada janela. As REGRAS dela
+sao provadas contra um Postgres de verdade no teste_marcar_no_banco.py. Este
+teste prova o outro lado: o que o dobrar_toques.py faz com ela, contra o
+dobrar_toques.py de verdade e o arremedo da funcao no PostgREST de mentira
+(scripts/postgrest_de_mentira.py — que aquele teste compara com a funcao).
+Nao toca a rede nem o repositorio: o Cronograma e montado num temporario.
 
 O QUE ESTE TESTE GUARDA, e o caso concreto de cada um:
-  · o `de` vem do cron_estado, e nao do estado.json — que parou em 10/09 e dava
-    como "a fazer" etapas ja fechadas no celular;
-  · so o `st` muda: vida, motivo, data de volta e vidaDesde ficam. O valor
-    montado do zero apagava o adiamento de uma etapa adiada;
-  · etapa que nao esta ativa e RECUSADA (decisao do autor, 2026-10-12), e o
-    --forcar passa sem apagar nada;
-  · a escrita so vale se a linha nao mudou desde a leitura, e o descarte do
-    relogio nao passa por sucesso;
-  · o banco vem antes do arquivo de toque: se a publicacao nao acontece, nada
-    e gravado, e o codigo de saida diz que falhou.
+  · o pedido vai a /rpc/cron_pipeline_marcar, e a nada mais: o comando nao
+    escreve no cron_estado por conta propria;
+  · nada vai para o disco — nem toque, nem estado.json. A copia publica do
+    historico parou em 2026-10-13, a pedido do autor;
+  · o codigo de saida diz o que a funcao respondeu: marcada, ja concluida e
+    "marcaria" (--seco) sao 0; recusa, falha de rede e resposta estranha, 1;
+  · o --para 0|1, o --vida e o --forcar sairam, e sao recusados sem chamar o
+    banco: voltar, mudar a vida ou forcar e coisa do aplicativo;
+  · sem credenciais, recusa; com --seco, mostra o alvo e diz que a funcao nao
+    foi consultada;
+  · com LOG_PUBLICO=1, o titulo do projeto nao sai no log publico do Actions.
 """
 import contextlib
 import io
@@ -31,6 +36,7 @@ import tempfile
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import dobrar_toques as T                                    # noqa: E402
+import postgrest_de_mentira as P                             # noqa: E402
 from postgrest_de_mentira import Banco                       # noqa: E402
 
 falhas = []
@@ -44,20 +50,12 @@ def ok(cond, nome, detalhe=None):
 
 
 ENTRADA = {"_versao": 1, "_gerado_em": "2026-09-11T10:00:00Z", "paineis": {"pipeline": [
-    {"id": "a00", "t": "Ago · Confusao de reinos", "slug": "patriotismo-cristao-lutero",
+    {"id": "a00", "t": "Ago · Artigo de exemplo",
      "subs": [{"id": "a00-1", "t": "Brainstorm", "prova": "estrela"},
               {"id": "a00-2", "t": "Janela 0 · planilha de corpus", "prova": "maquina"},
               {"id": "a00-3", "t": "Mapa argumentativo", "prova": "maquina"},
               {"id": "a00-4", "t": "Janela 1 · draft", "prova": "maquina"},
               {"id": "a00-5", "t": "Janela 2 · auditoria", "prova": "maquina"}]}]}}
-
-# O ESTADO.JSON PARADO, de proposito contrario ao banco: se algum valor daqui
-# aparecer no resultado, o --registrar leu o arquivo que nao devia.
-ESTADO_PARADO = {"_versao": 3, "itens": {
-    "pipeline/a00/a00-2": {"st": 1, "vida": "ativo", "quando": "2026-09-10T12:06:42.811Z"},
-    "pipeline/a00/a00-4": {"st": 0, "vida": "ativo", "quando": "2026-09-10T12:00:00.000Z"}},
-    "triagem": {}, "metas": {}, "eventos": {}, "prioridades": {}, "toefl": {},
-    "retomadas": {}, "historico": [], "_ids_dobrados": []}
 
 ATIVA = {"st": 1, "vida": "ativo", "motivo": "falta a secao 3",
          "voltar_em": "", "vidaDesde": "2026-09-01"}
@@ -69,8 +67,6 @@ def montar():
     os.makedirs(os.path.join(tmp, "Cronograma"))
     with open(os.path.join(tmp, "Cronograma", "entrada.json"), "w", encoding="utf-8") as f:
         json.dump(ENTRADA, f, ensure_ascii=False)
-    with open(os.path.join(tmp, "Cronograma", "estado.json"), "w", encoding="utf-8") as f:
-        json.dump(ESTADO_PARADO, f, ensure_ascii=False)
     T.DIR_TOQUES = os.path.join(tmp, "Cronograma", "toques")
     T.DIR_DOBRADOS = os.path.join(T.DIR_TOQUES, "_dobrados")
     T.ARQ_ESTADO = os.path.join(tmp, "Cronograma", "estado.json")
@@ -78,21 +74,21 @@ def montar():
     return tmp
 
 
-def toques_gravados():
-    if not os.path.isdir(T.DIR_TOQUES):
-        return []
+def disco(tmp):
+    """O que existe no Cronograma de mentira alem do entrada.json."""
     fora = []
-    for a in sorted(os.listdir(T.DIR_TOQUES)):
-        if a.endswith(".json"):
-            with open(os.path.join(T.DIR_TOQUES, a), encoding="utf-8") as f:
-                fora.extend(json.load(f)["toques"])
+    for raiz, _d, arquivos in os.walk(os.path.join(tmp, "Cronograma")):
+        for a in arquivos:
+            rel = os.path.relpath(os.path.join(raiz, a), os.path.join(tmp, "Cronograma"))
+            if rel != "entrada.json":
+                fora.append(rel)
     return fora
 
 
-def rodar(alvo, para=2, vida=None, forcar=False, seco=False):
+def rodar(alvo, seco=False):
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        codigo = T.registrar(alvo, para, vida, forcar, seco)
+        codigo = T.registrar(alvo, seco)
     return codigo, buf.getvalue()
 
 
@@ -110,12 +106,12 @@ def cli(*args):
 
 def cenario(semear=None):
     """Um banco novo e um Cronograma novo para cada caso: nada vaza de um
-    cenario para o outro."""
+    cenario para o outro. O banco ja tem a estrutura publicada."""
     tmp = montar()
-    b = Banco().subir()
+    b = Banco().subir().publicar(ENTRADA)
     os.environ[T.API_URL] = b.url
     os.environ[T.API_CHAVE] = "chave-de-mentira"
-    os.environ["TOQUE_AGORA"] = "2026-10-12T15:00:00.000Z"
+    os.environ.pop(T.VAR_LOG_PUBLICO, None)
     for chave, valor, em in (semear or []):
         b.semear(chave, valor, em)
     return tmp, b
@@ -127,196 +123,119 @@ def fechar(tmp, b):
 
 
 try:
-    print("=== 1. O `de` vem do banco, e nao do estado.json parado ===")
-    tmp, b = cenario([("pipeline/a00/a00-2", {"st": 0, "vida": "ativo", "motivo": "",
-                                              "voltar_em": "", "vidaDesde": ""}, EM_VELHO)])
+    print("=== 1. Marca pela funcao, e so por ela ===")
+    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
+    cod, saida = rodar("pipeline/a00/a00-4")
+    v = (b.item("pipeline/a00/a00-4") or {}).get("valor") or {}
+    ok(cod == 0 and "marcada" in saida, "sai com 0 e diz que marcou", saida)
+    ok(b.chamadas == [("POST", "rpc/cron_pipeline_marcar")],
+       "um pedido so, a /rpc/cron_pipeline_marcar", b.chamadas)
+    ok(v.get("st") == 2 and v.get("motivo") == "falta a secao 3",
+       "a etapa fecha, e o motivo fica (regra da funcao)", v)
+    ok(len(b.registros) == 1, "com a linha de registro junto", b.registros)
+    ok(disco(tmp) == [], "e nada vai para o disco: nem toque, nem estado.json", disco(tmp))
+    ok("Ago · Artigo de exemplo" in saida and "Janela 1 · draft" in saida,
+       "a saida diz qual projeto e qual etapa", saida)
+    fechar(tmp, b)
+
+    print("\n=== 2. Ja concluida: 0, e nada e reescrito ===")
+    tmp, b = cenario([("pipeline/a00/a00-2", dict(ATIVA, st=2), EM_VELHO)])
+    antes = json.dumps(b.item("pipeline/a00/a00-2"), sort_keys=True)
     cod, saida = rodar("pipeline/a00/a00-2")
-    ok(cod == 0, "a etapa ativa e marcada", saida[-300:])
-    ok(b.item("pipeline/a00/a00-2")["valor"]["st"] == 2, "e o banco passa a dizer st=2")
-    reg = list(b.registros.values())
-    ok(len(reg) == 1 and reg[0]["de"] == 0,
-       "o registro diz de=0, que e o do banco (o estado.json dizia 1)", reg)
-    ok("st 0 -> 2" in saida, "e o relatorio tambem", saida)
-    ok([t["dados"]["de"] for t in toques_gravados()] == [0],
-       "e o toque gravado carrega o mesmo `de`")
+    ok(cod == 0 and "ja_estava" in saida, "sai com 0 e diz que ja estava", saida)
+    ok(json.dumps(b.item("pipeline/a00/a00-2"), sort_keys=True) == antes and not b.registros,
+       "a linha nem foi tocada")
     fechar(tmp, b)
 
-    print("\n=== 2. So o `st` muda: motivo, datas e vida ficam ===")
-    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
-    cod, saida = rodar("pipeline/a00/a00-4")
-    v = b.item("pipeline/a00/a00-4")["valor"]
-    ok(cod == 0 and v["st"] == 2, "a etapa e marcada", (cod, v))
-    ok(v["motivo"] == "falta a secao 3", "o motivo fica", v)
-    ok(v["vidaDesde"] == "2026-09-01" and v["voltar_em"] == "", "as datas ficam", v)
-    ok(v["vida"] == "ativo", "e a vida tambem", v)
-    ok(b.item("pipeline/a00/a00-4")["aparelho"] == "cowork",
-       "assinado como `cowork`, um aparelho a mais")
-    ok(toques_gravados()[0]["dados"]["temMotivo"] is True,
-       "o toque diz que ha motivo, sem levar o texto ao repositorio publico")
-    fechar(tmp, b)
-
-    print("\n=== 3. Etapa que nao esta ativa e decisao do autor: RECUSA ===")
-    for vida in ("adiado", "abandonado", "arquivado", "inaplicavel"):
-        valor = {"st": 1, "vida": vida, "motivo": "esperar o parecer",
-                 "voltar_em": "2026-11-01", "vidaDesde": "2026-10-01"}
-        tmp, b = cenario([("pipeline/a00/a00-4", valor, EM_VELHO)])
-        antes = json.dumps(b.item("pipeline/a00/a00-4"), sort_keys=True)
-        cod, saida = rodar("pipeline/a00/a00-4")
-        ok(cod != 0 and "RECUSADO" in saida and vida in saida,
-           "vida '%s': RECUSADO, dizendo qual" % vida, saida[-200:])
-        ok(json.dumps(b.item("pipeline/a00/a00-4"), sort_keys=True) == antes and
-           not b.escritas() and not toques_gravados(),
-           "   e nada foi escrito: nem o item, nem registro, nem toque", b.escritas())
-        fechar(tmp, b)
-
-    print("\n=== 4. --forcar passa, e mesmo assim nada se apaga ===")
-    valor = {"st": 1, "vida": "adiado", "motivo": "esperar o parecer",
-             "voltar_em": "2026-11-01", "vidaDesde": "2026-10-01"}
-    tmp, b = cenario([("pipeline/a00/a00-4", valor, EM_VELHO)])
-    cod, saida = rodar("pipeline/a00/a00-4", forcar=True)
-    v = b.item("pipeline/a00/a00-4")["valor"]
-    ok(cod == 0 and v["st"] == 2, "com --forcar a etapa e marcada", saida[-200:])
-    ok(v["vida"] == "adiado" and v["motivo"] == "esperar o parecer" and
-       v["voltar_em"] == "2026-11-01" and v["vidaDesde"] == "2026-10-01",
-       "e o adiamento, o motivo e as datas continuam la", v)
-    fechar(tmp, b)
-
-    print("\n=== 5. Escrita condicional: o que voce fez no meio-tempo vence ===")
-    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
-
-    def celular(banco):
-        # Entre a leitura e a escrita, voce adia a etapa no celular.
-        banco.antes_de_gravar = None
-        banco.semear("pipeline/a00/a00-4",
-                     {"st": 1, "vida": "adiado", "motivo": "viagem",
-                      "voltar_em": "2026-11-01", "vidaDesde": "2026-10-12"},
-                     "2026-10-12T14:59:59.900Z")
-    b.antes_de_gravar = celular
-    cod, saida = rodar("pipeline/a00/a00-4")
-    v = b.item("pipeline/a00/a00-4")["valor"]
-    ok(cod != 0 and "NAO GRAVADO" in saida, "a escrita nao pega, e o comando diz",
-       saida[-240:])
-    ok(v["vida"] == "adiado" and v["motivo"] == "viagem" and v["st"] == 1,
-       "o adiamento feito no celular fica intacto", v)
-    ok(not b.registros and not toques_gravados(),
-       "e nao sobra registro nem toque de uma marcacao que nao aconteceu")
-    fechar(tmp, b)
-
-    print("\n=== 6. O relogio do banco recusa, e isso nao passa por sucesso ===")
-    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, "2030-01-01T00:00:00.000Z")])
-    cod, saida = rodar("pipeline/a00/a00-4")
-    ok(cod != 0 and "NAO GRAVADO" in saida,
-       "decisao com relogio mais novo: o descarte e dito, nao engolido", saida[-200:])
-    ok(b.item("pipeline/a00/a00-4")["valor"]["st"] == 1 and not toques_gravados(),
-       "o item fica como estava, e nada e gravado no disco")
-    fechar(tmp, b)
-
-    print("\n=== 7. Item nunca tocado online: a linha nasce ===")
-    tmp, b = cenario()
-    cod, saida = rodar("pipeline/a00/a00-5")
-    linha = b.item("pipeline/a00/a00-5")
-    ok(cod == 0 and linha and linha["valor"] == {"st": 2, "vida": "ativo", "motivo": "",
-                                                 "voltar_em": "", "vidaDesde": ""},
-       "o item e criado ja concluido, com os campos que o aparelho espera",
-       linha and linha["valor"])
-    ok(list(b.registros.values())[0]["de"] is None, "e o registro diz de=None")
-    fechar(tmp, b)
-
-    print("\n=== 8. Item criado no meio-tempo: o de la vence ===")
-    tmp, b = cenario()
-
-    def criou(banco):
-        banco.antes_de_gravar = None
-        banco.semear("pipeline/a00/a00-5", {"st": 0, "vida": "inaplicavel", "motivo": "",
-                                            "voltar_em": "", "vidaDesde": "2026-10-12"},
-                     "2026-10-12T14:59:00.000Z")
-    b.antes_de_gravar = criou
-    cod, saida = rodar("pipeline/a00/a00-5")
-    ok(cod != 0 and b.item("pipeline/a00/a00-5")["valor"]["vida"] == "inaplicavel",
-       "a linha criada no celular nao e sobrescrita", saida[-200:])
-    ok(not toques_gravados(), "e nada e gravado no disco")
-    fechar(tmp, b)
-
-    print("\n=== 9. O banco primeiro: sem ele, nada e gravado ===")
-    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
-    os.environ[T.API_URL] = "http://127.0.0.1:9"         # porta morta
-    cod, saida = rodar("pipeline/a00/a00-4")
-    ok(cod != 0 and "RECUSADO" in saida,
-       "sem conseguir LER o estado de agora, recusa", saida[-200:])
-    ok(not toques_gravados(), "e nao deixa toque para tras")
-    os.environ[T.API_URL] = b.url
-    b.falhar["PATCH cron_estado"] = 500
-    cod, saida = rodar("pipeline/a00/a00-4")
-    ok(cod != 0 and "NAO PUBLICADO" in saida,
-       "se a ESCRITA do item falha, sai com erro", saida[-200:])
-    ok(not toques_gravados() and not b.registros,
-       "e nao grava toque nem registro: um arquivo sozinho mentiria")
-    fechar(tmp, b)
-
-    print("\n=== 10. Falha so no registro: o item entrou, e isso e dito ===")
-    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
-    b.falhar["POST cron_registro"] = 500
-    cod, saida = rodar("pipeline/a00/a00-4")
-    ok(cod == 0 and b.item("pipeline/a00/a00-4")["valor"]["st"] == 2,
-       "o item foi marcado, e o comando nao finge que nao", saida[-200:])
-    ok("AVISO" in saida and "registro" in saida, "mas avisa que faltou o historico")
-    ok(len(toques_gravados()) == 1, "e o toque e gravado: o estado de fato mudou")
-    fechar(tmp, b)
-
-    print("\n=== 11. --seco le o banco e nao escreve nada ===")
-    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
-    cod, saida = rodar("pipeline/a00/a00-4", seco=True)
-    ok(cod == 0 and "st 1 -> 2" in saida, "mostra o `de` verdadeiro, o do banco", saida)
-    ok(not b.escritas() and not toques_gravados(), "e nao escreve em lugar nenhum",
-       b.escritas())
-    for v_ in (T.API_URL, T.API_CHAVE):
-        os.environ.pop(v_, None)
-    cod, saida = rodar("pipeline/a00/a00-4", seco=True)
-    ok(cod == 0 and "st ? -> 2" in saida and "nao lido" in saida,
-       "sem credenciais, o --seco diz que nao sabe o estado", saida)
-    fechar(tmp, b)
-
-    print("\n=== 12. Pela linha de comando: sem --vida, a vida fica ===")
-    valor = {"st": 1, "vida": "adiado", "motivo": "esperar o parecer",
-             "voltar_em": "2026-11-01", "vidaDesde": "2026-10-01"}
-    tmp, b = cenario([("pipeline/a00/a00-4", valor, EM_VELHO)])
-    cod, saida = cli("--registrar", "pipeline/a00/a00-4", "--para", "2", "--forcar")
-    ok(cod == 0 and b.item("pipeline/a00/a00-4")["valor"]["vida"] == "adiado",
-       "o padrao do --vida nao reativa mais a etapa", saida[-200:])
-    ok(os.path.exists(T.ARQ_ESTADO) and
-       json.load(open(T.ARQ_ESTADO, encoding="utf-8"))["itens"]["pipeline/a00/a00-4"]["st"] == 2,
-       "e a dobra do mesmo comando leva o toque ao estado.json (trilha auditavel)")
-    fechar(tmp, b)
-
-    tmp, b = cenario([("pipeline/a00/a00-2", dict(ATIVA), EM_VELHO)])
-    cod, saida = cli("--registrar", "pipeline/a00/a00-2", "--para", "0",
-                     "--vida", "inaplicavel")
-    v = b.item("pipeline/a00/a00-2")["valor"]
-    ok(cod == 0 and v["vida"] == "inaplicavel" and v["vidaDesde"] == "2026-10-12",
-       "--vida dito de proposito muda a vida, com a data de hoje", v)
-    ok(v["motivo"] == "falta a secao 3", "e o motivo fica", v)
-    # O RELOGIO ANDA entre uma decisao e a outra. Com o mesmo instante, o banco
-    # recusaria a segunda — que e a regra do relogio, provada no cenario 6.
-    os.environ["TOQUE_AGORA"] = "2026-10-12T15:05:00.000Z"
-    cod, saida = cli("--registrar", "pipeline/a00/a00-2", "--para", "2",
-                     "--vida", "ativo", "--forcar")
-    v = b.item("pipeline/a00/a00-2")["valor"]
-    ok(cod == 0 and v["vida"] == "ativo" and v["motivo"] == "" and v["voltar_em"] == "",
-       "voltar a ativa limpa motivo e data de volta, como no aparelho", v)
-    cod, saida = cli("--registrar", "pipeline/a00/a00-2", "--para", "2",
-                     "--vida", "inaplicável")
-    ok(cod != 0 and "nao existe" in saida, "--vida que o aplicativo nao conhece e recusado",
-       saida)
-    fechar(tmp, b)
-
-    print("\n=== 13. A prova `estrela` continua recusada antes de tudo ===")
+    print("\n=== 3. Recusa da funcao vira codigo 1 ===")
     tmp, b = cenario()
     cod, saida = rodar("pipeline/a00/a00-1")
-    ok(cod != 0 and "estrela" in saida and not b.chamadas,
-       "recusa sem nem consultar o banco", b.chamadas)
+    ok(cod == 1 and "estrela" in saida, "prova estrela: 1, e diz por que", saida)
+    adiada = {"st": 1, "vida": "adiado", "motivo": "esperando o parecer",
+              "voltar_em": "2026-11-01", "vidaDesde": "2026-10-01"}
+    b.semear("pipeline/a00/a00-4", adiada, EM_VELHO)
+    cod, saida = rodar("pipeline/a00/a00-4")
+    ok(cod == 1 and "adiado" in saida, "etapa adiada: 1, e diz a vida", saida)
+    ok(b.item("pipeline/a00/a00-4")["valor"] == adiada, "e o adiamento fica inteiro")
+    cod, saida = rodar("pipeline/a00/a00-9")
+    ok(cod == 1 and "estrutura publicada" in saida, "etapa que nao existe: 1", saida)
+    ok(not b.registros and disco(tmp) == [], "nenhuma recusa escreve nada")
+    fechar(tmp, b)
+
+    print("\n=== 4. --seco: a funcao confere e nao escreve ===")
+    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
+    cod, saida = cli("--registrar", "pipeline/a00/a00-4", "--para", "2", "--seco")
+    ok(cod == 0 and "marcaria" in saida, "diz que marcaria, com 0", saida)
+    ok(b.item("pipeline/a00/a00-4")["valor"]["st"] == 1 and not b.registros,
+       "e nao escreve nada")
+    cod, saida = rodar("pipeline/a00/a00-1", seco=True)
+    ok(cod == 1 and "estrela" in saida, "a conferencia tambem recusa estrela", saida)
+    fechar(tmp, b)
+
+    print("\n=== 5. Sem credenciais ===")
+    tmp, b = cenario()
+    for v_ in (T.API_URL, T.API_CHAVE):
+        os.environ.pop(v_, None)
+    cod, saida = rodar("pipeline/a00/a00-4")
+    ok(cod == 1 and "RECUSADO" in saida and "conector" in saida,
+       "recusa, e lembra que no Cowork o caminho e o conector", saida)
+    cod, saida = rodar("pipeline/a00/a00-4", seco=True)
+    ok(cod == 0 and "nao foi consultada" in saida and "Janela 1 · draft" in saida,
+       "o --seco mostra o alvo e diz que a funcao nao foi consultada", saida)
+    ok(b.chamadas == [] and disco(tmp) == [], "e nenhum pedido sai, nada e escrito")
+    fechar(tmp, b)
+
+    print("\n=== 6. Banco fora, erro HTTP, resposta estranha: 1, nada escrito ===")
+    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
+    os.environ[T.API_URL] = "http://127.0.0.1:9"
+    cod, saida = rodar("pipeline/a00/a00-4")
+    ok(cod == 1 and "NAO MARCADO" in saida, "rede fora: 1, NAO MARCADO", saida)
+    os.environ[T.API_URL] = b.url
+    b.falhar["POST rpc/cron_pipeline_marcar"] = 500
+    cod, saida = rodar("pipeline/a00/a00-4")
+    ok(cod == 1 and "NAO MARCADO" in saida, "erro 500: 1", saida)
+    del b.falhar["POST rpc/cron_pipeline_marcar"]
+    original = P.marcar
+    P.marcar = lambda banco, chave, seco=False, agora=None: []
+    try:
+        cod, saida = rodar("pipeline/a00/a00-4")
+    finally:
+        P.marcar = original
+    ok(cod == 1 and "resposta inesperada" in saida, "resposta sem `resultado`: 1", saida)
+    ok(b.item("pipeline/a00/a00-4")["valor"]["st"] == 1 and disco(tmp) == [],
+       "e a etapa fica como estava")
+    fechar(tmp, b)
+
+    print("\n=== 7. O que saiu: --para 0|1, --vida e --forcar ===")
+    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
+    for args in (("--para", "1"), ("--para", "0"), ("--para", "2", "--vida", "ativo"),
+                 ("--para", "2", "--forcar")):
+        cod, saida = cli("--registrar", "pipeline/a00/a00-4", *args)
+        ok(cod == 1 and "saiu em 2026-10-13" in saida and "aplicativo" in saida,
+           "%s e recusado, apontando o aplicativo" % " ".join(args), saida)
+    ok(b.chamadas == [], "e nenhum deles chega ao banco", b.chamadas)
+    cod, saida = cli("--registrar", "pipeline/a00/a00-4")
+    ok(cod == 0 and "marcada" in saida, "sem --para tambem marca (so ha um destino)", saida)
+    fechar(tmp, b)
+
+    print("\n=== 8. Alvo malformado ===")
+    tmp, b = cenario()
+    for ruim in ("pipeline/a00", "pipeline//a00-4", "", None):
+        cod, saida = rodar(ruim)
+        ok(cod == 1 and "Alvo invalido" in saida, "alvo %r e recusado" % (ruim,), saida)
+    ok(b.chamadas == [], "sem chamar o banco", b.chamadas)
+    fechar(tmp, b)
+
+    print("\n=== 9. LOG_PUBLICO=1: o titulo do projeto nao sai no log ===")
+    tmp, b = cenario([("pipeline/a00/a00-4", ATIVA, EM_VELHO)])
+    os.environ[T.VAR_LOG_PUBLICO] = "1"
+    cod, saida = rodar("pipeline/a00/a00-4")
+    os.environ.pop(T.VAR_LOG_PUBLICO, None)
+    ok(cod == 0 and "Ago · Artigo de exemplo" not in saida and "Janela 1 · draft" in saida,
+       "sai a etapa, nao o projeto", saida)
     fechar(tmp, b)
 finally:
-    for v_ in (T.API_URL, T.API_CHAVE, "TOQUE_AGORA"):
+    for v_ in (T.API_URL, T.API_CHAVE, T.VAR_LOG_PUBLICO):
         os.environ.pop(v_, None)
 
 print("\n" + "=" * 62)

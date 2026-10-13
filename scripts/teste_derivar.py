@@ -276,7 +276,7 @@ ENTRADA_REAL_FORMA = {"_versao": 1, "_gerado_em": "2026-09-11T10:00:00Z",
      "subs": [{"id": "a00-1", "t": "Brainstorm", "prova": "estrela"},
               {"id": "a00-2", "t": "Janela 0 · planilha de corpus", "prova": "maquina"},
               {"id": "a00-5", "t": "Janela 2 · auditoria", "prova": "maquina"}]},
-    {"id": "a01", "t": "Set · A consciencia", "slug": "consciencia-lutero-spinoza",
+    {"id": "a01", "t": "Set · Artigo da bancada", "slug": "artigo-da-bancada",
      "subs": [{"id": "a01-2", "t": "Janela 0 · planilha de corpus", "prova": "maquina"}]}]}}
 MAPA_ESTEIRA = {"objetivos": {"esteira": {"painel": "pipeline", "subitens": [
     {"id": "aNN-1", "prova": "estrela", "artefato": "entrada_FILOSOFICO.md"},
@@ -290,7 +290,7 @@ def producao_e_entrada(tmp, lugar_do_mapa=os.path.join("08_SISTEMA", "configurac
     desde a reorganizacao de 15/09."""
     prod = os.path.join(tmp, "producao")
     os.makedirs(os.path.join(prod, "07_NORMAS_REFERENCIAS"))
-    for slug in ("patriotismo-cristao-lutero", "consciencia-lutero-spinoza"):
+    for slug in ("patriotismo-cristao-lutero", "artigo-da-bancada"):
         open(os.path.join(prod, "07_NORMAS_REFERENCIAS", "corpus_%s.md" % slug), "w").write("x")
     if lugar_do_mapa is not None:
         os.makedirs(os.path.join(prod, lugar_do_mapa), exist_ok=True)
@@ -354,10 +354,11 @@ with tempfile.TemporaryDirectory() as tmp:
        "25. o modo seco sem credenciais confere o disco e diz que nao sabe o estado",
        saida[-500:])
 
-print("\n=== 12. Ponta a ponta: --aplicar -> --registrar -> banco ===")
+print("\n=== 12. Ponta a ponta: --aplicar -> --registrar -> funcao do banco ===")
 # Num repositorio TEMPORARIO, com os dois scripts de verdade: o --aplicar chama o
-# --registrar como subprocesso, e ele grava o toque na pasta do repositorio em
-# que roda. Rodar isto no repositorio real escreveria nele.
+# --registrar como subprocesso, e ele pede a marcacao a cron_pipeline_marcar (aqui,
+# o arremedo dela no PostgREST de mentira). Desde 2026-10-13 nada deve ir para o
+# disco — e o temporario e o que deixa provar isso sem arriscar o repositorio real.
 with tempfile.TemporaryDirectory() as tmp:
     prod, entrada = producao_e_entrada(tmp)
     repo = os.path.join(tmp, "repo")
@@ -366,7 +367,7 @@ with tempfile.TemporaryDirectory() as tmp:
     for nome in ("derivar_do_pipeline.py", "dobrar_toques.py"):
         shutil.copy(os.path.join(RAIZ, "scripts", nome), os.path.join(repo, "scripts", nome))
     shutil.copy(entrada, os.path.join(repo, "Cronograma", "entrada.json"))
-    b = Banco().subir()
+    b = Banco().subir().publicar(ENTRADA_REAL_FORMA)
     try:
         b.semear("pipeline/a00/a00-2", dict(VAZIO, st=0, vida="ativo"), "2026-09-01T00:00:00.000Z")
         b.semear("pipeline/a01/a01-2", dict(VAZIO, st=1, vida="adiado", motivo="viagem",
@@ -384,10 +385,13 @@ with tempfile.TemporaryDirectory() as tmp:
                                 voltar_em="2026-11-01"),
            "    a adiada fica exatamente como estava", a01)
         ok("adiada no aplicativo" in r.stdout, "    e e avisada no relatorio", r.stdout[-600:])
-        toques = os.listdir(os.path.join(repo, "Cronograma", "toques")) \
-            if os.path.isdir(os.path.join(repo, "Cronograma", "toques")) else []
-        ok(os.path.exists(os.path.join(repo, "Cronograma", "estado.json")),
-           "    e o toque e dobrado no estado.json do repositorio (trilha auditavel)", toques)
+        escritas = [c for c in b.escritas()]
+        ok(escritas == [("POST", "rpc/cron_pipeline_marcar")],
+           "    a escrita e um pedido so, a funcao do banco", escritas)
+        ok(len(b.registros) == 1, "    que grava o registro junto", b.registros)
+        ok(sorted(os.listdir(os.path.join(repo, "Cronograma"))) == ["entrada.json"],
+           "    e nada vai para o disco: nem toque, nem estado.json",
+           os.listdir(os.path.join(repo, "Cronograma")))
         r2 = subprocess.run([sys.executable, os.path.join(repo, "scripts", "derivar_do_pipeline.py"),
                              "--aplicar"], capture_output=True, text=True, env=amb)
         ok(r2.returncode == 0 and "Nada a marcar" in r2.stdout and
@@ -454,7 +458,7 @@ ENTRADA_V2 = {"paineis": {"pipeline": [
               {"id": pid + "-4", "t": "Draft 1.3-APL", "prova": "maquina"}]}
     for pid in ("a00", "a01", "a02")]}}
 PATRIOTISMO = "patriotismo-cristao-lutero"
-CONSCIENCIA = "consciencia-lutero-spinoza"
+CONSCIENCIA = "artigo-da-bancada"
 CAIXA_A00 = "00_CONCLUIDO/_pausado/FILOSOFICO_%s" % PATRIOTISMO
 
 
@@ -468,7 +472,7 @@ def escrever(prod, rel, texto="x"):
 def producao_v2(tmp, id_da_bancada="a01", slug_da_entrada=CONSCIENCIA,
                 rascunho_da_bancada="draft_1.3apl.md"):
     """A forma real: o patriotismo pausado na caixa (com o Id escrito como no
-    CONCLUIDO de verdade, em negrito e com o titulo), a consciencia na bancada."""
+    CONCLUIDO de verdade, em negrito e com o titulo), o outro artigo na bancada."""
     prod = os.path.join(tmp, "producao")
     escrever(prod, "08_SISTEMA/configuracao/mapa_portal.json", json.dumps(MAPA_V2))
     escrever(prod, CAIXA_A00 + "/CONCLUIDO_FILOSOFICO.md",

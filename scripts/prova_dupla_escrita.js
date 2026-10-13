@@ -438,59 +438,46 @@ titulo("=== 7. O item é progresso, e progresso não cria estrutura ===");
 /* ============================================================
    8 e 9. O SEGUNDO ESCRITOR REAL, E A FRONTEIRA DELE.
    ============================================================ */
-titulo("=== 8. O pipeline escreve nos dois caminhos, e não vira espelho ===");
+titulo("=== 8. O pipeline escreve pela função do banco, e não vira espelho ===");
 {
   const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
-  ok(/"aparelho": "cowork"/.test(pipe),
-     "o --registrar escreve um toque com aparelho `cowork`");
-  ok(/"tipo": "registro"/.test(pipe),
-     "do tipo `registro` — a mesma porta por onde o iPhone entra");
-  ok(/DIR_TOQUES/.test(pipe) && /json\.dump/.test(pipe),
-     "e o destino é um arquivo de toque, como o de qualquer aparelho");
+  const fn = fs.readFileSync(path.join(RAIZ, "sql", "cron_pipeline_marcar.sql"), "utf8")
+    .split("as $$")[1].split("$$;")[0];
+  const reg = pipe.split("def registrar(")[1].split("\ndef ")[0];
 
-  /* A 9G-0 deu ao pipeline o caminho online que faltava. O critério não é mais
-     "ele não fala com o Supabase" — é que, falando, ele continue afirmando um
-     FATO SEU e não espelhando estado alheio. */
-  ok(/def publicar_online/.test(pipe),
-     "e desde a 9G-0 publica o MESMO toque também no estado compartilhado");
-  const corpo = pipe.split("def publicar_online")[1].split("\ndef ")[0];
-  ok(/toque\["quando"\]/.test(corpo),
-     "com o `em` do próprio toque, e não um instante novo");
-  ok(/toque\["id"\]/.test(corpo),
-     "e com o id do próprio toque como chave do registro");
-  ok(/"dominio": "item"/.test(corpo) && !/estrutura_/.test(corpo),
-     "publica `item` e NUNCA estrutura: a separação do esquema é respeitada");
-  const dominios = (corpo.match(/"dominio": "(\w+)"/g) || []).map(x => x.match(/"(\w+)"$/)[1]);
-  ok(JSON.stringify(dominios) === JSON.stringify(["item"]),
-     "e um domínio só, o dele: não é espelho de estado", dominios);
-  ok(/aparelho": "cowork"/.test(corpo),
-     "assinando como `cowork` também online — um aparelho, não uma autoridade");
+  /* DESDE 2026-10-13 o --registrar não escreve nada por conta própria: pede a
+     marcação à cron_pipeline_marcar, a mesma função que o Cowork chama pelo
+     conector no fim de cada janela. Um lugar só para as regras. */
+  ok(/RPC_MARCAR = "\/rpc\/cron_pipeline_marcar"/.test(pipe) && /marcar_online\(/.test(reg),
+     "o --registrar pede a marcação à cron_pipeline_marcar");
+  ok(!/def publicar_online/.test(pipe) && !/"PATCH"/.test(pipe),
+     "e não escreve no cron_estado por conta própria");
+  ok(!/DIR_TOQUES|json\.dump|open\(/.test(reg),
+     "nem grava nada no disco: o toque e o estado.json públicos saíram");
 
-  /* A ORDEM SE INVERTEU EM 2026-10-12: o banco primeiro, o arquivo depois.
-     Até a 9G-3 o toque era o artefato durável e publicar era melhor esforço.
-     Desde então o arquivo não leva nada a aparelho nenhum: gravado sem a
-     publicação, ele só afirmaria uma marcação que ninguém vê — e o
-     derivar_do_pipeline.py contava a rodada como "ok". O `--seco` sai antes
-     dos dois, e não chama o publicador. */
-  const reg = pipe.split("def registrar(")[1];
-  const iPublica = reg.indexOf("publicar_online(");
-  const iArquivo = reg.indexOf("os.makedirs(DIR_TOQUES");
-  ok(iPublica > 0 && iArquivo > iPublica,
-     "na rodada de verdade, publica ANTES de gravar o arquivo de toque",
-     {publica: iPublica, arquivo: iArquivo});
-  ok(/if seco:[\s\S]{0,220}return 0/.test(reg) &&
-     reg.search(/if seco:[\s\S]{0,220}return 0/) < iPublica,
-     "e o --seco sai antes de escrever qualquer coisa");
-  const entreOsDois = reg.slice(iPublica, iArquivo);
-  ok(/except Exception as e:[\s\S]{0,300}return 1/.test(entreOsDois) &&
-     /if not gravado:[\s\S]{0,300}return 1/.test(entreOsDois),
-     "e se a publicação falha ou não pega, sai com erro sem gravar o toque");
+  /* O critério da 9G-0 continua, agora dentro da função: falando com o
+     Supabase, o pipeline afirma um FATO SEU, num domínio só. */
+  const dominios = (fn.match(/dominio = '(\w+)'|values \(v_dono, '(\w+)'/g) || [])
+    .map(x => x.match(/'(\w+)'/)[1]);
+  ok(dominios.length >= 2 && dominios.every(d => d === "item"),
+     "a função escreve `item`, e um domínio só: não é espelho de estado", dominios);
+  ok(!/(insert into|update) public\.cron_estrutura_base/.test(fn) && !/estrutura_(proj|sub)/.test(fn),
+     "e NUNCA estrutura: a separação do esquema é respeitada");
+  ok(/aparelho = 'cowork'/.test(fn) && /'cowork', null\)/.test(fn),
+     "assinando como `cowork` — um aparelho, não uma autoridade");
+
   /* E o que vai para o banco é o valor de AGORA com o `st` novo — o valor
      montado do zero (vida "ativo", motivo e datas vazios) apagava decisões. */
-  ok(!/"motivo": "", "voltar_em": "", "vidaDesde": ""/.test(corpo),
-     "o publicador não monta o valor do item do zero");
-  ok(/em=eq\./.test(corpo) && /return=representation/.test(corpo),
-     "e só grava se a linha ainda estiver como foi lida, conferindo a resposta");
+  ok(/v_novo := v_atual \|\| jsonb_build_object\('st', 2/.test(fn),
+     "o valor é o de agora com o `st` novo, e não um montado do zero");
+  ok(/for update;/.test(fn) && fn.indexOf("for update;") < fn.indexOf("update public.cron_estado"),
+     "com a linha travada da leitura à escrita");
+  ok(/insert into public\.cron_registro/.test(fn),
+     "e o registro entra na mesma transação do item");
+  const iSeco = fn.indexOf("if p_seco then");
+  ok(iSeco > 0 && iSeco < fn.indexOf("update public.cron_estado") &&
+     iSeco < fn.indexOf("insert into public.cron_estado"),
+     "o --seco (p_seco) sai antes de escrever qualquer coisa");
 
   /* Nenhum segredo no repositório: só leitura do ambiente. */
   ok(/os\.environ\.get\(API_URL\)/.test(pipe) && /os\.environ\.get\(API_CHAVE\)/.test(pipe),
@@ -498,30 +485,29 @@ titulo("=== 8. O pipeline escreve nos dois caminhos, e não vira espelho ===");
   ok(!/eyJ[A-Za-z0-9_-]{20,}/.test(pipe) && !/service_role"\s*:/.test(pipe),
      "e nenhuma chave está gravada no arquivo");
 
-  /* E o pipeline NÃO ficou sem interlocutor ao perder o caminho do GitHub: o
-     que ele escreve no Supabase continua descendo, porque o aplicativo lê o
-     MESMO domínio `item` por onde o `--registrar` publica. */
+  /* E o que a função escreve continua descendo, porque o aplicativo lê o MESMO
+     domínio `item` por onde ela escreve. */
   const srv = criarServidor();
   const A = criarAparelho("mac", srv).__conectar();
   ok(typeof A.buscarEstado === "undefined" && typeof A.enviarToques === "undefined",
      "o aplicativo não lê nem escreve mais no GitHub (9G-2 e 9G-3)");
   ok(typeof A.aplicarItemOnline === "function",
-     "e o que desce do `--registrar` chega pelo aplicarItemOnline, que ficou");
-  ok(/"dominio": "item"/.test(pipe.replace(/#.*$/gm, "")),
-     "o pipeline publica no domínio `item`, o mesmo que o aparelho assina");
+     "e o que a função escreve chega pelo aplicarItemOnline, que ficou");
 }
 
 titulo("=== 9. A fronteira do pipeline: prova `estrela` continua dele ===");
 {
   const pipe = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
-  ok(/prova == "estrela" and not forcar/.test(pipe),
-     "o --registrar RECUSA subitem de prova `estrela`");
-  ok(/return 1/.test(pipe.split('prova == "estrela"')[1].slice(0, 600)),
-     "e sai sem escrever nada quando recusa");
-  ok(/decisao do autor/.test(pipe),
+  const fn = fs.readFileSync(path.join(RAIZ, "sql", "cron_pipeline_marcar.sql"), "utf8")
+    .split("as $$")[1].split("$$;")[0];
+  const iEstrela = fn.indexOf("= 'estrela' then");
+  ok(iEstrela > 0 && iEstrela < fn.indexOf("update public.cron_estado") &&
+     iEstrela < fn.indexOf("insert into public.cron_estado"),
+     "a função RECUSA subitem de prova `estrela`, antes de qualquer escrita");
+  ok(/'recusada'/.test(fn.slice(iEstrela, iEstrela + 400)) && /decisão do autor/.test(fn),
      "dizendo por quê: a conclusão é decisão do autor, não artefato");
-  ok(/--forcar/.test(pipe),
-     "e a exceção é explícita, e não um caminho silencioso");
+  ok(!/p_forcar/.test(fn) && /"--vida", "--forcar"/.test(pipe),
+     "e não há exceção pela máquina: o --forcar saiu, e o autor marca no aplicativo");
 
   /* O PONTO DA 9F AQUI: a fronteira está ANTES da escrita, e a 9E não a moveu
      para o desempate. O merge é o mesmo para todo mundo — é a recusa a priori

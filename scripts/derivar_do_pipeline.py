@@ -209,9 +209,9 @@ def subitens_do_cronograma(entrada, estado, slugs=None):
 
 # =============== A LIGACAO PECA <-> ARTIGO, e os rascunhos (2026-10-12) ===============
 # O mapa descreve os artefatos com [slug] e [drafts] no caminho, e o Cronograma
-# conhece as pecas por id (a00, a01...). Quem sabe que a peca a01 e o artigo
-# `consciencia-lutero-spinoza` e o pipeline: na Janela 0, o CONCLUIDO do artigo
-# registra a linha "Slug:" e a linha "Id no Cronograma: aNN". Ate aqui a
+# conhece as pecas por id (a00, a01...). Quem sabe de que artigo e cada peca e
+# o pipeline: na Janela 0, o CONCLUIDO do artigo registra a linha "Slug:" e a
+# linha "Id no Cronograma: aNN". Ate aqui a
 # ligacao era um campo `slug` no Cronograma/entrada.json, que nenhuma sessao do
 # Cowork consegue publicar — e por isso so o a00 o tinha. Agora ela e lida de
 # onde o pipeline ja a escreve (`ligacao` no mapa), e o campo do entrada.json,
