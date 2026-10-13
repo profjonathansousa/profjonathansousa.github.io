@@ -1,20 +1,20 @@
 {
-  "_gerado_em": "2026-10-12T17:19:47.759952-03:00",
+  "_gerado_em": "2026-10-13T11:15:48.372894-03:00",
   "_o_que_e": "Lista viva. Classificada, nao pontuada. A ordem e a da secao 6 do agente_CHAMADAS.md: urgentes primeiro, depois bloco, depois prazo.",
   "_batimento": {
-    "quando": "2026-10-12T17:19:47.759952-03:00",
+    "quando": "2026-10-13T11:15:48.372894-03:00",
     "fontes": {
       "curadas": "ok · 5 curados · atualizado em 2026-08-25",
-      "philevents": "ok · 360 sondados · 90 novos",
-      "anpof-chamadas": "ok · 1551 links · moldura podada: 67288 chars",
+      "philevents": "ok · 360 sondados · 85 novos",
+      "anpof-chamadas": "ok · 1552 links · moldura podada: 67248 chars",
       "upenn-cfp": "desligada"
     },
     "avisos": [
       "philevents: teto de 360 sondas atingido — ha mais anuncios do que esta rodada leu",
       "anpof-chamadas: teto de 40 itens novos atingido",
-      "114 itens ja vivos reclassificados (sem rede, sem remocao)"
+      "119 itens ja vivos reclassificados (sem rede, sem remocao)"
     ],
-    "resumo": "124 vivos (?:1 evento:40 publicacao:83) · 7 urgentes · 4 novos · 19 arquivados por prazo · 113 barrados"
+    "resumo": "129 vivos (?:1 evento:43 publicacao:85) · 9 urgentes · 5 novos · 17 arquivados por prazo · 110 barrados"
   },
   "itens": [
     {
@@ -43,10 +43,10 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 19,
+      "dias_ate_prazo": 18,
       "urgente": true,
       "marcas": [
-        "prazo em 19 dia(s)"
+        "prazo em 18 dia(s)"
       ],
       "novo": true,
       "vencida": false,
@@ -82,10 +82,10 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 18,
+      "dias_ate_prazo": 17,
       "urgente": true,
       "marcas": [
-        "prazo em 18 dia(s)"
+        "prazo em 17 dia(s)"
       ],
       "novo": true,
       "vencida": false,
@@ -123,16 +123,55 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 18,
+      "dias_ate_prazo": 17,
       "urgente": true,
       "marcas": [
-        "prazo em 18 dia(s)"
+        "prazo em 17 dia(s)"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
       "vencida": false,
       "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-amentos-e-chamadas-de-revistas-dossie-fenomenologia-critica2",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/dossie-fenomenologia-critica2",
+      "titulo": "Dossiê Fenomenologia Crítica",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2026-10-31",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Dossiê Fenomenologia Crítica | ANPOF\n01/10/2026\nDossiê Fenomenologia Crítica\nRio de Janeiro\nEstá aberta a submissão de artigos para o número 61 da revista O que nos faz pensar , do Departamento de Filosofia da PUC-Rio, em número especial sob o título de “ Dossiê Fenomenologia Crítica ”.\nO dossiê será organizado por Fernanda Alt (PUC-Rio) e Silvana de Souza Ramos (USP).\nResumo da proposta: O campo da fenomenologia, uma das correntes mais expressivas da filosofia contemporânea, tem passado por revisões substantivas nas últimas quatro décadas, especialmente no contexto anglo-saxão. Essa reconfiguração teórica tem expandido as análises de temas caros à tradição fenomenológica clássica — como a corporeidade, a percepção, a imaginação e a intersubjetividade —, articulando-os com perspectivas críticas cada vez mais situadas. Tal vertente, que se consolida sob a alcunha de fenomenologia crítica, constitui um campo teórico-político fértil para investigar as opressões sociais no contexto capitalista engendradas pelos processos de racialização, generificação, normalização das sexualidades, capacitismo e opressão de classe em suas relações intrínsecas com a colonialidade. Sem abdicar do rigor metodológico, a fenomenologia crítica recusa a ideia de uma subjetividade purificada dos aspectos históricos e contingentes, buscando, em diálogo interdisciplinar, a transformação prática das opressões que constituem o mundo vivido individual e coletivamente. Este dossiê insere-se precisamente no esforço de ampliar e diversificar esse debate no cenário brasileiro, onde tais estudos ainda guardam caráter emergente. Convidamos todas, todos e todes que pesquisam essas temáticas a submeterem suas contribuições.\nA revista O que nos faz pensar está avaliada com o Qualis A1 na nova classificação da CAPES.\nO prazo final para submissões é o dia 31/10/2026 .\nA publicação do número 61 está prevista para agosto/2027 .\nLink: https://oquenosfazpensar.com.br/oqnfp/announcement/view/24",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "dossie",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 18,
+      "urgente": true,
+      "descartado": false,
+      "marcas": [
+        "prazo em 18 dia(s)"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philevents-146661",
@@ -160,11 +199,12 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 11,
+      "dias_ate_prazo": 10,
       "urgente": true,
       "marcas": [
         "pais nao lido",
-        "prazo em 11 dia(s)"
+        "prazo em 10 dia(s)",
+        "so com texto pronto"
       ],
       "novo": true,
       "vencida": false,
@@ -175,6 +215,48 @@
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
       "descartado": false
+    },
+    {
+      "id": "philevents-148261",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/148261",
+      "titulo": "University of Pennsylvania Metaphysics Workshop",
+      "instituicao": "",
+      "aos": "areas",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "prazo": "2026-10-24",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "University of Pennsylvania Metaphysics Workshop\n - PhilEvents \n University of Pennsylvania Metaphysics Workshop\n Michael James Bevan (University of Oxford (DPhil)) , David Builes (Princeton University) , Bar Luzon (Massachusetts Institute of Technology) , Maegan Fairchild (University of Michigan, Ann Arbor) , Alexander Skiles (Rutgers - New Brunswick) , Kit Fine (New York University) , Samuel Elgin (University of Pennsylvania) , Carla Merino-Rajme (University of Delaware) at University of Pennsylvania in November, 2026. Topics: Metaphysics\" />\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n University of Pennsylvania Metaphysics Workshop\n November 7, 2026 - November 8, 2026\n University of Pennsylvania \n Philadelphia\nUnited States\n Speakers:\n Michael James Bevan \n University of Oxfo",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "workshop",
+      "porque": "competencia: metaphysics",
+      "relevancia": "competencia",
+      "pais": "",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": 11,
+      "urgente": true,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido",
+        "prazo em 11 dia(s)"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philevents-146497",
@@ -202,11 +284,11 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 19,
+      "dias_ate_prazo": 18,
       "urgente": true,
       "marcas": [
         "pais nao lido",
-        "prazo em 19 dia(s)"
+        "prazo em 18 dia(s)"
       ],
       "novo": true,
       "vencida": false,
@@ -244,10 +326,10 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 4,
+      "dias_ate_prazo": 3,
       "urgente": true,
       "marcas": [
-        "prazo em 4 dia(s)",
+        "prazo em 3 dia(s)",
         "so com texto pronto"
       ],
       "novo": true,
@@ -286,10 +368,10 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 20,
+      "dias_ate_prazo": 19,
       "urgente": true,
       "marcas": [
-        "prazo em 20 dia(s)"
+        "prazo em 19 dia(s)"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
@@ -469,7 +551,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Periodico trimestral, com numeros tematicos, editado por Paul R. Hinlicky desde o inicio de 2026. Aceita submissoes em dogmatica, exegese teologica, historia da doutrina e missiologia contemporanea. Os quatro temas anunciados para 2028: janeiro, 'Perspectives on Law and Gospel, New and Old'; abril, 'Salvation History versus Apocalyptic'; agosto, 'What's Really Wrong with Dispensationalism?'; outubro, 'The Parables of Jesus — Jesus as Parable of God'. O boletim NAO declara prazo de submissao para nenhum deles. Prazo longo: numero de 2028 anunciado em 2026.",
-      "visto_em": "2026-10-12",
+      "visto_em": "2026-10-13",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "dossie",
@@ -507,7 +589,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Sem prazo: convida manuscritos em fluxo continuo, sobre qualquer parte do escopo do periodico. O foco e teologia publica em sentido amplo, de interesse para luteranos e nao-luteranos, no Canada e fora dele; a ELCIC e parceira de plena comunhao com a Igreja Anglicana do Canada, e o publico e deliberadamente diverso. NORMAS: 3.000 a 4.000 palavras, formato Word, citacao Chicago full-note. Co-editor-chefe: Kyle Schiefelbein-Guerrero. Requisitos completos na pagina de politicas do periodico.",
-      "visto_em": "2026-10-12",
+      "visto_em": "2026-10-13",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -545,7 +627,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Sem prazo e sem tema declarado: o boletim so convida ideias de artigo e manuscritos. Editado por Piotr J. Malysz e Matthew O. Staneck. Chamada generica — util como destino, nao como urgencia.",
-      "visto_em": "2026-10-12",
+      "visto_em": "2026-10-13",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -583,7 +665,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. Resenhas de 1.000 a 1.500 palavras, de livros recentes que contribuam para a reflexao teologica ou a deliberacao etica na igreja e na sociedade — inclusive livros que nao sejam teologicos em si. O livro NAO precisa ser do tema do numero. Envia-se a proposta (o livro e a direcao da resenha) ao editor de resenhas, William Rodriguez, com 'Book Review' no assunto; tambem se pode pedir cadastro como resenhista, indicando areas de interesse. ESFORCO BAIXO, porta de entrada: e o item mais barato deste boletim.",
-      "visto_em": "2026-10-12",
+      "visto_em": "2026-10-13",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -787,7 +869,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 49,
+      "dias_ate_prazo": 48,
       "urgente": false,
       "marcas": [],
       "novo": true,
@@ -1333,7 +1415,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 81,
+      "dias_ate_prazo": 80,
       "urgente": false,
       "marcas": [],
       "veredicto": "revisar",
@@ -1368,7 +1450,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 111,
+      "dias_ate_prazo": 110,
       "urgente": false,
       "marcas": [],
       "novo": true,
@@ -1407,7 +1489,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 130,
+      "dias_ate_prazo": 129,
       "urgente": false,
       "marcas": [],
       "veredicto": "revisar",
@@ -3240,6 +3322,45 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "chamada brasileira sem area no titulo",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas--da-unesp-v-48-2025-publicacoes-mais-recentes-fluxo-continuo",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/transformacao-revista-de-filosofia-da-unesp--v-48-2025-publicacoes-mais-recentes-fluxo-continuo",
+      "titulo": "Trans/Form/Ação: revista de filosofia da Unesp - v. 48 (2025): Publicações mais recentes (Fluxo Contínuo)",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Trans/Form/Ação: revista de filosofia da Unesp - v. 48 (2025): Publicações mais recentes (Fluxo Contínuo) | ANPOF\n16/09/2025\nTrans/Form/Ação: revista de filosofia da Unesp - v. 48 (2025): Publicações mais recentes (Fluxo Contínuo)\nOn line\nAnunciamos novo lote de artigos e comentários, em publicação fluxo contínuo da Trans/Form/Ação: revista de Filosofia da Unesp.\nLink: https://revistas.marilia.unesp.br/index.php/transformacao/index",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "periodico",
+      "porque": "chamada brasileira sem area no titulo",
+      "relevancia": "aberto",
+      "uf": "",
+      "forma": "publicacao",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
       "descartado": false,
       "marcas": [
         "sem prazo"
@@ -3287,6 +3408,48 @@
       "veredicto": "relevante",
       "porque_veredicto": "nicho no corpo: philosophy of religion",
       "descartado": false
+    },
+    {
+      "id": "philevents-148237",
+      "fonte": "philevents",
+      "url": "https://philevents.org/event/show/148237",
+      "titulo": "Tolerance and Education: Concepts, Justifications",
+      "instituicao": "and Limits (MANCEPT Panel 2026)",
+      "aos": "areas",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Tolerance and Education: Concepts, Justifications, and Limits (MANCEPT Panel 2026)\n - PhilEvents \n Tolerance and Education: Concepts, Justifications, and Limits (MANCEPT Panel 2026)\n The event requested has been deleted or is unavailable.\n PhilPapers \n PhilPeople \n PhilArchive \n PhilEvents \n PhilJobs \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n More   \n Sign in \n Upcoming events \n Recently added \n Online seminars \n Search \n Browse \n Submit an event \n My events \n Widgets \n Help \n PhilPapers \n PhilPeople \n PhilArchive \n PhilJobs \n Edit this event \n Tolerance and Education: Concepts, Justifications, and Limits (MANCEPT Panel 2026)\n September 2, 2026 - September 4, 2026\n University of Manchester - MANCEPT \n University of Manchester\nManchester\nUnited Kingdom\n This will be an accessible event, including organized related activities \n View the Call For Papers \n Organisers:\n Christina Elizabeth Easton \n University of Birmingham \n Topic areas\n Applied Ethics \n Social and Political Philosophy \n Talks at this conference\n Add a talk \n Details\n Tolerance and Education: Concepts, Justifications, and Limits \n Pan",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [
+        "pais nao lido"
+      ],
+      "extracao": "suspeita",
+      "tipo": "outro",
+      "porque": "nicho: justification",
+      "relevancia": "nicho",
+      "pais": "",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "pais nao lido",
+        "sem prazo"
+      ],
+      "veredicto": "revisar",
+      "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false
     },
     {
       "id": "philevents-146341",
@@ -3488,7 +3651,6 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "pais nao lido",
         "sem prazo"
@@ -3496,7 +3658,8 @@
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "philevents-148069",
@@ -3530,13 +3693,52 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "pais nao lido",
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
+      "novo": true,
+      "vencida": false,
+      "descartado": false
+    },
+    {
+      "id": "anpof-chamadas-tas-sobre-a-imaginacao-entre-a-etica-a-estetica-e-a-politica",
+      "fonte": "anpof-chamadas",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/sobre-a-imaginacao-entre-a-etica-a-estetica-e-a-politica",
+      "titulo": "Sobre a imaginação: entre a ética, a estética e a política",
+      "instituicao": "",
+      "aos": "",
+      "aoc": "",
+      "local": "",
+      "categoria": "",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Sobre a imaginação: entre a ética, a estética e a política | ANPOF\n23/09/2025\nSobre a imaginação: entre a ética, a estética e a política\nPUC-Rio\nEstá aberta a submissão de artigos para o número   58  da revista  O que nos faz pensar , do departamento de Filosofia da PUC-Rio, em número especial sob o título de \" Sobre a imaginação: entre a ética, a estética e a política \".\nO dossiê será organizado por Roan Costa Cordeiro (PUC-Rio), Cassiana Lopes Stephan (UFRJ) e Benjamim Brum Neto (UFRJ).\nResumo da proposta:  Convidamos pesquisadoras e pesquisadores a contribuírem com o dossiê “Sobre a imaginação: entre a ética, a estética e a política”, propondo investigações que interroguem e ampliem os sentidos da imaginação em suas implicações filosóficas. Interessa-nos refletir sobre as múltiplas modulações da faculdade de imaginar, compreendendo-a não apenas como operação mental ou potência estética, mas como força produtiva implicada em práticas de invenção e intervenção, criação de mundos e abertura do possível. Neste dossiê, trata-se de pensar a imaginação como operador simbólico, ético e político, capaz de instaurar formas de sensibilidade, subjetivação e resistência. Assim, esperamos contribuições que explorem tanto os dispositivos que configuram, capturam ou orientam a imaginação quanto aqueles que a mobilizam em novas confabulações, experiências de pensamento ou práticas críticas.\nA revista  O que nos faz pensar  está avaliada com o Qualis A3 na nova classificação da CAPES.\nO  prazo final para submissões  é o dia  10/10 .\nA  publicação do número 58  está prevista para  março/26 .\nLink: https://oquenosfazpensar.com.br/oqnfp/announcement/view/21",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "tipo": "outro",
+      "porque": "competencia: etica",
+      "relevancia": "competencia",
+      "uf": "",
+      "forma": "evento",
+      "bloco": null,
+      "esforco": "",
+      "elegibilidade": "Aberto",
+      "idioma": "EN",
+      "dias_ate_prazo": null,
+      "urgente": false,
+      "descartado": false,
+      "marcas": [
+        "sem prazo"
+      ],
+      "veredicto": "relevante",
+      "porque_veredicto": "competencia: etica",
       "novo": true,
       "vencida": false
     },
@@ -3568,7 +3770,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 80,
+      "dias_ate_prazo": 79,
       "urgente": false,
       "marcas": [],
       "veredicto": "revisar",
@@ -3761,7 +3963,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 29,
+      "dias_ate_prazo": 28,
       "urgente": false,
       "marcas": [],
       "veredicto": "revisar",
@@ -3798,7 +4000,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 112,
+      "dias_ate_prazo": 111,
       "urgente": false,
       "marcas": [],
       "veredicto": "revisar",
@@ -3833,7 +4035,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 170,
+      "dias_ate_prazo": 169,
       "urgente": false,
       "marcas": [],
       "novo": true,
@@ -3870,7 +4072,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": 323,
+      "dias_ate_prazo": 322,
       "urgente": false,
       "marcas": [],
       "novo": true,
@@ -4535,14 +4737,14 @@
       "idioma": "EN",
       "dias_ate_prazo": null,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "sem prazo"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "chamada brasileira sem area no titulo",
       "novo": true,
-      "vencida": false
+      "vencida": false,
+      "descartado": false
     },
     {
       "id": "philevents-146249",
@@ -4597,7 +4799,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -12,
+      "dias_ate_prazo": -13,
       "urgente": false,
       "marcas": [],
       "novo": true,
@@ -4624,7 +4826,7 @@
       "prazo_brando": false,
       "publicado": "",
       "texto": "Fonte: Lutheran Scholars Network, boletim trimestral #3, Summer 2026. PRAZO DE PROPOSTA: 1 de outubro de 2026. Entrega final dos textos: 1 de novembro de 2026. E o unico prazo duro do boletim inteiro. O tema: pensando o nascimento de Cristo num estabulo e a fuga da Sagrada Familia para o Egito, a chamada convida a considerar quem se encontra em situacao semelhante — sem meios de custear moradia, ou fugindo de violencia, pobreza ou desastre. Editora do numero: Jennifer Hockenbery. O JLE e publicacao eclesial online, bimestral, gratuita e de acesso aberto, catalogada na ATLA, que trata questoes sociais a partir da tradicao historica, teologica e etica. Ha mais chamadas do JLE para 2026 alem desta.",
-      "visto_em": "2026-10-12",
+      "visto_em": "2026-10-13",
       "avisos_extracao": [],
       "extracao": "ok",
       "tipo": "periodico",
@@ -4636,7 +4838,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -11,
+      "dias_ate_prazo": -12,
       "urgente": false,
       "descartado": false,
       "marcas": [],
@@ -4671,7 +4873,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -12,
+      "dias_ate_prazo": -13,
       "urgente": false,
       "marcas": [],
       "novo": true,
@@ -4710,7 +4912,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -12,
+      "dias_ate_prazo": -13,
       "urgente": false,
       "marcas": [],
       "veredicto": "revisar",
@@ -4745,7 +4947,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -11,
+      "dias_ate_prazo": -12,
       "urgente": false,
       "marcas": [
         "pais nao lido"
@@ -4790,16 +4992,15 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -4,
+      "dias_ate_prazo": -5,
       "urgente": false,
-      "descartado": false,
       "marcas": [
         "pais nao lido"
       ],
       "veredicto": "revisar",
       "porque_veredicto": "extracao suspeita",
-      "motivo_saida": "prazo vencido",
-      "vencida": true
+      "vencida": true,
+      "descartado": false
     },
     {
       "id": "anpof-chamadas-onstro-demasiado-humano-sobre-monstros-linguagem-e-violencia",
@@ -4827,7 +5028,7 @@
       "esforco": "",
       "elegibilidade": "Aberto",
       "idioma": "EN",
-      "dias_ate_prazo": -2,
+      "dias_ate_prazo": -3,
       "urgente": false,
       "marcas": [],
       "novo": true,

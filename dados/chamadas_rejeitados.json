@@ -1,8 +1,778 @@
 {
   "_o_que_e": "O que o filtro barrou, com a razao. Serve para afinar criterios_chamadas.json com evidencia em vez de palpite.",
   "_teto": 200,
-  "_barrados_nesta_rodada": 113,
+  "_barrados_nesta_rodada": 110,
   "itens": [
+    {
+      "id": "philevents-148121",
+      "titulo": "«Transcendental Turn in Contemporary Philosophy – 11: the \"Problem of Method\" and the Specificity of the Transcendental Research (Philosophy), Transcendentalism and Epistemology Cognitive Science",
+      "url": "https://philevents.org/event/show/148121",
+      "motivo_saida": "veto no cabeca: cognitive science",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148125",
+      "titulo": "CFP: \n\t«Transcendental Turn in Contemporary Philosophy – 11: the \"Problem of Method\" and the Specificity of the Transcendental Research (Philosophy), Transcendentalism and Epistemology Cognitive Science",
+      "url": "https://philevents.org/event/show/148125",
+      "motivo_saida": "veto no cabeca: cognitive science",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148129",
+      "titulo": "Conference celebrating Cezary Cieśliński’s 60th birthday",
+      "url": "https://philevents.org/event/show/148129",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148133",
+      "titulo": "Simon DeDeo (Carnegie Mellon University)\n\n   \n\tLTT: Simon DeDeo -  Alien Proofs",
+      "url": "https://philevents.org/event/show/148133",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148137",
+      "titulo": "MANCEPT 2026: New Directions for Cosmopolitanism and Global Democracy",
+      "url": "https://philevents.org/event/show/148137",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148141",
+      "titulo": "CFP: \n\tMANCEPT 2026: New Directions for Cosmopolitanism and Global Democracy",
+      "url": "https://philevents.org/event/show/148141",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148145",
+      "titulo": "CFP: \n\tSpecial Issue of Análisis Filosófico: “Oppressive Argumentation: Silencing and Oppressive Speech in Argumentation”",
+      "url": "https://philevents.org/event/show/148145",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148149",
+      "titulo": "Chapman - SNS Workshop on Logic and Philosophy of Mathematics",
+      "url": "https://philevents.org/event/show/148149",
+      "motivo_saida": "veto no cabeca: philosophy of mathematics",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148153",
+      "titulo": "CFP: \n\tIssue on Ludology and the Foundations of a Play Pedagogy (Journal Temps d'Educació)",
+      "url": "https://philevents.org/event/show/148153",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148157",
+      "titulo": "Lisa Ellis (University of Otago)\n\n   \n\tKant’s Mature Cosmopolitanism in the Anthropocene",
+      "url": "https://philevents.org/event/show/148157",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148169",
+      "titulo": "CFP: \n\tD.a.t. call for papers: Infractions of the Musical Paradigm: Practices, Technologies",
+      "url": "https://philevents.org/event/show/148169",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148173",
+      "titulo": "SAPoLSN 2026 Graduate Summer School: The Agents of Evolution",
+      "url": "https://philevents.org/event/show/148173",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148177",
+      "titulo": "PLATO & POLITICAL LANGUAGE",
+      "url": "https://philevents.org/event/show/148177",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148181",
+      "titulo": "Phenomenology and the Political:  Experience, Power",
+      "url": "https://philevents.org/event/show/148181",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148185",
+      "titulo": "CFP: \n\tPhenomenology and the Political:  Experience, Power",
+      "url": "https://philevents.org/event/show/148185",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148189",
+      "titulo": "Bodies in Digital Transition: Mapping a topology of digital bodies",
+      "url": "https://philevents.org/event/show/148189",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148193",
+      "titulo": "CFP: \n\tBodies in Digital Transition: Mapping a topology of digital bodies",
+      "url": "https://philevents.org/event/show/148193",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148197",
+      "titulo": "'Styles of Perception': From Historical Perspectives to the Digital Age",
+      "url": "https://philevents.org/event/show/148197",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148201",
+      "titulo": "CFP: \n\t 'Styles of Perception': From Historical Perspectives to the Digital Age",
+      "url": "https://philevents.org/event/show/148201",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148205",
+      "titulo": "CFP: \n\tThe Athens MA in Ancient Philosophy, Call for Applications",
+      "url": "https://philevents.org/event/show/148205",
+      "motivo_saida": "veto no cabeca: ancient philosophy",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148213",
+      "titulo": "Heart of Science: Book Workshop",
+      "url": "https://philevents.org/event/show/148213",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148217",
+      "titulo": "2026 Foundations of Thermodynamics Workshop: Finding Balance",
+      "url": "https://philevents.org/event/show/148217",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148221",
+      "titulo": "Migration",
+      "url": "https://philevents.org/event/show/148221",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148225",
+      "titulo": "Racism",
+      "url": "https://philevents.org/event/show/148225",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148229",
+      "titulo": "Η ΜΕΤΑ - ΦΙΛΟΣΟΦΙΚΗ ΣΚΕΨΗ - ΑΛΕΞΗΣ ΚΑΡΠΟΥΖΟΣ",
+      "url": "https://philevents.org/event/show/148229",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148233",
+      "titulo": "International Interdisciplinary Conference of Psychedelic Studies",
+      "url": "https://philevents.org/event/show/148233",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148245",
+      "titulo": "Hegel on Historicity",
+      "url": "https://philevents.org/event/show/148245",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148249",
+      "titulo": "CFP: \n\tHegel on Historicity",
+      "url": "https://philevents.org/event/show/148249",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148253",
+      "titulo": "8th Asian Workshop on Philosophical Logic",
+      "url": "https://philevents.org/event/show/148253",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148257",
+      "titulo": "Nicolas Zaks (Université Libre de Bruxelles)\n\n   \n\tNicolas ZAKS (FNRS/Paris 1) - 'Qua Qualifications in Aristotle'",
+      "url": "https://philevents.org/event/show/148257",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148265",
+      "titulo": "CFP: \n\tThe PPE Society | Tenth Annual Meeting",
+      "url": "https://philevents.org/event/show/148265",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148269",
+      "titulo": "Philosophy and Generative Grammar 3",
+      "url": "https://philevents.org/event/show/148269",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148273",
+      "titulo": "Attitude Reports, Unarticulated Constituents",
+      "url": "https://philevents.org/event/show/148273",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148277",
+      "titulo": "Sages & Scholars Conference",
+      "url": "https://philevents.org/event/show/148277",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148281",
+      "titulo": "Forms of Context-Sensitivity 2",
+      "url": "https://philevents.org/event/show/148281",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148285",
+      "titulo": "Conceptualising the Self",
+      "url": "https://philevents.org/event/show/148285",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148289",
+      "titulo": "CFP: \n\tConceptualising the Self",
+      "url": "https://philevents.org/event/show/148289",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148293",
+      "titulo": "Workshop on Theoretical Computer Science and Computational Creativity (TCS&CS-ICCC’26)",
+      "url": "https://philevents.org/event/show/148293",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148297",
+      "titulo": "CFP: \n\tWorkshop on Theoretical Computer Science and Computational Creativity (TCS&CS-ICCC’26)",
+      "url": "https://philevents.org/event/show/148297",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148301",
+      "titulo": "University of Toronto Philosophy Graduate Conference 2026",
+      "url": "https://philevents.org/event/show/148301",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148305",
+      "titulo": "Vandana Sharma (University of Delhi)\n\n   \n\tVirtue as the Foundation of Life in Buddhist Philosophy",
+      "url": "https://philevents.org/event/show/148305",
+      "motivo_saida": "veto no cabeca: buddhist",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148309",
+      "titulo": "Felix Hausdorff (1868-1942): Between Post-Kantian Philosophy and Modern Mathematics",
+      "url": "https://philevents.org/event/show/148309",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148313",
+      "titulo": "The 25th Amsterdam Colloquium",
+      "url": "https://philevents.org/event/show/148313",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148317",
+      "titulo": "CFP: \n\tThe 25th Amsterdam Colloquium",
+      "url": "https://philevents.org/event/show/148317",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148321",
+      "titulo": "Virtues",
+      "url": "https://philevents.org/event/show/148321",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148325",
+      "titulo": "CFP: \n\tVirtues",
+      "url": "https://philevents.org/event/show/148325",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148329",
+      "titulo": "Ally Delshad Tehrani (Nidrana Initiative Foundation)\n\n   \n\tResponsibility Without Free Will",
+      "url": "https://philevents.org/event/show/148329",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148333",
+      "titulo": "SLR: Science",
+      "url": "https://philevents.org/event/show/148333",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148337",
+      "titulo": "CFP: \n\tSLR: Science",
+      "url": "https://philevents.org/event/show/148337",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148341",
+      "titulo": "Fragility and the Aesthetics of Sensitivity",
+      "url": "https://philevents.org/event/show/148341",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148345",
+      "titulo": "CFP: \n\tFragility and the Aesthetics of Sensitivity",
+      "url": "https://philevents.org/event/show/148345",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148349",
+      "titulo": "Jakob Hohwy (Monash University)",
+      "url": "https://philevents.org/event/show/148349",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148353",
+      "titulo": "Metabolic Futures II – The Politics of Smell",
+      "url": "https://philevents.org/event/show/148353",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148357",
+      "titulo": "Digital Humanism Conference 2026",
+      "url": "https://philevents.org/event/show/148357",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148361",
+      "titulo": "Planetary Technologies: Ontology and Agency",
+      "url": "https://philevents.org/event/show/148361",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148365",
+      "titulo": "CFP: \n\tUniversity of Toronto Philosophy Graduate Conference 2026",
+      "url": "https://philevents.org/event/show/148365",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148369",
+      "titulo": "Dina Emundts (Freie Universität Berlin)\n\n   \n\tDie Wahrnehmung seiner selbst und der Anderen in Kants Theorie des Erhabenen",
+      "url": "https://philevents.org/event/show/148369",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148377",
+      "titulo": "CFP: \n\tDEADLINE EXTENDED: Tennessee Value and Agency (TVA): Grief, Trauma, Anger",
+      "url": "https://philevents.org/event/show/148377",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148381",
+      "titulo": "2nd Nagoya Meta-Philosophy Workshop 2.0",
+      "url": "https://philevents.org/event/show/148381",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148385",
+      "titulo": "Mental Disorder and Responsiveness to Reasons",
+      "url": "https://philevents.org/event/show/148385",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148389",
+      "titulo": "Ingeborg Gabriel \n\n   \n\tBraucht Glaube Mut? – Zur Tapferkeit als Lebenshaltung",
+      "url": "https://philevents.org/event/show/148389",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148393",
+      "titulo": "CFP: \n\tMaking Kin as Practice of Care: Habitable Bodies or Unexpected  Alliances between Ecology",
+      "url": "https://philevents.org/event/show/148393",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148397",
+      "titulo": "Critical Theories of Fascism  - Lisbon Praxis Summer School 2026",
+      "url": "https://philevents.org/event/show/148397",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148401",
+      "titulo": "CFP: \n\tCritical Theories of Fascism  - Lisbon Praxis Summer School 2026",
+      "url": "https://philevents.org/event/show/148401",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148405",
+      "titulo": "Jacob Cléophas Defo Nzikou (University of Dschang/URPHISSA)",
+      "url": "https://philevents.org/event/show/148405",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148409",
+      "titulo": "Varieties of realism: aesthetics, politics",
+      "url": "https://philevents.org/event/show/148409",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148413",
+      "titulo": "Anelise De Carli (Pontifical Catholic University of Rio Grande do Sul)\n\n   \n\tAesthetics of Catastrophe: Climate Change and the Politics of Seeing",
+      "url": "https://philevents.org/event/show/148413",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148417",
+      "titulo": "Ischia & Naples Festival of Philosophy: Freedom",
+      "url": "https://philevents.org/event/show/148417",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148421",
+      "titulo": "CFP: \n\tIN_Festival of Philosophy",
+      "url": "https://philevents.org/event/show/148421",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148425",
+      "titulo": "Stephen M. Gardiner (University of Washington), Matthias Fritsch (Concordia University), David Schmidtz (University of Arizona), Molly Dea-Stephensen (McGill University)",
+      "url": "https://philevents.org/event/show/148425",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148445",
+      "titulo": "CFP: \n\tThe Phenomenology of Desire (The New Yearbook for Phenomenology and Phenomenological Philosophy",
+      "url": "https://philevents.org/event/show/148445",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148449",
+      "titulo": "Workshop: Causal Models, Causal Abstraction",
+      "url": "https://philevents.org/event/show/148449",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148453",
+      "titulo": "CFP: \n\tCall for Applications 2026-27, Phase II. MA in Contemporary Philosophy/Philosophy of Science",
+      "url": "https://philevents.org/event/show/148453",
+      "motivo_saida": "veto no cabeca: philosophy of science",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148465",
+      "titulo": "John D. Norton (University of Pittsburgh)\n\n   \n\tHow the Material Theory of Induction Dissolves the Problem of Induction",
+      "url": "https://philevents.org/event/show/148465",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148469",
+      "titulo": "The Sixteenth Biennial Congress of HOPOS",
+      "url": "https://philevents.org/event/show/148469",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148473",
+      "titulo": "\"Eternidad del ser",
+      "url": "https://philevents.org/event/show/148473",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "philevents-148477",
+      "titulo": "Artificial Creativity in Theory and Practice",
+      "url": "https://philevents.org/event/show/148477",
+      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-entos-e-chamadas-de-revistas-lancamento-da-revista-catholica",
+      "titulo": "Lançamento da revista Catholica",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-catholica",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-os-e-chamadas-de-revistas-lancamento-da-revista-ver-o-pensar",
+      "titulo": "Lançamento da revista Ver-O-Pensar",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ver-o-pensar",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
+      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 33, 2026.1",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-dossie-a-filosofia-de-norberto-bobbio-ii-revista-quero-saber",
+      "titulo": "Lançamento do Dossiê 'A Filosofia de Norberto Bobbio II' - Revista Quero Saber",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-a-filosofia-de-norberto-bobbio-ii--revista-quero-saber",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-madas-de-revistas-novo-numero-dos-cadernos-espinosanos-no-ar",
+      "titulo": "Novo número dos Cadernos Espinosanos no ar",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero-dos-cadernos-espinosanos-no-ar",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas--revistas-prisma-revista-de-filosofia-lancamento-do-v-8-2026",
+      "titulo": "PRISMA - Revista de Filosofia, lançamento do v. 8, 2026",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/prisma--revista-de-filosofia-lancamento-do-v-8-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-stas-novo-numero-voluntas-revista-internacional-de-filosofia",
+      "titulo": "Novo número - Voluntas: Revista Internacional de Filosofia",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--voluntas-revista-internacional-de-filosofia",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-e-rancire-30-anos-de-o-desentendimento-v2-n1-2026-unicampufc",
+      "titulo": "Lançamento da Revista: SIMBÓLICA - Revista de Filosofia da Cultura e Estudos Interdisciplinares - DOSSIÊ: Rancière - 30 anos de 'O desentendimento' - V.2, N.1 (2026) - (UNICAMP/UFC)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--dossie-rancire--30-anos-de-o-desentendimento--v2-n1-2026--unicampufc",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-v2-n1-2026",
+      "titulo": "Lançamento de Dossiê: Rancière - 30 anos de 'O desentendimento' - Simbólica: Revista de Filosofia da Cultura e Estudos Interdisciplinares - V.2, N.1 (2026)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-dossie-rancire--30-anos-de-o-desentendimento--simbolica-revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--v2-n1-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-tas-lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
+      "titulo": "Lançamento da edição inaugural da NeoKrísis v. 1, n. 1 (2026)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-ntos-e-chamadas-de-revistas-lancamento-da-revista-ideacao-53",
+      "titulo": "Lançamento da Revista Ideação 53",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-53",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-etheus-v-18-n-50-2026-dossie-reler-o-manual-de-epicteto-hoje",
+      "titulo": "Lançamento: PROMETHEUS v. 18 n. 50 (2026): Dossiê (Re)ler o Manual de Epicteto hoje",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-prometheus-v-18-n-50-2026-dossie-reler-o-manual-de-epicteto-hoje",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-tigos-na-revista-cadernos-de-historia-e-filosofia-da-ciencia",
+      "titulo": "Chamada para submissão de artigos na Revista Cadernos de História e Filosofia da Ciência",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-submissao-de-artigos-na-revista-cadernos-de-historia-e-filosofia-da-ciencia",
+      "motivo_saida": "veto no cabeca: filosofia da ciencia",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-unicampufc",
+      "titulo": "Lançamento da Revista: Simbólica - Revista de Filosofia da Cultura e Estudos Interdisciplinares (UNICAMP/UFC)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares-unicampufc",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-encias-entre-filosofia-e-raca-desvelando-as-mascaras-brancas",
+      "titulo": "Lançamento do DOSSIÊ GT FILOSOFIA E RAÇA - CONFLUÊNCIAS ENTRE FILOSOFIA E RAÇA: DESVELANDO AS MÁSCARAS BRANCAS",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-gt-filosofia-e-raca--confluencias-entre-filosofia-e-raca-desvelando-as-mascaras-brancas",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-ncamentos-e-chamadas-de-revistas-lancamento-cadernos-do-nefi",
+      "titulo": "Lançamento Cadernos do NEFI",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-cadernos-do-nefi",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-ancamento-dossie-entrelacar-tessituras-filosofico-literarias",
+      "titulo": "Lançamento Dossiê Entrelaçar: tessituras filosófico-literárias",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-dossie-entrelacar-tessituras-filosofico-literarias",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-sta-o-que-nos-faz-pensar-n-56-dossie-sobre-as-leis-de-platao",
+      "titulo": "Lançamento da revista 'O que nos faz pensar', n. 56 - Dossiê sobre as 'Leis' de Platão",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-o-que-nos-faz-pensar-n-56--dossie-sobre-as-leis-de-platao",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-istas-novo-numero-anansi-estudos-contemporaneos-de-filosofia",
+      "titulo": "Novo Número - Anãnsi: Estudos Contemporâneos de Filosofia",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--anansi-estudos-contemporaneos-de-filosofia",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-enda-lancamentos-e-chamadas-de-revistas-lancamento-read-2026",
+      "titulo": "Lançamento READ - 2026",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-read--2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas--de-revistas-lancamento-da-magazine-virtualia-vol-3-n-1-2026",
+      "titulo": "Lançamento da magazine Virtualia, vol. 3, n. 1, 2026",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-magazine-virtualia-vol-3-n-1-2026",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-extensao-de-prazo-do-dossie-conhecimento-na-filosofia-antiga",
+      "titulo": "Extensão de prazo do Dossiê Conhecimento na Filosofia Antiga",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/extensao-de-prazo-do-dossie-conhecimento-na-filosofia-antiga",
+      "motivo_saida": "veto no cabeca: filosofia antiga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-ista-perspectiva-filosofica-conhecimento-na-filosofia-antiga",
+      "titulo": "Revista Perspectiva Filosófica - Conhecimento na Filosofia Antiga",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/revista-perspectiva-filosofica--conhecimento-na-filosofia-antiga",
+      "motivo_saida": "veto no cabeca: filosofia antiga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-cacao-de-novo-numero-cadernos-de-filosofia-alema-v30-n3-2025",
+      "titulo": "Publicação de novo número - Cadernos de filosofia alemã V30 N3 (2025)",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/publicacao-de-novo-numero--cadernos-de-filosofia-alema-v30-n3-2025",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas--de-revistas-artefilosofia-divulga-lancamento-de-novo-numero",
+      "titulo": "ARTEFILOSOFIA divulga lançamento de novo número.",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/artefilosofia-divulga-lancamento-de-novo-numero",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-32-20252",
+      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 32, 2025.2",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-32-20252",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-s-publicacao-de-novo-numero-da-pensando-revista-de-filosofia",
+      "titulo": "Publicação de novo número da PENSANDO - REVISTA DE FILOSOFIA",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/publicacao-de-novo-numero-da-pensando--revista-de-filosofia",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-icao-v-30-n-2-2025-da-revista-philosophos-120-anos-de-sartre",
+      "titulo": "Lançamento da edição v. 30, n. 2 (2025) da revista Philósophos: 120 anos de Sartre",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-v-30-n-2-2025-da-revista-philosophos-120-anos-de-sartre",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-chamadas-de-revistas-lancamento-da-revista-ideacao-edicao-52",
+      "titulo": "Lançamento da Revista Ideação edição 52",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-edicao-52",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-revistas-lancamento-do-dossie-de-tema-livre-da-revista-itaca",
+      "titulo": "Lançamento do Dossiê de Tema Livre da Revista Ítaca",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-de-tema-livre-da-revista-itaca",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-ancamentos-e-chamadas-de-revistas-lancamento-da-revista-nos2",
+      "titulo": "Lançamento da Revista NÓS",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-nos2",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-a-edicao-da-read-revista-de-estudos-anarquista-e-decoloniais",
+      "titulo": "Lançamento da Nova Edição da READ - Revista de Estudos Anarquista e Decoloniais",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-nova-edicao-da-read--revista-de-estudos-anarquista-e-decoloniais",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
+    {
+      "id": "anpof-chamadas-camento-da-tarka-revista-de-filosofia-intercultural-da-alafi",
+      "titulo": "Lançamento da TARKA - Revista de Filosofia Intercultural da ALAFI",
+      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-tarka--revista-de-filosofia-intercultural-da-alafi",
+      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
+      "visto_em": "2026-10-13"
+    },
     {
       "id": "philevents-147761",
       "titulo": "Paradigms, Progress",
@@ -632,776 +1402,6 @@
       "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-dossie-rancire--30-anos-de-o-desentendimento--simbolica-revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--v2-n1-2026",
       "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
       "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-tas-lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
-      "titulo": "Lançamento da edição inaugural da NeoKrísis v. 1, n. 1 (2026)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-ntos-e-chamadas-de-revistas-lancamento-da-revista-ideacao-53",
-      "titulo": "Lançamento da Revista Ideação 53",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-53",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-etheus-v-18-n-50-2026-dossie-reler-o-manual-de-epicteto-hoje",
-      "titulo": "Lançamento: PROMETHEUS v. 18 n. 50 (2026): Dossiê (Re)ler o Manual de Epicteto hoje",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-prometheus-v-18-n-50-2026-dossie-reler-o-manual-de-epicteto-hoje",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-tigos-na-revista-cadernos-de-historia-e-filosofia-da-ciencia",
-      "titulo": "Chamada para submissão de artigos na Revista Cadernos de História e Filosofia da Ciência",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-submissao-de-artigos-na-revista-cadernos-de-historia-e-filosofia-da-ciencia",
-      "motivo_saida": "veto no cabeca: filosofia da ciencia",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-unicampufc",
-      "titulo": "Lançamento da Revista: Simbólica - Revista de Filosofia da Cultura e Estudos Interdisciplinares (UNICAMP/UFC)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares-unicampufc",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-encias-entre-filosofia-e-raca-desvelando-as-mascaras-brancas",
-      "titulo": "Lançamento do DOSSIÊ GT FILOSOFIA E RAÇA - CONFLUÊNCIAS ENTRE FILOSOFIA E RAÇA: DESVELANDO AS MÁSCARAS BRANCAS",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-gt-filosofia-e-raca--confluencias-entre-filosofia-e-raca-desvelando-as-mascaras-brancas",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-ncamentos-e-chamadas-de-revistas-lancamento-cadernos-do-nefi",
-      "titulo": "Lançamento Cadernos do NEFI",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-cadernos-do-nefi",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-ancamento-dossie-entrelacar-tessituras-filosofico-literarias",
-      "titulo": "Lançamento Dossiê Entrelaçar: tessituras filosófico-literárias",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-dossie-entrelacar-tessituras-filosofico-literarias",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-sta-o-que-nos-faz-pensar-n-56-dossie-sobre-as-leis-de-platao",
-      "titulo": "Lançamento da revista 'O que nos faz pensar', n. 56 - Dossiê sobre as 'Leis' de Platão",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-o-que-nos-faz-pensar-n-56--dossie-sobre-as-leis-de-platao",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-istas-novo-numero-anansi-estudos-contemporaneos-de-filosofia",
-      "titulo": "Novo Número - Anãnsi: Estudos Contemporâneos de Filosofia",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--anansi-estudos-contemporaneos-de-filosofia",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-enda-lancamentos-e-chamadas-de-revistas-lancamento-read-2026",
-      "titulo": "Lançamento READ - 2026",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-read--2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas--de-revistas-lancamento-da-magazine-virtualia-vol-3-n-1-2026",
-      "titulo": "Lançamento da magazine Virtualia, vol. 3, n. 1, 2026",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-magazine-virtualia-vol-3-n-1-2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-extensao-de-prazo-do-dossie-conhecimento-na-filosofia-antiga",
-      "titulo": "Extensão de prazo do Dossiê Conhecimento na Filosofia Antiga",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/extensao-de-prazo-do-dossie-conhecimento-na-filosofia-antiga",
-      "motivo_saida": "veto no cabeca: filosofia antiga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-ista-perspectiva-filosofica-conhecimento-na-filosofia-antiga",
-      "titulo": "Revista Perspectiva Filosófica - Conhecimento na Filosofia Antiga",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/revista-perspectiva-filosofica--conhecimento-na-filosofia-antiga",
-      "motivo_saida": "veto no cabeca: filosofia antiga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-cacao-de-novo-numero-cadernos-de-filosofia-alema-v30-n3-2025",
-      "titulo": "Publicação de novo número - Cadernos de filosofia alemã V30 N3 (2025)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/publicacao-de-novo-numero--cadernos-de-filosofia-alema-v30-n3-2025",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas--de-revistas-artefilosofia-divulga-lancamento-de-novo-numero",
-      "titulo": "ARTEFILOSOFIA divulga lançamento de novo número.",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/artefilosofia-divulga-lancamento-de-novo-numero",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-32-20252",
-      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 32, 2025.2",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-32-20252",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-s-publicacao-de-novo-numero-da-pensando-revista-de-filosofia",
-      "titulo": "Publicação de novo número da PENSANDO - REVISTA DE FILOSOFIA",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/publicacao-de-novo-numero-da-pensando--revista-de-filosofia",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-icao-v-30-n-2-2025-da-revista-philosophos-120-anos-de-sartre",
-      "titulo": "Lançamento da edição v. 30, n. 2 (2025) da revista Philósophos: 120 anos de Sartre",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-v-30-n-2-2025-da-revista-philosophos-120-anos-de-sartre",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-chamadas-de-revistas-lancamento-da-revista-ideacao-edicao-52",
-      "titulo": "Lançamento da Revista Ideação edição 52",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-edicao-52",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-revistas-lancamento-do-dossie-de-tema-livre-da-revista-itaca",
-      "titulo": "Lançamento do Dossiê de Tema Livre da Revista Ítaca",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-de-tema-livre-da-revista-itaca",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-ancamentos-e-chamadas-de-revistas-lancamento-da-revista-nos2",
-      "titulo": "Lançamento da Revista NÓS",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-nos2",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "anpof-chamadas-a-edicao-da-read-revista-de-estudos-anarquista-e-decoloniais",
-      "titulo": "Lançamento da Nova Edição da READ - Revista de Estudos Anarquista e Decoloniais",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-nova-edicao-da-read--revista-de-estudos-anarquista-e-decoloniais",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-12"
-    },
-    {
-      "id": "philevents-147641",
-      "titulo": "Hegelian Constitutivism and Metaethics",
-      "url": "https://philevents.org/event/show/147641",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147645",
-      "titulo": "CFP: \n\tMemory",
-      "url": "https://philevents.org/event/show/147645",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147653",
-      "titulo": "Jakob Hohwy (Monash University)\n\n   \n\tSelf-evidencing agents",
-      "url": "https://philevents.org/event/show/147653",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147657",
-      "titulo": "Diversity and Unity: The Metaphysical Challenge of Scientific Pluralism",
-      "url": "https://philevents.org/event/show/147657",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147665",
-      "titulo": "Klaus Corcilius (University Tübingen)\n\n   \n\tPractical Principles in Aristotle",
-      "url": "https://philevents.org/event/show/147665",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147669",
-      "titulo": "CFP: \n\tBalkan Journal of Philosophy Special Issue on “THEORETICAL RATIONALITY AND PRACTICAL REASON”",
-      "url": "https://philevents.org/event/show/147669",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147673",
-      "titulo": "Levinas as Educator",
-      "url": "https://philevents.org/event/show/147673",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147677",
-      "titulo": "CFP: \n\tLevinas as Educator",
-      "url": "https://philevents.org/event/show/147677",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147681",
-      "titulo": "‘The Ethics of Empty Beliefs: Conversations with Buddhist Philosophy’",
-      "url": "https://philevents.org/event/show/147681",
-      "motivo_saida": "veto no cabeca: buddhist",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147689",
-      "titulo": "Roberto Granieri (Università degli Studi Roma Tre)\n\n   \n\tFrancesco VERDE (Sapienza) - 'La ricezione del <i>Timeo</i> nell'Epicureismo'",
-      "url": "https://philevents.org/event/show/147689",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147693",
-      "titulo": "Summer School Desire and Decay in Japanese Philosophy",
-      "url": "https://philevents.org/event/show/147693",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147697",
-      "titulo": "Roberto Granieri (Università degli Studi Roma Tre)\n\n   \n\tAlexandra MICHALEWSKI (CNRS Léon Robin) - 'Plotinus on the Generation of Time (3.7.11). New Perspectives'",
-      "url": "https://philevents.org/event/show/147697",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147701",
-      "titulo": "The Architecture of Propositional Thought: From Cognitive Maps to Language and Reasoning",
-      "url": "https://philevents.org/event/show/147701",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147705",
-      "titulo": "CFP: \n\tThe Architecture of Propositional Thought: From Cognitive Maps to Language and Reasoning",
-      "url": "https://philevents.org/event/show/147705",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147717",
-      "titulo": "Tennessee Value and Agency (TVA): Grief, Trauma, Anger",
-      "url": "https://philevents.org/event/show/147717",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147721",
-      "titulo": "XXI FÓRUM INTERNACIONAL DE FILOSOFÍA  / XXI INTERNATIONAL FORUM OF PHILOSOPHY",
-      "url": "https://philevents.org/event/show/147721",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147725",
-      "titulo": "CFP: \n\tXXI FÓRUM INTERNACIONAL DE FILOSOFÍA  / XXI INTERNATIONAL FORUM OF PHILOSOPHY",
-      "url": "https://philevents.org/event/show/147725",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147729",
-      "titulo": "Inteligența artificială: perspective filosofice (Artificial Intelligence: Philosophical Perspectives)",
-      "url": "https://philevents.org/event/show/147729",
-      "motivo_saida": "veto no cabeca: artificial intelligence",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147741",
-      "titulo": "Theories of Object Perception",
-      "url": "https://philevents.org/event/show/147741",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147745",
-      "titulo": "CFP: \n\tJournal of Interdisciplinary Studies XXXVIII 2026: \"C.S. Lewis & J.R.R. Tolkien: The Promise of Christian Fairytales\"",
-      "url": "https://philevents.org/event/show/147745",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147749",
-      "titulo": "CFP: \n\tKantian Journal. Special Issue \"Immanuel Kant on Jesus Christ and Christianity\"",
-      "url": "https://philevents.org/event/show/147749",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147753",
-      "titulo": "Bernardo Ferro (University of Coimbra)",
-      "url": "https://philevents.org/event/show/147753",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147757",
-      "titulo": "Matti Eklund (Uppsala University)\n\n   \n\tCarnap",
-      "url": "https://philevents.org/event/show/147757",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-entos-e-chamadas-de-revistas-lancamento-da-revista-catholica",
-      "titulo": "Lançamento da revista Catholica",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-catholica",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-os-e-chamadas-de-revistas-lancamento-da-revista-ver-o-pensar",
-      "titulo": "Lançamento da revista Ver-O-Pensar",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ver-o-pensar",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
-      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 33, 2026.1",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-dossie-a-filosofia-de-norberto-bobbio-ii-revista-quero-saber",
-      "titulo": "Lançamento do Dossiê 'A Filosofia de Norberto Bobbio II' - Revista Quero Saber",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-a-filosofia-de-norberto-bobbio-ii--revista-quero-saber",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-madas-de-revistas-novo-numero-dos-cadernos-espinosanos-no-ar",
-      "titulo": "Novo número dos Cadernos Espinosanos no ar",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero-dos-cadernos-espinosanos-no-ar",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas--revistas-prisma-revista-de-filosofia-lancamento-do-v-8-2026",
-      "titulo": "PRISMA - Revista de Filosofia, lançamento do v. 8, 2026",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/prisma--revista-de-filosofia-lancamento-do-v-8-2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-stas-novo-numero-voluntas-revista-internacional-de-filosofia",
-      "titulo": "Novo número - Voluntas: Revista Internacional de Filosofia",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--voluntas-revista-internacional-de-filosofia",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-e-rancire-30-anos-de-o-desentendimento-v2-n1-2026-unicampufc",
-      "titulo": "Lançamento da Revista: SIMBÓLICA - Revista de Filosofia da Cultura e Estudos Interdisciplinares - DOSSIÊ: Rancière - 30 anos de 'O desentendimento' - V.2, N.1 (2026) - (UNICAMP/UFC)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--dossie-rancire--30-anos-de-o-desentendimento--v2-n1-2026--unicampufc",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-v2-n1-2026",
-      "titulo": "Lançamento de Dossiê: Rancière - 30 anos de 'O desentendimento' - Simbólica: Revista de Filosofia da Cultura e Estudos Interdisciplinares - V.2, N.1 (2026)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-dossie-rancire--30-anos-de-o-desentendimento--simbolica-revista-de-filosofia-da-cultura-e-estudos-interdisciplinares--v2-n1-2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-tas-lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
-      "titulo": "Lançamento da edição inaugural da NeoKrísis v. 1, n. 1 (2026)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-inaugural-da-neokrisis-v-1-n-1-2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-ntos-e-chamadas-de-revistas-lancamento-da-revista-ideacao-53",
-      "titulo": "Lançamento da Revista Ideação 53",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-53",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-etheus-v-18-n-50-2026-dossie-reler-o-manual-de-epicteto-hoje",
-      "titulo": "Lançamento: PROMETHEUS v. 18 n. 50 (2026): Dossiê (Re)ler o Manual de Epicteto hoje",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-prometheus-v-18-n-50-2026-dossie-reler-o-manual-de-epicteto-hoje",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-tigos-na-revista-cadernos-de-historia-e-filosofia-da-ciencia",
-      "titulo": "Chamada para submissão de artigos na Revista Cadernos de História e Filosofia da Ciência",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/chamada-para-submissao-de-artigos-na-revista-cadernos-de-historia-e-filosofia-da-ciencia",
-      "motivo_saida": "veto no cabeca: filosofia da ciencia",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-filosofia-da-cultura-e-estudos-interdisciplinares-unicampufc",
-      "titulo": "Lançamento da Revista: Simbólica - Revista de Filosofia da Cultura e Estudos Interdisciplinares (UNICAMP/UFC)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-simbolica--revista-de-filosofia-da-cultura-e-estudos-interdisciplinares-unicampufc",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-encias-entre-filosofia-e-raca-desvelando-as-mascaras-brancas",
-      "titulo": "Lançamento do DOSSIÊ GT FILOSOFIA E RAÇA - CONFLUÊNCIAS ENTRE FILOSOFIA E RAÇA: DESVELANDO AS MÁSCARAS BRANCAS",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-gt-filosofia-e-raca--confluencias-entre-filosofia-e-raca-desvelando-as-mascaras-brancas",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-ncamentos-e-chamadas-de-revistas-lancamento-cadernos-do-nefi",
-      "titulo": "Lançamento Cadernos do NEFI",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-cadernos-do-nefi",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-ancamento-dossie-entrelacar-tessituras-filosofico-literarias",
-      "titulo": "Lançamento Dossiê Entrelaçar: tessituras filosófico-literárias",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-dossie-entrelacar-tessituras-filosofico-literarias",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-sta-o-que-nos-faz-pensar-n-56-dossie-sobre-as-leis-de-platao",
-      "titulo": "Lançamento da revista 'O que nos faz pensar', n. 56 - Dossiê sobre as 'Leis' de Platão",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-o-que-nos-faz-pensar-n-56--dossie-sobre-as-leis-de-platao",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-istas-novo-numero-anansi-estudos-contemporaneos-de-filosofia",
-      "titulo": "Novo Número - Anãnsi: Estudos Contemporâneos de Filosofia",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero--anansi-estudos-contemporaneos-de-filosofia",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-enda-lancamentos-e-chamadas-de-revistas-lancamento-read-2026",
-      "titulo": "Lançamento READ - 2026",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-read--2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas--de-revistas-lancamento-da-magazine-virtualia-vol-3-n-1-2026",
-      "titulo": "Lançamento da magazine Virtualia, vol. 3, n. 1, 2026",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-magazine-virtualia-vol-3-n-1-2026",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-extensao-de-prazo-do-dossie-conhecimento-na-filosofia-antiga",
-      "titulo": "Extensão de prazo do Dossiê Conhecimento na Filosofia Antiga",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/extensao-de-prazo-do-dossie-conhecimento-na-filosofia-antiga",
-      "motivo_saida": "veto no cabeca: filosofia antiga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-ista-perspectiva-filosofica-conhecimento-na-filosofia-antiga",
-      "titulo": "Revista Perspectiva Filosófica - Conhecimento na Filosofia Antiga",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/revista-perspectiva-filosofica--conhecimento-na-filosofia-antiga",
-      "motivo_saida": "veto no cabeca: filosofia antiga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-cacao-de-novo-numero-cadernos-de-filosofia-alema-v30-n3-2025",
-      "titulo": "Publicação de novo número - Cadernos de filosofia alemã V30 N3 (2025)",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/publicacao-de-novo-numero--cadernos-de-filosofia-alema-v30-n3-2025",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas--de-revistas-artefilosofia-divulga-lancamento-de-novo-numero",
-      "titulo": "ARTEFILOSOFIA divulga lançamento de novo número.",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/artefilosofia-divulga-lancamento-de-novo-numero",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-32-20252",
-      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 32, 2025.2",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-32-20252",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-s-publicacao-de-novo-numero-da-pensando-revista-de-filosofia",
-      "titulo": "Publicação de novo número da PENSANDO - REVISTA DE FILOSOFIA",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/publicacao-de-novo-numero-da-pensando--revista-de-filosofia",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-icao-v-30-n-2-2025-da-revista-philosophos-120-anos-de-sartre",
-      "titulo": "Lançamento da edição v. 30, n. 2 (2025) da revista Philósophos: 120 anos de Sartre",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-edicao-v-30-n-2-2025-da-revista-philosophos-120-anos-de-sartre",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-chamadas-de-revistas-lancamento-da-revista-ideacao-edicao-52",
-      "titulo": "Lançamento da Revista Ideação edição 52",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ideacao-edicao-52",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-revistas-lancamento-do-dossie-de-tema-livre-da-revista-itaca",
-      "titulo": "Lançamento do Dossiê de Tema Livre da Revista Ítaca",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-de-tema-livre-da-revista-itaca",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "anpof-chamadas-ancamentos-e-chamadas-de-revistas-lancamento-da-revista-nos2",
-      "titulo": "Lançamento da Revista NÓS",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-nos2",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-10-09"
-    },
-    {
-      "id": "philevents-147521",
-      "titulo": "CFP: \n\tActa Structuralica. International Journal for Structuralist Research",
-      "url": "https://philevents.org/event/show/147521",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147525",
-      "titulo": "CFP: \n\t‘Impossible Architecture’ in: 'Universitas Gedanesis'",
-      "url": "https://philevents.org/event/show/147525",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147529",
-      "titulo": "CFP: \n\t‘Mysticism of Open Eyes’ in: 'Universitas Gedanesis'",
-      "url": "https://philevents.org/event/show/147529",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147533",
-      "titulo": "Moral Progress and Moral Change",
-      "url": "https://philevents.org/event/show/147533",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147541",
-      "titulo": "Imagination Day",
-      "url": "https://philevents.org/event/show/147541",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147545",
-      "titulo": "Thinking the City: Perspectives on the Philosophy of Place",
-      "url": "https://philevents.org/event/show/147545",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147549",
-      "titulo": "MANCEPT Workshop - Epistemic Injustice and Backlash",
-      "url": "https://philevents.org/event/show/147549",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147553",
-      "titulo": "CFP: \n\tMANCEPT Workshop - Epistemic Injustice and Backlash",
-      "url": "https://philevents.org/event/show/147553",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147557",
-      "titulo": "CFP: \n\tThinking the City: Perspectives on the Philosophy of Place",
-      "url": "https://philevents.org/event/show/147557",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147561",
-      "titulo": "Voir-Dire: \"World-Building\"",
-      "url": "https://philevents.org/event/show/147561",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147565",
-      "titulo": "CFP: \n\tVoir-Dire: \"World-Building\"",
-      "url": "https://philevents.org/event/show/147565",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147569",
-      "titulo": "Negotiated Meanings, Norms, Cooperation",
-      "url": "https://philevents.org/event/show/147569",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147573",
-      "titulo": "5th World Congress on Logic and Religion – WoCoLoR",
-      "url": "https://philevents.org/event/show/147573",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147577",
-      "titulo": "CFP: \n\t5th World Congress on Logic and Religion – WoCoLoR",
-      "url": "https://philevents.org/event/show/147577",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147581",
-      "titulo": "Questions Arising from the Aristotelian Zoology",
-      "url": "https://philevents.org/event/show/147581",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147585",
-      "titulo": "CFP: \n\tRethinking the Explanatory Foundations of Sociological Theory",
-      "url": "https://philevents.org/event/show/147585",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147589",
-      "titulo": "CFP: \n\tPhilosophia Reformata special issue on the legacy of MD Stafleu",
-      "url": "https://philevents.org/event/show/147589",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147593",
-      "titulo": "HPS Winter School & Australia/New Zealand Philosophy of Biology Workshop",
-      "url": "https://philevents.org/event/show/147593",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147597",
-      "titulo": "CFP: \n\tHPS Winter School & Australia/New Zealand Philosophy of Biology Workshop",
-      "url": "https://philevents.org/event/show/147597",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147601",
-      "titulo": "Multilateralism",
-      "url": "https://philevents.org/event/show/147601",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147605",
-      "titulo": "CFP: \n\tMultilateralism",
-      "url": "https://philevents.org/event/show/147605",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147609",
-      "titulo": "CFP: \n\tMultilateralism",
-      "url": "https://philevents.org/event/show/147609",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147613",
-      "titulo": "Kyle Fiore Law \n\n   \n\tThe Moral Psychology of Intergenerational Concern and Seventh Generation Stewardship (March 26",
-      "url": "https://philevents.org/event/show/147613",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147617",
-      "titulo": "Rethinking the Radical Right: Transnational Networks, Policy Convergence, and Discursive Power Across Gender, Health",
-      "url": "https://philevents.org/event/show/147617",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147621",
-      "titulo": "Gunnar Babcock (Cornell University)",
-      "url": "https://philevents.org/event/show/147621",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147625",
-      "titulo": "Second Workshop of the Indeterminacy in Science Project",
-      "url": "https://philevents.org/event/show/147625",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147629",
-      "titulo": "MANCEPT Workshops - Respect for Persons: Foundations, Varieties",
-      "url": "https://philevents.org/event/show/147629",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147633",
-      "titulo": "CFP: \n\tMANCEPT Workshops - Respect for Persons: Foundations, Varieties",
-      "url": "https://philevents.org/event/show/147633",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "philevents-147637",
-      "titulo": "The Philosophy of Dialogue Conference",
-      "url": "https://philevents.org/event/show/147637",
-      "motivo_saida": "sem aderencia no cabeca (titulo/AOS/AOC)",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "anpof-chamadas-os-e-chamadas-de-revistas-lancamento-da-revista-ver-o-pensar",
-      "titulo": "Lançamento da revista Ver-O-Pensar",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-da-revista-ver-o-pensar",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "anpof-chamadas-istas-lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
-      "titulo": "Lançamento de periódico: Ensaios Filosóficos, nº 33, 2026.1",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-de-periodico-ensaios-filosoficos-n-33-20262",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "anpof-chamadas-dossie-a-filosofia-de-norberto-bobbio-ii-revista-quero-saber",
-      "titulo": "Lançamento do Dossiê 'A Filosofia de Norberto Bobbio II' - Revista Quero Saber",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/lancamento-do-dossie-a-filosofia-de-norberto-bobbio-ii--revista-quero-saber",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-09-28"
-    },
-    {
-      "id": "anpof-chamadas-madas-de-revistas-novo-numero-dos-cadernos-espinosanos-no-ar",
-      "titulo": "Novo número dos Cadernos Espinosanos no ar",
-      "url": "https://anpof.org.br/agenda/lancamentos-e-chamadas-de-revistas/novo-numero-dos-cadernos-espinosanos-no-ar",
-      "motivo_saida": "tipo 'anuncio de numero' nao e vaga",
-      "visto_em": "2026-09-28"
     }
   ]
 }

@@ -1,0 +1,45 @@
+{
+  "quando": "2026-10-13T11:11:42.421091-03:00",
+  "itens": [
+    {
+      "id": "manual-ufvjm-101-12-2026",
+      "fonte": "curadas",
+      "url": "https://valorfinal.com.br/concursos/edital/universidade-federal-dos-vales-do-jequitinhonha-e-mucuri__101-2026",
+      "titulo": "Professor do Magisterio Superior (efetivo) — Vaga 101.12, Ciencias Humanas, Ciencias Sociais Aplicadas e/ou Multidisciplinar",
+      "instituicao": "UFVJM — Faculdade Interdisciplinar em Humanidades (FIH)",
+      "aos": "Ciencias Humanas, Ciencias Sociais Aplicadas e/ou Multidisciplinar",
+      "aoc": "",
+      "local": "Diamantina, MG — Campus JK",
+      "categoria": "Efetivo",
+      "contrato": "",
+      "pais": "Brasil",
+      "prazo": "2026-10-23",
+      "prazo_brando": false,
+      "publicado": "",
+      "texto": "Concurso publico, Edital UFVJM n. 101/2026 (24 vagas), vaga 101.12: 1 vaga de Professor do Magisterio Superior, Classe A, 40h com Dedicacao Exclusiva, na FIH, Campus JK, Diamantina-MG. Requisito: doutorado na area de Ciencias Humanas, de Ciencias Sociais Aplicadas ou Multidisciplinar; o edital NAO exige graduacao especifica (as vagas 101.11 e 101.21 exigem Pedagogia). Inscricoes de 25/09 a 23/10/2026, 23h59 (Brasilia); taxa R$ 200. O QUE CONFERIR: o programa da prova e as instrucoes especificas da vaga, e se o doutorado em Filosofia (grande area Ciencias Humanas na CAPES) e aceito sem ressalva. Curado a mao em 2026-10-13 porque o edital nao passou pelo coletor.",
+      "visto_em": "2026-10-13",
+      "avisos_extracao": [],
+      "extracao": "ok",
+      "porta_passou": true,
+      "area_confirmada": true,
+      "tipo": "efetivo",
+      "porque": "edital geral",
+      "relevancia": "aberto",
+      "uf": "MG",
+      "bloco": "A",
+      "esforco": "Alto",
+      "elegibilidade": "Aberto",
+      "idioma": "PT",
+      "dias_ate_prazo": 10,
+      "urgente": true,
+      "descartado": false,
+      "marcas": [
+        "prazo em 10 dia(s)"
+      ],
+      "veredicto": "relevante",
+      "porque_veredicto": "edital de efetivo, area nao declarada",
+      "novo": true,
+      "vencida": false
+    }
+  ]
+}
