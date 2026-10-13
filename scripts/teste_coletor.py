@@ -440,7 +440,11 @@ ok("sem prazo" in (fapesp.get("marcas") or []),
 
 crit_c = C.ler_json(os.path.join(C.RAIZ, "criterios_chamadas.json"), {})
 cfg_c = [f for f in crit_c["fontes"] if f["nome"] == "curadas"][0]
-lsn = C.fonte_manual(cfg_c, {"fontes": {}, "avisos": []})
+# So os itens do boletim LSN: o arquivo curado tambem guarda, desde 2026-10-13,
+# os periodicos-alvo da esteira ('manual-rev-*'), que podem sair como
+# competencia (Kriterion, Analytica) sem que isso seja defeito.
+lsn = [i for i in C.fonte_manual(cfg_c, {"fontes": {}, "avisos": []})
+       if i["id"].startswith("lsn-")]
 for it in lsn:
     C.descarte_barato(it, crit_c)
     C.classificar(it, crit_c, "vaga")
