@@ -415,8 +415,10 @@ for modo, minimo in (("vagas", 1), ("chamadas", 5)):
     ok(len(itens) >= minimo, "%s: o arquivo curado carrega (%d itens)" % (modo, len(itens)),
        bat["fontes"].get("curadas"))
     for it in itens:
+        # Mesma regra do executar(): a porta do item curado vence a da fonte.
+        porta = it.pop("_porta", "") or cfg.get("porta", "filosofia")
         if not C.descarte_barato(it, crit) and cfg.get("unidade") == "edital":
-            C.resolver_area(None, it, crit, bat, {"restante": 0}, cfg.get("porta", "filosofia"))
+            C.resolver_area(None, it, crit, bat, {"restante": 0}, porta)
         C.classificar(it, crit, cfg.get("unidade", "vaga"))
     mortos = [i["titulo"][:40] for i in itens if i.get("descartado")]
     ok(not mortos, "%s: nenhum item curado morre no pipeline" % modo, mortos)
