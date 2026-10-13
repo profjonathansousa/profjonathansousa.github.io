@@ -1154,6 +1154,11 @@ def fonte_manual(cfg, batimento):
             "publicado": it.get("publicado", ""),
             "texto": it.get("texto", ""),
             "visto_em": hoje().isoformat(),
+            # Porta por item: a fonte curada abre pela porta 'posdoc', mas um
+            # concurso curado a mao (efetivo, substituto) precisa da porta
+            # 'filosofia'. Sem isto o item morreria em "nao e de pos-doutorado".
+            # O campo e consumido no executar() e nao chega ao arquivo publicado.
+            "_porta": it.get("porta", ""),
         })
     return saida
 
@@ -1506,7 +1511,7 @@ def executar(modo, diagnostico=False):
             continue
         for it in itens:
             unidade_de[it["id"]] = cfg.get("unidade", "vaga")
-            porta_de[it["id"]] = cfg.get("porta", "filosofia")
+            porta_de[it["id"]] = it.pop("_porta", "") or cfg.get("porta", "filosofia")
         coletados += itens
 
     if diagnostico:
