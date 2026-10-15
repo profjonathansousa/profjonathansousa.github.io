@@ -3,7 +3,7 @@
   "_para_que_serve": "Fluxo continuo. Um programa que fica aberto o ano inteiro nunca aparece como 'novidade' em lista nenhuma, e por isso passaria despercebido para sempre por um coletor que so olha o que mudou nesta semana.",
   "_como_manter": "Acrescente um objeto em 'itens' e atualize '_atualizado_em'. O campo 'texto' e o que a tarefa semanal le para julgar — escreva nele o que decide a candidatura (requisito que trava, e qual e o passo real), nao a propaganda do programa. Item sem 'prazo' entra marcado 'sem prazo' e fica na lista ate voce arquivar num toque.",
   "_repositorio_publico": "Este arquivo esta num repositorio publico. Nada de e-mail pessoal, nada inedito, nada de recorte de pesquisa. Os recortes moram no prompt da tarefa 3c (decisao 4.8).",
-  "_atualizado_em": "2026-10-13",
+  "_atualizado_em": "2026-10-14",
   "itens": [
     {
       "id": "manual-fapesp-pd",
@@ -16,19 +16,6 @@
       "pais": "Brasil",
       "prazo": "",
       "texto": "Bolsa de pos-doutorado da FAPESP em FLUXO CONTINUO. VERIFICADO na propria pagina em 2026-08-25: 'Em qualquer epoca do ano (fluxo continuo)' — nao ha edital com data limite, e por isso este item nunca apareceria numa lista de novidades. SEM RESTRICAO DE AREA do conhecimento. Requisitos: doutorado obtido nos ultimos 7 anos; supervisor com doutorado e vinculo com instituicao de pesquisa ou ensino superior NO ESTADO DE SAO PAULO, com liderança em projetos competitivos e experiencia internacional; a pesquisa e realizada em instituicao paulista. Duracao inicial de ate 36 meses (minimo 6), renovavel ate 48 no total. Inclui mensalidade, reserva tecnica e auxilio instalacao. O QUE TRAVA: dedicacao exclusiva, sem vinculo empregaticio e sem acumular outra bolsa. Para quem da aula, isso e a decisao inteira, nao um detalhe. O PASSO REAL nao e a inscricao: e achar o supervisor em Sao Paulo. Sem ele nao ha submissao, e e isso que consome o tempo."
-    },
-    {
-      "id": "manual-ufvjm-101-12-2026",
-      "titulo": "Professor do Magisterio Superior (efetivo) — Vaga 101.12, Ciencias Humanas, Ciencias Sociais Aplicadas e/ou Multidisciplinar",
-      "url": "https://valorfinal.com.br/concursos/edital/universidade-federal-dos-vales-do-jequitinhonha-e-mucuri__101-2026",
-      "instituicao": "UFVJM — Faculdade Interdisciplinar em Humanidades (FIH)",
-      "aos": "Ciencias Humanas, Ciencias Sociais Aplicadas e/ou Multidisciplinar",
-      "local": "Diamantina, MG — Campus JK",
-      "categoria": "Efetivo",
-      "pais": "Brasil",
-      "prazo": "2026-10-23",
-      "texto": "Concurso publico, Edital UFVJM n. 101/2026 (24 vagas), vaga 101.12: 1 vaga de Professor do Magisterio Superior, Classe A, 40h com Dedicacao Exclusiva, na FIH, Campus JK, Diamantina-MG. Requisito: doutorado na area de Ciencias Humanas, de Ciencias Sociais Aplicadas ou Multidisciplinar; o edital NAO exige graduacao especifica (as vagas 101.11 e 101.21 exigem Pedagogia). Inscricoes de 25/09 a 23/10/2026, 23h59 (Brasilia); taxa R$ 200. O QUE CONFERIR: o programa da prova e as instrucoes especificas da vaga, e se o doutorado em Filosofia (grande area Ciencias Humanas na CAPES) e aceito sem ressalva. Curado a mao em 2026-10-13 porque o edital nao passou pelo coletor.",
-      "porta": "filosofia"
     }
   ]
 }
