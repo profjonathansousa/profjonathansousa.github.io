@@ -3581,6 +3581,81 @@ console.log("\n=== 73. Etapa NOVA entra no lugar que a entrada declara (11/09) =
      "5. etapa declarada em primeiro lugar entra em primeiro", comPrimeira);
 }
 
+console.log("\n=== 74. O desfecho e o porque atravessam aparelhos (15/10/2026) ===");
+{
+  /* "Me candidatei", "desisti" e o motivo de um descarte sao decisao sua, e
+     decisao atravessa. O formato e o mesmo `valor` da triagem, com dois campos
+     que so existem quando ha porque — sem eles, a linha continua sendo `{st}`. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+
+  A.vgMarcar("v-env", A.VG_ST.SIM);
+  A.vgMarcar("v-env", A.VG_ST.ENV);
+  await A.SYNC.drenarFila();
+  ok(stDe(B, "v-env") === 4, "1. 'me candidatei' chega ao celular", stDe(B, "v-env"));
+  ok(JSON.stringify(Object.keys(linhaTri(srv, "v-env").valor)) === JSON.stringify(["st"]),
+     "   e sem motivo a linha continua sendo so `{st}`", linhaTri(srv, "v-env").valor);
+
+  A.vgMarcar("v-des", A.VG_ST.SIM);
+  A.vgMarcar("v-des", A.VG_ST.DES);
+  A.vgMotivo("v-des", "custo");
+  await A.SYNC.drenarFila();
+  const lDes = linhaTri(srv, "v-des");
+  ok(lDes.valor.st === 5 && lDes.valor.mot === "custo" &&
+     JSON.stringify(Object.keys(lDes.valor)) === JSON.stringify(["st", "mot"]),
+     "2. a desistencia sobe com o porque, na MESMA linha", lDes.valor);
+  ok(triagem(B)["v-des"].st === 5 && triagem(B)["v-des"].mot === "custo",
+     "   e o celular recebe os dois", triagem(B)["v-des"]);
+  ok(triagem(B)["v-des"].em === triagem(A)["v-des"].em,
+     "   com o mesmo instante");
+  ["veredicto", "t", "titulo", "prazo", "url"].forEach(function (campo) {
+    ok(!(campo in lDes.valor), "   `" + campo + "` continua sem viajar");
+  });
+
+  A.__prompt = "banca ja escolhida";
+  A.vgMarcar("v-out", A.VG_ST.NAO);
+  A.vgMotivo("v-out", "outro");
+  await A.SYNC.drenarFila();
+  ok(triagem(B)["v-out"].mot === "outro" && triagem(B)["v-out"].nota === "banca ja escolhida",
+     "3. o texto do 'outro' tambem atravessa", triagem(B)["v-out"]);
+
+  A.vgMarcar("v-des", A.VG_ST.SIM);
+  await A.SYNC.drenarFila();
+  ok(JSON.stringify(Object.keys(linhaTri(srv, "v-des").valor)) === JSON.stringify(["st"]),
+     "4. voltar a 'vou me candidatar' tira o motivo da linha", linhaTri(srv, "v-des").valor);
+  ok(stDe(B, "v-des") === 1 && !("mot" in triagem(B)["v-des"]),
+     "   e do celular — o 'custo' de antes nao fica pendurado", triagem(B)["v-des"]);
+
+  /* A linha e dado de fora: o merge nao confia que o motivo venha so com o st
+     que o pede. */
+  const tri = B.vgTriagem();
+  B.mesclarTriagem(tri, "v-x", {quando: "2099-01-01T00:00:00.000Z", st: 1, mot: "area"});
+  ok(tri["v-x"].st === 1 && !("mot" in tri["v-x"]),
+     "5. o merge descarta motivo que chega com um st que nao pede motivo", tri["v-x"]);
+
+  /* A republicacao das decisoes anteriores ao corte leva o motivo junto. */
+  const srv2 = criarServidor();
+  const ANTES = "2026-10-01T10:00:00.000Z";
+  const C = criarAparelho("cel2", srv2, {storage: {
+    "cron:triagem": JSON.stringify({"v-rep": {st:2, quando:"2026-10-01", em:ANTES, mot:"idioma"}}),
+    "cron:triagem-publicada": "true"
+  }}).__conectar();
+  C.publicarDecisoesAntigas();
+  await C.SYNC.drenarFila();
+  const lRep = srv2.linhas.filter(l => l.dominio === "triagem" && l.chave === "v-rep")[0];
+  ok(lRep && lRep.valor.mot === "idioma" && lRep.em === ANTES,
+     "6. republicar leva o motivo, com o instante verdadeiro", lRep);
+
+  /* E ainda um escritor so. */
+  const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
+  ok((render.match(/SYNC\.salvarAlteracao\(\s*"triagem"/g) || []).length === 1,
+     "7. o motivo nao abriu um segundo escritor de triagem");
+  const vm2 = render.split("function vgMotivo(")[1].split("\n}")[0];
+  ok(/tocarTriagem\(id, st, null, r\)/.test(vm2), "   o vgMotivo passa pelo mesmo funil do vgMarcar");
+}
+
 console.log("\n==============================================================");
 console.log(falhas.length ? "FALHAS: " + falhas.length : "TUDO PASSA");
 falhas.forEach(f => console.log("  - " + f));

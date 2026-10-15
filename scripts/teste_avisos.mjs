@@ -373,6 +373,14 @@ ok(N.decidir({ vagas: [], lote: null, eventos: {}, chamadas: CH, triagem: TRI },
 ok(JSON.stringify(N.triagemDeLinhas([{ dominio: 'triagem', chave: 'c5', valor: { st: 2 } },
                                      { dominio: 'rotina', chave: 'x', valor: {} }])) === '{"c5":2}',
    '(ch) a triagem vem do cron_estado');
+/* 15/10/2026: "submeti" (4) e "desisti" (5), com o porque no valor. O
+   notificador le so o `st`, e qualquer st diferente de 0 ja e triado. */
+const TRI2 = N.triagemDeLinhas([{ dominio: 'triagem', chave: 'c1', valor: { st: 4 } },
+                                { dominio: 'triagem', chave: 'c2', valor: { st: 5, mot: 'prazo' } }]);
+ok(JSON.stringify(TRI2) === '{"c1":4,"c2":5}', '(ch) enviada e desistida chegam com o st, e o motivo fica de fora', TRI2);
+const aviso2 = N.chamadasParaAvisar(CH, TRI2, '2026-10-08').map((c) => c.id);
+ok(JSON.stringify(aviso2) === '["c5"]',
+   '    e chamada submetida ou desistida não toca o telefone (a c5, não triada aqui, toca)', aviso2);
 
 console.log('\n=== Envio: urgência, TTL e o registro no Supabase ===');
 const opcoesVistas = [];

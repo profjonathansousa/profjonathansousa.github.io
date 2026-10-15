@@ -147,7 +147,7 @@ grant  execute on function public.cron_e_dono() to authenticated;
 --   item            painel/projeto/subitem   {st, vida, motivo, voltar_em, vidaDesde}
 --   estrutura_proj  painel/projeto           {t, n, mes}
 --   estrutura_sub   painel/projeto/subitem   {t, n, onde, prova, medida, ordem}
---   triagem         idDaVaga                 {st}
+--   triagem         idDaVaga                 {st, mot?, nota?}   (mot/nota só com st 2 ou 5)
 --   meta            AAAA-MM/id               {t, done, de}
 --   evento          idDoEvento               {t, data, priv}
 --   prioridade      AAAA-Wnn/id              {tipo, painel, projId, t, feito_em}
