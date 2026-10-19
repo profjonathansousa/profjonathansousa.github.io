@@ -127,6 +127,10 @@ separado.
 - **Hero do index no tema claro**: «Portal de Filosofia» sumia (texto escuro sobre fundo escuro)
 - **Tema claro nas turmas**: o título do cabeçalho sumia pelo mesmo motivo. Cada página redefine `--header-from`, `--header-to` e `--accent2` dentro de `@media (prefers-color-scheme: light)`
 
+### v1.4 — 19 out 2026 · Calendário das sextas do 3º ano
+- **16/10 sem aula na 3001 e na 3002** (manutenção da caixa d'água). A U2 das sextas passa de 7 para 6 aulas: Rousseau I em 23/10, Rousseau II com o Teste de Meio em 30/10, Síntese em 06/11. Sai a aula de Bobbio e Mbembe, que não caía na prova
+- **Teste de Meio do 3º ano na mesma semana**: 29/10 nas quintas, 30/10 nas sextas. No index, os dois avisos viram um só; na folha do aluno em PDF, só a data mudou
+
 ---
 
 ## Como atualizar o cronograma
@@ -222,7 +226,7 @@ de apagado. Por isso:
 
 ---
 
-*Última atualização: 23 set 2026*
+*Última atualização: 19 out 2026*
 
 ---
 
