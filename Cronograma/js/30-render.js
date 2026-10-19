@@ -1783,18 +1783,19 @@ function limparHoje(){
 
    SO A DECISAO VIAJA. O veredicto do coletor, o texto da vaga e tudo o mais que
    dados/vagas.json carrega ficam de fora: aquilo e do pipeline e e reescrito a
-   cada coleta. Aqui vai `st`, e nada mais. */
-function escreverTriagemOnline(vid, st, iso){
+   cada coleta. Aqui vai `st` e, quando ha, o porque dele (`r`, ver vgValor) —
+   que e seu, e nao do pipeline. */
+function escreverTriagemOnline(vid, st, iso, r){
   try{
     if(typeof SYNC === "undefined" || !SYNC.ligado()) return false;
-    SYNC.salvarAlteracao("triagem", vid, {st: st}, {em: iso});
+    SYNC.salvarAlteracao("triagem", vid, vgValor(st, r), {em: iso});
     return true;
   }catch(e){ try{ console.error("sync: triagem nao subiu:", e); }catch(e2){} return false; }
 }
-function tocarTriagem(vid, st, quandoISO){
+function tocarTriagem(vid, st, quandoISO, r){
   if(!vid) return null;
   var iso = instanteISO(quandoISO);
-  escreverTriagemOnline(vid, st, iso);
+  escreverTriagemOnline(vid, st, iso, r);
   return iso;
 }
 
@@ -1814,6 +1815,32 @@ function vgMarcar(id, st){
   vgSalvarTriagem(t);
   vgRender();
 }
+/* O PORQUE DE UM DESCARTE OU DE UMA DESISTENCIA. Mesmo funil e mesma ordem do
+   vgMarcar — o instante antes, uma gravacao so —, e por isso o motivo chega ao
+   outro aparelho na mesma linha que a decisao, e nao numa segunda.
+
+   MUDAR DE ESTADO APAGA O MOTIVO (o vgMarcar grava sem ele); escolher motivo
+   nao muda o estado. A excecao e o `st` explicito: "nao deu tempo", no cartao
+   vencido, decide a desistencia e o porque num toque so. `mot` vazio e
+   "trocar": o motivo sai, e os botoes voltam. "outro" pede o texto, como o
+   ciclarVida pede o porque de adiar uma etapa. */
+function vgMotivo(id, mot, st){
+  var t = vgTriagem(), atual = t[id] || {};
+  if(st === undefined) st = atual.st || VG_ST.NOVO;
+  if(!vgPedeMotivo(st)) return;
+  var r = {mot: mot || ""};
+  if(mot === "outro"){
+    var m = prompt("Qual foi o motivo?", atual.mot === "outro" ? (atual.nota || "") : "");
+    if(m === null) return;
+    r.nota = (m || "").trim();
+  }
+  var iso = tocarTriagem(id, st, null, r);
+  var quando = iso ? new Date(iso) : new Date();
+  t[id] = Object.assign({st:st, quando:ymd(quando), em: iso || quando.toISOString()},
+                        vgMotivoDe(st, r));
+  vgSalvarTriagem(t);
+  vgRender();
+}
 function vgEsc(s){ return String(s==null?"":s)
   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
@@ -1823,13 +1850,80 @@ function vgEsc(s){ return String(s==null?"":s)
 function vgL(s){ return VG_LBL[s] || s; }
 function vgGrupo(i){ return i.bloco || i.forma; }
 
+function vgBotao(id, st, txt, cls){
+  return '<button'+(cls?' class="'+cls+'"':'')+' onclick="vgMarcar(\''+id+'\','+st+')">'+txt+'</button>';
+}
+
+/* AS ACOES DE CADA ESTADO. A regra que vale para todos: O BOTAO ACESO DESFAZ O
+   ULTIMO PASSO. Era assim com "vou me candidatar" e "descartada", e continua:
+   o aceso de "me candidatei" e de "desisti" volta para "vou me candidatar", e
+   nao para o comeco — desfazer o envio nao e desfazer a escolha da vaga.
+
+   A VENCIDA MARCADA PERGUNTA. Ate 15/10/2026 o cartao vencido trocava todos os
+   botoes por "Arquivar", e a sua marcacao sumia sem ninguem perguntar se a
+   candidatura tinha saido. Agora ela pergunta, e "nao deu tempo" ja vem com o
+   motivo. Arquivar continua la, para quem nao quer responder.
+
+   O QUE JA SAIU DA COLETA NAO TEM BOTAO. Ele so aparece nas Enviadas, e so por
+   estar enviado: desfeito, voltaria a "vou me candidatar" numa vaga que nao
+   esta em lista nenhuma, e sumiria da tela sem caminho de volta. */
+function vgAcoes(i, st, ehChamada){
+  var id = i.id;
+  if(i._hist) return "";
+  var simTxt = ehChamada ? "Vou submeter" : "Vou me candidatar";
+  var envTxt = ehChamada ? "Submeti" : "Me candidatei";
+  if(st === VG_ST.ENV) return vgBotao(id, VG_ST.SIM, "✓ " + envTxt.toLowerCase(), "on-env");
+  if(st === VG_ST.DES) return vgBotao(id, VG_ST.SIM, "desisti", "on-nao");
+  if(st === VG_ST.NAO) return vgBotao(id, VG_ST.NAO, "descartada", "on-nao");
+  if(st === VG_ST.ARQ) return vgBotao(id, VG_ST.ARQ, "Desarquivar");
+  if(st === VG_ST.SIM && i.vencida)
+    return vgBotao(id, VG_ST.ENV, "Sim, " + envTxt.toLowerCase()) +
+      '<button onclick="vgMotivo(\''+id+'\',\'prazo\','+VG_ST.DES+')">Não deu tempo</button>' +
+      vgBotao(id, VG_ST.ARQ, "Arquivar");
+  if(st === VG_ST.SIM)
+    return vgBotao(id, VG_ST.SIM, "✓ " + simTxt.toLowerCase(), "on-sim") +
+      vgBotao(id, VG_ST.ENV, envTxt) + vgBotao(id, VG_ST.DES, "Desisti");
+  if(i.vencida) return vgBotao(id, VG_ST.ARQ, "Arquivar");
+  return vgBotao(id, VG_ST.SIM, simTxt) + vgBotao(id, VG_ST.NAO, "Descartar");
+}
+
+/* O porque, debaixo dos botoes. Sem motivo, a lista curta para escolher —
+   ignora-la nao custa nada. Com motivo, a frase, e "trocar". A lista muda com
+   o estado e com o tipo: descartar uma chamada nao e por "nivel", e desistir
+   de uma vaga nao e por "fora da area". */
+function vgPorque(i, st, r, ehChamada){
+  if(!vgPedeMotivo(st)) return "";
+  var id = i.id;
+  if(r && r.mot){
+    return '<div class="vg-porque">motivo: <b>' +
+      vgEsc(VG_MOTIVOS[r.mot] || r.mot) + '</b>' + (r.nota ? ' — ' + vgEsc(r.nota) : '') +
+      '<button onclick="vgMotivo(\''+id+'\',\'\')">trocar</button></div>';
+  }
+  var lista = VG_MOTIVOS_DE[ehChamada ? "chamada" : "vaga"][st === VG_ST.DES ? "desiste" : "descarte"];
+  return '<div class="vg-porque"><span>por quê?</span>' + lista.map(function(m){
+    return '<button onclick="vgMotivo(\''+id+'\',\''+m+'\')">' + vgEsc(VG_MOTIVOS[m]) + '</button>';
+  }).join("") + '</div>';
+}
+
 function vgCard(i){
-  var st = vgEstado(i.id);
-  var cls = "vg-card st-" + st + (i.vencida ? " vencida" : "")
+  /* Uma leitura da gaveta por cartao, e nao duas: o vgEstado(i.id) relia o
+     cron:triagem inteiro so para devolver o mesmo `st` que esta aqui. */
+  var r = vgTriagem()[i.id] || {}, st = r.st || 0;
+  /* Prazo so alarma o que ainda esta em aberto. Uma candidatura enviada que
+     venceu nao "venceu": ela saiu a tempo, e o vermelho ali seria mentira. */
+  var aberta = vgEmAberto(st);
+  var cls = "vg-card st-" + st + (i.vencida && aberta ? " vencida" : "")
             + (i.veredicto==="rejeitado" ? " rejeitado" : "");
+  /* Chamada nao tem pais nem esforco: dossie de periodico nao tem geografia, e
+     chamada nao se candidata — se submete. O verbo do botao muda junto. O item
+     do historico nao tem `forma`, e diz de onde veio por `_chamada`. */
+  var ehChamada = !!i.forma || !!i._chamada;
   var tags = [];
-  if(i.vencida)                       tags.push('<span class="vg-tag venceu">venceu</span>');
-  else if(i.urgente)                  tags.push('<span class="vg-tag urgente">⚠ '+
+  if(st === VG_ST.ENV && /^\d{4}-\d{2}-\d{2}$/.test(r.quando || ""))
+                                      tags.push('<span class="vg-tag enviada">'+
+                                        (ehChamada?"submetida":"enviada")+' em '+vgEsc(fmtData(r.quando))+'</span>');
+  if(i.vencida && aberta)             tags.push('<span class="vg-tag venceu">venceu</span>');
+  else if(i.urgente && aberta)        tags.push('<span class="vg-tag urgente">⚠ '+
                                         (i.dias_ate_prazo===0?"hoje":i.dias_ate_prazo+" dia"+(i.dias_ate_prazo===1?"":"s"))+'</span>');
   else if(i.prazo)                    tags.push('<span class="vg-tag prazo">'+vgEsc(i.prazo)+
                                         (i.prazo_brando?" · brando":"")+'</span>');
@@ -1855,33 +1949,53 @@ function vgCard(i){
     if(m.indexOf("texto pronto")>=0)  tags.push('<span class="vg-tag urgente">só com texto pronto</span>');
   });
 
-  /* Chamada nao tem pais nem esforco: dossie de periodico nao tem geografia, e
-     chamada nao se candidata — se submete. O verbo do botao muda junto. */
-  var ehChamada = !!i.forma;
   var subtitulo = ehChamada ? (i.periodico || i.instituicao || "")
                             : [i.instituicao, i.uf, i.pais].filter(Boolean).join(" · ");
-  var simTxt = ehChamada ? "Vou submeter" : "Vou me candidatar";
-  var acoes = i.vencida
-    ? '<button onclick="vgMarcar(\''+i.id+'\','+VG_ST.ARQ+')">Arquivar</button>'
-    : '<button class="'+(st===VG_ST.SIM?"on-sim":"")+'" onclick="vgMarcar(\''+i.id+'\','+VG_ST.SIM+')">'+
-        (st===VG_ST.SIM?"✓ "+simTxt.toLowerCase():simTxt)+'</button>'+
-      '<button class="'+(st===VG_ST.NAO?"on-nao":"")+'" onclick="vgMarcar(\''+i.id+'\','+VG_ST.NAO+')">'+
-        (st===VG_ST.NAO?"descartada":"Descartar")+'</button>';
+  var pergunta = (st === VG_ST.SIM && i.vencida)
+    ? '<div class="vg-pergunta">O prazo passou. Você ' + (ehChamada ? "submeteu" : "se candidatou") + '?</div>' : '';
+  var acoes = vgAcoes(i, st, ehChamada);
 
   return '<div class="'+cls+'">'+
     '<div class="vg-t"><a href="'+vgEsc(i.url)+'" target="_blank" rel="noopener">'+vgEsc(i.titulo)+'</a></div>'+
     '<div class="vg-inst">'+vgEsc(subtitulo)+(i.link_e_da_lista?' · <i>link da lista</i>':'')+'</div>'+
     '<div class="vg-tags">'+tags.join("")+'</div>'+
-    '<div class="vg-acoes">'+acoes+'</div>'+
+    pergunta +
+    (acoes ? '<div class="vg-acoes">'+acoes+'</div>' : '')+
+    vgPorque(i, st, r, ehChamada) +
   '</div>';
+}
+
+/* A lista das enviadas e plana, e nao por bloco: o item do historico nao tem
+   `bloco` nem `forma`, e a pergunta aqui e "a que me candidatei", nao "de que
+   tipo e". Quando falta alguma, a tela diz por que. */
+function vgListaEnviadas(env){
+  var h = "", falta = env.total - env.lista.length;
+  if(env.lista.length){
+    h += '<div class="vg-bloco"><h3>Candidaturas e submissões<span>'+env.lista.length+'</span></h3>'+
+         env.lista.map(vgCard).join("") + '</div>';
+  } else if(!falta){
+    h += '<div class="vg-vazio"><b>Nenhuma enviada ainda.</b>Depois de se candidatar, toque em '+
+         '“Me candidatei” no cartão: ele vem para cá e fica, mesmo depois que o prazo passar.</div>';
+  }
+  if(falta){
+    h += '<div class="vg-nota">' + (VG_HIST.estado === "buscando" ? "Carregando o histórico…"
+      : falta + (falta === 1 ? " enviada não aparece" : " enviadas não aparecem") + " aqui: " +
+        (VG_HIST.estado === "falhou" ? "o histórico não carregou." : "a vaga já saiu da coleta e do histórico.")) +
+      '</div>';
+  }
+  return h;
 }
 
 function vgRender(){
   var alvo = document.getElementById("view-vagas");
   if(!alvo) return;
+  /* O historico so e buscado com o filtro aberto — ver vgCarregarHistorico. */
+  if(VG_FILTRO === "enviadas" && VG_HIST.estado === "nunca")
+    vgCarregarHistorico().then(function(m){ if(m && VG_FILTRO === "enviadas") vgRender(); });
   var itens = (VG_VAGAS.itens||[]).concat(VG_CHAMADAS.itens||[]);
-  var mostrar = itens.filter(vgVisivel);
-  var nUrg = itens.filter(function(i){return i.urgente && !i.vencida && vgEstado(i.id)!==VG_ST.NAO;}).length;
+  var env = vgEnviadas();
+  var mostrar = VG_FILTRO === "enviadas" ? env.lista : itens.filter(vgVisivel);
+  var nUrg = itens.filter(function(i){return i.urgente && !i.vencida && vgEmAberto(vgEstado(i.id));}).length;
   var nNovo = itens.filter(function(i){return i.novo && vgEstado(i.id)===VG_ST.NOVO;}).length;
   var nSim = itens.filter(function(i){return vgEstado(i.id)===VG_ST.SIM;}).length;
   var quando = [VG_VAGAS._gerado_em, VG_CHAMADAS._gerado_em].filter(Boolean).sort().pop() || "";
@@ -1894,15 +2008,18 @@ function vgRender(){
     '<span class="vg-atualizado">coletado em '+vgEsc(quando.slice(0,10)||"—")+'</span>'+
   '</div>';
   var nRev = itens.filter(function(i){
-    return i.veredicto==="revisar" && vgEstado(i.id)!==VG_ST.NAO; }).length;
+    return i.veredicto==="revisar" && vgEmAberto(vgEstado(i.id)); }).length;
   var fs = [["abertas","Em aberto"],["novas","Novas ("+nNovo+")"],
             ["revisar","Revisar ("+nRev+")"],
-            ["sim","Vou me candidatar ("+nSim+")"],["nao","Descartadas"],["tudo","Tudo"]];
+            ["sim","Vou me candidatar ("+nSim+")"],["enviadas","Enviadas ("+env.total+")"],
+            ["nao","Descartadas"],["arquivadas","Arquivadas"],["tudo","Tudo"]];
   h += '<div class="vg-filtros">' + fs.map(function(f){
     return '<button class="'+(VG_FILTRO===f[0]?"on":"")+'" onclick="VG_FILTRO=\''+f[0]+'\';vgRender()">'+f[1]+'</button>';
   }).join("") + '</div>';
 
-  if(!itens.length){
+  if(VG_FILTRO === "enviadas"){
+    h += vgListaEnviadas(env);
+  } else if(!itens.length){
     h += '<div class="vg-vazio"><b>Nada coletado ainda.</b>'+
          'O Actions roda toda segunda às 8h e grava <code>dados/vagas.json</code> e '+
          '<code>dados/chamadas.json</code>.<br>Este painel enche sozinho na primeira rodada.</div>';

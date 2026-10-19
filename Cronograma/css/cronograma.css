@@ -432,10 +432,17 @@
   .vg-card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold-line);
     border-radius:10px;padding:11px 12px;margin-bottom:9px;box-shadow:var(--shadow);}
   .vg-card.st-1{border-left-color:var(--gold);}
-  .vg-card.st-2{opacity:.45;border-left-color:var(--line-strong);}
+  /* Descartada, desistida e arquivada apagam o TEXTO, e nao o cartao: os
+     botoes do porque e o de desfazer ficam embaixo, e apagados ninguem os ve. */
+  .vg-card.st-2,.vg-card.st-3,.vg-card.st-5{border-left-color:var(--line-strong);}
+  .vg-card.st-2 .vg-t,.vg-card.st-2 .vg-inst,.vg-card.st-2 .vg-tags,
+  .vg-card.st-3 .vg-t,.vg-card.st-3 .vg-inst,.vg-card.st-3 .vg-tags,
+  .vg-card.st-5 .vg-t,.vg-card.st-5 .vg-inst,.vg-card.st-5 .vg-tags{opacity:.45;}
   .vg-card.st-2 .vg-t{text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  .vg-card.st-4{border-left-color:var(--ink);}
   .vg-card.vencida{opacity:.55;border-left-color:var(--crimson);}
-  .vg-card.st-3{display:none;}
+  /* A vencida marcada faz uma pergunta, e pergunta apagada nao se le. */
+  .vg-card.st-1.vencida{opacity:1;}
   /* Vagas 2: rejeitado pela MAQUINA. Nao some do arquivo nesta primeira rodada
      — fica visivel em "Tudo" para auditoria, com o mesmo apagamento que a
      descartada por voce ja usa. Nenhuma cor nova. */
@@ -460,6 +467,16 @@
   .vg-acoes button:active{transform:translateY(1px);}
   .vg-acoes button.on-sim{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600;}
   .vg-acoes button.on-nao{background:var(--ink-soft);border-color:var(--ink-soft);color:var(--paper-2);}
+  .vg-acoes button.on-env{background:var(--ink);border-color:var(--ink);color:var(--paper-2);font-weight:600;}
+  .vg-tag.enviada{border-color:var(--ink);background:var(--ink);color:var(--paper-2);font-weight:600;}
+  .vg-pergunta{font-size:13px;color:var(--crimson);font-weight:600;margin:0 0 7px;}
+  .vg-porque{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px;
+    font-size:12px;color:var(--ink-soft);}
+  .vg-porque > span{color:var(--muted);margin-right:2px;}
+  .vg-porque button{background:none;border:1px dashed var(--line-strong);color:var(--ink-soft);
+    border-radius:999px;padding:5px 10px;font-size:12px;font-family:var(--sans);cursor:pointer;}
+  .vg-porque b + button{margin-left:auto;border-style:solid;}
+  .vg-nota{font-size:12px;color:var(--muted);margin:10px 2px 0;}
   .vg-vazio{background:var(--paper-2);border:1px dashed var(--line-strong);border-radius:10px;
     padding:22px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
   .vg-vazio b{display:block;color:var(--ink-soft);font-family:var(--display);font-size:15px;

@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-10-11-avisos-do-dia";
+const APP_VERSION = "2026-10-15-vagas-desfecho";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -690,7 +690,36 @@ const TOQUES_POR_ARQUIVO = "lote";   /* "lote" | "um" */
 const ENVIO_TIMEOUT = 20000;
 const FASE_LBL = {livre:"produção livre", ebd1:"sprint EBD · Momento 1", ebd2:"sprint EBD · Momento 2"};
 const ROMANOS = ["I","II","III","IV"];
-var VG_ST = {NOVO:0, SIM:1, NAO:2, ARQ:3};
+/* OS NUMEROS SAO DADO GRAVADO, e nao enumeracao interna: cada `st` ja mora no
+   cron_estado. Estado novo entra no fim, e nenhum muda de numero.
+
+   ENV e DES sao as duas saidas de "vou me candidatar", que ate 15/10/2026 nao
+   existiam: a vaga marcada so podia ser desmarcada (voltava como nova),
+   descartada (misturava com o que nunca interessou) ou esperar vencer.
+
+   DES NAO E NAO, e a diferenca e o motivo de existirem dois. Descartar na
+   triagem quer dizer "isto nao e para mim" — e o sinal que um dia vai calibrar
+   o coletor (Vagas 3). Desistir depois de marcar quer dizer "era para mim, e
+   nao deu": tempo, dossie, custo. Juntar os dois ensinaria o filtro a esconder
+   justamente as vagas boas. */
+var VG_ST = {NOVO:0, SIM:1, NAO:2, ARQ:3, ENV:4, DES:5};
+/* O MOTIVO E OPCIONAL, e por isso nao ha janela: o cartao descartado mostra
+   os botoes e quem quiser toca em um. Codigos em ASCII, como os criterios_*.json;
+   o portugues e posto aqui, na borda. `idioma` e `texto` casam com as marcas
+   que o coletor ja poe ("exige alemao fluente", "so com texto pronto"), e e
+   isso que vai permitir medir se a marca previu a desistencia. */
+var VG_MOTIVOS = {
+  area:"fora da área", nivel:"nível", elegib:"elegibilidade", idioma:"idioma",
+  local:"local", condicoes:"condições", escopo:"fora do escopo",
+  prazo:"não deu tempo", docs:"faltou documento", texto:"sem texto pronto",
+  custo:"custo", prioridade:"outra prioridade", outro:"outro"
+};
+var VG_MOTIVOS_DE = {
+  vaga:    {descarte:["area","nivel","elegib","idioma","local","condicoes","outro"],
+            desiste: ["prazo","docs","custo","prioridade","elegib","condicoes","outro"]},
+  chamada: {descarte:["area","escopo","idioma","outro"],
+            desiste: ["prazo","texto","prioridade","outro"]}
+};
 var VG_LBL = {
   "pos-doc":"pós-doc", "senior":"sênior",
   "Alto":"alto", "Medio":"médio", "Baixo":"baixo",

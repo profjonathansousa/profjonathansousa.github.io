@@ -1852,6 +1852,184 @@ PERD.renderHoje();
 ok(!/Os avisos pararam/.test(PERD.document.getElementById("view-hoje").innerHTML),
    "e sem perda, nao diz nada");
 
+console.log("\n=== O desfecho da candidatura: enviada, desistida e o porque (15/10/2026) ===");
+{
+  /* O PROBLEMA QUE ESTA SECAO GUARDA. "Vou me candidatar" nao tinha saida:
+     desmarcar a devolvia como nova, descartar a misturava com o que nunca
+     interessou, e arquivar so existia na vencida — e sumia de todas as listas,
+     sem desfazer. */
+  const V = criarAparelho("desfecho");
+  ok(V.VG_ST.ENV === 4 && V.VG_ST.DES === 5, "1. dois estados novos, no fim", V.VG_ST);
+  ok(V.VG_ST.NOVO === 0 && V.VG_ST.SIM === 1 && V.VG_ST.NAO === 2 && V.VG_ST.ARQ === 3,
+     "   e nenhum dos antigos mudou de numero — eles ja estao gravados no banco");
+
+  const vaga = (id, extra) => Object.assign({ id, titulo: "Vaga " + id, url: "https://x/" + id,
+    bloco: "A", veredicto: "relevante", prazo: "2026-11-30" }, extra || {});
+  V.VG_VAGAS = { itens: [vaga("v1"), vaga("v2"), vaga("v3", { veredicto: "revisar" }),
+                         vaga("v4", { vencida: true, prazo: "2026-10-01" }),
+                         vaga("v5", { vencida: true, prazo: "2026-10-01" }),
+                         vaga("v6", { urgente: true, dias_ate_prazo: 2, prazo: "2026-10-09" })] };
+  V.VG_CHAMADAS = { itens: [{ id: "c1", titulo: "Dossiê", forma: "publicacao", veredicto: "relevante" }] };
+  const cartao = (id) => {
+    const todos = V.VG_VAGAS.itens.concat(V.VG_CHAMADAS.itens);
+    return V.vgCard(todos.find(i => i.id === id));
+  };
+  const reg = (id) => V.vgTriagem()[id];
+
+  ok(/>Vou me candidatar</.test(cartao("v1")) && /Descartar/.test(cartao("v1")) &&
+     !/Me candidatei|Desisti/.test(cartao("v1")),
+     "2. a nao marcada continua com os dois botoes de sempre");
+
+  V.vgMarcar("v1", V.VG_ST.SIM);
+  ok(/Me candidatei/.test(cartao("v1")) && /Desisti/.test(cartao("v1")) &&
+     /✓ vou me candidatar/.test(cartao("v1")),
+     "3. a marcada ganha as duas saidas, e o aceso continua desmarcando");
+
+  V.vgMarcar("v1", V.VG_ST.ENV);
+  ok(reg("v1").st === 4 && !!reg("v1").em, "4. 'me candidatei' grava st 4, com instante", reg("v1"));
+  ok(/vg-tag enviada">enviada em /.test(cartao("v1")), "   e o cartao diz quando", cartao("v1"));
+  ok(/on-env" onclick="vgMarcar\('v1',1\)/.test(cartao("v1")),
+     "   o aceso desfaz UM passo: volta para 'vou me candidatar'");
+  V.vgMarcar("v1", V.VG_ST.SIM);
+  ok(reg("v1").st === 1, "   e desfazer devolve a 1, nao a 0 — o envio sai, a escolha fica", reg("v1"));
+  V.vgMarcar("v1", V.VG_ST.ENV);
+
+  /* O porque. */
+  V.vgMarcar("v2", V.VG_ST.SIM);
+  V.vgMarcar("v2", V.VG_ST.DES);
+  ok(reg("v2").st === 5 && !("mot" in reg("v2")), "5. desistir grava st 5, ainda sem motivo");
+  ok(/por quê\?/.test(cartao("v2")) && /vgMotivo\('v2','prazo'\)/.test(cartao("v2")) &&
+     !/vgMotivo\('v2','area'\)/.test(cartao("v2")),
+     "   o cartao oferece os motivos de DESISTENCIA — e 'fora da area' nao e um deles");
+  V.vgMotivo("v2", "custo");
+  ok(reg("v2").st === 5 && reg("v2").mot === "custo", "6. escolher o motivo grava, sem mudar o estado", reg("v2"));
+  ok(/motivo: <b>custo<\/b>/.test(cartao("v2")) && /vgMotivo\('v2',''\)">trocar/.test(cartao("v2")),
+     "   e o cartao mostra a frase, com 'trocar'");
+  V.vgMotivo("v2", "");
+  ok(reg("v2").st === 5 && !("mot" in reg("v2")), "   'trocar' tira o motivo e os botoes voltam", reg("v2"));
+  V.vgMotivo("v2", "docs");
+  V.vgMarcar("v2", V.VG_ST.SIM);
+  ok(reg("v2").st === 1 && !("mot" in reg("v2")),
+     "7. mudar de estado leva o motivo junto — 'vou me candidatar' nao carrega 'faltou documento'", reg("v2"));
+  V.vgMotivo("v2", "prazo");
+  ok(reg("v2").st === 1 && !("mot" in reg("v2")), "   e motivo em quem nao pede motivo nao grava nada");
+
+  V.vgMarcar("v3", V.VG_ST.NAO);
+  ok(/vgMotivo\('v3','area'\)/.test(cartao("v3")) && !/vgMotivo\('v3','prazo'\)/.test(cartao("v3")),
+     "8. o descarte oferece os motivos de DESCARTE");
+  const OUT = criarAparelho("outro-motivo", { prompt: "edital pede livre-docencia" });
+  OUT.vgMarcar("x", OUT.VG_ST.NAO);
+  OUT.vgMotivo("x", "outro");
+  ok(OUT.vgTriagem()["x"].mot === "outro" && OUT.vgTriagem()["x"].nota === "edital pede livre-docencia",
+     "9. 'outro' pede o texto e guarda", OUT.vgTriagem()["x"]);
+  const CAN = criarAparelho("outro-cancelado");
+  CAN.vgMarcar("x", CAN.VG_ST.NAO);
+  const antesCan = JSON.stringify(CAN.vgTriagem()["x"]);
+  CAN.vgMotivo("x", "outro");
+  ok(JSON.stringify(CAN.vgTriagem()["x"]) === antesCan, "   e cancelar o texto nao grava nada");
+
+  /* A vencida marcada pergunta. */
+  ok(/>Arquivar</.test(cartao("v4")) && !/Não deu tempo/.test(cartao("v4")),
+     "10. a vencida NAO marcada continua so com 'Arquivar'");
+  V.vgMarcar("v5", V.VG_ST.SIM);
+  ok(/O prazo passou\. Você se candidatou\?/.test(cartao("v5")) &&
+     /vgMarcar\('v5',4\)">Sim, me candidatei/.test(cartao("v5")) &&
+     /vgMotivo\('v5','prazo',5\)">Não deu tempo/.test(cartao("v5")) && />Arquivar</.test(cartao("v5")),
+     "    a vencida marcada pergunta, e oferece as tres respostas", cartao("v5"));
+  V.vgMotivo("v5", "prazo", V.VG_ST.DES);
+  ok(reg("v5").st === 5 && reg("v5").mot === "prazo",
+     "    'nao deu tempo' decide a desistencia e o porque num toque so", reg("v5"));
+  ok(!/vencida/.test(cartao("v5").split('"')[1]) && !/venceu/.test(cartao("v5")),
+     "    e o que ja teve desfecho nao fica pintado de vencido");
+
+  /* Os leitores: uma regra so de "em aberto". */
+  V.vgMarcar("v6", V.VG_ST.ENV);
+  const vis = (f) => { V.VG_FILTRO = f; return V.VG_VAGAS.itens.concat(V.VG_CHAMADAS.itens)
+    .filter(V.vgVisivel).map(i => i.id).join(","); };
+  /* Aqui: v1 e v6 enviadas, v2 marcada, v3 descartada, v4 vencida sem marca,
+     v5 desistida, c1 sem marca. */
+  ok(vis("abertas") === "v2,v4,c1", "11. 'Em aberto' nao mostra enviada, desistida nem descartada", vis("abertas"));
+  ok(vis("sim") === "v2", "    'Vou me candidatar' so tem a que ainda esta por fazer", vis("sim"));
+  ok(vis("enviadas") === "v1,v6", "    'Enviadas' tem as duas", vis("enviadas"));
+  ok(vis("nao") === "v3,v5", "    'Descartadas' junta descartada e desistida", vis("nao"));
+  V.vgMarcar("v4", V.VG_ST.ARQ);
+  ok(vis("arquivadas") === "v4", "12. a arquivada tem filtro proprio", vis("arquivadas"));
+  ok(vis("tudo").indexOf("v4") < 0, "    e continua fora de 'Tudo', como antes");
+  ok(/vgMarcar\('v4',3\)">Desarquivar/.test(cartao("v4")), "    com caminho de volta");
+  V.VG_FILTRO = "abertas";
+
+  const cont = V.contagemDeVagas();
+  ok(cont.marcadas === 1 && cont.revisar === 0,
+     "13. o indicador do Hoje conta so a marcada — enviada e desistida nao sao 'selecionadas'", cont);
+  const pz = V.prazosProximos(10).lista.map(i => i.id);
+  ok(pz.join(",") === "v2",
+     "    e os prazos da Semana nao mostram o que ja foi enviado", pz);
+
+  V.document.getElementById("view-vagas").innerHTML = "";
+  V.vgRender();
+  const painel = V.document.getElementById("view-vagas").innerHTML;
+  ok(/Enviadas \(2\)/.test(painel) && /Arquivadas/.test(painel),
+     "14. o painel ganha os filtros 'Enviadas (n)' e 'Arquivadas'");
+  ok(!/urgente/.test(painel.split("vg-filtros")[0]),
+     "    e a enviada urgente nao conta como urgente no topo", painel.split("vg-filtros")[0]);
+
+  /* A chamada fala de submissao. */
+  V.vgMarcar("c1", V.VG_ST.SIM);
+  ok(/>Submeti</.test(cartao("c1")) && /✓ vou submeter/.test(cartao("c1")), "15. chamada: 'Submeti'");
+  V.vgMarcar("c1", V.VG_ST.DES);
+  ok(/vgMotivo\('c1','texto'\)">sem texto pronto/.test(cartao("c1")) &&
+     !/vgMotivo\('c1','custo'\)/.test(cartao("c1")),
+     "    e os motivos de chamada sao os dela");
+}
+
+console.log("\n=== As enviadas que ja sairam da coleta (15/10/2026) ===");
+{
+  /* Passada a carencia, a vaga vai para o historico — que o app nao lia. A
+     candidatura sumia da tela com a decisao ainda no banco. */
+  const W = criarAparelho("historico");
+  W.VG_VAGAS = { itens: [{ id: "viva", titulo: "Viva", bloco: "A" }] };
+  W.vgMarcar("viva", W.VG_ST.SIM); W.vgMarcar("viva", W.VG_ST.ENV);
+  W.vgMarcar("velha", W.VG_ST.SIM); W.vgMarcar("velha", W.VG_ST.ENV);
+  W.vgMarcar("perdida", W.VG_ST.SIM); W.vgMarcar("perdida", W.VG_ST.ENV);
+  W.vgMarcar("chamada-velha", W.VG_ST.SIM); W.vgMarcar("chamada-velha", W.VG_ST.ENV);
+
+  let env = W.vgEnviadas();
+  ok(env.total === 4 && env.lista.length === 1, "1. sem o historico, so a do feed aparece", env);
+
+  ["abertas", "sim", "nao", "arquivadas", "tudo"].forEach(f => { W.VG_FILTRO = f; W.vgRender(); });
+  ok(W.VG_HIST.estado === "nunca", "2. nenhum outro filtro baixa o historico (~400 KB)", W.VG_HIST.estado);
+  W.VG_FILTRO = "enviadas";
+  W.vgRender();
+  ok(W.VG_HIST.estado !== "nunca", "   e abrir 'Enviadas' baixa", W.VG_HIST.estado);
+
+  W.VG_HIST = { estado: "ok", itens: [
+    { id: "velha", titulo: "Concurso UFX", instituicao: "UFX", prazo: "2026-08-01", _hist: true },
+    { id: "chamada-velha", titulo: "Dossiê Lutero", instituicao: "Revista Y", prazo: "2026-07-01",
+      _hist: true, _chamada: true },
+    { id: "nunca-marcada", titulo: "Outra", _hist: true }] };
+  env = W.vgEnviadas();
+  ok(env.lista.map(i => i.id).join(",") === "chamada-velha,velha,viva",
+     "3. com o historico, as enviadas voltam — a mais recente primeiro", env.lista.map(i => i.id));
+  ok(env.lista.every(i => i.id !== "nunca-marcada"), "   e so as enviadas: o historico nao vira lista");
+
+  const cVelha = W.vgCard(env.lista.find(i => i.id === "velha"));
+  ok(/enviada em /.test(cVelha) && !/vg-acoes/.test(cVelha),
+     "4. o cartao de quem ja saiu da coleta nao tem botao — desfeito, sumiria sem volta", cVelha);
+  ok(/submetida em /.test(W.vgCard(env.lista.find(i => i.id === "chamada-velha"))),
+     "   e a chamada do historico continua dizendo 'submetida'");
+
+  W.vgRender();
+  const p = W.document.getElementById("view-vagas").innerHTML;
+  ok(/Candidaturas e submissões<span>3/.test(p), "5. a lista e plana, com as tres", p.slice(0, 400));
+  ok(/1 enviada não aparece aqui: a vaga já saiu da coleta e do histórico/.test(p),
+     "   e a que nao se acha em lugar nenhum e contada, e nao escondida");
+  W.VG_HIST = { estado: "falhou", itens: [] };
+  W.vgRender();
+  ok(/3 enviadas não aparecem aqui: o histórico não carregou/.test(W.document.getElementById("view-vagas").innerHTML),
+     "   sem rede, a tela diz que faltou o historico");
+  W.VG_FILTRO = "abertas";
+}
+
 /* Um navegador com push, de mentira: so o que curarInscricao consulta. */
 function comPush(ctx, sub, permissao) {
   const pedidos = [];

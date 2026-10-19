@@ -1378,7 +1378,9 @@ rotinas e dispensas continuam legados.
 
 **A chave é o id da vaga** — `philjobs-31649` —, que é estável e sobrevive à
 coleta semanal: `dados/vagas.json` é reescrito inteiro toda segunda, e a decisão
-não se perde porque nunca morou lá. O valor leva **só `{st}`**.
+não se perde porque nunca morou lá. O valor leva **só `{st}`** — desde
+15/10/2026, também o motivo do descarte ou da desistência, quando há (ver
+"Vagas · O ciclo da sua decisão").
 
 **Veredicto e triagem continuam sendo dois eixos.** O veredicto é do coletor e
 vem no arquivo; a triagem é a sua decisão. A 9D transporta **apenas a decisão** —
@@ -2639,7 +2641,60 @@ Cadeia: **coleta → validação da extração → classificação → triagem**
 Dois eixos, que não se confundem:
 
 - **`veredicto`** (da máquina): `relevante` / `revisar` / `rejeitado`;
-- **`cron:triagem`** (sua): candidatar / descartar / arquivar.
+- **`cron:triagem`** (sua): os seis estados abaixo.
+
+### O ciclo da sua decisão (15/10/2026)
+
+Até aqui "vou me candidatar" não tinha saída: desmarcar devolvia a vaga como
+nova, descartar a misturava com o que nunca interessou, e arquivar só existia
+na vencida — e a fazia sumir de todos os filtros, sem desfazer.
+
+| `st` | vaga | chamada | onde aparece |
+|---|---|---|---|
+| 0 | não marcada | não marcada | Em aberto, Novas |
+| 1 | Vou me candidatar | Vou submeter | Em aberto, Vou me candidatar |
+| 2 | Descartada | Descartada | Descartadas |
+| 3 | Arquivada | Arquivada | Arquivadas |
+| 4 | **Me candidatei** | **Submeti** | **Enviadas** |
+| 5 | **Desisti** | **Desisti** | Descartadas |
+
+Os números são dado gravado no `cron_estado`: estado novo entra no fim, e
+nenhum muda de número.
+
+**Desistir não é descartar.** Descartar na triagem diz "isto não é para mim",
+e é o sinal que um dia vai calibrar o coletor (Vagas 3). Desistir depois de
+marcar diz "era para mim, e não deu" — tempo, dossiê, custo. Juntar os dois
+ensinaria o filtro a esconder justamente as vagas boas.
+
+**O motivo é opcional, e não há janela.** O cartão descartado ou desistido
+mostra uma fileira de motivos; tocar em um grava, ignorar não custa nada.
+"Outro" pede o texto. As listas mudam com o estado e com o tipo
+(`VG_MOTIVOS_DE`, em `00-config.js`): desistir de uma vaga é por prazo,
+documento, custo, prioridade, elegibilidade ou condições; descartar é por área,
+nível, elegibilidade, idioma, local ou condições. `idioma` e `texto` casam com
+as marcas que o coletor já põe, e é isso que vai permitir medir se a marca
+previu a desistência.
+
+**O botão aceso desfaz o último passo.** O aceso de "me candidatei" e de
+"desisti" volta para "vou me candidatar", e não para o começo.
+
+**A vencida marcada pergunta.** "O prazo passou. Você se candidatou?" —
+*Sim*, *Não deu tempo* (desistência com o motivo, num toque) ou *Arquivar*.
+
+**As enviadas não somem com a coleta.** Passada a carência de 21 dias a vaga
+sai de `dados/vagas.json` para `dados/*_historico.json`. O filtro *Enviadas*
+lê os dois históricos — só quando é aberto, uma vez por sessão — e a
+candidatura continua lá. O cartão que já saiu da coleta não tem botão:
+desfeito, ele sumiria sem caminho de volta.
+
+**"Em aberto" é uma regra só** (`vgEmAberto`, em `20-regras.js`): estados 0 e
+1. É ela que decide os urgentes, o "Revisar", o indicador do Hoje e os prazos
+da Semana — antes cada leitor comparava números do seu jeito.
+
+**No banco**, o valor da triagem passa a ser `{st, mot?, nota?}`, com `mot` e
+`nota` só nos estados 2 e 5. Sem motivo a linha continua sendo `{st}`. Nada de
+título, prazo ou URL: só a decisão e o porquê dela. Sem migração — `valor` é
+`jsonb`. O notificador lê só o `st`, e já ignorava qualquer `st` diferente de 0.
 
 `AOS: Open` nunca é eliminado e nunca é promovido — vai para **revisar**.
 Extração suspeita também.
@@ -2985,11 +3040,15 @@ arquivo na aplicação não deixa o teste medindo outra coisa.
 | 9G-2 — subida legada cortada | concluída |
 | 9G-3 — cortar a descida (`buscarEstado`, `estado.json`) e aposentar o acervo | concluída |
 | 10 — Resumo do dia em quatro momentos, relógio no Supabase, chamadas no push | concluída (o relógio espera o token no Vault) |
+| Vagas 3a — "me candidatei", "desisti" e o motivo estruturado | concluída (15/10/2026) |
 
 ### Previsto e ainda não implementado
 
-- **Aprender com os descartes das vagas** (Vagas 3): registrar motivo
-  estruturado para calibrar os filtros com o comportamento real.
+- **Aprender com os descartes das vagas** (Vagas 3b): o motivo estruturado já
+  é registrado (Vagas 3a). Falta o coletor lê-lo para calibrar os filtros com o
+  comportamento real — só os descartes (`st` 2), nunca as desistências.
+- **Resultado da candidatura** (aguardando, entrevista, aprovado, não
+  aprovado): um campo dentro de "me candidatei", e não um estado novo.
 - **Remoção automática dos itens de veredicto `rejeitado`** de `dados/vagas.json`
   — hoje eles permanecem, marcados, para auditoria.
 - **Dependências entre projetos.** Não existem no dado, e a Fase 3 não as

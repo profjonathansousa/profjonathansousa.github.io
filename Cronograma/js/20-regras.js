@@ -895,10 +895,10 @@ function contagemDeVagas(){
   itens.forEach(function(i){
     var st = (typeof vgEstado === "function") ? vgEstado(i.id) : 0;
     if(i.veredicto === "rejeitado") return;
-    if(st === 3) return;
-    if(st === 1) marcadas++;
-    if(st === 0 && i.novo) novas++;
-    if(i.veredicto === "revisar" && st !== 2) revisar++;
+    if(!vgEmAberto(st)) return;
+    if(st === VG_ST.SIM) marcadas++;
+    if(st === VG_ST.NOVO && i.novo) novas++;
+    if(i.veredicto === "revisar") revisar++;
   });
   return {novas:novas, revisar:revisar, marcadas:marcadas, total:itens.length};
 }
@@ -971,17 +971,27 @@ function entregaDosArtigos(){
   return {previstos:previstos.length, entregues:previstos.filter(projConcluido).length,
           total:projs.length};
 }
+/* EM ABERTO E O QUE AINDA PEDE ALGUMA COISA DE VOCE: a vaga nao triada e a
+   marcada "vou me candidatar". Descartada, arquivada, enviada e desistida ja
+   tiveram desfecho.
+
+   UMA REGRA SO, e nao uma comparacao por leitor. Ate 15/10/2026 cada leitor
+   dizia "aberto" do seu jeito — `st !== 2`, `st !== NAO && st !== ARQ`, `st === 3`
+   com o numero cru —, e as formas so concordavam porque havia quatro estados.
+   Com seis, a enviada entraria nos urgentes, no "Revisar" e nos prazos da
+   Semana sem ninguem ter decidido isso. */
+function vgEmAberto(st){ return st === VG_ST.NOVO || st === VG_ST.SIM; }
+
 /* Prazos ordenados por proximidade. Sai do mesmo feed e da mesma triagem da
-   aba Vagas: o que voce marcou "nao" ou arquivou nao aparece, e o que ja
-   venceu tambem nao. Nenhuma ordem inventada — e a data, so. */
+   aba Vagas: o que ja teve desfecho nao aparece, e o que ja venceu tambem nao.
+   Nenhuma ordem inventada — e a data, so. */
 function prazosProximos(n){
   var itens = (VG_VAGAS.itens||[]).concat(VG_CHAMADAS.itens||[]);
   var hoje = ymd(now);
   var abertas = itens.filter(function(i){
     if(!i || !/^\d{4}-\d{2}-\d{2}$/.test(i.prazo||"")) return false;
     if(i.prazo < hoje) return false;
-    var st = vgEstado(i.id);
-    return st !== VG_ST.NAO && st !== VG_ST.ARQ;
+    return vgEmAberto(vgEstado(i.id));
   });
   abertas.sort(function(a,b){ return a.prazo < b.prazo ? -1 : (a.prazo > b.prazo ? 1 : 0); });
   /* De quando e o feed que esta na tela. O painel abre pelo cache, que pode
@@ -993,18 +1003,44 @@ function prazosProximos(n){
 
 function vgVisivel(i){
   var st = vgEstado(i.id);
+  /* ARQUIVAR DEIXOU DE SER SUMIR. Ate 15/10/2026 a arquivada nao aparecia em
+     filtro nenhum, nem em "Tudo", e nao havia como desfazer: um toque errado
+     num cartao vencido era definitivo. Ela continua fora de todos os outros
+     filtros — e para isso que se arquiva — e tem o seu. */
+  if(VG_FILTRO==="arquivadas") return st===VG_ST.ARQ;
   if(st===VG_ST.ARQ) return false;
   /* Vagas 2. O que a maquina rejeitou sai das listas de TRABALHO e continua
      em "Tudo" — nesta primeira rodada o coletor nao remove nada do arquivo,
      de proposito, para que o resultado possa ser auditado antes de virar
      remocao automatica. Item sem o campo se comporta como sempre. */
   var rejeitado = (i.veredicto==="rejeitado");
-  if(VG_FILTRO==="abertas") return st!==VG_ST.NAO && !rejeitado;
-  if(VG_FILTRO==="novas")   return st===VG_ST.NOVO && i.novo && !rejeitado;
-  if(VG_FILTRO==="revisar") return st!==VG_ST.NAO && i.veredicto==="revisar";
-  if(VG_FILTRO==="sim")     return st===VG_ST.SIM;
-  if(VG_FILTRO==="nao")     return st===VG_ST.NAO;
+  if(VG_FILTRO==="abertas")  return vgEmAberto(st) && !rejeitado;
+  if(VG_FILTRO==="novas")    return st===VG_ST.NOVO && i.novo && !rejeitado;
+  if(VG_FILTRO==="revisar")  return vgEmAberto(st) && i.veredicto==="revisar";
+  if(VG_FILTRO==="sim")      return st===VG_ST.SIM;
+  if(VG_FILTRO==="enviadas") return st===VG_ST.ENV;
+  /* Descartada e desistida moram juntas na tela, e separadas no dado: o
+     cartao diz qual e qual, e o motivo de cada uma. */
+  if(VG_FILTRO==="nao")      return st===VG_ST.NAO || st===VG_ST.DES;
   return true;
+}
+
+/* AS ENVIADAS VEM DE DOIS LUGARES: do feed, enquanto a vaga estiver nele, e
+   do historico depois que ela sai. O feed vence quando os dois a tem, porque
+   e o mais novo. A ordem e a da decisao, a mais recente primeiro — e a
+   pergunta que esta lista responde e "a que me candidatei por ultimo". */
+function vgEnviadas(){
+  var tri = vgTriagem(), porId = {};
+  (VG_HIST.itens || []).forEach(function(i){ if(i && i.id) porId[i.id] = i; });
+  (VG_VAGAS.itens || []).concat(VG_CHAMADAS.itens || [])
+    .forEach(function(i){ if(i && i.id) porId[i.id] = i; });
+  var ids = Object.keys(tri).filter(function(id){ return tri[id] && tri[id].st === VG_ST.ENV; });
+  var achadas = ids.filter(function(id){ return porId[id]; }).map(function(id){ return porId[id]; });
+  achadas.sort(function(a, b){
+    var ea = tri[a.id].em || "", eb = tri[b.id].em || "";
+    return ea < eb ? 1 : (ea > eb ? -1 : 0);
+  });
+  return {lista: achadas, total: ids.length};
 }
 
 /* ==================== AVISOS — Fase 8 ====================

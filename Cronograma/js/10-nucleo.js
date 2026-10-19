@@ -1073,9 +1073,31 @@ function aplicarRegistroOnline(linha){
 function escapeHtml(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 var VG_FILTRO = "abertas";
 var VG_VAGAS = {itens:[]}, VG_CHAMADAS = {itens:[]}, VG_BUSCOU = false;
+var VG_HIST = {itens:[], estado:"nunca"};   /* nunca | buscando | ok | falhou */
 
 function vgTriagem(){ return LS("cron:triagem", {}) || {}; }
 function vgSalvarTriagem(t){ save("cron:triagem", t); }
+
+/* O MOTIVO SO EXISTE JUNTO DO st QUE O PEDE. Descartar e desistir perguntam
+   por que; nenhum outro estado pergunta. Trocar de estado leva o motivo junto,
+   e e por isso que ele e filtrado aqui, e nao em cada escritor: uma vaga que
+   volta de "desisti" para "vou me candidatar" nao pode chegar ao outro
+   aparelho carregando o "nao deu tempo" de antes.
+
+   A AUSENCIA E O ESTADO NORMAL. Sem motivo o valor continua sendo `{st}`, o
+   mesmo de antes de 15/10/2026 — uma versao antiga do app que receba a linha
+   le o `st` e ignora o resto. */
+function vgPedeMotivo(st){ return st === VG_ST.NAO || st === VG_ST.DES; }
+function vgMotivoDe(st, r){
+  var x = {};
+  if(!r || !r.mot || !vgPedeMotivo(st)) return x;
+  x.mot = String(r.mot);
+  if(r.nota) x.nota = String(r.nota);
+  return x;
+}
+/* O que sobe para o cron_estado. So a decisao e o porque dela — nada do que
+   dados/vagas.json diz sobre a vaga. */
+function vgValor(st, r){ return Object.assign({st: st}, vgMotivoDe(st, r)); }
 
 /* MIGRACAO, UMA VEZ POR APARELHO.
    O toque so publica marcacao NOVA. Uma vaga marcada antes desta versao
@@ -1161,7 +1183,7 @@ function publicarDecisoesAntigas(){
          instantes deslocados, e republicar duas vezes deslocaria de novo.
          Republicar nao e decidir — o instante ja existe, e o que se quer e
          repeti-lo exatamente. */
-      if(escreverTriagemOnline(vid, r.st || 0, r.em)) fora.triagem++;
+      if(escreverTriagemOnline(vid, r.st || 0, r.em, r)) fora.triagem++;
     });
 
     PAINEIS.forEach(function(P){
@@ -1196,12 +1218,17 @@ function publicarDecisoesAntigas(){
    e assim que desmarcar atravessa aparelhos.
 
    O `quando` E DERIVADO, e nao um segundo relogio: e o dia do proprio instante.
-   A tela mostra o dia; o `em` decide quem vence. */
+   A tela mostra o dia; o `em` decide quem vence.
+
+   O MOTIVO VIAJA COM A DECISAO, e por isso entra aqui: o registro e
+   reconstruido inteiro a cada linha que vence, e sem esta linha o porque de
+   um descarte feito no celular sumiria na chegada ao Mac. */
 function mesclarTriagem(tri, vid, r){
   if(!r || !r.quando) return false;
   var atual = tri[vid];
   if(atual && (atual.em || "") >= r.quando) return false;
-  tri[vid] = {st:r.st, quando:String(r.quando).slice(0,10), em:r.quando};
+  tri[vid] = Object.assign({st:r.st, quando:String(r.quando).slice(0,10), em:r.quando},
+                           vgMotivoDe(r.st, r));
   return true;
 }
 
@@ -1289,7 +1316,8 @@ function aplicarTriagemOnline(linha){
   if(!linha || !linha.chave) return [];
   var v = linha.valor || {};
   var tri = vgTriagem();
-  if(!mesclarTriagem(tri, String(linha.chave), {quando: linha.em, st: v.st})) return [];
+  if(!mesclarTriagem(tri, String(linha.chave),
+                     {quando: linha.em, st: v.st, mot: v.mot, nota: v.nota})) return [];
   vgSalvarTriagem(tri);
   return ["renderVistaVagas", "renderHoje", "renderSemana", "renderVistaRevisao"];
 }
@@ -1324,6 +1352,38 @@ function vgCarregar(){
       if(r[0] || r[1]){ save("cron:feed-cache", {vagas:VG_VAGAS, chamadas:VG_CHAMADAS,
                                                  quando:new Date().toISOString()}); return true; }
       return false;
+    });
+}
+
+/* O HISTORICO, SO PARA AS ENVIADAS. Passada a carencia de 21 dias, o coletor
+   tira a vencida de dados/vagas.json e a guarda em dados/*_historico.json, que
+   o app nunca lia. A decisao continuava no banco e a candidatura sumia da
+   tela — e o resultado de um concurso sai meses depois do prazo, que e
+   justamente quando se quer reencontra-la.
+
+   PREGUICOSO DE PROPOSITO: os dois arquivos somam ~400 KB e so sao buscados
+   quando o filtro "Enviadas" abre, uma vez por sessao. Nao vao para o cache:
+   sem rede, a lista mostra o que ainda esta no feed, e diz que falta o resto.
+
+   O item do historico e mais magro que o do feed — nao tem `forma` nem
+   `bloco`. `_chamada` guarda de que arquivo ele veio, que e o que o cartao
+   precisa para dizer "submeti" em vez de "me candidatei"; `_hist`, que ele ja
+   saiu da coleta (ver vgAcoes). */
+function vgCarregarHistorico(){
+  if(VG_HIST.estado !== "nunca") return Promise.resolve(false);
+  VG_HIST.estado = "buscando";
+  return Promise.all([vgBuscar("../dados/vagas_historico.json"),
+                      vgBuscar("../dados/chamadas_historico.json")])
+    .then(function(r){
+      var itens = [];
+      ((r[0] && r[0].itens) || []).forEach(function(i){
+        itens.push(Object.assign({_hist:true}, i));
+      });
+      ((r[1] && r[1].itens) || []).forEach(function(i){
+        itens.push(Object.assign({_hist:true, _chamada:true}, i));
+      });
+      VG_HIST = {itens: itens, estado: (r[0] || r[1]) ? "ok" : "falhou"};
+      return true;
     });
 }
 
