@@ -164,7 +164,8 @@ with open(os.path.join(TMP2, "Cronograma", "entrada.json"), encoding="utf-8") as
     BANCO = Banco().subir().publicar(json.load(_f))
 os.environ[dobrar_toques.API_URL] = BANCO.url
 cod, saida = registrar("pipeline/a00/a00-4")
-cod_estrela, saida_estrela = registrar("pipeline/a00/a00-1")
+# Desde 2026-10-20 a unica etapa 'estrela' da esteira e a 4b, do NotebookLM.
+cod_estrela, saida_estrela = registrar("pipeline/a00/a00-4b")
 BANCO.parar()
 for _v in (dobrar_toques.API_URL, dobrar_toques.API_CHAVE):
     os.environ.pop(_v, None)

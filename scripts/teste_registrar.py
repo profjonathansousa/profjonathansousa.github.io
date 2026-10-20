@@ -5,7 +5,7 @@
     python3 scripts/teste_registrar.py
 
 Desde 2026-10-13 quem marca e a cron_pipeline_marcar (sql/cron_pipeline_marcar.sql),
-a mesma que o Cowork chama pelo conector no fim de cada janela. As REGRAS dela
+a mesma que o Cowork chama pelo conector no fim de cada etapa. As REGRAS dela
 sao provadas contra um Postgres de verdade no teste_marcar_no_banco.py. Este
 teste prova o outro lado: o que o dobrar_toques.py faz com ela, contra o
 dobrar_toques.py de verdade e o arremedo da funcao no PostgREST de mentira

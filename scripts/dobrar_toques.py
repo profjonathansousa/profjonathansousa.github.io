@@ -79,11 +79,12 @@ SUPABASE_SECRET_KEY no ambiente.
 
 O --registrar MARCA UMA ETAPA COMO CONCLUÍDA, e quem marca é a função do banco
 cron_pipeline_marcar (sql/cron_pipeline_marcar.sql) — a mesma que o Cowork chama
-pelo conector do Supabase no fim de cada janela (2026-10-13). As regras moram
+pelo conector do Supabase no fim de cada etapa (2026-10-20; de 2026-10-13 até
+ali, no fim de cada janela). As regras moram
 nela, e só nela:
   · só etapa de prova "maquina" na estrutura publicada. Prova "estrela" é
-    decisão do autor — a escolha entre as opções A/B/C, o portão do NotebookLM,
-    o "pronto para submeter" —, e a máquina não a marca;
+    decisão do autor — desde 2026-10-20, só o portão do NotebookLM —, e a
+    máquina não a marca;
   · só etapa ATIVA. Adiada, abandonada, arquivada, "não se aplica" ou apagada
     fica como está, com o motivo e as datas (decidido em 2026-10-12);
   · só CONCLUIR. O --para 0|1, o --vida e o --forcar saíram: voltar uma etapa,
@@ -552,7 +553,8 @@ def publicar_estrutura(caminho_novo, seco):
 # (sql/cron_pipeline_marcar.sql), e este comando so a chama. A razao e o Cowork:
 # ele roda atras de um proxy que recusa o supabase.co e o api.github.com, e o
 # unico caminho que sai de la e o conector do Supabase. O autor decidiu que a
-# marcacao acontece no fim de cada janela, quando ELE dispara o fluxo — e nao
+# marcacao acontece no fim de cada etapa (desde 2026-10-20; antes, no fim de
+# cada janela), quando ELE dispara o fluxo — e nao
 # numa rodada agendada. Entao o Cowork chama a funcao pelo conector, e este
 # comando (o botao de conferencia do Actions, ou um terminal) chama a MESMA
 # funcao pela API. Um lugar so para as regras, e dois caminhos ate ele:

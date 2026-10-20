@@ -3,7 +3,7 @@
 -- Idempotente: pode rodar de novo sem estragar nada.
 -- ============================================================
 --
--- O QUE ESTA FUNÇÃO FAZ, EM UMA FRASE. No fim de cada janela do pipeline, o
+-- O QUE ESTA FUNÇÃO FAZ, EM UMA FRASE. No fim de cada etapa do pipeline, o
 -- Cowork chama, pelo conector do Supabase,
 --
 --     select public.cron_pipeline_marcar('pipeline/a01/a01-3');
@@ -23,8 +23,8 @@
 -- Aqui as regras moram num lugar só, e o Cowork só diz QUAL etapa fechou:
 --
 --   · só etapa de prova "maquina" na estrutura publicada (cron_estrutura_base).
---     Prova "estrela" é decisão do autor: a escolha entre as opções, o portão
---     do NotebookLM, o "pronto para submeter";
+--     Prova "estrela" é decisão do autor: desde 2026-10-20, só o portão do
+--     NotebookLM (até ali, também o Brainstorm e o "pronto para submeter");
 --   · só etapa ATIVA. Adiar, abandonar, arquivar e "não se aplica" são decisões
 --     do autor (2026-10-12), e etapa apagada não volta pela máquina;
 --   · só CONCLUIR (st = 2). Voltar uma etapa, mudar a vida dela ou passar por

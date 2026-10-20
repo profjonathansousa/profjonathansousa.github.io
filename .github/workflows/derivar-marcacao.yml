@@ -3,7 +3,7 @@ name: Conferir os Trilhos pelo artefato
 # O QUE ESTE WORKFLOW E, DESDE 2026-10-13: o BOTAO DE CONFERENCIA. Ele so roda
 # quando alguem aperta Run workflow — nao ha agendamento.
 #
-# A MARCACAO DO DIA A DIA NAO PASSA POR AQUI. No fim de cada janela do pipeline,
+# A MARCACAO DO DIA A DIA NAO PASSA POR AQUI. No fim de cada etapa do pipeline,
 # o Cowork chama a funcao do banco cron_pipeline_marcar pelo conector do
 # Supabase, e a etapa aparece nos aparelhos no mesmo instante. Foi o desenho que
 # o autor decidiu: a marcacao acontece quando ELE dispara o fluxo no Cowork, e
