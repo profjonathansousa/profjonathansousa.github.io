@@ -447,7 +447,7 @@ titulo("=== 8. O pipeline escreve pela função do banco, e não vira espelho ==
 
   /* DESDE 2026-10-13 o --registrar não escreve nada por conta própria: pede a
      marcação à cron_pipeline_marcar, a mesma função que o Cowork chama pelo
-     conector no fim de cada janela. Um lugar só para as regras. */
+     conector no fim de cada etapa. Um lugar só para as regras. */
   ok(/RPC_MARCAR = "\/rpc\/cron_pipeline_marcar"/.test(pipe) && /marcar_online\(/.test(reg),
      "o --registrar pede a marcação à cron_pipeline_marcar");
   ok(!/def publicar_online/.test(pipe) && !/"PATCH"/.test(pipe),

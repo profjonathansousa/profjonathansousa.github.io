@@ -419,6 +419,11 @@ console.log("\n=== 10b. A etapa 'estrela' fica visivel no Hoje ===");
    pagina. E justamente a etapa que o pipeline nao fecha sozinho, porque a
    conclusao e decisao do autor — quem mais precisa aparecer. */
 const S = criarAparelho("estrela");
+/* Desde 2026-10-20 a unica etapa 'estrela' da esteira e a 4b, do NotebookLM:
+   as quatro antes dela sao fechadas aqui para que ela seja a corrente. */
+const psS = S.getProjs("pipeline"), prS = psS.find(p => p.id === "a02");
+prS.subs.forEach(x => { if (["a02-1", "a02-2", "a02-3", "a02-4"].indexOf(x.id) > -1) x.st = 2; });
+S.setProjs("pipeline", psS);
 const etS = S.estagioDoTrilho("pipeline", "a02");
 ok(etS.prova === "estrela", "a etapa corrente de a02 e uma 'estrela'", etS.prova);
 S.addPrioridadeTrilho("pipeline/a02");

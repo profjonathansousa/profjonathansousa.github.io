@@ -2484,6 +2484,9 @@ ele apareça.
 Cowork**, no fim de cada janela, e não numa rodada agendada. A rodada das 20h37
 saiu.
 
+> **Desde 2026-10-20, no fim de cada etapa**, e não mais no fim da janela. Ver
+> *A marcação por etapa*, abaixo.
+
 O caminho tinha de ser outro, porque o Cowork roda atrás de um proxy que recusa o
 `supabase.co` e o `api.github.com` (medido em 2026-10-13: nem o `--registrar`
 nem um `curl` saem de lá). O **conector do Supabase** sai. Então, no fim de cada
@@ -2546,7 +2549,7 @@ mesmo teste compara os dois, caso a caso.
 #### Como ligar a marcação
 
 **No Cowork, nada a ligar:** o conector do Supabase já está conectado, e a
-função já está no banco. As instruções do FILOSÓFICO (v1.3) dizem em que passo
+função já está no banco. As instruções do FILOSÓFICO (v1.9) dizem em que passo
 chamá-la.
 
 **O botão de conferência** (`derivar-marcacao.yml`) precisa de um segredo que só
@@ -2576,11 +2579,45 @@ o relatório sai completo.
 O workflow não escreve nada no repositório (`contents: read`): a marcação é a
 escrita no banco, feita pela função.
 
+#### A marcação por etapa (2026-10-20)
+
+**Decidido pelo autor: cada etapa da esteira é marcada pelo Cowork assim que
+termina**, e não mais no fim da janela. Só a etapa 4b, do NotebookLM, continua
+sendo marcada por ele, no aplicativo. As instruções do FILOSÓFICO (v1.9) dizem
+onde cada uma é marcada:
+
+| etapa | onde o Cowork marca |
+|---|---|
+| 1 · Brainstorm | Janela de Brainstorm, Passo 3, o último, depois da escolha entre A, B e C |
+| 2 · Janela 0 · planilha de corpus | Janela 0, Passo 2, com o `corpus_[slug].md` gravado |
+| 3 · Janela 0 · 1.0-FIL · mapa argumentativo | Janela 0, Passo 3, com o `draft_1.0_mapa.md` |
+| 4 · Janela 1 | Janela 1, Passo 4, com o `draft_1.3apl.md` |
+| 4b · NotebookLM | o autor, no aplicativo |
+| 5 · Janela 2 | Janela 2, Passo 9, com o `draft_3.4apl.md` |
+| 6 · Janela 2 · .docx | Janela 2, Passo 11, com o `[slug]-artigo-final.docx` |
+
+O que mudou para isso:
+
+- **As etapas 1 e 6 passaram a prova `maquina`**, nas treze peças do
+  `entrada.json` e na estrutura publicada. Antes eram `estrela`, e a função as
+  recusava. A 1 virou *Brainstorm* e a 6, *Janela 2 · .docx*: a revisão humana
+  fina vem depois do `.docx` e fica fora do trilho. A etapa 2 deixou de dizer
+  *celular*.
+- **Na Janela 0, a planilha de corpus vem antes do mapa argumentativo**, a mesma
+  ordem da tela. A convenção das "duas ordens" do `mapa_portal.json`, em que o
+  pipeline rodava o mapa antes da planilha, passou a histórico.
+- **O `Id no Cronograma` é registrado na abertura do artigo**, e não mais na
+  Janela 0: sem ele o Cowork não teria a chave para marcar o Brainstorm.
+- **O botão de conferência não marca o Brainstorm.** Nenhum arquivo prova a
+  escolha do autor; o caminho que o mapa descreve para a etapa 1 não tem
+  `[slug]` nem `[drafts]`, e a regra 7 do `derivar_do_pipeline.py` a pula.
+
 #### O que ainda falta
 
-- **A Janela 0 de cada artigo** registrar `Id no Cronograma: aNN` no CONCLUIDO.
-  Sem essa linha, a peça não tem ligação: o botão a pula e diz por quê. A
-  chamada do Cowork não depende dela, porque o Cowork já diz a chave.
+- **A abertura de cada artigo** registrar `Id no Cronograma: aNN` no CONCLUIDO
+  (desde a v1.9 das instruções; até a 1.8, a Janela 0). Sem essa linha, a peça
+  não tem ligação: o botão a pula e diz por quê. A chamada do Cowork não depende
+  dela, porque o Cowork já diz a chave.
 - **Apagar as versões antigas do `estado.json` do histórico do git**, se o autor
   quiser (ver acima). Não foi feito.
 

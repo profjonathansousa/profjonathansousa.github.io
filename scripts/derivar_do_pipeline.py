@@ -55,7 +55,8 @@ AS REGRAS DURAS, e cada uma existe por um caso concreto:
   4. NUNCA lê nem edita o estado.json. O escritor único continua sendo o
      dobrar_toques.py, e este script fala com ele por toque, como um aparelho.
   5. NUNCA adivinha a ligação peça <-> artigo. Ela vem do CONCLUIDO de cada
-     artigo — as linhas "Slug:" e "Id no Cronograma:", escritas na Janela 0 — e,
+     artigo — as linhas "Slug:" e "Id no Cronograma:", escritas na abertura do
+     artigo (até 2026-10-20, na Janela 0) — e,
      na falta, do campo slug do entrada.json; existindo os dois, têm de
      concordar. Casar título com slug por heurística erraria em silêncio. Peça
      sem ligação, ou com ligação ambígua, é PULADA com aviso.
@@ -230,7 +231,8 @@ RE_SLUG = re.compile(r"^[ \t>*-]*Slug(?: do artigo)?\s*\**\s*:\s*\**\s*`?"
                      r"([a-z0-9]+(?:-[a-z0-9]+)*)`?\s*$", re.I | re.M)
 
 SEM_LIGACAO = ("peca sem ligacao a um artigo: nenhum CONCLUIDO registra o 'Id no "
-               "Cronograma' dela (Janela 0, Passo 5), e o entrada.json nao tem slug")
+               "Cronograma' dela (registrado na abertura do artigo), e o entrada.json "
+               "nao tem slug")
 
 # Todo slug que a leitura da pasta de producao encontrou. E o que o LOG_PUBLICO
 # esconde (ver _Redigido, abaixo do main).
