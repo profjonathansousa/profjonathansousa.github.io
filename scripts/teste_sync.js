@@ -54,7 +54,8 @@ function criarServidor() {
     recusados: 0,          /* upserts descartados pelo gatilho */
     escritas: 0,
     registros: [],         /* cron_registro */
-    repetidos: 0           /* inserts de registro que bateram na chave primaria */
+    repetidos: 0,          /* inserts de registro que bateram na chave primaria */
+    base: []               /* cron_estrutura_base: so leitura para o aplicativo */
   };
   srv.chave = (l) => l.dono + "|" + l.dominio + "|" + l.chave;
 
@@ -141,7 +142,10 @@ function criarCliente(srv, uid) {
         if (f.tabela === "cron_dono") {
           out = srv.donos.filter(d => d === uid).map(d => ({uid: d}));
         } else {
-          const fonte = f.tabela === "cron_registro" ? srv.registros : srv.linhas;
+          /* A BASE TEM TABELA PROPRIA (30/10/2026). Ate aqui nenhum teste lia a
+             base pela rede, e a consulta dela caia nas linhas do cron_estado. */
+          const fonte = f.tabela === "cron_registro" ? srv.registros
+                      : f.tabela === "cron_estrutura_base" ? srv.base : srv.linhas;
           out = fonte.filter(l => f.filtros.every(([c, op, v]) =>
             op === "eq" ? l[c] === v : op === "in" ? v.indexOf(l[c]) >= 0 : String(l[c]) >= String(v)));
           out = out.slice(f._de, f._ate + 1);
@@ -3654,6 +3658,156 @@ console.log("\n=== 74. O desfecho e o porque atravessam aparelhos (15/10/2026) =
      "7. o motivo nao abriu um segundo escritor de triagem");
   const vm2 = render.split("function vgMotivo(")[1].split("\n}")[0];
   ok(/tocarTriagem\(id, st, null, r\)/.test(vm2), "   o vgMotivo passa pelo mesmo funil do vgMarcar");
+}
+
+console.log("\n=== 75. A entrada move o mes da peca (30/10/2026) ===");
+{
+  /* ATE AQUI O MES SO ENTRAVA QUANDO A PECA NASCIA. A esteira andou — duas
+     pecas novas em novembro e dezembro de 2026, e as nove seguintes dois meses
+     para a frente —, e a peca que muda de mes pela entrada tem de mudar em todo
+     aparelho que ja a tinha, pela MESMA porta do titulo e da nota: a regra de
+     tres vias, campo a campo. */
+  const srv = criarServidor();
+  const mesDe = (D, id) => ((D.getProjs("pipeline") || []).find(p => p.id === id) || {}).mes;
+  const fixarMes = (D, id, mes) => {
+    const ps = D.getProjs("pipeline"); ps.find(p => p.id === id).mes = mes; D.setProjs("pipeline", ps);
+  };
+  const publicarMes = (D, id, mes, quando) => {
+    D.save("cron:entrada", {_gerado_em: quando, paineis: {pipeline: [{id: id, mes: mes}]}});
+    D.mesclarEntrada();
+  };
+
+  /* (1) SEM BASE, DUAS VIAS — o caso real das pecas a04 a a12, cuja linha na
+         base nunca conheceu o mes. */
+  const A = criarAparelho("mac", srv);
+  ok(mesDe(A, "a04") === "2026-11", "1. o a04 comeca em novembro, como a semente diz", mesDe(A, "a04"));
+  A.save("cron:entrada", {_gerado_em: "2026-10-30T12:00:00Z", paineis: {pipeline: [
+    {id: "a04", mes: "2027-01"}, {id: "a05", mes: "2027-02"}, {id: "a06", mes: "2027-03"},
+    {id: "a07", mes: "2027-04"}, {id: "a08", mes: "2027-05"}, {id: "a09", mes: "2027-06"},
+    {id: "a10", mes: "2027-07"}, {id: "a11", mes: "2027-08"}, {id: "a12", mes: "2027-09"},
+    {id: "a13", t: "Nov · Peca nova de novembro", mes: "2026-11", subs: [{id: "a13-1", t: "Brainstorm"}]},
+    {id: "a14", t: "Dez · Peca nova de dezembro", mes: "2026-12", subs: [{id: "a14-1", t: "Brainstorm"}]}
+  ]}});
+  A.mesclarEntrada();
+  ok(mesDe(A, "a04") === "2027-01" && mesDe(A, "a12") === "2027-09",
+     "   sem base, o mes de peca existente entra", {a04: mesDe(A, "a04"), a12: mesDe(A, "a12")});
+  const ordemA = A.getProjs("pipeline").map(p => p.id).join(" ");
+  ok(ordemA === "a01 a02 a03 a13 a14 a04 a05 a06 a07 a08 a09 a10 a11 a12",
+     "   e o painel se reordena pelo mes: as novas entram antes das que andaram", ordemA);
+
+  /* (2) COM BASE, TRES VIAS. A base registra o mes que o pipeline publicou. */
+  const B = criarAparelho("celular", srv, {storage: {
+    "cron:estrutura-base": JSON.stringify({
+      "pipeline/a05": {tipo: "projeto", valor: {mes: "2026-12"}, gerado_em: "2026-10-20T01:53:08Z"}
+    })
+  }});
+  fixarMes(B, "a05", "2027-03");
+  publicarMes(B, "a05", "2026-12", "2026-10-30T13:00:00Z");
+  ok(mesDe(B, "a05") === "2027-03", "2. (a) so voce mexeu: a publicacao NAO desfaz o seu mes", mesDe(B, "a05"));
+
+  fixarMes(B, "a05", "2026-12");
+  publicarMes(B, "a05", "2027-02", "2026-10-30T13:00:01Z");
+  ok(mesDe(B, "a05") === "2027-02", "   (b) so o pipeline mexeu: o mes novo entra", mesDe(B, "a05"));
+
+  fixarMes(B, "a05", "2027-03");
+  const confAntes = (B.LS("cron:estrutura-conflitos", []) || []).length;
+  publicarMes(B, "a05", "2027-02", "2026-10-30T13:00:02Z");
+  const conf = B.LS("cron:estrutura-conflitos", []) || [];
+  ok(mesDe(B, "a05") === "2027-02" && conf.length === confAntes + 1,
+     "   (c) os dois mexeram: vence a publicacao, e o conflito fica registrado",
+     {mes: mesDe(B, "a05"), novos: conf.length - confAntes});
+  const ult = conf[conf.length - 1] || {};
+  ok(ult.campo === "mes" && ult.seu === "2027-03" && ult.pipeline === "2027-02" &&
+     ult.chave === "pipeline/a05", "       com o campo, o que era seu e a peca", ult);
+
+  /* (3) MES MALFORMADO NAO ENTRA, e nao vira conflito. O local diverge da base
+         de proposito: se o formato so fosse conferido depois da terceira via,
+         cada valor ruim abaixo seria registrado como conflito. */
+  const C = criarAparelho("intacto", srv, {storage: {
+    "cron:estrutura-base": JSON.stringify({
+      "pipeline/a06": {tipo: "projeto", valor: {mes: "2026-12"}, gerado_em: "2026-10-20T01:53:08Z"}
+    })
+  }});
+  fixarMes(C, "a06", "2027-03");
+  const confC = (C.LS("cron:estrutura-conflitos", []) || []).length;
+  ["2027-1", "jan/2027", "2027-01-15", " 2027-01", 202701].forEach((ruim, n) => {
+    publicarMes(C, "a06", ruim, "2026-10-30T14:00:0" + n + "Z");
+  });
+  ok(mesDe(C, "a06") === "2027-03", "3. mes malformado nao entra", mesDe(C, "a06"));
+  ok((C.LS("cron:estrutura-conflitos", []) || []).length === confC,
+     "   nem vira conflito registrado");
+
+  /* (4) ENTRADA SEM MES — como a de hoje, que so traz id e subs de a01 a a12 —
+         nao mexe em mes nenhum: o codigo novo e inerte ate a publicacao. */
+  const D = criarAparelho("hoje", srv);
+  const antesD = D.getProjs("pipeline").map(p => p.id + ":" + p.mes).join(" ");
+  D.save("cron:entrada", {_gerado_em: "2026-10-20T01:53:08Z", paineis: {pipeline: [
+    {id: "a04", subs: [{id: "a04-1", t: "Brainstorm"}]}, {id: "a05", subs: [{id: "a05-1"}]}]}});
+  D.mesclarEntrada();
+  ok(D.getProjs("pipeline").map(p => p.id + ":" + p.mes).join(" ") === antesD,
+     "4. entrada sem mes nao mexe em mes nenhum, nem na ordem", D.getProjs("pipeline").map(p => p.id + ":" + p.mes));
+}
+
+console.log("\n=== 76. A copia da base nunca fica a frente da entrada aplicada (30/10/2026) ===");
+{
+  /* A JANELA QUE A TRAVA FECHA. O --publicar-estrutura grava a base no ato; o
+     entrada.json so chega depois do commit e do Pages. O aparelho que abrisse
+     nessa janela copiava a base nova, e na carga seguinte a entrada nova
+     encontrava a base IGUAL a ela: "o pipeline nao mexeu", e nada entrava. */
+  const G1 = "2026-10-20T01:53:08Z", G2 = "2026-10-30T12:00:00Z";
+  const entrada = (g, a04) => ({_gerado_em: g, paineis: {pipeline: [Object.assign({id: "a04", subs: []}, a04)]}});
+  const NOVO = {t: "Jan · O método exegético em Lutero", n: "nota nova", mes: "2027-01"};
+  const srv = criarServidor();
+  /* A base do servidor ja e a da publicacao nova (G2), com o banco devolvendo o
+     instante no formato do timestamptz. */
+  srv.base.push({dono: "dono-1", chave: "pipeline/a04", tipo: "projeto",
+                 valor: NOVO, gerado_em: "2026-10-30T12:00:00+00:00"});
+  const copiaG1 = JSON.stringify({"pipeline/a04": {tipo: "projeto", valor: {}, gerado_em: "2026-10-20T01:53:08+00:00"}});
+  const a04 = (X) => (X.getProjs("pipeline") || []).find(p => p.id === "a04") || {};
+
+  /* O aparelho aplicou G1 (o boot grava a marca) e ainda nao viu o arquivo G2. */
+  const E = criarAparelho("mac", srv, {storage: {
+    "cron:entrada": JSON.stringify(entrada(G1, {})),
+    "cron:estrutura-base": copiaG1
+  }}).__conectar();
+  ok(E.LS("cron:entrada-aplicada", null) === G1, "1. o aparelho aplicou a publicacao anterior",
+     E.LS("cron:entrada-aplicada", null));
+  let r = await E.SYNC.carregarBase();
+  ok(r.lidas === 1 && r.guardada === false,
+     "   a base do servidor esta a frente: a copia NAO e substituida", r);
+  ok(JSON.stringify(E.LS("cron:estrutura-base", null)) === copiaG1,
+     "   e a copia anterior continua la, intacta");
+
+  /* Chega o arquivo G2, e a mesclagem acontece contra a base CERTA (G1). */
+  E.save("cron:entrada", entrada(G2, NOVO));
+  E.mesclarEntrada();
+  ok(a04(E).t === NOVO.t && a04(E).n === NOVO.n && a04(E).mes === NOVO.mes,
+     "2. a entrada nova entra inteira: titulo, nota e mes", {t: a04(E).t, n: a04(E).n, mes: a04(E).mes});
+
+  /* Depois de aplicar G2, a copia passa a ser a de G2 — o estado de regime. */
+  r = await E.SYNC.carregarBase();
+  ok(r.guardada === true && E.estruturaBase()["pipeline/a04"].valor.mes === "2027-01",
+     "3. aplicada a publicacao, a copia acompanha", r);
+
+  /* A PROVA DE QUE A TRAVA E NECESSARIA: o aparelho cuja copia JA esta na
+     publicacao nova — o que o codigo anterior gravava nessa janela — nao
+     recebe nada da entrada nova. E a regra de tres vias fazendo o certo com a
+     base errada. */
+  const F = criarAparelho("celular", srv, {storage: {
+    "cron:entrada": JSON.stringify(entrada(G1, {})),
+    "cron:estrutura-base": JSON.stringify({"pipeline/a04": {tipo: "projeto", valor: NOVO, gerado_em: "2026-10-30T12:00:00+00:00"}})
+  }});
+  F.save("cron:entrada", entrada(G2, NOVO));
+  F.mesclarEntrada();
+  ok(a04(F).t === "Nov · O método exegético em Lutero" && a04(F).mes === "2026-11",
+     "4. com a copia a frente, nada entraria — e o que a trava evita", {t: a04(F).t, mes: a04(F).mes});
+
+  /* Aparelho que nunca aplicou entrada nao guarda base nenhuma: a primeira
+     mesclagem dele tem de ser de duas vias. */
+  const G = criarAparelho("novo", srv).__conectar();
+  r = await G.SYNC.carregarBase();
+  ok(r.guardada === false && G.LS("cron:estrutura-base", null) === null,
+     "5. aparelho sem entrada aplicada nao guarda a base", r);
 }
 
 console.log("\n==============================================================");

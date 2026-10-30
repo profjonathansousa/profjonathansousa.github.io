@@ -199,6 +199,16 @@ function mesclarEntrada(){
          entradaPodeEscrever(kProj, "t", alvo.t, novo.t, bProj)){ alvo.t=novo.t; mudou=true; }
       if(novo.n && novo.n!==alvo.n &&
          entradaPodeEscrever(kProj, "n", alvo.n, novo.n, bProj)){ alvo.n=novo.n; mudou=true; }
+      /* O MES ANDA PELA MESMA PORTA DO TITULO E DA NOTA (30/10/2026). Ate aqui ele
+         so entrava quando a peca nascia: a peca que mudava de mes na esteira
+         ficava no mes antigo em todo aparelho que ja a tinha, e o mes e o que
+         ordena o painel, o que acusa atraso e o que conta "previstos".
+
+         O FORMATO E CONFERIDO ANTES DA TERCEIRA VIA, para que um valor malformado
+         nao chegue a ser registrado como conflito. E o `mudou` aciona a
+         reordenacao logo abaixo, que e o que poe a peca no lugar novo. */
+      if(novo.mes && novo.mes!==alvo.mes && /^\d{4}-\d{2}$/.test(String(novo.mes)) &&
+         entradaPodeEscrever(kProj, "mes", alvo.mes, novo.mes, bProj)){ alvo.mes=novo.mes; mudou=true; }
       var subsPorId={}; (alvo.subs||[]).forEach(function(s){ subsPorId[s.id]=s; });
       (novo.subs||[]).forEach(function(ns, k){
         if(!ns || !ns.id) return;
