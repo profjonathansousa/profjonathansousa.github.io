@@ -2118,6 +2118,31 @@ Testes: `teste_sync.js`, seções 75 e 76 — o mês nos três casos e em duas v
 o formato recusado sem conflito, a entrada de hoje inerte, e a cópia que não
 passa à frente, com a prova do que aconteceria sem a trava.
 
+#### A esteira nova na semente, e as entregas do mês trocadas (2026-10-30)
+
+**A semente acompanha a publicação.** O `PIPELINE_DEFAULT` passa a ter o `a13`
+(nov/26) e o `a14` (dez/26), e o `a04` a `a12` de jan a set/27, com o título, o
+mês e a nota publicados. Ela vale para o aparelho novo e para o **notificador**,
+que carrega o aplicativo com o armazenamento vazio: para ele a esteira é sempre
+semente + `entrada.json`. Por isso ela entrou **depois** da publicação, e não
+antes — com a semente nova e o arquivo antigo, o resumo do dia sugeriria uma
+peça que os aparelhos ainda não tinham. As peças novas seguem a convenção do
+arquivo (as seis etapas antigas); a entrada renomeia e insere a 4b, como faz
+com as outras. O subtítulo do painel passa a dizer "14 peças · ago/26 a set/27".
+
+**As entregas do mês.** O `ROTEIRO` vai de ago/26 a set/27, e o seed, que só
+acrescenta por id ausente, passa a **trocar a entrega semeada que ninguém
+tocou**: a `art-<mês>-<i>` com exatamente o texto do `ROTEIRO_ANTERIOR`, não
+concluída e não trazida de outro mês. A troca vai pelo caminho de uma edição
+sua — `setMetas` + `tocarMeta` — e atravessa aparelhos pelo SYNC. Dois
+aparelhos chegam à mesma chave com o mesmo valor; a meta que já chegou trocada
+do outro tem o texto novo e fica como está. A editada, a concluída e a trazida
+não são tocadas, e ficam listadas em `cron:metas-seed-relatorio`, que vai junto
+no backup.
+
+Testes: `teste_sync.js`, seções 77 e 78. As seções 75 e 76 partem agora do
+estado dos aparelhos de hoje, e não da semente, que já traz a esteira nova.
+
 ### 9G-0 B2 — O `cron:arquivo` aposentado
 
 Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta

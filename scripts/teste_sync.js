@@ -3678,9 +3678,17 @@ console.log("\n=== 75. A entrada move o mes da peca (30/10/2026) ===");
   };
 
   /* (1) SEM BASE, DUAS VIAS — o caso real das pecas a04 a a12, cuja linha na
-         base nunca conheceu o mes. */
+         base nunca conheceu o mes. O ponto de partida e O APARELHO DE HOJE, e
+         nao a semente, que desde 30/10 ja traz a esteira nova: a peca que anda
+         esta no mes antigo, e as duas novas ainda nao existem. */
   const A = criarAparelho("mac", srv);
-  ok(mesDe(A, "a04") === "2026-11", "1. o a04 comeca em novembro, como a semente diz", mesDe(A, "a04"));
+  const MES_ANTIGO = {a04: "2026-11", a05: "2026-12", a06: "2027-01", a07: "2027-02", a08: "2027-03",
+                      a09: "2027-04", a10: "2027-05", a11: "2027-06", a12: "2027-07"};
+  const deHoje = A.getProjs("pipeline").filter(p => p.id !== "a13" && p.id !== "a14");
+  deHoje.forEach(p => { if (MES_ANTIGO[p.id]) p.mes = MES_ANTIGO[p.id]; });
+  deHoje.sort((a, b) => a.mes === b.mes ? (a.id < b.id ? -1 : 1) : (a.mes < b.mes ? -1 : 1));
+  A.setProjs("pipeline", deHoje);
+  ok(mesDe(A, "a04") === "2026-11", "1. o a04 comeca em novembro, como nos aparelhos de hoje", mesDe(A, "a04"));
   A.save("cron:entrada", {_gerado_em: "2026-10-30T12:00:00Z", paineis: {pipeline: [
     {id: "a04", mes: "2027-01"}, {id: "a05", mes: "2027-02"}, {id: "a06", mes: "2027-03"},
     {id: "a07", mes: "2027-04"}, {id: "a08", mes: "2027-05"}, {id: "a09", mes: "2027-06"},
@@ -3764,12 +3772,19 @@ console.log("\n=== 76. A copia da base nunca fica a frente da entrada aplicada (
                  valor: NOVO, gerado_em: "2026-10-30T12:00:00+00:00"});
   const copiaG1 = JSON.stringify({"pipeline/a04": {tipo: "projeto", valor: {}, gerado_em: "2026-10-20T01:53:08+00:00"}});
   const a04 = (X) => (X.getProjs("pipeline") || []).find(p => p.id === "a04") || {};
+  /* O a04 COMO ELE ESTA NOS APARELHOS DE HOJE, e nao como a semente o traz:
+     desde 30/10 a semente ja tem a esteira nova. */
+  const ANTIGO = {t: "Nov · O método exegético em Lutero", mes: "2026-11", n: "nota antiga"};
+  const comoHoje = (X) => {
+    const ps = X.getProjs("pipeline"); Object.assign(ps.find(p => p.id === "a04"), ANTIGO);
+    X.setProjs("pipeline", ps); return X;
+  };
 
   /* O aparelho aplicou G1 (o boot grava a marca) e ainda nao viu o arquivo G2. */
-  const E = criarAparelho("mac", srv, {storage: {
+  const E = comoHoje(criarAparelho("mac", srv, {storage: {
     "cron:entrada": JSON.stringify(entrada(G1, {})),
     "cron:estrutura-base": copiaG1
-  }}).__conectar();
+  }})).__conectar();
   ok(E.LS("cron:entrada-aplicada", null) === G1, "1. o aparelho aplicou a publicacao anterior",
      E.LS("cron:entrada-aplicada", null));
   let r = await E.SYNC.carregarBase();
@@ -3793,14 +3808,14 @@ console.log("\n=== 76. A copia da base nunca fica a frente da entrada aplicada (
      publicacao nova — o que o codigo anterior gravava nessa janela — nao
      recebe nada da entrada nova. E a regra de tres vias fazendo o certo com a
      base errada. */
-  const F = criarAparelho("celular", srv, {storage: {
+  const F = comoHoje(criarAparelho("celular", srv, {storage: {
     "cron:entrada": JSON.stringify(entrada(G1, {})),
     "cron:estrutura-base": JSON.stringify({"pipeline/a04": {tipo: "projeto", valor: NOVO, gerado_em: "2026-10-30T12:00:00+00:00"}})
-  }});
+  }}));
   F.save("cron:entrada", entrada(G2, NOVO));
   F.mesclarEntrada();
-  ok(a04(F).t === "Nov · O método exegético em Lutero" && a04(F).mes === "2026-11",
-     "4. com a copia a frente, nada entraria — e o que a trava evita", {t: a04(F).t, mes: a04(F).mes});
+  ok(a04(F).t === ANTIGO.t && a04(F).n === ANTIGO.n && a04(F).mes === ANTIGO.mes,
+     "4. com a copia a frente, nada entraria — e o que a trava evita", {t: a04(F).t, n: a04(F).n, mes: a04(F).mes});
 
   /* Aparelho que nunca aplicou entrada nao guarda base nenhuma: a primeira
      mesclagem dele tem de ser de duas vias. */
@@ -3808,6 +3823,107 @@ console.log("\n=== 76. A copia da base nunca fica a frente da entrada aplicada (
   r = await G.SYNC.carregarBase();
   ok(r.guardada === false && G.LS("cron:estrutura-base", null) === null,
      "5. aparelho sem entrada aplicada nao guarda a base", r);
+}
+
+console.log("\n=== 77. A entrega semeada que ninguem tocou e trocada pelo caminho das metas (30/10/2026) ===");
+{
+  /* A esteira andou, e o seed so acrescenta por id ausente: sem a troca, a meta
+     ja semeada de novembro diria para sempre "O metodo exegetico". So muda a
+     que ninguem tocou, e pelo mesmo par da edicao — setMetas + tocarMeta —,
+     para atravessar aparelhos. */
+  const srv = criarServidor();
+  const R = vm.runInContext("({novo: ROTEIRO, antigo: ROTEIRO_ANTERIOR, seed: METAS_SEED})",
+                            criarAparelho("leitor", srv));
+  const inicial = () => ({
+    "cron:metas-seed": JSON.stringify("2027-07-esteira-12"),
+    "cron:metas:2026-11": JSON.stringify([{id: "art-2026-11-0", t: R.antigo["2026-11"][0], done: false}]),
+    "cron:metas:2026-12": JSON.stringify([{id: "art-2026-12-0", t: "Entrega de dezembro: o texto que eu escrevi", done: false}]),
+    "cron:metas:2027-01": JSON.stringify([{id: "art-2027-01-0", t: R.antigo["2027-01"][0], done: true}]),
+    "cron:metas:2027-03": JSON.stringify([{id: "art-2027-03-0", t: R.antigo["2027-03"][0], done: false, de: "2027-02"}]),
+    "cron:metas:2027-04": JSON.stringify([
+      {id: "art-2027-04-0", t: R.antigo["2027-04"][0], done: false},
+      {id: "art-2027-04-1", t: R.novo["2027-04"][1], done: false},
+      {id: "m1", t: "uma meta minha de abril", done: false}])
+  });
+  const meta = (D, mes, id) => (D.getMetas(mes) || []).find(m => m.id === id) || null;
+  const filaMeta = (D) => (D.LS("cron:sync-fila", []) || []).filter(x => x.dominio === "meta").map(x => x.chave).sort();
+
+  const A = criarAparelho("mac", srv, {storage: inicial()});
+  ok(meta(A, "2026-11", "art-2026-11-0").t === R.novo["2026-11"][0],
+     "1. a semeada intocada de novembro passa a ser a entrega nova", meta(A, "2026-11", "art-2026-11-0"));
+  ok(meta(A, "2027-04", "art-2027-04-0").t === R.novo["2027-04"][0], "   e a de abril tambem",
+     meta(A, "2027-04", "art-2027-04-0"));
+  ok(meta(A, "2026-12", "art-2026-12-0").t === "Entrega de dezembro: o texto que eu escrevi",
+     "2. a que voce editou fica como esta");
+  ok(meta(A, "2027-01", "art-2027-01-0").t === R.antigo["2027-01"][0] && meta(A, "2027-01", "art-2027-01-0").done === true,
+     "   a concluida tambem");
+  ok(meta(A, "2027-03", "art-2027-03-0").t === R.antigo["2027-03"][0], "   e a trazida de outro mes tambem");
+  ok(meta(A, "2027-04", "art-2027-04-1").t === R.novo["2027-04"][1] &&
+     meta(A, "2027-04", "m1").t === "uma meta minha de abril",
+     "   o ensaio Berggruen e a meta sua de abril ficam");
+  ok(A.getMetas("2027-04").length === 3, "   sem duplicar nada", A.getMetas("2027-04").map(m => m.id));
+  ok((meta(A, "2027-05", "art-2027-05-0") || {}).t === R.novo["2027-05"][0] &&
+     (meta(A, "2027-09", "art-2027-09-0") || {}).t === R.novo["2027-09"][0],
+     "3. o mes sem meta semeada nasce com a entrega nova, ate setembro de 2027");
+  ok(JSON.stringify(filaMeta(A)) === JSON.stringify(["2026-11/art-2026-11-0", "2027-04/art-2027-04-0"]),
+     "4. so as trocadas sobem, pelo SYNC", filaMeta(A));
+  const item = (A.LS("cron:sync-fila", []) || []).find(x => x.chave === "2026-11/art-2026-11-0");
+  ok(item && item.valor.t === R.novo["2026-11"][0] && item.valor.done === false &&
+     item.em === meta(A, "2026-11", "art-2026-11-0").em,
+     "   com o texto novo e o MESMO instante da meta no aparelho", item);
+  const rel = A.LS("cron:metas-seed-relatorio", null) || {};
+  ok(JSON.stringify(rel.trocadas) === JSON.stringify(["2026-11/art-2026-11-0", "2027-04/art-2027-04-0"]) &&
+     (rel.intocadas || []).map(x => x.id).join(" ") === "art-2026-12-0 art-2027-01-0 art-2027-03-0",
+     "5. o relatorio diz o que trocou e o que nao tocou", rel);
+  ok(A.LS("cron:metas-seed", null) === R.seed, "   e a marca do seed avancou");
+
+  A.__conectar();
+  await A.SYNC.drenarFila();
+  const linhasNov = () => srv.linhas.filter(l => l.dominio === "meta" && l.chave === "2026-11/art-2026-11-0");
+  ok(linhasNov().length === 1 && linhasNov()[0].valor.t === R.novo["2026-11"][0],
+     "6. no estado compartilhado, uma linha com a entrega nova", linhasNov());
+
+  /* IDEMPOTENTE: rodar de novo, mesmo sem a marca do seed, nao sobe nada. */
+  const arm = Object.assign({}, A.__armazem);
+  delete arm["cron:metas-seed"]; delete arm["cron:sync-fila"];
+  const A2 = criarAparelho("mac", srv, {storage: arm});
+  ok(filaMeta(A2).length === 0, "7. rodar de novo nao sobe nada: a trocada ja tem o texto novo", filaMeta(A2));
+
+  /* O OUTRO APARELHO, partindo do mesmo estado, troca o mesmo: o estado
+     compartilhado continua com uma linha por meta, e o valor e o mesmo. */
+  const B = criarAparelho("iphone", srv, {storage: inicial()}).__conectar();
+  await B.SYNC.drenarFila();
+  ok(linhasNov().length === 1 && linhasNov()[0].valor.t === R.novo["2026-11"][0],
+     "8. dois aparelhos: uma linha so, com o mesmo valor", linhasNov());
+  ok(B.getMetas("2026-11").filter(m => m.id === "art-2026-11-0").length === 1,
+     "   e uma meta so em cada aparelho");
+
+  /* O APARELHO QUE JA RECEBEU A TROCA DO OUTRO nao a republica nem a lista. */
+  const C = criarAparelho("terceiro", srv, {storage: Object.assign(inicial(), {
+    "cron:metas:2026-11": JSON.stringify([{id: "art-2026-11-0", t: R.novo["2026-11"][0], done: false,
+                                           em: linhasNov()[0].em}])
+  })});
+  ok(filaMeta(C).indexOf("2026-11/art-2026-11-0") < 0,
+     "9. a meta que chegou trocada do outro aparelho nao sobe de novo", filaMeta(C));
+  ok(((C.LS("cron:metas-seed-relatorio", null) || {}).intocadas || []).every(x => x.id !== "art-2026-11-0"),
+     "   nem entra na lista das nao tocadas");
+}
+
+console.log("\n=== 78. A semente da esteira: o titulo diz o mes, e a ordem e a do calendario (30/10/2026) ===");
+{
+  /* O `curto` do Hoje corta o titulo no ponto mediano, e o mes ordena o painel.
+     Uma peca que mudasse de mes so num dos dois diria um mes e ficaria noutro. */
+  const X = criarAparelho("leitor", criarServidor());
+  const P = vm.runInContext("PIPELINE_DEFAULT", X);
+  const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const errados = P.filter(p => !/^\d{4}-\d{2}$/.test(p.mes || "") ||
+                                p.t.slice(0, 6) !== MESES[Number(p.mes.slice(5, 7)) - 1] + " · ");
+  ok(errados.length === 0, "1. todo titulo da semente comeca pelo mes da peca, com o ponto mediano",
+     errados.map(p => p.id + " " + p.mes + " " + p.t));
+  const meses = P.map(p => p.mes);
+  ok(meses.every((m, i) => i === 0 || meses[i - 1] <= m), "2. a semente esta na ordem do calendario",
+     P.map(p => p.id + ":" + p.mes));
+  ok(new Set(P.map(p => p.id)).size === P.length, "3. sem id repetido");
 }
 
 console.log("\n==============================================================");
