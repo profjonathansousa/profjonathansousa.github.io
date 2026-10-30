@@ -2080,6 +2080,44 @@ falso **emula a transação** e recusa qualquer escrita que não seja a RPC — 
 servidor que aplicasse pela metade provaria o contrário do que o teste afirma. `teste_sync.js`, seções 66 e 67, cobrem a regra de três
 vias e quem pode escrever a base.
 
+#### O mês também anda, e a cópia da base não passa à frente (2026-10-30)
+
+A esteira andou: duas peças novas em novembro e dezembro de 2026, e as nove
+seguintes dois meses para a frente. Duas coisas impediam que isso chegasse aos
+aparelhos, e as duas foram medidas no código de 30/10.
+
+**O `mes` só entrava quando a peça nascia.** O `mesclarEntrada()` atualizava `t`
+e `n` de peça existente, e nunca o `mes` — que é o que ordena o painel, o que
+acusa atraso e o que conta "previstos". Agora ele entra pela **mesma porta** do
+título e da nota: a regra de três vias, campo a campo, com o formato
+(`AAAA-MM`) conferido **antes** dela, para que um valor malformado não vire
+conflito registrado. A mudança de mês reordena o painel.
+
+**A cópia local da base podia ficar à frente da entrada aplicada.** O
+`--publicar-estrutura` grava a base no ato, e o `entrada.json` só chega aos
+aparelhos depois do commit e do Pages. Um aparelho que abrisse nessa janela
+copiava a base nova; na carga seguinte, a entrada nova encontrava a base
+**igual** a ela, e a regra concluía "o pipeline não mexeu". Nada do que mudou
+entrava: nem o título, nem a nota, nem o mês. A regra estava certa; a base é que
+estava errada, porque já não era "a última publicação que este aparelho
+recebeu".
+
+A trava mora no `SYNC.carregarBase()`: a cópia só é substituída quando a base do
+servidor não está à frente de `cron:entrada-aplicada`. Enquanto estiver, a cópia
+anterior fica, e a entrada nova é mesclada contra ela. Aparelho que nunca
+aplicou entrada não guarda base nenhuma, e a primeira mesclagem dele é de duas
+vias, como deve ser.
+
+**O que a trava não cobre: o código velho.** Um aparelho que aplique a entrada
+nova **antes** de carregar esta versão marca a publicação como aplicada sem
+mover o mês, e depois disso a base dele já está certa e igual à entrada. Por
+isso a ordem é: esta versão nos dois aparelhos primeiro, e a publicação depois.
+Foi o mesmo buraco do `-4b` (comentário no `mesclarEntrada`).
+
+Testes: `teste_sync.js`, seções 75 e 76 — o mês nos três casos e em duas vias,
+o formato recusado sem conflito, a entrada de hoje inerte, e a cópia que não
+passa à frente, com a prova do que aconteceria sem a trava.
+
 ### 9G-0 B2 — O `cron:arquivo` aposentado
 
 Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta

@@ -542,14 +542,34 @@ SYNC.carregarBase = function(){
       });
   };
   return pagina(0).then(function(){
+    /* E SO GRAVA SE ESTE APARELHO JA APLICOU A PUBLICACAO QUE A BASE REGISTRA
+       (30/10/2026). A base e a terceira via: "o que o pipeline publicou da
+       ultima vez" — da ultima vez que ESTE aparelho recebeu. O
+       --publicar-estrutura a grava no ato, e o entrada.json so chega depois do
+       commit e do Pages. Copiada nessa janela, ela chegava ao merge seguinte
+       IGUAL a entrada nova, e a regra concluia "o pipeline nao mexeu": medido no
+       codigo de 30/10, o `t` e o `n` de peca existente paravam ali, e o `mes`
+       pararia junto.
+
+       Enquanto a base do servidor estiver a frente de cron:entrada-aplicada, a
+       copia anterior fica, e a entrada nova e mesclada contra ela, que e a base
+       certa. Aparelho que nunca aplicou entrada nao guarda base nenhuma: a
+       primeira mesclagem dele e de duas vias, como deve ser. */
+    var aplicada = Date.parse(LS("cron:entrada-aplicada", "") || "");
+    var publicada = -Infinity;
+    Object.keys(mapa).forEach(function(k){
+      var g = Date.parse(mapa[k].gerado_em || "");
+      if(g > publicada) publicada = g;
+    });
+    var aFrente = isNaN(aplicada) || publicada > aplicada;
     /* SO GRAVA SE VEIO ALGUMA COISA. Uma leitura que falhou no meio devolveria
        um mapa parcial, e um mapa parcial diz "o pipeline nunca publicou isto"
        sobre o que faltou — que e a mentira que esta fase existe para evitar. */
-    if(lidas) save(BASE_ESTRUTURA_KEY, mapa);
+    if(lidas && !aFrente) save(BASE_ESTRUTURA_KEY, mapa);
     /* NAO REMESCLA AGORA, de proposito: o mesclarEntrada() ja rodou neste
        carregamento, e refaze-lo aqui repintaria os Trilhos no meio da sessao.
        A baseline entra no proximo carregamento, que e quando o merge pergunta. */
-    return {lidas:lidas};
+    return {lidas:lidas, guardada: !!(lidas && !aFrente)};
   }, function(e){
     SYNC_SITUACAO = "offline";
     SYNC_ULTIMO_ERRO = String((e && e.message) || e);
