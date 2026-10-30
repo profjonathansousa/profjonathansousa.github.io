@@ -97,18 +97,43 @@ if(LS("cron:tecnico-seed", null) !== TEC_SEED){
 }
 /* Seed das entregas mensais.
    Acrescenta por id ausente (n\u00e3o pula o m\u00eas inteiro) e remove o roteiro antigo,
-   que fatiava o ensaio Berggruen em v\u00e1rios meses. */
+   que fatiava o ensaio Berggruen em v\u00e1rios meses.
+
+   E TROCA A ENTREGA SEMEADA QUE NINGUEM TOCOU (30/10/2026). A esteira andou, e
+   o texto de uma meta que ja existe nunca e reescrito aqui \u2014 e isso que
+   preserva o que voce editou. So muda a `art-<mes>-<i>` que ainda tem EXATAMENTE
+   o texto do ROTEIRO_ANTERIOR, nao concluida e nao trazida de outro mes; e muda
+   pelo caminho de uma edicao sua, setMetas + tocarMeta, para que a troca
+   atravesse aparelhos. Dois aparelhos chegam a mesma chave com o mesmo valor, e
+   a meta que ja chegou trocada do outro tem o texto novo e fica como esta. O que
+   nao foi trocado por ter sido editado ou concluido fica no
+   cron:metas-seed-relatorio, que vai junto no backup. */
 if(LS("cron:metas-seed", null) !== METAS_SEED){
+  var _trocadas = [], _intocadas = [];
   Object.keys(ROTEIRO).forEach(function(k){
     var atual = LS("cron:metas:"+k, []).filter(function(m){
       return String(m.id).indexOf("seed-") !== 0;   // limpa o seed antigo, preserva o que voc\u00ea escreveu
     });
     ROTEIRO[k].forEach(function(t,i){
       var id = "art-"+k+"-"+i;
-      if(!atual.some(function(m){return m.id===id;})) atual.push({id:id, t:t, done:false});
+      var m = null;
+      atual.forEach(function(x){ if(x.id===id) m = x; });
+      if(!m){ atual.push({id:id, t:t, done:false}); return; }
+      var antigo = (ROTEIRO_ANTERIOR[k] || [])[i];
+      if(!antigo || antigo === t || m.t === t) return;
+      if(m.t === antigo && !m.done && !m.de){
+        m.t = t;
+        save("cron:metas:"+k, atual);
+        m.em = tocarMeta(k, m, false) || m.em;
+        _trocadas.push(k+"/"+id);
+      } else {
+        _intocadas.push({mes:k, id:id, t:m.t, done:!!m.done});
+      }
     });
     save("cron:metas:"+k, atual);
   });
+  save("cron:metas-seed-relatorio", {quando:new Date().toISOString(), seed:METAS_SEED,
+                                     trocadas:_trocadas, intocadas:_intocadas});
   save("cron:metas-seed", METAS_SEED);
 }
 renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();
