@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-10-30-esteira-mes";
+const APP_VERSION = "2026-10-30-esteira-14";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -170,7 +170,23 @@ const PIPELINE_DEFAULT = [
     {id:"a03-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a03-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a04", t:"Nov · O método exegético em Lutero", mes:"2026-11", n:"MTSR ou Síntese. Mês do TOEFL e das submissões: peça sem leitura nova. Também é carta de entrevista.", subs:[
+  {id:"a13", t:"Nov · A politeia antes da queda", mes:"2026-11", n:"Periódico em aberto. A tese mais elogiada no parecer sobre o capítulo de Lutero da tese: a política tem dimensão pré e pós-lapsária, contra a leitura, apoiada no De civitate Dei, da politeia como medida de emergência depois da queda; a política é parte da boa criação, e depois da queda os dois reinos lhe dão esperança de transformação. Corpus: Von weltlicher Obrigkeit (1523), Comentário ao Salmo 82 (1530), Preleções sobre o Gênesis; categoria de paradoxo (lei natural universal e pré-lapsária × reino temporal). Material da tese: pouca leitura nova. Salmo 82 (ideia incorporada aqui): o parecer elogiou a ampliação do \"cânone\" luterano; ver no brainstorm se pede seção própria e se faz par com o a03 (Salmo 127). Fonte: comentários do parecer.", subs:[
+    {id:"a13-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a13-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a13-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a13-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a13-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a13-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a14", t:"Dez · O uso civil da lei como categoria política", mes:"2026-12", n:"Periódico em aberto. O parecer chama o foco na lei civil de \"huge contribution\": a tradição olha só para a função acusatória da lei e trata a lei civil como irrelevante para a teologia. Nas tradições medievais, lei natural equivale à lei civil; interlocutor: Antti Raunio. A lei civil como consequência da justificação, não meio de merecê-la; o evangelho contém a possibilidade de transformação social. Ressalva do parecer: perguntar se não cristãos obedecem à lei civil é anacrônico para Lutero, que via judeus e muçulmanos como pagãos, mas é valioso para o pluralismo atual; tratar como transposição. Fonte: comentários do parecer.", subs:[
+    {id:"a14-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
+    {id:"a14-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
+    {id:"a14-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
+    {id:"a14-4", t:"Janelas 2 e 3 · redação", st:0},
+    {id:"a14-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
+    {id:"a14-6", t:"Pronto para submeter", st:0}
+  ]},
+  {id:"a04", t:"Jan · O método exegético em Lutero", mes:"2027-01", n:"MTSR ou Síntese. Também é carta de entrevista. Parecer sobre o capítulo de Lutero da tese: Lutero não se reduz ao \"sola scriptura\", anacronismo que achata sua interpretação e projeta no fim da Idade Média um individualismo pietista do séc. XVII; ele está mergulhado nos Padres e na exegese medieval, às vezes usa alegoria (contra Ebeling) e muitas vezes usa a doutrina para ler o texto. O parecer destaca sua fórmula da \"organic hermeneutics\", em que teologia, ética e política formam o mesmo tecido, e diz que o método serve também contra o literalismo da política e das redes. Fonte: comentários do parecer (01_ACADEMICO/02_PRODUCAO/TESE_DOUTORADO/TESE).", subs:[
     {id:"a04-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a04-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a04-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -178,7 +194,7 @@ const PIPELINE_DEFAULT = [
     {id:"a04-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a04-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a05", t:"Dez · Interpretação bíblica em Lutero e Spinoza", mes:"2026-12", n:"Religion ou Journal of Early Modern Studies. Obriga Sheehan.", subs:[
+  {id:"a05", t:"Fev · Interpretação bíblica em Lutero e Spinoza", mes:"2027-02", n:"Religion ou Journal of Early Modern Studies. Obriga Sheehan.", subs:[
     {id:"a05-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a05-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a05-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -186,7 +202,7 @@ const PIPELINE_DEFAULT = [
     {id:"a05-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a05-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a06", t:"Jan · Tolerância e libertas philosophandi", mes:"2027-01", n:"JAAR ou Intellectual History Review. Crítica da liberdade religiosa.", subs:[
+  {id:"a06", t:"Mar · Tolerância e libertas philosophandi", mes:"2027-03", n:"JAAR ou Intellectual History Review. Crítica da liberdade religiosa. Lembrete: o ensaio Berggruen (\"Depois de Lutero, antes de Spinoza\") está nas metas de abril: escrever e submeter.", subs:[
     {id:"a06-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a06-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a06-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -194,7 +210,7 @@ const PIPELINE_DEFAULT = [
     {id:"a06-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a06-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a07", t:"Fev · Spinoza, eco do luteranismo?", mes:"2027-02", n:"JAAR ou Kriterion. Em chave genealogica, não de influência. Schmitt, Blumenberg e Löwith.", subs:[
+  {id:"a07", t:"Abr · Spinoza, eco do luteranismo?", mes:"2027-04", n:"JAAR ou Kriterion. Em chave genealogica, não de influência. Schmitt, Blumenberg e Löwith.", subs:[
     {id:"a07-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a07-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a07-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -202,7 +218,7 @@ const PIPELINE_DEFAULT = [
     {id:"a07-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a07-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a08", t:"Mar · Aspectos ético-políticos do comentário aos Gálatas", mes:"2027-03", n:"Journal of Religious Ethics. Herdt, Stout e Schweiker. Embrião do pós-doc. Absorve \"a questão ética no luteranismo\".", subs:[
+  {id:"a08", t:"Mai · Aspectos ético-políticos do comentário aos Gálatas", mes:"2027-05", n:"Journal of Religious Ethics. Herdt, Stout e Schweiker. Embrião do pós-doc. Absorve \"a questão ética no luteranismo\". Parecer sobre o capítulo de Lutero da tese: os estudiosos de Lutero leem o Comentário maior aos Gálatas como negação de qualquer progresso moral, porque o foco seria só a graça; o parecer aplaude você mostrar que há progresso, que \"aprofunda a vida\" no espaço da fé, o que aproxima Lutero dos medievais, e uma justiça ativa compatível com as visões de justiça de não cristãos. Pergunta 2 do parecer: como o amor, que \"cumpre todas as leis\", se relaciona com a justiça, dado o peso da lei civil no capítulo? Sua resposta preliminar: amor e justiça pensados juntos, pelos dois reinos (interior e exterior); objeção que você mesmo deixou anotada: leis ou políticas teocráticas por se fundarem em conceitos bíblico-teológicos. Fonte: comentários do parecer.", subs:[
     {id:"a08-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a08-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a08-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -210,7 +226,7 @@ const PIPELINE_DEFAULT = [
     {id:"a08-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a08-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a09", t:"Abr · A teologia da glória como crítica da ideologia", mes:"2027-04", n:"Numen ou International Journal of Public Theology. Dobradinha com o ensaio Berggruen, que está nas metas do mês.", subs:[
+  {id:"a09", t:"Jun · A teologia da glória como crítica da ideologia", mes:"2027-06", n:"Numen ou International Journal of Public Theology. Pergunta 1 do parecer: com o domínio do pecado, como o cristão decide quais visões de justiça promovem melhor o bem na sociedade? Uma doutrina robusta do pecado parece impedir o discernimento do bem, ou deixar as motivações cristãs sujeitas a autoengano, crueldade e até mal (o parecer cita o nacionalismo cristão americano). Sua resposta preliminar: pela teologia da cruz; quem promove crueldade e mal em nome do cristianismo não a aceitou nem a compreendeu. Fonte: comentários do parecer.", subs:[
     {id:"a09-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a09-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a09-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -218,7 +234,7 @@ const PIPELINE_DEFAULT = [
     {id:"a09-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a09-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a10", t:"Mai · Ebeling: a palavra como evento e os atos de fala", mes:"2027-05", n:"Síntese ou Estudos Teológicos. Absorve a ideia de \"proclamação\".", subs:[
+  {id:"a10", t:"Jul · Ebeling: a palavra como evento e os atos de fala", mes:"2027-07", n:"Síntese ou Estudos Teológicos. Absorve a ideia de \"proclamação\".", subs:[
     {id:"a10-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a10-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a10-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -226,7 +242,7 @@ const PIPELINE_DEFAULT = [
     {id:"a10-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a10-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a11", t:"Jun · As faculdades da alma de Aristóteles em Lutero", mes:"2027-06", n:"Cadernos de Filosofia Alemã ou Analytica.", subs:[
+  {id:"a11", t:"Ago · As faculdades da alma de Aristóteles em Lutero", mes:"2027-08", n:"Cadernos de Filosofia Alemã ou Analytica.", subs:[
     {id:"a11-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a11-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a11-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -234,7 +250,7 @@ const PIPELINE_DEFAULT = [
     {id:"a11-5", t:"Revisão de estilo + ABNT NBR 10520", st:0},
     {id:"a11-6", t:"Pronto para submeter", st:0}
   ]},
-  {id:"a12", t:"Jul · Spinoza, um filósofo do processo (E1p34)", mes:"2027-07", n:"Cadernos Espinosanos ou Journal of Early Modern Studies. Absorve \"conatus e agência\".", subs:[
+  {id:"a12", t:"Set · Spinoza, um filósofo do processo (E1p34)", mes:"2027-09", n:"Cadernos Espinosanos ou Journal of Early Modern Studies. Absorve \"conatus e agência\".", subs:[
     {id:"a12-1", t:"Tese em 1 parágrafo + periódico-alvo", st:0},
     {id:"a12-2", t:"Bibliografia (3 primárias · 3 comentadores × 2 · 6 temáticas)", st:0},
     {id:"a12-3", t:"Janela 1 · argumento e estrutura de seções", st:0},
@@ -409,7 +425,7 @@ const POSDOC_DEFAULT = [
    ou baixo continua podendo aparecer por prazo, por decisao travada ou por
    inatividade. O peso decide a classe ESTRATEGICO e desempata o resto. */
 const PAINEIS = [
-  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"12 peças · ago/26 a jul/27", seed:PIPELINE_DEFAULT,   aberto:true,  peso:"alto"},
+  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"14 peças · ago/26 a set/27", seed:PIPELINE_DEFAULT,   aberto:true,  peso:"alto"},
   {id:"leituras",   key:"cron:leituras",   titulo:"Leituras · religious studies", sub:"mapa do campo", seed:LEITURAS_DEFAULT,   aberto:false, peso:"medio"},
   {id:"candidatura",key:"cron:candidatura",titulo:"Doutorado no exterior (PhD)", sub:"dossê, cartas e entrevista", seed:CANDIDATURA_DEFAULT, aberto:false, peso:"alto"},
   {id:"posdoc",     key:"cron:posdoc",     titulo:"Pós-doutorado",       sub:"FAPERJ, FAPESP e exterior", seed:POSDOC_DEFAULT, aberto:false, peso:"alto"},
@@ -737,18 +753,38 @@ var VG_GRUPOS = {
 };
 var VG_ORDEM = ["A","B","C","publicacao","evento"];
 const TEC_SEED = "2026-07-28-limpa";
-const METAS_SEED = "2027-07-esteira-12";
+const METAS_SEED = "2027-09-esteira-14";
 const ROTEIRO = {
   "2026-08":["Entrega de agosto: A consciência em Lutero e Spinoza, pronta para submeter (JAAR/MTSR)"],
   "2026-09":["Entrega de setembro: A categoria de \"religião\" e a primeira modernidade, pronta para submeter (MTSR/Numen)"],
   "2026-10":["Entrega de outubro: A genealogia do secular e a Reforma, pronta para submeter (Religion/JAAR)"],
+  "2026-11":["Entrega de novembro: A politeia antes da queda, pronta para submeter (periódico em aberto)"],
+  "2026-12":["Entrega de dezembro: O uso civil da lei como categoria política, pronto para submeter (periódico em aberto)"],
+  "2027-01":["Entrega de janeiro: O método exegético em Lutero, pronto para submeter (MTSR/Síntese)"],
+  "2027-02":["Entrega de fevereiro: Interpretação bíblica em Lutero e Spinoza, pronta para submeter (Religion/JEMS)"],
+  "2027-03":["Entrega de março: Tolerância e libertas philosophandi, pronta para submeter (JAAR/IHR)"],
+  "2027-04":["Entrega de abril: Spinoza, eco do luteranismo?, pronta para submeter (JAAR/Kriterion)",
+           "Ensaio Berggruen: escrever e submeter (meta única do mês)"],
+  "2027-05":["Entrega de maio: Gálatas ético-político, pronto para submeter (Journal of Religious Ethics)"],
+  "2027-06":["Entrega de junho: A teologia da glória como crítica da ideologia, pronta para submeter (Numen/IJPT)"],
+  "2027-07":["Entrega de julho: Ebeling, a palavra como evento e os atos de fala, pronto para submeter (Síntese/Estudos Teológicos)"],
+  "2027-08":["Entrega de agosto: As faculdades da alma de Aristóteles em Lutero, pronto para submeter (Cad. de Filosofia Alemã/Analytica)"],
+  "2027-09":["Entrega de setembro: Spinoza, um filósofo do processo (E1p34), pronto para submeter (Cadernos Espinosanos/JEMS)"]
+};
+/* O ROTEIRO ANTERIOR, so os textos que mudaram (30/10/2026). A esteira andou:
+   duas pecas novas em novembro e dezembro de 2026, e as nove seguintes dois
+   meses para a frente. O seed so acrescenta por id ausente e nunca reescreve
+   meta que ja existe — e e isso que preserva o que voce editou. Para trocar a
+   entrega semeada que ninguem tocou, ele precisa reconhecer o texto antigo:
+   so a meta com EXATAMENTE este texto, nao concluida e nao trazida de outro
+   mes, e trocada. O indice 1 de abril (o ensaio Berggruen) nao mudou. */
+const ROTEIRO_ANTERIOR = {
   "2026-11":["Entrega de novembro: O método exegético em Lutero, pronto para submeter (MTSR/Síntese)"],
   "2026-12":["Entrega de dezembro: Interpretação bíblica em Lutero e Spinoza, pronta para submeter (Religion/JEMS)"],
   "2027-01":["Entrega de janeiro: Tolerância e libertas philosophandi, pronta para submeter (JAAR/IHR)"],
   "2027-02":["Entrega de fevereiro: Spinoza, eco do luteranismo?, pronta para submeter (JAAR/Kriterion)"],
   "2027-03":["Entrega de março: Gálatas ético-político, pronto para submeter (Journal of Religious Ethics)"],
-  "2027-04":["Entrega de abril: A teologia da glória como crítica da ideologia, pronta para submeter (Numen/IJPT)",
-           "Ensaio Berggruen: escrever e submeter (meta única do mês)"],
+  "2027-04":["Entrega de abril: A teologia da glória como crítica da ideologia, pronta para submeter (Numen/IJPT)"],
   "2027-05":["Entrega de maio: Ebeling, a palavra como evento e os atos de fala, pronto para submeter (Síntese/Estudos Teológicos)"],
   "2027-06":["Entrega de junho: As faculdades da alma de Aristóteles em Lutero, pronto para submeter (Cad. de Filosofia Alemã/Analytica)"],
   "2027-07":["Entrega de julho: Spinoza, um filósofo do processo (E1p34), pronto para submeter (Cadernos Espinosanos/JEMS)"]
