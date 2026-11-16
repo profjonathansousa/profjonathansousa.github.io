@@ -1,12 +1,12 @@
 {
   "philjobs": {
     "semente": 31580,
-    "ultimo_id": 32925,
-    "ultima_sondagem": "2026-11-09T18:23:52.026561-03:00"
+    "ultimo_id": 32985,
+    "ultima_sondagem": "2026-11-16T17:54:45.659280-03:00"
   },
   "philevents": {
     "semente": 146200,
-    "ultimo_id": 150277,
-    "ultima_sondagem": "2026-11-09T18:34:34.707036-03:00"
+    "ultimo_id": 150637,
+    "ultima_sondagem": "2026-11-16T18:05:50.514012-03:00"
   }
 }
