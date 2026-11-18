@@ -1080,7 +1080,9 @@ function cycleSub(pid,projId,subId){
   var x=acharSub(getProjs(pid), projId, subId);
   if(!x) return;
   if(!marcarSub(pid, projId, subId, (x.st+1)%3)) return;
-  renderPainel(pid); renderRegistro(); sincronizarHoje(pid);
+  /* renderArquivo tambem: a ultima etapa concluida tira a peca da esteira e a
+     poe em "Encerrados", e reabrir uma etapa faz o caminho de volta. */
+  renderPainel(pid); renderRegistro(); renderArquivo(); sincronizarHoje(pid);
 }
 /* A caixa que a aba Hoje mostra. Marcar conclui; desmarcar volta para "a
    fazer" — a caixa tem dois estados, e nao ha como ela adivinhar que o item
@@ -1416,25 +1418,64 @@ function rotuloReg(o){
   if(p===1) return '<i>em andamento</i>';
   return (o.de>0) ? '<i>voltou para a fazer</i>' : '<i>a fazer</i>';
 }
-/* ---- Aba Arquivo: o que foi removido, com bot\u00e3o de restaurar ---- */
+/* ---- Encerrados: o que saiu da fila, concluido ou arquivado, com a data ----
+
+   ERA A SECAO "ARQUIVO", e so mostrava o arquivado, com o dia do mes sem o mes.
+   Desde 18/11/2026 ela se chama "Encerrados" e junta as duas saidas da fila:
+   a peca CONCLUIDA (dos paineis com `concluidosSaem`, hoje so a esteira), com a
+   data em que ficou pronta, e o item ARQUIVADO, de qualquer painel, com a data
+   em que foi arquivado. Os ids do HTML e a chave cron:painel-open:arquivo nao
+   mudaram, para nao perder o aberto/fechado de cada aparelho.
+
+   AS DUAS SAO VISOES, e nao gavetas. A arquivada e vida='arquivado' e volta pelo
+   botao restaurar, POR ID. A concluida e o projConcluido(), calculado do
+   andamento: volta para a esteira quando uma etapa e reaberta, e por isso ela
+   mostra as etapas com o mesmo ponto do painel. */
+function resumoEncerrados(){
+  var nA = arquivados().length, nC = concluidas().length, partes = [];
+  if(nC) partes.push(nC + (nC===1 ? " concluída" : " concluídas"));
+  if(nA) partes.push(nA + (nA===1 ? " arquivado" : " arquivados"));
+  return partes.length ? partes.join(" · ") : "nada encerrado";
+}
 function renderArquivo(){
   var box=document.getElementById("arquivo"); if(!box) return;
-  /* UMA VISAO, e nao uma gaveta: a lista sai do proprio painel, filtrada por
-     vida='arquivado'. E o botao restaura POR ID — nao ha posicao a acertar. */
-  var a=arquivados();
-  if(!a.length){ box.innerHTML='<div class="vazio">Nada arquivado. Quando voc\u00ea remover um item de um painel, ele vem parar aqui \u2014 e pode voltar.</div>'; return; }
+  var cab=document.querySelector("#painel-arquivo .tb-sub"); if(cab) cab.textContent=resumoEncerrados();
+  var a=arquivados(), c=concluidas();
+  if(!a.length && !c.length){ box.innerHTML='<div class="vazio">Nada encerrado. A peça concluída e o item que você remover de um painel vêm parar aqui, com a data — e podem voltar.</div>'; return; }
+  var itens=[];
+  c.forEach(function(it){ itens.push({tipo:"concluida", quando:String(it.quando||""), it:it}); });
+  /* O arquivado mais recente vinha primeiro (reverse); a ordem por data mantem
+     isso, e o sort estavel guarda a ordem antiga no empate. Sem data, no fim. */
+  a.slice().reverse().forEach(function(it){ itens.push({tipo:"arquivado", quando:String(it.vidaDesde||""), it:it}); });
+  itens.sort(function(x,y){ return x.quando===y.quando ? 0 : (x.quando > y.quando ? -1 : 1); });
   var h="";
-  a.slice().reverse().forEach(function(it){
-    var P=painelDef(it.pid);
-    var titulo = it.t || "(sem t\u00edtulo)";
-    var contexto = it.tipo==="subtarefa" && it.de ? " \u00b7 de \u201c"+it.de+"\u201d" : "";
+  itens.forEach(function(e){
+    var it=e.it, P=painelDef(it.pid), painel=escapeHtml(P?P.titulo:it.pid);
+    var titulo = it.t || "(sem título)";
+    if(e.tipo==="concluida"){
+      var pr=acharProj(getProjs(it.pid), it.projId); if(!pr) return;
+      var quando = e.quando ? "concluída em "+dataCurta(e.quando) : "concluída";
+      h+='<details class="enc-proj"><summary class="reg-i"><span class="reg-t">'+escapeHtml(titulo)+
+         '<span>'+quando+' · '+painel+'</span></span><span class="enc-ver">etapas</span></summary>'+
+         '<div class="enc-corpo"><div class="enc-dica">Para reabrir, toque no ponto de uma etapa: a peça volta para a esteira.</div>';
+      vivos(pr.subs).forEach(function(x){
+        normSub(x);
+        if(x.vida==="inaplicavel") return;
+        h+='<div class="sub st-'+x.st+'">'+
+           '<span class="st-dot" onclick="cycleSub(\''+it.pid+'\',\''+pr.id+'\',\''+x.id+'\')" title="'+ST_LBL[x.st]+'"></span>'+
+           '<div class="sub-text">'+escapeHtml(x.t)+'</div></div>';
+      });
+      h+='</div></details>';
+      return;
+    }
+    var contexto = it.tipo==="subtarefa" && it.de ? " · de “"+it.de+"”" : "";
     var volta = it.tipo==="projeto"
       ? "restaurarProj('"+it.pid+"','"+it.projId+"')"
       : "restaurarSub('"+it.pid+"','"+it.projId+"','"+it.subId+"')";
-    h+='<div class="reg-i"><span class="reg-d">'+Number(String(it.vidaDesde||"").slice(8,10)||0)+'</span>'+
-       '<span class="reg-t">'+escapeHtml(titulo)+
-       '<span>'+(it.tipo==="projeto"?"item":"subtarefa")+' \u00b7 '+escapeHtml(P?P.titulo:it.pid)+escapeHtml(contexto)+'</span></span>'+
-       '<button class="add-row" style="margin:0;padding:4px 10px" onclick="'+volta+'">restaurar</button></div>';
+    var rot = it.tipo==="projeto" ? "arquivado" : "arquivada";
+    h+='<div class="reg-i"><span class="reg-t">'+escapeHtml(titulo)+
+       '<span>'+(e.quando ? rot+" em "+dataCurta(e.quando) : rot)+' · '+(it.tipo==="projeto"?"item":"subtarefa")+' · '+painel+escapeHtml(contexto)+'</span></span>'+
+       '<button class="add-row enc-volta" onclick="'+volta+'">restaurar</button></div>';
   });
   box.innerHTML=h;
 }
@@ -1465,9 +1506,15 @@ function acharSub(p, projId, subId){
   for(var j=0;j<(pr.subs||[]).length;j++){ if(pr.subs[j].id === subId) return normSub(pr.subs[j]); }
   return null;
 }
-function editProj(pid,projId,t){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;pr.t=t.trim()||pr.t;setProjs(pid,p);}
+/* A TELA MOSTRA O TITULO SEM O MES (tituloDaPeca), e o onblur devolve o que a
+   tela mostra. Sem esta guarda, so tocar no titulo e sair gravaria a versao sem
+   o prefixo como se fosse uma edicao sua — e o merge de tres vias passaria a
+   ve-la como mudanca local. Igual ao que a tela mostra e nao mudar nada. */
+function editProj(pid,projId,t){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  if(t.trim()===tituloDaPeca(pr))return;
+  pr.t=t.trim()||pr.t;setProjs(pid,p);}
 function editSub(pid,projId,subId,t){var p=getProjs(pid);var x=acharSub(p,projId,subId);if(!x)return;x.t=t.trim()||x.t;setProjs(pid,p);}
-/* Remover deixa de destruir: vai para a aba Arquivo e pode voltar. */
+/* Remover deixa de destruir: vai para Encerrados e pode voltar. */
 /* ARQUIVAR E RESTAURAR VIRARAM MUDANCA DE CAMPO. A peca fica onde esta; o que
    muda e `vida`. Restaurar nao depende de posicao nenhuma — e o mesmo campo de
    volta para 'ativo'.
@@ -1475,7 +1522,7 @@ function editSub(pid,projId,subId,t){var p=getProjs(pid);var x=acharSub(p,projId
    PROJETO fica LOCAL: `estrutura_proj` e {t, n, mes} e a estrutura ainda nao e
    dominio online, entao nao ha por onde isso viajar. SUBITEM ATRAVESSA, e de
    graca: `vida` ja e campo do dominio `item`, e o tocarItem ja o publica. */
-function delProj(pid,projId){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para a aba Arquivo e pode ser restaurado."))return;
+function delProj(pid,projId){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para Encerrados, no fim da aba Trilhos, e pode ser restaurado."))return;
   var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
   pr.vida="arquivado";pr.vidaDesde=ymd(now);
   setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
@@ -1508,8 +1555,9 @@ function renderPainel(pid){
   var alvos=document.querySelectorAll('[data-painel="'+pid+'"]');
   if(!alvos.length) return;
   /* A TELA MOSTRA OS VIVOS. As arquivadas continuam no armazenamento — e por
-     isso o filtro e aqui, e nao no getProjs(). */
-  var projs=vivos(getProjs(pid)), h="";
+     isso o filtro e aqui, e nao no getProjs(). Na esteira, tambem as
+     concluidas saem da tela (naFila): elas estao em "Encerrados". */
+  var projs=naFila(pid, getProjs(pid)), h="";
   projs.forEach(function(p,pi){
     var subsVivos=vivos(p.subs);
     var contam=subsVivos.filter(function(x){return x.vida!=="inaplicavel";});
@@ -1520,8 +1568,9 @@ function renderPainel(pid){
        ' ontoggle="setProjAberto(\''+pid+'\',\''+p.id+'\',this.open)">'+
        '<summary class="proj-head">'+
        '<div class="proj-name" contenteditable="true" onclick="event.stopPropagation()" '+
-       'onblur="editProj(\''+pid+'\',\''+p.id+'\',this.innerText)">'+escapeHtml(p.t)+'</div>'+
-       '<span class="proj-prog">'+feitas+'/'+total+'</span></summary><div class="proj-body">';
+       'onblur="editProj(\''+pid+'\',\''+p.id+'\',this.innerText)">'+escapeHtml(tituloDaPeca(p))+'</div>'+
+       '<span class="proj-meta">'+(p.mes?'<span class="proj-prog proj-mes">'+mesAbrev(p.mes)+'</span>':'')+
+       '<span class="proj-prog">'+feitas+'/'+total+'</span></span></summary><div class="proj-body">';
     if(p.n) h+='<div class="proj-note">'+escapeHtml(p.n)+'</div>';
     subsVivos.forEach(function(x,si){
       normSub(x);
@@ -1546,6 +1595,7 @@ function renderPainel(pid){
   });
   h+='<button class="add-row" onclick="addProj(\''+pid+'\')">+ Novo item</button>';
   alvos.forEach(function(el){el.innerHTML=h;});
+  var cab=document.querySelector("#painel-"+pid+" .tb-sub"); if(cab) cab.textContent=subDoPainel(painelDef(pid));
 }
 function renderTecnico(){renderPainel("tecnico");}
 /* Uma peca esta pronta quando toda etapa que CONTA esta concluida. "Nao se
@@ -1564,17 +1614,16 @@ function renderTrilhos(){
   PAINEIS.forEach(function(P){
     var ab=LS("cron:painel-open:"+P.id, P.aberto);
     h+='<details class="tecbloco" id="painel-'+P.id+'" '+(ab?"open":"")+' ontoggle="save(\'cron:painel-open:'+P.id+'\', this.open)">'+
-       '<summary><span class="tb-t">'+P.titulo+'</span><span class="tb-sub">'+P.sub+'</span></summary>'+
+       '<summary><span class="tb-t">'+P.titulo+'</span><span class="tb-sub">'+escapeHtml(subDoPainel(P))+'</span></summary>'+
        '<div class="tb-body"><div data-painel="'+P.id+'"></div></div></details>';
   });
   h+='<details class="tecbloco" id="painel-registro" '+(LS("cron:painel-open:registro",false)?"open":"")+
      ' ontoggle="save(\'cron:painel-open:registro\', this.open)">'+
      '<summary><span class="tb-t">Registro</span><span class="tb-sub">o que voc\u00ea fechou, por data</span></summary>'+
      '<div class="tb-body"><div id="registro"></div></div></details>';
-  var nArq = arquivados().length;
   h+='<details class="tecbloco" id="painel-arquivo" '+(LS("cron:painel-open:arquivo",false)?"open":"")+
      ' ontoggle="save(\'cron:painel-open:arquivo\', this.open)">'+
-     '<summary><span class="tb-t">Arquivo</span><span class="tb-sub">'+(nArq? nArq+' item'+(nArq===1?'':'s')+' \u00b7 nada foi apagado' : 'nada arquivado')+'</span></summary>'+
+     '<summary><span class="tb-t">Encerrados</span><span class="tb-sub">'+resumoEncerrados()+'</span></summary>'+
      '<div class="tb-body"><div id="arquivo"></div></div></details>';
   document.getElementById("view-trilhos").innerHTML=h;
   PAINEIS.forEach(function(P){renderPainel(P.id);});

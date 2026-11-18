@@ -340,7 +340,7 @@ function arquivados(){
   PAINEIS.forEach(function(P){
     (getProjs(P.id) || []).forEach(function(p){
       if(estaArquivado(p)){
-        fora.push({pid:P.id, tipo:"projeto", projId:p.id, t:p.t || "", de:"", vidaDesde:p.vidaDesde || ""});
+        fora.push({pid:P.id, tipo:"projeto", projId:p.id, t:tituloDaPeca(p), de:"", vidaDesde:p.vidaDesde || ""});
         return;   /* subitem de projeto arquivado nao entra duas vezes */
       }
       (p.subs || []).forEach(function(x){

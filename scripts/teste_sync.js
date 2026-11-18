@@ -3926,6 +3926,94 @@ console.log("\n=== 78. A semente da esteira: o titulo diz o mes, e a ordem e a d
   ok(new Set(P.map(p => p.id)).size === P.length, "3. sem id repetido");
 }
 
+console.log("\n=== 79. O mes sai do titulo, e a peca concluida sai da esteira para Encerrados (18/11/2026) ===");
+{
+  /* A esteira e uma fila: o que esta pronto sai dela. "Concluida" e o mesmo
+     projConcluido() do Hoje, calculado do andamento, e por isso nao ha campo
+     novo nem toque novo — a peca sai em todo aparelho porque o andamento ja
+     atravessa. O mes passa a ser lido do campo `mes`, e nao do titulo. */
+  const X = criarAparelho("leitor", criarServidor());
+  ok(X.tituloDaPeca({t: "Out · A genealogia", mes: "2026-10"}) === "A genealogia",
+     "1. o titulo de uma peca com mes aparece sem o prefixo");
+  ok(X.tituloDaPeca({t: "Mar · Outra coisa"}) === "Mar · Outra coisa",
+     "   sem `mes`, nada e cortado: um titulo de outro painel nao e mes nenhum");
+  ok(X.tituloDaPeca({t: "Como se Deus não existisse", mes: "2026-11"}) === "Como se Deus não existisse",
+     "   e o titulo que ja chega sem o mes fica como esta");
+  ok(X.mesAbrev("2026-11") === "nov/26" && X.mesAbrev("2027-01") === "jan/27" && X.mesAbrev("x") === "",
+     "2. o mes curto e o do subtitulo de sempre (nov/26)");
+  ok(X.dataCurta("2026-11-03T10:00:00.000Z") === "03/11/2026" && X.dataCurta("") === "",
+     "   e a data, dd/mm/aaaa");
+
+  const projs = X.getProjs("pipeline");
+  const pr = projs[0];
+  pr.subs.forEach((x, i) => { x.st = 2; x.em = "2026-08-2" + i + "T12:00:00.000Z"; });
+  X.setProjs("pipeline", projs);
+  const alvo = {innerHTML: ""};
+  X.document.querySelectorAll = (sel) =>
+    (String(sel).indexOf('data-painel="pipeline"') >= 0 ? [alvo] : []);
+  X.renderPainel("pipeline");
+  ok(alvo.innerHTML.indexOf('data-proj="pipeline/' + pr.id + '"') < 0,
+     "3. a peca concluida nao aparece na esteira", pr.id);
+  ok(alvo.innerHTML.indexOf('data-proj="pipeline/' + projs[1].id + '"') >= 0,
+     "   e as outras continuam la");
+  const c = X.concluidas();
+  ok(c.length === 1 && c[0].projId === pr.id && c[0].quando === "2026-08-25",
+     "4. ela entra em Encerrados com a data da ULTIMA etapa concluida", c);
+  const sub = X.subDoPainel(X.painelDef("pipeline"));
+  ok(sub.indexOf((projs.length - 1) + " peças") === 0,
+     "5. o subtitulo da esteira conta so a fila, e nao e mais texto fixo", sub);
+  const a03 = projs[2];
+  ok(alvo.innerHTML.indexOf('proj-mes">' + X.mesAbrev(a03.mes) + '<') >= 0,
+     "6. o cartao mostra o mes lido do campo `mes`", X.mesAbrev(a03.mes));
+  ok(alvo.innerHTML.indexOf(">" + a03.t + "<") < 0 &&
+     alvo.innerHTML.indexOf(">" + X.tituloDaPeca(a03) + "<") >= 0,
+     "   e o titulo aparece sem o prefixo do mes", a03.t);
+
+  const box = X.document.getElementById("arquivo");
+  X.renderArquivo();
+  ok(box.innerHTML.indexOf("concluída em 25/08/2026") >= 0,
+     "7. Encerrados mostra a data em que a peca ficou pronta", box.innerHTML.slice(0, 160));
+  ok(box.innerHTML.indexOf("cycleSub('pipeline','" + pr.id + "'") >= 0,
+     "   e as etapas dela, com o ponto que reabre");
+  const projs2 = X.getProjs("pipeline");
+  projs2[3].vida = "arquivado"; projs2[3].vidaDesde = "2026-11-18";
+  X.setProjs("pipeline", projs2);
+  X.renderArquivo();
+  const html = box.innerHTML;
+  ok(html.indexOf("arquivado em 18/11/2026") >= 0,
+     "8. e o arquivado, com a data em que foi arquivado", html.slice(0, 160));
+  ok(html.indexOf("arquivado em 18/11/2026") < html.indexOf("concluída em 25/08/2026"),
+     "   o mais recente primeiro");
+  ok(X.resumoEncerrados() === "1 concluída · 1 arquivado",
+     "   e o cabecalho conta os dois", X.resumoEncerrados());
+
+  X.cycleSub("pipeline", pr.id, pr.subs[pr.subs.length - 1].id);
+  ok(X.concluidas().length === 0, "9. reabrir uma etapa tira a peca de Encerrados", X.concluidas());
+  X.renderPainel("pipeline");
+  ok(alvo.innerHTML.indexOf('data-proj="pipeline/' + pr.id + '"') >= 0,
+     "   e ela volta para a esteira");
+
+  const antes = X.getProjs("pipeline")[2].t;
+  X.editProj("pipeline", a03.id, X.tituloDaPeca(X.getProjs("pipeline")[2]));
+  ok(X.getProjs("pipeline")[2].t === antes,
+     "10. tocar no titulo e sair sem mudar nada nao grava a versao sem o mes", X.getProjs("pipeline")[2].t);
+  X.editProj("pipeline", a03.id, "Um titulo novo");
+  ok(X.getProjs("pipeline")[2].t === "Um titulo novo", "    e uma edicao de verdade continua gravando");
+
+  const L = X.getProjs("leituras");
+  L[0].subs.forEach(x => { x.st = 2; });
+  X.setProjs("leituras", L);
+  const alvoL = {innerHTML: ""};
+  X.document.querySelectorAll = (sel) =>
+    (String(sel).indexOf('data-painel="leituras"') >= 0 ? [alvoL] : []);
+  X.renderPainel("leituras");
+  ok(alvoL.innerHTML.indexOf('data-proj="leituras/' + L[0].id + '"') >= 0,
+     "11. nos outros paineis o bloco concluido fica onde esta");
+  ok(X.concluidas().every(x => x.pid === "pipeline"), "    e nao entra em Encerrados");
+  const pc = X.pecaDoMes();
+  ok(!!pc && !/^[A-Za-z]{3} · /.test(pc.curto), "12. o Hoje mostra o titulo da peca sem o mes", pc && pc.curto);
+}
+
 console.log("\n==============================================================");
 console.log(falhas.length ? "FALHAS: " + falhas.length : "TUDO PASSA");
 falhas.forEach(f => console.log("  - " + f));

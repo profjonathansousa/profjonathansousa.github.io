@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-10-30-esteira-14";
+const APP_VERSION = "2026-11-18-encerrados";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -425,7 +425,9 @@ const POSDOC_DEFAULT = [
    ou baixo continua podendo aparecer por prazo, por decisao travada ou por
    inatividade. O peso decide a classe ESTRATEGICO e desempata o resto. */
 const PAINEIS = [
-  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"14 peças · ago/26 a set/27", seed:PIPELINE_DEFAULT,   aberto:true,  peso:"alto"},
+  /* `concluidosSaem`: a peca pronta sai do painel e vai para "Encerrados". O
+     subtitulo da esteira e calculado (subDoPainel); o `sub` fica como reserva. */
+  {id:"pipeline",   key:"cron:pipeline",   titulo:"Esteira de artigos",   sub:"esteira de artigos", seed:PIPELINE_DEFAULT,   aberto:true,  peso:"alto", concluidosSaem:true},
   {id:"leituras",   key:"cron:leituras",   titulo:"Leituras · religious studies", sub:"mapa do campo", seed:LEITURAS_DEFAULT,   aberto:false, peso:"medio"},
   {id:"candidatura",key:"cron:candidatura",titulo:"Doutorado no exterior (PhD)", sub:"dossê, cartas e entrevista", seed:CANDIDATURA_DEFAULT, aberto:false, peso:"alto"},
   {id:"posdoc",     key:"cron:posdoc",     titulo:"Pós-doutorado",       sub:"FAPERJ, FAPESP e exterior", seed:POSDOC_DEFAULT, aberto:false, peso:"alto"},

@@ -2143,6 +2143,40 @@ no backup.
 Testes: `teste_sync.js`, seções 77 e 78. As seções 75 e 76 partem agora do
 estado dos aparelhos de hoje, e não da semente, que já traz a esteira nova.
 
+#### O mês sai do título, e a peça concluída sai da esteira (2026-11-18)
+
+**O mês é lido do campo, e não do título.** O título da peça carregava o mês
+por extenso ("Out · A genealogia…"), e o mês já é o campo `mes`, que ordena o
+painel, acusa atraso e liga a peça à entrega do mês. Duas cópias do mesmo
+dado, e a escrita à mão ficava para trás: em 31/10 nove títulos tiveram de ser
+reescritos porque as peças andaram dois meses. Agora o cartão mostra o mês
+(`mesAbrev`, "nov/26") ao lado do contador, e o título é só o título. Enquanto
+a publicação nova não chega, o prefixo antigo é tirado **na tela**
+(`tituloDaPeca`), e só de peça que tem `mes`. O `editProj` ignora o texto igual
+ao que a tela mostra: sem isso, tocar no título e sair gravaria a versão sem o
+prefixo como edição sua. O `curto` do Hoje usa a mesma função, e o subtítulo da
+esteira deixou de ser texto fixo: `subDoPainel` conta a fila e diz de que mês a
+que mês ela vai.
+
+**A peça concluída sai da fila.** Nos painéis com `concluidosSaem` (hoje, só a
+esteira), a peça cuja etapa que conta está toda concluída sai do painel
+(`naFila`). Não é estado novo: é o mesmo `projConcluido()` do `pecaDoMes`,
+calculado do andamento, que já atravessa aparelhos pelo `item` — então a peça
+sai em todo aparelho ao mesmo tempo, sem campo nem toque novo, e volta sozinha
+se uma etapa for reaberta. Nos outros painéis um bloco concluído costuma servir
+de consulta, e fica onde está.
+
+**A seção "Arquivo" virou "Encerrados".** Ela junta as duas saídas da fila: a
+peça concluída, com a data em que ficou pronta (`dataDeConclusao`: o `em` da
+última etapa que conta; na falta, o registro datado), e o item arquivado, de
+qualquer painel, com a data em que foi arquivado (`vidaDesde`). Antes ela
+mostrava só o dia do mês. A concluída abre e mostra as etapas com o mesmo ponto
+do painel, que é como se reabre; a arquivada tem o botão restaurar. Os ids do
+HTML (`#arquivo`, `#painel-arquivo`) e a chave `cron:painel-open:arquivo` não
+mudaram, para não perder o aberto/fechado de cada aparelho.
+
+Testes: `teste_sync.js`, seção 79.
+
 ### 9G-0 B2 — O `cron:arquivo` aposentado
 
 Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta
