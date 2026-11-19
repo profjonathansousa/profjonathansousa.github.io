@@ -145,8 +145,13 @@ grant  execute on function public.cron_e_dono() to authenticated;
 -- pior do que um erro na hora de gravar.
 --
 --   item            painel/projeto/subitem   {st, vida, motivo, voltar_em, vidaDesde}
---   estrutura_proj  painel/projeto           {t, n, mes}
---   estrutura_sub   painel/projeto/subitem   {t, n, onde, prova, medida, ordem}
+--   estrutura_proj  painel/projeto           {t, origem?}         o nome que você deu (19/11/2026)
+--                   painel/projeto#vida      {vida, vidaDesde}    arquivar/restaurar a peça
+--                   painel/projeto#submetida {submetida}          "AAAA-MM-DD" ou ""
+--   estrutura_sub   painel/projeto/subitem   {t, origem?}         o nome da etapa
+--                   (só o que VOCÊ decide: a estrutura do pipeline mora na
+--                   cron_estrutura_base, mais abaixo. Comentário apenas: nada
+--                   no esquema mudou em 19/11/2026.)
 --   triagem         idDaVaga                 {st, mot?, nota?}   (mot/nota só com st 2 ou 5)
 --   meta            AAAA-MM/id               {t, done, de}
 --   evento          idDoEvento               {t, data, priv}

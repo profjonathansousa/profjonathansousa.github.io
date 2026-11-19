@@ -1723,8 +1723,8 @@ ok(CHAVES.indexOf("cron:checks:") > -1 && CHAVES.indexOf("cron:contexto") > -1 &
 const TIPOS = Array.from(new Set((CODIGO.match(/salvarAlteracao\(\s*"([a-z_]+)"/g) || [])
   .map(t => t.match(/"([a-z_]+)"/)[1]))).sort();
 ok(JSON.stringify(TIPOS) ===
-   JSON.stringify(["dispensa","evento","item","meta","prioridade","retomada","rotina","toefl","triagem"]),
-   "os nove dominios online continuam os mesmos, sem nenhum novo", TIPOS);
+   JSON.stringify(["dispensa","estrutura_proj","estrutura_sub","evento","item","meta","prioridade","retomada","rotina","toefl","triagem"]),
+   "os onze dominios online: os nove de antes e a estrutura (19/11/2026)", TIPOS);
 ok(!/enfileirarToque\(/.test(CODIGO),
    "e nao ha mais nenhuma chamada de enfileirarToque");
 
@@ -1759,7 +1759,7 @@ ok(/pushManager\.getSubscription/.test(CODIGO),
    "a inscricao e lida do PushManager, que e a fonte da verdade");
 
 /* Nada de dominio novo, e nenhuma secao nova no estado consolidado. */
-ok(TIPOS.length === 9, "os dominios online continuam nove", TIPOS);
+ok(TIPOS.length === 11, "os dominios online sao onze, todos os do esquema", TIPOS);
 const DOBRA = fs.readFileSync(path.join(RAIZ, "scripts", "dobrar_toques.py"), "utf8");
 const SECOES = (DOBRA.match(/^\s{8}"(\w+)": \{\},$/gm) || []).map(l => l.match(/"(\w+)"/)[1]);
 ok(JSON.stringify(SECOES.sort()) ===

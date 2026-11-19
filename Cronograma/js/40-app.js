@@ -263,11 +263,17 @@ catch(e){ console.error("sincronia: dominio dispensa:", e); }
 /* Fase 9E: os Trilhos. O `item` e o unico dominio com DOIS escritores reais —
    voce e o pipeline, pelo `--registrar` —, e a fronteira que os separa esta no
    dado e nao no desempate: o pipeline recusa subitem de prova "estrela". O
-   `toefl` vem junto por ser progresso pela mesma regra. A ESTRUTURA
-   (estrutura_proj, estrutura_sub) NAO entrou: ela depende do merge de tres vias
-   e da cron_estrutura_base, que so o pipeline pode escrever. Ver o README. */
+   `toefl` vem junto por ser progresso pela mesma regra. */
 try{ SYNC.assinarDominio("item", aplicarItemOnline); }
 catch(e){ console.error("sincronia: dominio item:", e); }
+/* A ESTRUTURA QUE VOCE DECIDE (19/11/2026): nome de peca e de etapa,
+   arquivamento de peca, submissao, item feito a mao. Ficou de fora da 9E porque
+   dependia do merge de tres vias e da cron_estrutura_base; as duas existem
+   desde 30/10. Ver os aplicadores no 10-nucleo.js. */
+try{ SYNC.assinarDominio("estrutura_proj", aplicarEstruturaProjOnline); }
+catch(e){ console.error("sincronia: dominio estrutura_proj:", e); }
+try{ SYNC.assinarDominio("estrutura_sub", aplicarEstruturaSubOnline); }
+catch(e){ console.error("sincronia: dominio estrutura_sub:", e); }
 try{ SYNC.assinarDominio("toefl", aplicarToeflOnline); }
 catch(e){ console.error("sincronia: dominio toefl:", e); }
 try{ renderSincroniaOnline(); }catch(e){}
@@ -285,5 +291,8 @@ try{
         try{ renderProcessos(); }catch(e){}
       }
     }catch(e){ console.error("publicacao das decisoes antigas:", e); }
+    /* Depois do carregarEstado (dentro do iniciar): a publicacao unica da
+       estrutura confere no cache o que ja esta online, para nao subir de novo. */
+    try{ publicarEstruturaAntiga(); }catch(e){ console.error("publicacao da estrutura antiga:", e); }
   });
 }catch(e){ console.error("sincronia online:", e); }

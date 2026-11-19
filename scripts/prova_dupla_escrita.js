@@ -427,12 +427,13 @@ titulo("=== 7. O item é progresso, e progresso não cria estrutura ===");
   ok(JSON.stringify(A.getProjs("pipeline")) === antes,
      "e o painel fica exatamente como estava");
 
-  /* E a estrutura continua sem escritor online, como a 9E documentou. */
+  /* A estrutura ficou fora da 9E e da 9F; desde 19/11/2026 ela tem escritor
+     proprio (nome, arquivamento de peca, submissao), que NAO passa pelo item. */
   const render = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "30-render.js"), "utf8");
   const nucleo = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "10-nucleo.js"), "utf8");
   const regras = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "20-regras.js"), "utf8");
-  ok(!/salvarAlteracao\(\s*"estrutura_/.test(render + nucleo + regras),
-     "e estrutura_proj/estrutura_sub seguem sem escritor: fora do escopo da 9F");
+  ok(/escreverEstruturaOnline\("estrutura_/.test(render) && !/salvarAlteracao\(\s*"item"[^)]*#/.test(render + nucleo + regras),
+     "e estrutura_proj/estrutura_sub tem escritor proprio desde 19/11/2026, fora do item");
 }
 
 /* ============================================================

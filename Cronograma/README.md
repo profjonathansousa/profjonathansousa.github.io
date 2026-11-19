@@ -2217,6 +2217,59 @@ Testes: `teste_sync.js`, seções 77 e 78 (reescritas), 70, 71 e 75 (passam a
 escolher peças vivas); `teste_hoje.js`, as seções que usavam a a02 e a a07
 como peças ativas.
 
+#### A estrutura que você decide atravessa aparelhos (2026-11-19)
+
+**Até aqui só o andamento viajava.** Renomear uma peça, arquivar uma peça
+inteira ou criar um item à mão ficava no aparelho em que foi feito — foi assim
+que, em 18/11, não se sabia se a a03 tinha sido renomeada no celular. A 9E
+deixou isso de fora de propósito: dependia do merge de três vias e da
+`cron_estrutura_base`, que existem desde 30/10.
+
+**Os domínios são os que o esquema já declarava**, e nada no banco mudou. Na
+`cron_estado`, `estrutura_proj` e `estrutura_sub` são só suas: o pipeline
+publica estrutura na `cron_estrutura_base`, que é outra tabela. **Uma chave por
+decisão**, porque o relógio é por linha, e duas decisões na mesma linha
+brigariam (um nome dado no Mac apagaria um arquivamento feito no celular):
+
+| Domínio | Chave | Valor | O quê |
+|---|---|---|---|
+| `estrutura_proj` | `painel/projeto` | `{t, origem?}` | o nome |
+| `estrutura_proj` | `painel/projeto#vida` | `{vida, vidaDesde}` | arquivar, restaurar |
+| `estrutura_proj` | `painel/projeto#submetida` | `{submetida}` | `"AAAA-MM-DD"` ou `""` |
+| `estrutura_sub` | `painel/projeto/subitem` | `{t, origem?}` | o nome da etapa |
+
+**O nome tem uma guarda a mais, contra a publicação.** A peça e a etapa guardam
+`tEm`, o instante do nome que têm: o da sua edição, ou o `_gerado_em` da
+publicação que o escreveu. Uma linha mais velha do que isso não desfaz o nome —
+é o que impede que uma edição antiga, chegando tarde a um aparelho que já
+recebeu a publicação nova, desfaça o que o merge de três vias decidiu.
+
+**`origem: "manual"` é o que autoriza criar.** O item feito à mão nasce no outro
+aparelho pela linha do nome, e a etapa feita à mão também, já com o andamento
+que estava no cache. Peça da publicação nunca nasce por aqui: ela vem do
+`entrada.json`, com mês e etapas. Uma linha que chega antes da peça fica no
+cache e é reaplicada quando o `mesclarEntrada` cria a peça.
+
+**A publicação única** (`publicarEstruturaAntiga`, uma vez por aparelho, depois
+do `carregarEstado`) sobe o que só aquele aparelho sabia: as peças arquivadas,
+com o instante da meia-noite do dia do arquivamento — antigo de propósito, para
+que qualquer decisão posterior continue vencendo —, e os itens feitos à mão com
+nome. Não sobe nome trocado à mão antes de hoje numa peça da semente ou da
+publicação: olhando só o aparelho, um nome editado e um nome antigo são
+indistinguíveis, e subir um nome antigo desfaria a publicação nos outros.
+
+**O marcador de submissão.** Em "Encerrados", cada peça concluída diz "não
+submetida" (com "submeter até <mês> (mês N do PROFIX)" quando é meta do
+projeto) ou "submetida em dd/mm/aaaa", com o botão que marca ou desfaz.
+
+Continua local, por desenho: casa/fora, a identidade do aparelho, o token, os
+caches e o estado de tela (ver "Continua local").
+
+Testes: `teste_sync.js`, seção 80 (dois aparelhos). As travas que diziam "a
+estrutura não entrou" — a lista de domínios com aplicador, no `teste_sync.js`,
+no `teste_hoje.js` e na `prova_dupla_escrita.js`, e o "arquivar projeto não
+viaja" da seção 69 — passam a dizer que ela entrou, e por onde.
+
 ### 9G-0 B2 — O `cron:arquivo` aposentado
 
 Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta
@@ -2239,7 +2292,8 @@ no celular.
 
 **Projeto continua local**, e é consequência conhecida: `estrutura_proj` é
 `{t, n, mes}`, sem `vida`, e a estrutura ainda não é domínio online. Não há
-regressão — arquivar projeto já era local.
+regressão — arquivar projeto já era local. *(Desde 2026-11-19 não é mais: ver "A estrutura que
+você decide atravessa aparelhos".)*
 
 #### A posição saiu dos handlers, não só da gaveta
 

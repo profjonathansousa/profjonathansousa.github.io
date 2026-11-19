@@ -175,8 +175,11 @@ function entradaPodeEscrever(chave, campo, local, daEntrada, linhaBase){
 function mesclarEntrada(){
   var ent = LS("cron:entrada", null);
   if(!ent || !ent.paineis) return;
-  var aplicou = false;
+  var aplicou = false, criou = false;
   var base = estruturaBase();
+  /* O instante da publicacao, para a guarda do nome (aplicarEstruturaProjOnline):
+     o nome escrito por ela leva este `tEm`. */
+  var emDaEntrada = isoNorm(ent._gerado_em || "") || "";
   Object.keys(ent.paineis).forEach(function(pid){
     if(!painelDef(pid)) return;
     var atuais = getProjs(pid), mudou = false, porId = {};
@@ -190,13 +193,13 @@ function mesclarEntrada(){
            a que faltasse uma peca ganharia um projeto sem nome e sem mes — e um
            projeto sem mes desliga a ordenacao do painel inteiro. */
         if(!novo.t) return;
-        atuais.push(normProj(Object.assign({}, novo, {origem:"entrada"}))); mudou=true; return;
+        atuais.push(normProj(Object.assign({}, novo, {origem:"entrada", tEm:emDaEntrada}))); mudou=true; criou=true; return;
       }
       /* A guarda de sempre (so escreve o que a entrada traz de verdade) mais a
          terceira via: o campo mudou desde a ultima publicacao? */
       var kProj = pid + "/" + novo.id, bProj = base[kProj];
       if(novo.t && novo.t!==alvo.t &&
-         entradaPodeEscrever(kProj, "t", alvo.t, novo.t, bProj)){ alvo.t=novo.t; mudou=true; }
+         entradaPodeEscrever(kProj, "t", alvo.t, novo.t, bProj)){ alvo.t=novo.t; alvo.tEm=emDaEntrada; mudou=true; }
       if(novo.n && novo.n!==alvo.n &&
          entradaPodeEscrever(kProj, "n", alvo.n, novo.n, bProj)){ alvo.n=novo.n; mudou=true; }
       /* O MES ANDA PELA MESMA PORTA DO TITULO E DA NOTA (30/10/2026). Ate aqui ele
@@ -233,7 +236,8 @@ function mesclarEntrada(){
              dele produz uma etapa em branco no meio do trilho. Etapa sem nome
              nao e etapa: e ruido que o "Agora" pode apontar. */
           if(!ns.t) return;
-          var novoSub = normSub(Object.assign({}, ns, {origem:"entrada"}));
+          var novoSub = normSub(Object.assign({}, ns, {origem:"entrada", tEm:emDaEntrada}));
+          criou = true;
           var pos = alvo.subs.length, irmao = k > 0 ? novo.subs[k-1] : null;
           if(!irmao){ pos = 0; }
           else for(var q=0;q<alvo.subs.length;q++){
@@ -249,7 +253,7 @@ function mesclarEntrada(){
           if(!(campo in ns)) return;
           if(JSON.stringify(ns[campo])===JSON.stringify(as[campo])) return;
           if(!entradaPodeEscrever(kSub, campo, as[campo], ns[campo], bSub)) return;
-          as[campo]=ns[campo]; mudou=true;
+          as[campo]=ns[campo]; if(campo==="t") as.tEm=emDaEntrada; mudou=true;
         });
       });
 
@@ -307,6 +311,8 @@ function mesclarEntrada(){
   /* Guarda a marca do PROPRIO arquivo, nao a hora da mesclagem: e assim que a
      proxima carga sabe que ja aplicou esta versao e nao precisa remesclar. */
   save("cron:entrada-aplicada", ent._gerado_em || new Date().toISOString());
+  /* Peca ou etapa nova: a decisao que chegou antes dela sai do cache agora. */
+  if(criou) reaplicarEstruturaDoCache();
   return aplicou;
 }
 /* ---- Arquivo: remover deixa de destruir, e deixa de mudar de lugar ----
@@ -551,6 +557,138 @@ function aplicarItemOnline(linha){
   /* Os mesmos quatro que a descida do estado.json ja dispara quando um item
      muda: o progresso de um subitem atravessa o aplicativo inteiro. */
   return ["renderOrdo", "renderHoje", "renderSemana", "renderTrilhos"];
+}
+
+/* ====== A ESTRUTURA QUE VOCE DECIDE ATRAVESSA APARELHOS (19/11/2026) ======
+
+   ATE AQUI SO O ANDAMENTO VIAJAVA. Renomear uma peca, arquivar uma peca
+   inteira ou criar um item a mao ficava no aparelho em que foi feito — foi
+   assim que, em 18/11, ninguem sabia se a a03 tinha sido renomeada no celular.
+   A Fase 9E deixou isso de fora de proposito: dependia do merge de tres vias e
+   da cron_estrutura_base, para que um nome dado a mao nao fosse desfeito em
+   silencio pela proxima publicacao. As duas existem desde 30/10.
+
+   OS DOMINIOS SAO OS QUE O ESQUEMA JA DECLARAVA, e nenhuma migracao foi
+   precisa. Na cron_estado, `estrutura_proj` e `estrutura_sub` sao SO suas: o
+   pipeline publica estrutura na cron_estrutura_base, que e outra tabela. Uma
+   linha por decisao, e por isso uma chave por campo — o relogio e por linha, e
+   duas decisoes na mesma linha brigariam (um nome dado no Mac apagaria um
+   arquivamento feito no celular, se os dois nao se tivessem visto):
+
+     estrutura_proj  painel/projeto              {t, origem?}       o nome
+     estrutura_proj  painel/projeto#vida         {vida, vidaDesde}  arquivar/restaurar
+     estrutura_proj  painel/projeto#submetida    {submetida}        "AAAA-MM-DD" ou ""
+     estrutura_sub   painel/projeto/subitem      {t, origem?}       o nome da etapa
+
+   O NOME TEM UMA GUARDA A MAIS, contra a publicacao. A peca guarda `tEm`, o
+   instante do nome que ela tem: o da sua edicao, ou o `_gerado_em` da
+   publicacao que o escreveu. Uma linha mais velha do que isso nao desfaz o
+   nome — e o que impede que uma edicao antiga, chegando tarde a um aparelho
+   que ja recebeu a publicacao nova, desfaca o que o merge de tres vias decidiu.
+
+   `origem: "manual"` E O QUE AUTORIZA CRIAR. Item feito a mao (o "+ Novo
+   item", o "+ subtarefa") nasce no outro aparelho pela linha do nome. Peca da
+   publicacao nunca nasce por aqui: ela vem do entrada.json, com mes e etapas, e
+   uma peca sem mes desligaria a ordenacao do painel.
+
+   RECEBER NAO E TOCAR: nada aqui escreve online. */
+function isoNorm(s){
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? "" : d.toISOString();
+}
+function chaveDaEstrutura(chave){
+  var cru = String(chave || ""), campo = "";
+  var h = cru.indexOf("#");
+  if(h >= 0){ campo = cru.slice(h + 1); cru = cru.slice(0, h); }
+  return {partes: cru.split("/"), campo: campo};
+}
+var RENDERS_ESTRUTURA = ["renderOrdo", "renderHoje", "renderSemana", "renderTrilhos"];
+function aplicarEstruturaProjOnline(linha){
+  if(!linha || !linha.chave || linha.del) return [];
+  var k = chaveDaEstrutura(linha.chave), pid = k.partes[0], projId = k.partes[1];
+  if(k.partes.length !== 2 || !painelDef(pid) || !projId) return [];
+  var v = linha.valor || {}, projs = getProjs(pid) || [], p = null;
+  projs.forEach(function(x){ if(x.id === projId) p = x; });
+  if(k.campo === "vida"){
+    if(!p) return [];
+    var vida = v.vida === "arquivado" ? "arquivado" : "ativo";
+    if(p.vida === vida && (p.vidaDesde || "") === (v.vidaDesde || "")) return [];
+    p.vida = vida; p.vidaDesde = v.vidaDesde || "";
+    setProjs(pid, projs);
+    return RENDERS_ESTRUTURA;
+  }
+  if(k.campo === "submetida"){
+    if(!p) return [];
+    var sub = /^\d{4}-\d{2}-\d{2}$/.test(String(v.submetida || "")) ? v.submetida : "";
+    if((p.submetida || "") === sub) return [];
+    p.submetida = sub;
+    setProjs(pid, projs);
+    return RENDERS_ESTRUTURA;
+  }
+  if(k.campo) return [];                       /* campo que esta versao nao conhece */
+  if(typeof v.t !== "string" || !v.t.trim()) return [];
+  var em = isoNorm(linha.em);
+  if(!p){
+    if(v.origem !== "manual") return [];
+    projs.push(normProj({id: projId, t: v.t, subs: [], origem: "manual", tEm: em}));
+    setProjs(pid, projs);
+    return RENDERS_ESTRUTURA;
+  }
+  if(!(em > (p.tEm || "")) || p.t === v.t) return [];
+  p.t = v.t; p.tEm = em;
+  setProjs(pid, projs);
+  return RENDERS_ESTRUTURA;
+}
+function aplicarEstruturaSubOnline(linha){
+  if(!linha || !linha.chave || linha.del) return [];
+  var k = chaveDaEstrutura(linha.chave);
+  if(k.campo || k.partes.length !== 3 || !painelDef(k.partes[0])) return [];
+  var pid = k.partes[0], projId = k.partes[1], subId = k.partes[2];
+  var v = linha.valor || {};
+  if(typeof v.t !== "string" || !v.t.trim()) return [];
+  var projs = getProjs(pid) || [], p = null;
+  projs.forEach(function(x){ if(x.id === projId) p = x; });
+  if(!p) return [];
+  var em = isoNorm(linha.em), x = null;
+  (p.subs || []).forEach(function(s){ if(s.id === subId) x = s; });
+  if(!x){
+    if(v.origem !== "manual") return [];
+    x = normSub({id: subId, t: v.t, st: 0, origem: "manual", tEm: em});
+    p.subs.push(x);
+    /* O andamento pode ter chegado ANTES da etapa: o aplicador do `item` exige
+       que ela exista, e a linha ficou so no cache. Agora ela existe. */
+    try{
+      var ci = (typeof syncCache === "function") ? syncCache()[SYNC.chave("item", pid + "/" + projId + "/" + subId)] : null;
+      if(ci && !ci.del) mesclarItem(x, {quando: ci.em, st: ci.valor.st, vida: ci.valor.vida,
+                                        motivo: ci.valor.motivo, voltar_em: ci.valor.voltar_em,
+                                        vidaDesde: ci.valor.vidaDesde});
+    }catch(e){}
+    setProjs(pid, projs);
+    return RENDERS_ESTRUTURA;
+  }
+  if(!(em > (x.tEm || "")) || x.t === v.t) return [];
+  x.t = v.t; x.tEm = em;
+  setProjs(pid, projs);
+  return RENDERS_ESTRUTURA;
+}
+/* AS LINHAS QUE CHEGARAM ANTES DA PECA. Uma decisao sobre uma peca que este
+   aparelho ainda nao tinha (a publicacao nova chegou depois) fica so no cache.
+   Depois que o mesclarEntrada cria pecas ou etapas, elas sao reaplicadas — os
+   aplicadores sao idempotentes, e a guarda do nome continua valendo. */
+function reaplicarEstruturaDoCache(){
+  try{
+    if(typeof syncCache !== "function") return 0;
+    var cache = syncCache(), n = 0;
+    Object.keys(cache).forEach(function(kk){
+      var sep = kk.indexOf("␟"); if(sep < 0) return;
+      var dom = kk.slice(0, sep), chave = kk.slice(sep + 1), c = cache[kk];
+      var linha = {chave: chave, valor: c.valor, del: c.del, em: c.em};
+      var r = dom === "estrutura_proj" ? aplicarEstruturaProjOnline(linha)
+            : dom === "estrutura_sub"  ? aplicarEstruturaSubOnline(linha) : [];
+      if(r && r.length) n++;
+    });
+    return n;
+  }catch(e){ return 0; }
 }
 
 /* ============ O MERGE DE UMA PRIORIDADE — UMA IMPLEMENTACAO SO ============
@@ -1213,6 +1351,59 @@ function publicarDecisoesAntigas(){
       console.log("publicadas " + fora.triagem + " decisao(oes) de triagem e " +
                   fora.itens + " de subitem que estavam so neste aparelho.");
   }catch(e){ console.error("publicacao das decisoes antigas falhou:", e); }
+  return fora;
+}
+
+/* A ESTRUTURA QUE ESTAVA SO NESTE APARELHO, UMA VEZ (19/11/2026). Antes de o
+   nome e o arquivamento de peca viajarem, cada aparelho decidia sozinho: a a02
+   e a a07 foram arquivadas no celular, e o Mac nunca soube. Esta funcao sobe,
+   uma vez por aparelho, o que so ele sabe:
+
+     · a peca ARQUIVADA, com o instante do dia em que foi arquivada (meia-noite
+       UTC). Um instante antigo e de proposito: qualquer decisao posterior,
+       feita em outro aparelho, continua vencendo — o gatilho do relogio recusa
+       a linha mais velha. Se ja ha linha online para ela, nada sobe;
+     · o item FEITO A MAO com nome (peca e etapa), com a marca `manual`, para
+       nascer no outro aparelho. O andamento dele ja subiu pela publicacao de
+       9G (publicarDecisoesAntigas).
+
+   O que NAO sobe: nome que voce trocou a mao numa peca da semente ou da
+   publicacao antes de hoje. Nao ha como distinguir, olhando so o aparelho, um
+   nome editado de um nome antigo, e subir um nome antigo desfaria a
+   publicacao nos outros aparelhos. Daqui em diante, toda troca de nome viaja. */
+function publicarEstruturaAntiga(){
+  var fora = {arquivadas:0, manuais:0, correu:false};
+  try{
+    if(LS(ESTRUTURA_PUBLICADA_KEY, false)) return fora;
+    if(typeof SYNC === "undefined" || !SYNC.ligado()) return fora;
+    var cache = syncCache();
+    var temOnline = function(dom, chave){ return !!cache[SYNC.chave(dom, chave)]; };
+    PAINEIS.forEach(function(P){
+      (getProjs(P.id) || []).forEach(function(pr){
+        var base = P.id + "/" + pr.id;
+        if(pr.origem === "manual" && String(pr.t || "").trim() && !temOnline("estrutura_proj", base)){
+          SYNC.salvarAlteracao("estrutura_proj", base, {t: pr.t, origem: "manual"},
+                               {em: pr.tEm || instanteISO()});
+          fora.manuais++;
+        }
+        (pr.subs || []).forEach(function(x){
+          var ks = base + "/" + x.id;
+          if(x.origem !== "manual" || !String(x.t || "").trim() || temOnline("estrutura_sub", ks)) return;
+          SYNC.salvarAlteracao("estrutura_sub", ks, {t: x.t, origem: "manual"},
+                               {em: x.tEm || instanteISO()});
+          fora.manuais++;
+        });
+        if(pr.vida === "arquivado" && !temOnline("estrutura_proj", base + "#vida")){
+          var dia = /^\d{4}-\d{2}-\d{2}$/.test(pr.vidaDesde || "") ? pr.vidaDesde + "T00:00:00.000Z" : instanteISO();
+          SYNC.salvarAlteracao("estrutura_proj", base + "#vida",
+                               {vida: "arquivado", vidaDesde: pr.vidaDesde || ""}, {em: dia});
+          fora.arquivadas++;
+        }
+      });
+    });
+    save(ESTRUTURA_PUBLICADA_KEY, true);
+    fora.correu = true;
+  }catch(e){ console.error("publicacao da estrutura antiga falhou:", e); }
   return fora;
 }
 
