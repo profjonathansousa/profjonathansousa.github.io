@@ -108,19 +108,42 @@ if(LS("cron:tecnico-seed", null) !== TEC_SEED){
    a meta que ja chegou trocada do outro tem o texto novo e fica como esta. O que
    nao foi trocado por ter sido editado ou concluido fica no
    cron:metas-seed-relatorio, que vai junto no backup. */
+/* E RETIRA A ENTREGA SEMEADA QUE PERDEU O MES (19/11/2026). Com a esteira no
+   cronograma do PROFIX, ha mes que deixou de ter entrega (novembro de 2026 em
+   diante, onde nao cai meta). O indice que ficou vazio no ROTEIRO (ausente ou
+   null) e a meta que ainda tem EXATAMENTE o texto do ROTEIRO_ANTERIOR, nao
+   concluida e nao trazida, sai pelo caminho de uma remocao sua: setMetas +
+   tocarMeta com lapide, para atravessar aparelhos. A editada, a concluida e a
+   trazida ficam, e vao para o relatorio. Os meses que so o ROTEIRO_ANTERIOR
+   conhece tambem sao percorridos: e la que mora o que saiu. */
 if(LS("cron:metas-seed", null) !== METAS_SEED){
-  var _trocadas = [], _intocadas = [];
-  Object.keys(ROTEIRO).forEach(function(k){
+  var _trocadas = [], _retiradas = [], _intocadas = [];
+  var _meses = Object.keys(ROTEIRO);
+  Object.keys(ROTEIRO_ANTERIOR).forEach(function(k){ if(_meses.indexOf(k) < 0) _meses.push(k); });
+  _meses.forEach(function(k){
     var atual = LS("cron:metas:"+k, []).filter(function(m){
       return String(m.id).indexOf("seed-") !== 0;   // limpa o seed antigo, preserva o que voc\u00ea escreveu
     });
-    ROTEIRO[k].forEach(function(t,i){
-      var id = "art-"+k+"-"+i;
-      var m = null;
-      atual.forEach(function(x){ if(x.id===id) m = x; });
-      if(!m){ atual.push({id:id, t:t, done:false}); return; }
-      var antigo = (ROTEIRO_ANTERIOR[k] || [])[i];
-      if(!antigo || antigo === t || m.t === t) return;
+    var novos = ROTEIRO[k] || [], antigos = ROTEIRO_ANTERIOR[k] || [];
+    var n = Math.max(novos.length, antigos.length);
+    for(var i = 0; i < n; i++){
+      var t = novos[i], id = "art-"+k+"-"+i, m = null, pos = -1;
+      atual.forEach(function(x, q){ if(x.id===id){ m = x; pos = q; } });
+      var antigo = antigos[i];
+      if(!t){
+        if(!m || !antigo) continue;
+        if(m.t === antigo && !m.done && !m.de){
+          atual.splice(pos, 1);
+          save("cron:metas:"+k, atual);
+          tocarMeta(k, m, true);
+          _retiradas.push(k+"/"+id);
+        } else {
+          _intocadas.push({mes:k, id:id, t:m.t, done:!!m.done});
+        }
+        continue;
+      }
+      if(!m){ atual.push({id:id, t:t, done:false}); continue; }
+      if(!antigo || antigo === t || m.t === t) continue;
       if(m.t === antigo && !m.done && !m.de){
         m.t = t;
         save("cron:metas:"+k, atual);
@@ -129,11 +152,11 @@ if(LS("cron:metas-seed", null) !== METAS_SEED){
       } else {
         _intocadas.push({mes:k, id:id, t:m.t, done:!!m.done});
       }
-    });
+    }
     save("cron:metas:"+k, atual);
   });
   save("cron:metas-seed-relatorio", {quando:new Date().toISOString(), seed:METAS_SEED,
-                                     trocadas:_trocadas, intocadas:_intocadas});
+                                     trocadas:_trocadas, retiradas:_retiradas, intocadas:_intocadas});
   save("cron:metas-seed", METAS_SEED);
 }
 renderOrdo(); renderHoje(); renderSemana(); renderTrilhos();

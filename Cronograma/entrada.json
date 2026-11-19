@@ -1,57 +1,10 @@
 {
  "_versao": 1,
- "_gerado_em": "2026-10-30T21:52:09Z",
+ "_gerado_em": "2026-11-19T12:29:26Z",
  "_o_que_e": "Estrutura das peças do Cronograma, escrita pelo Cowork a partir do que o pipeline produziu. A página lê no carregamento e mescla: a ENTRADA manda na estrutura (quais peças, quais subitens, os títulos), o TOQUE manda no progresso. Subitem que já existe não tem st nem vida alterados por aqui. O campo prova vem do mapa_portal.json: 'maquina' = o artefato prova; 'estrela' = exige decisao do autor, e o Cowork nao escreve toque sobre ela.",
- "_escritor": "Cowork. Não editar à mão.",
+ "_escritor": "Cowork, ou scripts/gerar_entrada_esteira.js a partir da semente. Não editar à mão.",
  "paineis": {
   "pipeline": [
-   {
-    "id": "a01",
-    "subs": [
-     {
-      "id": "a01-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a01-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a01-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a01-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a01-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a01-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a01-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
    {
     "id": "a02",
     "subs": [
@@ -100,507 +53,11 @@
     ]
    },
    {
-    "id": "a03",
-    "subs": [
-     {
-      "id": "a03-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a03-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a03-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a03-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a03-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a03-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a03-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a04",
-    "t": "Jan · O método exegético em Lutero",
-    "mes": "2027-01",
-    "n": "MTSR ou Síntese. Também é carta de entrevista. Parecer sobre o capítulo de Lutero da tese: Lutero não se reduz ao \"sola scriptura\", anacronismo que achata sua interpretação e projeta no fim da Idade Média um individualismo pietista do séc. XVII; ele está mergulhado nos Padres e na exegese medieval, às vezes usa alegoria (contra Ebeling) e muitas vezes usa a doutrina para ler o texto. O parecer destaca sua fórmula da \"organic hermeneutics\", em que teologia, ética e política formam o mesmo tecido, e diz que o método serve também contra o literalismo da política e das redes. Fonte: comentários do parecer (01_ACADEMICO/02_PRODUCAO/TESE_DOUTORADO/TESE).",
-    "subs": [
-     {
-      "id": "a04-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a04-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a04-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a04-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a04-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a04-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a04-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a05",
-    "t": "Fev · Interpretação bíblica em Lutero e Spinoza",
-    "mes": "2027-02",
-    "n": "Religion ou Journal of Early Modern Studies. Obriga Sheehan.",
-    "subs": [
-     {
-      "id": "a05-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a05-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a05-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a05-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a05-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a05-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a05-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a06",
-    "t": "Mar · Tolerância e libertas philosophandi",
-    "mes": "2027-03",
-    "n": "JAAR ou Intellectual History Review. Crítica da liberdade religiosa. Lembrete: o ensaio Berggruen (\"Depois de Lutero, antes de Spinoza\") está nas metas de abril: escrever e submeter.",
-    "subs": [
-     {
-      "id": "a06-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a06-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a06-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a06-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a06-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a06-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a06-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a07",
-    "t": "Abr · Spinoza, eco do luteranismo?",
-    "mes": "2027-04",
-    "n": "JAAR ou Kriterion. Em chave genealogica, não de influência. Schmitt, Blumenberg e Löwith.",
-    "subs": [
-     {
-      "id": "a07-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a07-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a07-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a07-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a07-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a07-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a07-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a08",
-    "t": "Mai · Aspectos ético-políticos do comentário aos Gálatas",
-    "mes": "2027-05",
-    "n": "Journal of Religious Ethics. Herdt, Stout e Schweiker. Embrião do pós-doc. Absorve \"a questão ética no luteranismo\". Parecer sobre o capítulo de Lutero da tese: os estudiosos de Lutero leem o Comentário maior aos Gálatas como negação de qualquer progresso moral, porque o foco seria só a graça; o parecer aplaude você mostrar que há progresso, que \"aprofunda a vida\" no espaço da fé, o que aproxima Lutero dos medievais, e uma justiça ativa compatível com as visões de justiça de não cristãos. Pergunta 2 do parecer: como o amor, que \"cumpre todas as leis\", se relaciona com a justiça, dado o peso da lei civil no capítulo? Sua resposta preliminar: amor e justiça pensados juntos, pelos dois reinos (interior e exterior); objeção que você mesmo deixou anotada: leis ou políticas teocráticas por se fundarem em conceitos bíblico-teológicos. Fonte: comentários do parecer.",
-    "subs": [
-     {
-      "id": "a08-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a08-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a08-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a08-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a08-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a08-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a08-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a09",
-    "t": "Jun · A teologia da glória como crítica da ideologia",
-    "mes": "2027-06",
-    "n": "Numen ou International Journal of Public Theology. Pergunta 1 do parecer: com o domínio do pecado, como o cristão decide quais visões de justiça promovem melhor o bem na sociedade? Uma doutrina robusta do pecado parece impedir o discernimento do bem, ou deixar as motivações cristãs sujeitas a autoengano, crueldade e até mal (o parecer cita o nacionalismo cristão americano). Sua resposta preliminar: pela teologia da cruz; quem promove crueldade e mal em nome do cristianismo não a aceitou nem a compreendeu. Fonte: comentários do parecer.",
-    "subs": [
-     {
-      "id": "a09-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a09-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a09-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a09-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a09-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a09-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a09-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a10",
-    "t": "Jul · Ebeling: a palavra como evento e os atos de fala",
-    "mes": "2027-07",
-    "n": "Síntese ou Estudos Teológicos. Absorve a ideia de \"proclamação\".",
-    "subs": [
-     {
-      "id": "a10-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a10-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a10-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a10-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a10-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a10-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a10-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a11",
-    "t": "Ago · As faculdades da alma de Aristóteles em Lutero",
-    "mes": "2027-08",
-    "n": "Cadernos de Filosofia Alemã ou Analytica.",
-    "subs": [
-     {
-      "id": "a11-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a11-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a11-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a11-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a11-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a11-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a11-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
-    "id": "a12",
-    "t": "Set · Spinoza, um filósofo do processo (E1p34)",
-    "mes": "2027-09",
-    "n": "Cadernos Espinosanos ou Journal of Early Modern Studies. Absorve \"conatus e agência\".",
-    "subs": [
-     {
-      "id": "a12-1",
-      "t": "Brainstorm",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     },
-     {
-      "id": "a12-2",
-      "t": "Janela 0 · planilha de corpus",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a12-3",
-      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a12-4",
-      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a12-4b",
-      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
-      "prova": "estrela",
-      "onde": "manual"
-     },
-     {
-      "id": "a12-5",
-      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
-      "onde": "cowork",
-      "prova": "maquina"
-     },
-     {
-      "id": "a12-6",
-      "t": "Janela 2 · .docx",
-      "onde": "escrivaninha",
-      "prova": "maquina"
-     }
-    ]
-   },
-   {
     "id": "a00",
-    "t": "Ago · Confusão de reinos: o patriotismo cristão brasileiro",
-    "mes": "2026-08",
-    "n": "Horizonte (PUC Minas, A1) ou Journal of Church and State. Artigo pré-existente, de nov/2025, importado como equivalente ao draft_1.1 — as Janelas de Brainstorm e o 1.0-FIL não se aplicam. Parado no 1.3-APL, esperando a verificação do corpus. Ordem de submissão em aberto: ela define APA 7 ou Chicago 17.",
+    "t": "Confusão de reinos: o patriotismo cristão brasileiro à luz da teologia política de Lutero",
+    "n": "PROFIX: meta 1 (mês 3, frente 4). Vai como está, para a Horizonte (PUC Minas, A1) ou o Journal of Church and State; a versão de filosofia é a meta 10. Artigo pré-existente, de nov/2025, importado como equivalente ao draft_1.1 — as Janelas de Brainstorm e o 1.0-FIL não se aplicam. Ordem de submissão em aberto: ela define APA 7 ou Chicago 17.",
+    "mes": "2027-03",
+    "slug": "patriotismo-cristao-lutero",
     "subs": [
      {
       "id": "a00-1",
@@ -662,14 +119,113 @@
       "motivo": "",
       "prova": "maquina"
      }
-    ],
-    "slug": "patriotismo-cristao-lutero"
+    ]
+   },
+   {
+    "id": "a01",
+    "t": "Uma categoria órfã: a dupla fundação heterônoma da liberdade de consciência em Lutero e Spinoza",
+    "n": "PROFIX: meta 1 (mês 3, frente 2). JAAR ou MTSR. Writing sample do Polo B. Obriga Asad, Mahmood, Sullivan e Hurd.",
+    "mes": "2027-03",
+    "subs": [
+     {
+      "id": "a01-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a01-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a01-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a01-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a01-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a01-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a01-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a07",
+    "t": "Abr · Spinoza, eco do luteranismo?",
+    "mes": "2027-04",
+    "n": "JAAR ou Kriterion. Em chave genealogica, não de influência. Schmitt, Blumenberg e Löwith.",
+    "subs": [
+     {
+      "id": "a07-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a07-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a07-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a07-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a07-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a07-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a07-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
    },
    {
     "id": "a13",
-    "t": "Nov · A politeia antes da queda",
-    "mes": "2026-11",
-    "n": "Periódico em aberto. A tese mais elogiada no parecer sobre o capítulo de Lutero da tese: a política tem dimensão pré e pós-lapsária, contra a leitura, apoiada no De civitate Dei, da politeia como medida de emergência depois da queda; a política é parte da boa criação, e depois da queda os dois reinos lhe dão esperança de transformação. Corpus: Von weltlicher Obrigkeit (1523), Comentário ao Salmo 82 (1530), Preleções sobre o Gênesis; categoria de paradoxo (lei natural universal e pré-lapsária × reino temporal). Material da tese: pouca leitura nova. Salmo 82 (ideia incorporada aqui): o parecer elogiou a ampliação do \"cânone\" luterano; ver no brainstorm se pede seção própria e se faz par com o a03 (Salmo 127). Fonte: comentários do parecer.",
+    "t": "A politeia antes da queda",
+    "n": "PROFIX: meta 2 (mês 6, frente 1). Introduz a tese de que, em Lutero, a política é constitutiva desde a criação, que o livro desenvolve (meta 11). Periódico em aberto. A tese mais elogiada no parecer sobre o capítulo de Lutero da tese: a política tem dimensão pré e pós-lapsária, contra a leitura, apoiada no De civitate Dei, da politeia como medida de emergência depois da queda; a política é parte da boa criação, e depois da queda os dois reinos lhe dão esperança de transformação. Corpus: Von weltlicher Obrigkeit (1523), Comentário ao Salmo 82 (1530), Preleções sobre o Gênesis; categoria de paradoxo (lei natural universal e pré-lapsária × reino temporal). Material da tese: pouca leitura nova. Salmo 82 (ideia incorporada aqui): o parecer elogiou a ampliação do \"cânone\" luterano; ver no brainstorm se pede seção própria e se faz par com o a03 (Salmo 127). Fonte: comentários do parecer.",
+    "mes": "2027-06",
     "subs": [
      {
       "id": "a13-1",
@@ -717,9 +273,9 @@
    },
    {
     "id": "a14",
-    "t": "Dez · O uso civil da lei como categoria política",
-    "mes": "2026-12",
-    "n": "Periódico em aberto. O parecer chama o foco na lei civil de \"huge contribution\": a tradição olha só para a função acusatória da lei e trata a lei civil como irrelevante para a teologia. Nas tradições medievais, lei natural equivale à lei civil; interlocutor: Antti Raunio. A lei civil como consequência da justificação, não meio de merecê-la; o evangelho contém a possibilidade de transformação social. Ressalva do parecer: perguntar se não cristãos obedecem à lei civil é anacrônico para Lutero, que via judeus e muçulmanos como pagãos, mas é valioso para o pluralismo atual; tratar como transposição. Fonte: comentários do parecer.",
+    "t": "O uso civil da lei como categoria política",
+    "n": "PROFIX: meta 2 (mês 6, frente 1). Periódico em aberto. O parecer chama o foco na lei civil de \"huge contribution\": a tradição olha só para a função acusatória da lei e trata a lei civil como irrelevante para a teologia. Nas tradições medievais, lei natural equivale à lei civil; interlocutor: Antti Raunio. A lei civil como consequência da justificação, não meio de merecê-la; o evangelho contém a possibilidade de transformação social. Ressalva do parecer: perguntar se não cristãos obedecem à lei civil é anacrônico para Lutero, que via judeus e muçulmanos como pagãos, mas é valioso para o pluralismo atual; tratar como transposição. Fonte: comentários do parecer.",
+    "mes": "2027-06",
     "subs": [
      {
       "id": "a14-1",
@@ -759,6 +315,606 @@
      },
      {
       "id": "a14-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a03",
+    "t": "Como se Deus não existisse: Lutero, o Salmo 127 e a forma luterana do secular",
+    "n": "PROFIX: meta 3 (mês 9, frente 1). Lê na exposição do Salmo 127 a regra de agir no ofício como se não houvesse Deus. Periódico em aberto.",
+    "mes": "2027-09",
+    "subs": [
+     {
+      "id": "a03-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a03-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a03-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a03-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a03-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a03-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a03-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a08",
+    "t": "Aspectos ético-políticos do comentário aos Gálatas",
+    "n": "PROFIX: meta 4 (mês 12, frente 1), periódico estrangeiro. Journal of Religious Ethics. Herdt, Stout e Schweiker. Embrião do pós-doc. Absorve \"a questão ética no luteranismo\". Parecer sobre o capítulo de Lutero da tese: os estudiosos de Lutero leem o Comentário maior aos Gálatas como negação de qualquer progresso moral, porque o foco seria só a graça; o parecer aplaude você mostrar que há progresso, que \"aprofunda a vida\" no espaço da fé, o que aproxima Lutero dos medievais, e uma justiça ativa compatível com as visões de justiça de não cristãos. Pergunta 2 do parecer: como o amor, que \"cumpre todas as leis\", se relaciona com a justiça, dado o peso da lei civil no capítulo? Sua resposta preliminar: amor e justiça pensados juntos, pelos dois reinos (interior e exterior); objeção que você mesmo deixou anotada: leis ou políticas teocráticas por se fundarem em conceitos bíblico-teológicos. Fonte: comentários do parecer.",
+    "mes": "2027-12",
+    "subs": [
+     {
+      "id": "a08-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a08-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a08-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a08-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a08-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a08-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a08-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a06",
+    "t": "Tolerância e libertas philosophandi",
+    "n": "PROFIX: meta 5 (mês 18, frente 2), periódico estrangeiro. Leva a análise da liberdade de consciência ao plano político-jurídico. JAAR ou Intellectual History Review. Crítica da liberdade religiosa. Lembrete: o ensaio Berggruen (\"Depois de Lutero, antes de Spinoza\") está nas metas de abril: escrever e submeter.",
+    "mes": "2028-06",
+    "subs": [
+     {
+      "id": "a06-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a06-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a06-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a06-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a06-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a06-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a06-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a16",
+    "t": "Fundamento involuntarista e meios indiretos (título a definir)",
+    "n": "PROFIX: meta 6 (mês 24, frente 2). Desenvolve o fundamento involuntarista da incoercibilidade do foro interno e responde à objeção dos meios indiretos (objetivo 2): é o centro normativo do projeto. O fecho de \"Uma categoria órfã\" anuncia este trabalho. Título e periódico em aberto.",
+    "mes": "2028-12",
+    "subs": [
+     {
+      "id": "a16-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a16-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a16-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a16-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a16-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a16-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a16-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a05",
+    "t": "Interpretação bíblica em Lutero e Spinoza",
+    "n": "PROFIX: meta 7 (mês 30, frente 3), periódico estrangeiro. Religion ou Journal of Early Modern Studies. Obriga Sheehan.",
+    "mes": "2029-06",
+    "subs": [
+     {
+      "id": "a05-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a05-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a05-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a05-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a05-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a05-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a05-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a15",
+    "t": "Imanência e transcendência: teologia política em Spinoza e Lutero",
+    "n": "PROFIX: meta 8 (mês 36, frente 3). É nele que se decide a contraprova (objetivo 3). Entra no lugar da a07, que saiu do projeto em 06/11. Periódico em aberto.",
+    "mes": "2029-12",
+    "subs": [
+     {
+      "id": "a15-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a15-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a15-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a15-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a15-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a15-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a15-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a09",
+    "t": "A crítica da teologia da glória como crítica da ideologia",
+    "n": "PROFIX: meta 9 (mês 42, frente 4). Numen ou International Journal of Public Theology. Pergunta 1 do parecer: com o domínio do pecado, como o cristão decide quais visões de justiça promovem melhor o bem na sociedade? Uma doutrina robusta do pecado parece impedir o discernimento do bem, ou deixar as motivações cristãs sujeitas a autoengano, crueldade e até mal (o parecer cita o nacionalismo cristão americano). Sua resposta preliminar: pela teologia da cruz; quem promove crueldade e mal em nome do cristianismo não a aceitou nem a compreendeu. Fonte: comentários do parecer.",
+    "mes": "2030-06",
+    "subs": [
+     {
+      "id": "a09-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a09-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a09-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a09-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a09-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a09-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a09-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a17",
+    "t": "Nacionalismo cristão e idolatria política: uma análise conceitual",
+    "n": "PROFIX: meta 10 (mês 48, frente 4). Versão de filosofia do tema do artigo do patriotismo: aplica o critério ao discurso público brasileiro e o põe à prova contra as invocações de Deus de qualquer orientação política (objetivo 4). Periódico em aberto.",
+    "mes": "2030-12",
+    "subs": [
+     {
+      "id": "a17-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a17-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a17-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a17-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a17-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a17-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a17-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a04",
+    "t": "O método exegético em Lutero",
+    "n": "MTSR ou Síntese. Também é carta de entrevista. Parecer sobre o capítulo de Lutero da tese: Lutero não se reduz ao \"sola scriptura\", anacronismo que achata sua interpretação e projeta no fim da Idade Média um individualismo pietista do séc. XVII; ele está mergulhado nos Padres e na exegese medieval, às vezes usa alegoria (contra Ebeling) e muitas vezes usa a doutrina para ler o texto. O parecer destaca sua fórmula da \"organic hermeneutics\", em que teologia, ética e política formam o mesmo tecido, e diz que o método serve também contra o literalismo da política e das redes. Fonte: comentários do parecer (01_ACADEMICO/02_PRODUCAO/TESE_DOUTORADO/TESE).",
+    "mes": "2031-01",
+    "subs": [
+     {
+      "id": "a04-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a04-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a04-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a04-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a04-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a04-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a04-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a10",
+    "t": "Ebeling: a palavra como evento e os atos de fala",
+    "n": "Síntese ou Estudos Teológicos. Absorve a ideia de \"proclamação\".",
+    "mes": "2031-02",
+    "subs": [
+     {
+      "id": "a10-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a10-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a10-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a10-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a10-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a10-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a10-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a11",
+    "t": "As faculdades da alma de Aristóteles em Lutero",
+    "n": "Cadernos de Filosofia Alemã ou Analytica.",
+    "mes": "2031-03",
+    "subs": [
+     {
+      "id": "a11-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a11-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a11-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a11-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a11-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a11-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a11-6",
+      "t": "Janela 2 · .docx",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     }
+    ]
+   },
+   {
+    "id": "a12",
+    "t": "Spinoza, um filósofo do processo (E1p34)",
+    "n": "Cadernos Espinosanos ou Journal of Early Modern Studies. Absorve \"conatus e agência\".",
+    "mes": "2031-04",
+    "subs": [
+     {
+      "id": "a12-1",
+      "t": "Brainstorm",
+      "onde": "escrivaninha",
+      "prova": "maquina"
+     },
+     {
+      "id": "a12-2",
+      "t": "Janela 0 · planilha de corpus",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a12-3",
+      "t": "Janela 0 · 1.0-FIL · mapa argumentativo",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a12-4",
+      "t": "Janela 1 · 1.1-FIL até 1.3-APL · draft e aparato",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a12-4b",
+      "t": "NotebookLM · 2.0 a 2.3 · verificação de fontes",
+      "prova": "estrela",
+      "onde": "manual"
+     },
+     {
+      "id": "a12-5",
+      "t": "Janela 2 · 1.3b até 3.4-APL · calibração e auditoria",
+      "onde": "cowork",
+      "prova": "maquina"
+     },
+     {
+      "id": "a12-6",
       "t": "Janela 2 · .docx",
       "onde": "escrivaninha",
       "prova": "maquina"

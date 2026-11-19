@@ -906,6 +906,98 @@ function projConcluido(p){
   var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel" && !estaArquivado(x); });
   return conta.length > 0 && conta.every(function(x){ return x.st === 2; });
 }
+/* ====== O MES SAI DO TITULO E ENTRA NO CARTAO (18/11/2026) ======
+
+   O titulo da peca carregava o mes por extenso ("Out · A genealogia..."), e o
+   mes ja e um campo, o `mes`, que e quem ordena o painel, acusa atraso e liga a
+   peca a entrega do mes. Eram duas copias do mesmo dado, e a escrita a mao
+   ficava para tras na primeira mudanca de calendario: em 31/10 nove titulos
+   tiveram de ser reescritos porque as pecas andaram dois meses.
+
+   AGORA o cartao mostra o mes lido do `mes`, e o titulo e so o titulo. O
+   prefixo antigo e tirado NA TELA enquanto a publicacao nova nao chega, e so de
+   peca que tem `mes`: um titulo de outro painel que comece por "Mar · " nao e
+   mes nenhum, e fica como esta. */
+var PREFIXO_MES = /^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\s*·\s*/i;
+function tituloDaPeca(p){
+  var t = (p && p.t) || "";
+  return (p && p.mes) ? t.replace(PREFIXO_MES, "") : t;
+}
+/* "2026-11" -> "nov/26", a forma que o subtitulo da esteira sempre usou. */
+function mesAbrev(k){
+  var m = /^(\d{4})-(\d{2})$/.exec(String(k || ""));
+  if(!m) return "";
+  var nomes = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  return (nomes[Number(m[2]) - 1] || "") + "/" + m[1].slice(2);
+}
+/* "2026-11-03" (ou um ISO inteiro) -> "03/11/2026". */
+function dataCurta(iso){
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+  return m ? m[3] + "/" + m[2] + "/" + m[1] : "";
+}
+
+/* ====== A PECA CONCLUIDA SAI DA ESTEIRA (18/11/2026) ======
+
+   A esteira e uma FILA: o que esta pronto ja nao pede nada dela. A peca cuja
+   etapa que conta esta toda concluida sai do painel e vai para "Encerrados",
+   ao lado das arquivadas, com a data em que ficou pronta.
+
+   NAO E UM ESTADO NOVO, e um FILTRO, como o arquivo. "Concluida" e o mesmo
+   projConcluido() que o pecaDoMes e o entregaDosArtigos ja usam, calculado do
+   andamento das etapas — e o andamento ja atravessa aparelhos pelo `item`.
+   Por isso a peca sai da esteira em todo aparelho ao mesmo tempo, sem campo
+   novo e sem toque novo; e volta sozinha se uma etapa for reaberta.
+
+   SO NOS PAINEIS QUE PEDEM (`concluidosSaem` no PAINEIS). Hoje, so a esteira:
+   nos outros, um bloco concluido costuma servir de consulta (a lista de
+   documentos do pos-doc, por exemplo), e sumir com ele seria uma surpresa. */
+function concluidosSaem(pid){ var P = painelDef(pid); return !!(P && P.concluidosSaem); }
+/* O que o painel desenha: os vivos e, onde a regra vale, so os nao concluidos. */
+function naFila(pid, lista){
+  var v = vivos(lista);
+  return concluidosSaem(pid) ? v.filter(function(p){ return !projConcluido(p); }) : v;
+}
+/* A DATA EM QUE A PECA FICOU PRONTA e a da ULTIMA etapa que conta a ser
+   concluida. O instante vem do `em` da etapa, o mesmo que o `item` carrega
+   entre aparelhos; na falta dele (etapa fechada antes da Fase 9), do registro
+   datado, que guarda cada conclusao com o dia. Sem nenhum dos dois, vazio: a
+   tela diz "concluido" sem inventar data. */
+function dataDeConclusao(pid, p){
+  var conta = (p && p.subs || []).filter(function(x){ return x.vida !== "inaplicavel" && !estaArquivado(x); });
+  var maior = "";
+  conta.forEach(function(x){ var d = String(x.em || "").slice(0, 10); if(d > maior) maior = d; });
+  if(maior) return maior;
+  (getReg() || []).forEach(function(o){
+    if(o && o.pid === pid && o.projId === p.id && o.para === 2 && String(o.d || "") > maior) maior = String(o.d);
+  });
+  return maior;
+}
+/* As pecas concluidas dos paineis onde elas saem da fila, com a data. */
+function concluidas(){
+  var fora = [];
+  PAINEIS.forEach(function(P){
+    if(!P.concluidosSaem) return;
+    vivos(getProjs(P.id) || []).forEach(function(p){
+      if(!projConcluido(p)) return;
+      fora.push({pid:P.id, projId:p.id, t:tituloDaPeca(p), quando:dataDeConclusao(P.id, p)});
+    });
+  });
+  return fora;
+}
+/* O subtitulo do painel. Na esteira ele CONTA o que esta na fila e diz de que
+   mes a que mes ela vai — era um texto fixo ("14 pecas · ago/26 a set/27") que
+   ficava errado a cada peca que entrava, saia ou mudava de mes. Nos outros
+   paineis, o texto de sempre. */
+function subDoPainel(P){
+  if(!P || !P.concluidosSaem) return P ? P.sub : "";
+  var fila = naFila(P.id, getProjs(P.id) || []);
+  if(!fila.length) return "nenhuma peça na fila";
+  var meses = fila.map(function(p){ return p.mes; }).filter(Boolean).sort();
+  var conta = fila.length + (fila.length === 1 ? " peça" : " peças");
+  if(!meses.length) return conta;
+  var de = mesAbrev(meses[0]), ate = mesAbrev(meses[meses.length - 1]);
+  return conta + " · " + (de === ate ? de : de + " a " + ate);
+}
 /* A PECA CORRENTE DA ESTEIRA — e por que ela deixou de ser "a peca do mes".
 
    ANTES: `mes === monthKey`. A esteira avancava porque o calendario virou. Em
@@ -934,7 +1026,7 @@ function pecaDoMes(){
     if(p.subs[j].st!==2){etapa=p.subs[j].t;break;}
   }
   var atraso = (p.mes && p.mes < monthKey) ? mesesEntre(p.mes, monthKey) : 0;
-  return {id:p.id, curto:p.t.replace(/^[^\u00b7]*\u00b7\s*/,""), mes:p.mes,
+  return {id:p.id, curto:tituloDaPeca(p), mes:p.mes,
           proxima: !!(p.mes && p.mes > monthKey), atraso: atraso,
           etapa: etapa || "pronta para submeter"};
 }

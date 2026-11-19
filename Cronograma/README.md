@@ -2143,6 +2143,80 @@ no backup.
 Testes: `teste_sync.js`, seções 77 e 78. As seções 75 e 76 partem agora do
 estado dos aparelhos de hoje, e não da semente, que já traz a esteira nova.
 
+#### O mês sai do título, e a peça concluída sai da esteira (2026-11-18)
+
+**O mês é lido do campo, e não do título.** O título da peça carregava o mês
+por extenso ("Out · A genealogia…"), e o mês já é o campo `mes`, que ordena o
+painel, acusa atraso e liga a peça à entrega do mês. Duas cópias do mesmo
+dado, e a escrita à mão ficava para trás: em 31/10 nove títulos tiveram de ser
+reescritos porque as peças andaram dois meses. Agora o cartão mostra o mês
+(`mesAbrev`, "nov/26") ao lado do contador, e o título é só o título. Enquanto
+a publicação nova não chega, o prefixo antigo é tirado **na tela**
+(`tituloDaPeca`), e só de peça que tem `mes`. O `editProj` ignora o texto igual
+ao que a tela mostra: sem isso, tocar no título e sair gravaria a versão sem o
+prefixo como edição sua. O `curto` do Hoje usa a mesma função, e o subtítulo da
+esteira deixou de ser texto fixo: `subDoPainel` conta a fila e diz de que mês a
+que mês ela vai.
+
+**A peça concluída sai da fila.** Nos painéis com `concluidosSaem` (hoje, só a
+esteira), a peça cuja etapa que conta está toda concluída sai do painel
+(`naFila`). Não é estado novo: é o mesmo `projConcluido()` do `pecaDoMes`,
+calculado do andamento, que já atravessa aparelhos pelo `item` — então a peça
+sai em todo aparelho ao mesmo tempo, sem campo nem toque novo, e volta sozinha
+se uma etapa for reaberta. Nos outros painéis um bloco concluído costuma servir
+de consulta, e fica onde está.
+
+**A seção "Arquivo" virou "Encerrados".** Ela junta as duas saídas da fila: a
+peça concluída, com a data em que ficou pronta (`dataDeConclusao`: o `em` da
+última etapa que conta; na falta, o registro datado), e o item arquivado, de
+qualquer painel, com a data em que foi arquivado (`vidaDesde`). Antes ela
+mostrava só o dia do mês. A concluída abre e mostra as etapas com o mesmo ponto
+do painel, que é como se reabre; a arquivada tem o botão restaurar. Os ids do
+HTML (`#arquivo`, `#painel-arquivo`) e a chave `cron:painel-open:arquivo` não
+mudaram, para não perder o aberto/fechado de cada aparelho.
+
+Testes: `teste_sync.js`, seção 79.
+
+#### A esteira segue o PROFIX (2026-11-19)
+
+**O mês de cada artigo é o da sua meta no projeto PROFIX-RJ**, que é o mês da
+submissão, e não mais uma peça por mês. Os meses sem meta ficam vazios. As
+peças que não estão no projeto (a04, a10, a11, a12) vão para o fim da fila, uma
+por mês, nos meses 49 a 52. A tabela mora no `00-config.js`: `PROFIX_ESTEIRA`
+(peça, meta, mês do projeto) e `ESTEIRA_DEPOIS`.
+
+**Os meses do projeto contam do depósito da primeira parcela**, que ainda não
+aconteceu. `PROFIX_INICIO` é o mês 1, **provisório** (jan/27) até o depósito, e
+`mesDoProfix(n)` é a única conta. Quando o depósito sair:
+
+1. trocar o `PROFIX_INICIO` e pôr o `ROTEIRO` de agora no `ROTEIRO_ANTERIOR`;
+2. `node scripts/gerar_entrada_esteira.js /caminho/entrada-nova.json` — monta a
+   estrutura com título, nota e mês da semente, e as etapas do arquivo publicado;
+3. publicar (`dobrar_toques.py --publicar-estrutura`, ou a mesma função
+   `cron_publicar_estrutura` pelo conector), e só então o `entrada.json` vai
+   para a `main`.
+
+Todas as peças andam juntas, e nenhuma passa à frente de outra.
+
+**A semente acompanha.** Títulos sem o mês; notas com "PROFIX: meta N (mês X,
+frente Y)"; a00 entra na semente (antes só vinha pela entrada) com a etapa que
+não se aplica; a15, a16 e a17 são novas; a02 e a07 nascem arquivadas.
+
+**As entregas do mês também.** Só tem entrega o mês em que cai uma meta, e a
+entrega é *submeter*. O `ROTEIRO` é calculado da mesma tabela; os três meses que
+já passaram ficam como estavam. O ensaio Berggruen continua em abril de 2027, no
+índice 1 de sempre, e se soma ao que cair em abril. O seed passou a **retirar**
+a entrega semeada intocada cujo índice ficou vazio (com lápide, pelo SYNC), além
+de trocar a que ganhou outra: novembro e dezembro de 2026 perdem a entrega, e a
+de abril da a07 sai. A editada, a concluída e a trazida ficam, no relatório.
+
+Primeira publicação por este caminho: 19/11/2026, pelo conector do Supabase
+(`select * from cron_publicar_estrutura(...)`), com autorização do autor.
+
+Testes: `teste_sync.js`, seções 77 e 78 (reescritas), 70, 71 e 75 (passam a
+escolher peças vivas); `teste_hoje.js`, as seções que usavam a a02 e a a07
+como peças ativas.
+
 ### 9G-0 B2 — O `cron:arquivo` aposentado
 
 Arquivar era um **mecanismo próprio**: `splice` no array mais uma gaveta

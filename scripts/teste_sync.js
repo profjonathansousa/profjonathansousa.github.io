@@ -3184,7 +3184,8 @@ console.log("\n=== 69. Arquivar virou `vida`, e a posicao foi aposentada (9G-0 B
 console.log("\n=== 70. O que a peca arquivada NAO faz mais (9G-0 B2) ===");
 {
   const A = criarAparelho("mac", criarServidor());
-  const pr = (A.getProjs("pipeline") || [])[0];
+  /* A primeira peca VIVA: desde 19/11/2026 a semente traz a a02 arquivada. */
+  const pr = A.vivos(A.getProjs("pipeline") || [])[0];
   const subId = pr.subs[0].id;
 
   const antesEtapa = A.estagioDoTrilho("pipeline", pr.id);
@@ -3260,7 +3261,9 @@ console.log("\n=== 71. A gaveta `cron:arquivo` foi aposentada (9G-0 B2) ===");
   const pz = projs.find(p => p.id === "aZZ");
   ok(!!pz && pz.vida === "arquivado", "e o projeto tambem", pz && pz.vida);
   ok((pz.subs || []).length === 1, "com os subitens que tinha", pz && pz.subs.length);
-  ok(A.arquivados().length === 2, "e os dois aparecem na aba Arquivo", A.arquivados().length);
+  /* So os dois da gaveta: a semente de 19/11/2026 ja traz a02 e a07 arquivadas. */
+  const daGaveta = A.arquivados().filter(x => x.subId === "a01-9" || (x.tipo === "projeto" && x.projId === "aZZ"));
+  ok(daGaveta.length === 2, "e os dois aparecem na aba Arquivo", A.arquivados());
 
   /* NAO PUBLICA TOQUE: o arquivamento antigo nunca atravessou aparelho. */
 
@@ -3682,10 +3685,13 @@ console.log("\n=== 75. A entrada move o mes da peca (30/10/2026) ===");
          nao a semente, que desde 30/10 ja traz a esteira nova: a peca que anda
          esta no mes antigo, e as duas novas ainda nao existem. */
   const A = criarAparelho("mac", srv);
-  const MES_ANTIGO = {a04: "2026-11", a05: "2026-12", a06: "2027-01", a07: "2027-02", a08: "2027-03",
+  /* Desde 19/11/2026 a semente segue o PROFIX: o aparelho de 30/10 e montado
+     com os meses de entao, de a01 a a12, todas vivas. */
+  const MES_ANTIGO = {a01: "2026-08", a02: "2026-09", a03: "2026-10",
+                      a04: "2026-11", a05: "2026-12", a06: "2027-01", a07: "2027-02", a08: "2027-03",
                       a09: "2027-04", a10: "2027-05", a11: "2027-06", a12: "2027-07"};
-  const deHoje = A.getProjs("pipeline").filter(p => p.id !== "a13" && p.id !== "a14");
-  deHoje.forEach(p => { if (MES_ANTIGO[p.id]) p.mes = MES_ANTIGO[p.id]; });
+  const deHoje = A.getProjs("pipeline").filter(p => MES_ANTIGO[p.id]);
+  deHoje.forEach(p => { p.mes = MES_ANTIGO[p.id]; p.vida = "ativo"; });
   deHoje.sort((a, b) => a.mes === b.mes ? (a.id < b.id ? -1 : 1) : (a.mes < b.mes ? -1 : 1));
   A.setProjs("pipeline", deHoje);
   ok(mesDe(A, "a04") === "2026-11", "1. o a04 comeca em novembro, como nos aparelhos de hoje", mesDe(A, "a04"));
@@ -3825,105 +3831,221 @@ console.log("\n=== 76. A copia da base nunca fica a frente da entrada aplicada (
      "5. aparelho sem entrada aplicada nao guarda a base", r);
 }
 
-console.log("\n=== 77. A entrega semeada que ninguem tocou e trocada pelo caminho das metas (30/10/2026) ===");
+console.log("\n=== 77. As entregas do mes seguem o PROFIX: troca, retira e preserva (19/11/2026) ===");
 {
-  /* A esteira andou, e o seed so acrescenta por id ausente: sem a troca, a meta
-     ja semeada de novembro diria para sempre "O metodo exegetico". So muda a
-     que ninguem tocou, e pelo mesmo par da edicao — setMetas + tocarMeta —,
-     para atravessar aparelhos. */
+  /* A esteira passou ao cronograma do PROFIX. O seed so acrescenta por id
+     ausente; para o que JA foi semeado, ele troca a entrega que ninguem tocou
+     quando o mes ganhou outra no mesmo indice, e a RETIRA quando o indice
+     ficou vazio. As duas coisas pelo caminho de uma edicao sua (setMetas +
+     tocarMeta), para atravessar aparelhos. A editada, a concluida e a trazida
+     ficam como estao. */
   const srv = criarServidor();
   const R = vm.runInContext("({novo: ROTEIRO, antigo: ROTEIRO_ANTERIOR, seed: METAS_SEED})",
                             criarAparelho("leitor", srv));
+  /* O aparelho de hoje: o seed de 30/10 aplicado. */
   const inicial = () => ({
-    "cron:metas-seed": JSON.stringify("2027-07-esteira-12"),
+    "cron:metas-seed": JSON.stringify("2027-09-esteira-14"),
     "cron:metas:2026-11": JSON.stringify([{id: "art-2026-11-0", t: R.antigo["2026-11"][0], done: false}]),
     "cron:metas:2026-12": JSON.stringify([{id: "art-2026-12-0", t: "Entrega de dezembro: o texto que eu escrevi", done: false}]),
     "cron:metas:2027-01": JSON.stringify([{id: "art-2027-01-0", t: R.antigo["2027-01"][0], done: true}]),
-    "cron:metas:2027-03": JSON.stringify([{id: "art-2027-03-0", t: R.antigo["2027-03"][0], done: false, de: "2027-02"}]),
+    "cron:metas:2027-02": JSON.stringify([{id: "art-2027-02-0", t: R.antigo["2027-02"][0], done: false, de: "2027-01"}]),
+    "cron:metas:2027-03": JSON.stringify([{id: "art-2027-03-0", t: R.antigo["2027-03"][0], done: false}]),
     "cron:metas:2027-04": JSON.stringify([
       {id: "art-2027-04-0", t: R.antigo["2027-04"][0], done: false},
-      {id: "art-2027-04-1", t: R.novo["2027-04"][1], done: false},
-      {id: "m1", t: "uma meta minha de abril", done: false}])
+      {id: "art-2027-04-1", t: R.antigo["2027-04"][1], done: false},
+      {id: "m1", t: "uma meta minha de abril", done: false}]),
+    "cron:metas:2027-05": JSON.stringify([{id: "art-2027-05-0", t: R.antigo["2027-05"][0], done: false}])
   });
   const meta = (D, mes, id) => (D.getMetas(mes) || []).find(m => m.id === id) || null;
   const filaMeta = (D) => (D.LS("cron:sync-fila", []) || []).filter(x => x.dominio === "meta").map(x => x.chave).sort();
 
+  ok(!R.novo["2026-11"] && !R.novo["2026-12"] && R.novo["2027-04"][0] === null &&
+     R.novo["2027-04"][1] === "Ensaio Berggruen: escrever e submeter",
+     "0. o roteiro novo: novembro e dezembro sem entrega; abril so com o Berggruen, no indice de sempre",
+     {nov: R.novo["2026-11"], abr: R.novo["2027-04"]});
+
   const A = criarAparelho("mac", srv, {storage: inicial()});
-  ok(meta(A, "2026-11", "art-2026-11-0").t === R.novo["2026-11"][0],
-     "1. a semeada intocada de novembro passa a ser a entrega nova", meta(A, "2026-11", "art-2026-11-0"));
-  ok(meta(A, "2027-04", "art-2027-04-0").t === R.novo["2027-04"][0], "   e a de abril tambem",
-     meta(A, "2027-04", "art-2027-04-0"));
+  ok(!meta(A, "2026-11", "art-2026-11-0") && !meta(A, "2027-05", "art-2027-05-0"),
+     "1. a entrega semeada intocada de um mes que ficou sem meta e retirada",
+     {nov: A.getMetas("2026-11"), mai: A.getMetas("2027-05")});
+  ok(!meta(A, "2027-04", "art-2027-04-0"), "   a de abril tambem (era a a07, que saiu)");
+  ok(meta(A, "2027-03", "art-2027-03-0").t === R.novo["2027-03"][0],
+     "2. a do mes que ganhou outra meta e trocada", meta(A, "2027-03", "art-2027-03-0"));
+  ok((meta(A, "2027-03", "art-2027-03-1") || {}).t === R.novo["2027-03"][1],
+     "   e a segunda meta do mes nasce", meta(A, "2027-03", "art-2027-03-1"));
+  ok(meta(A, "2027-04", "art-2027-04-1").t === "Ensaio Berggruen: escrever e submeter" &&
+     meta(A, "2027-04", "m1").t === "uma meta minha de abril" && A.getMetas("2027-04").length === 2,
+     "3. o ensaio Berggruen fica em abril, sem o 'meta unica', e a sua meta de abril fica",
+     A.getMetas("2027-04"));
   ok(meta(A, "2026-12", "art-2026-12-0").t === "Entrega de dezembro: o texto que eu escrevi",
-     "2. a que voce editou fica como esta");
-  ok(meta(A, "2027-01", "art-2027-01-0").t === R.antigo["2027-01"][0] && meta(A, "2027-01", "art-2027-01-0").done === true,
-     "   a concluida tambem");
-  ok(meta(A, "2027-03", "art-2027-03-0").t === R.antigo["2027-03"][0], "   e a trazida de outro mes tambem");
-  ok(meta(A, "2027-04", "art-2027-04-1").t === R.novo["2027-04"][1] &&
-     meta(A, "2027-04", "m1").t === "uma meta minha de abril",
-     "   o ensaio Berggruen e a meta sua de abril ficam");
-  ok(A.getMetas("2027-04").length === 3, "   sem duplicar nada", A.getMetas("2027-04").map(m => m.id));
-  ok((meta(A, "2027-05", "art-2027-05-0") || {}).t === R.novo["2027-05"][0] &&
-     (meta(A, "2027-09", "art-2027-09-0") || {}).t === R.novo["2027-09"][0],
-     "3. o mes sem meta semeada nasce com a entrega nova, ate setembro de 2027");
-  ok(JSON.stringify(filaMeta(A)) === JSON.stringify(["2026-11/art-2026-11-0", "2027-04/art-2027-04-0"]),
-     "4. so as trocadas sobem, pelo SYNC", filaMeta(A));
-  const item = (A.LS("cron:sync-fila", []) || []).find(x => x.chave === "2026-11/art-2026-11-0");
-  ok(item && item.valor.t === R.novo["2026-11"][0] && item.valor.done === false &&
-     item.em === meta(A, "2026-11", "art-2026-11-0").em,
-     "   com o texto novo e o MESMO instante da meta no aparelho", item);
+     "4. a que voce editou fica como esta");
+  ok(meta(A, "2027-01", "art-2027-01-0").done === true, "   a concluida tambem");
+  ok(meta(A, "2027-02", "art-2027-02-0").t === R.antigo["2027-02"][0], "   e a trazida de outro mes tambem");
+  ok((meta(A, "2027-09", "art-2027-09-0") || {}).t === R.novo["2027-09"][0] &&
+     (meta(A, "2030-12", "art-2030-12-0") || {}).t === R.novo["2030-12"][0],
+     "5. o mes da meta que nao tinha entrega semeada nasce com ela, ate o mes 48",
+     [meta(A, "2027-09", "art-2027-09-0"), meta(A, "2030-12", "art-2030-12-0")]);
+  const esperadas = ["2026-11/art-2026-11-0", "2027-03/art-2027-03-0", "2027-04/art-2027-04-0",
+                     "2027-04/art-2027-04-1", "2027-05/art-2027-05-0"];
+  ok(JSON.stringify(filaMeta(A)) === JSON.stringify(esperadas),
+     "6. so as trocadas e as retiradas sobem, pelo SYNC", filaMeta(A));
+  const fila = (A.LS("cron:sync-fila", []) || []).filter(x => x.dominio === "meta");
+  ok(fila.filter(x => x.del).map(x => x.chave).sort().join(" ") ===
+     "2026-11/art-2026-11-0 2027-04/art-2027-04-0 2027-05/art-2027-05-0",
+     "   e as retiradas sobem como lapide", fila.map(x => [x.chave, x.del]));
   const rel = A.LS("cron:metas-seed-relatorio", null) || {};
-  ok(JSON.stringify(rel.trocadas) === JSON.stringify(["2026-11/art-2026-11-0", "2027-04/art-2027-04-0"]) &&
-     (rel.intocadas || []).map(x => x.id).join(" ") === "art-2026-12-0 art-2027-01-0 art-2027-03-0",
-     "5. o relatorio diz o que trocou e o que nao tocou", rel);
+  ok(JSON.stringify((rel.trocadas || []).slice().sort()) === JSON.stringify(["2027-03/art-2027-03-0", "2027-04/art-2027-04-1"]) &&
+     JSON.stringify((rel.retiradas || []).slice().sort()) ===
+       JSON.stringify(["2026-11/art-2026-11-0", "2027-04/art-2027-04-0", "2027-05/art-2027-05-0"]) &&
+     (rel.intocadas || []).map(x => x.id).sort().join(" ") === "art-2026-12-0 art-2027-01-0 art-2027-02-0",
+     "7. o relatorio diz o que trocou, o que retirou e o que nao tocou", rel);
   ok(A.LS("cron:metas-seed", null) === R.seed, "   e a marca do seed avancou");
 
   A.__conectar();
   await A.SYNC.drenarFila();
-  const linhasNov = () => srv.linhas.filter(l => l.dominio === "meta" && l.chave === "2026-11/art-2026-11-0");
-  ok(linhasNov().length === 1 && linhasNov()[0].valor.t === R.novo["2026-11"][0],
-     "6. no estado compartilhado, uma linha com a entrega nova", linhasNov());
+  const linha = (k) => srv.linhas.filter(l => l.dominio === "meta" && l.chave === k);
+  ok(linha("2026-11/art-2026-11-0").length === 1 && linha("2026-11/art-2026-11-0")[0].del === true,
+     "8. no estado compartilhado, a retirada e uma lapide", linha("2026-11/art-2026-11-0"));
 
   /* IDEMPOTENTE: rodar de novo, mesmo sem a marca do seed, nao sobe nada. */
   const arm = Object.assign({}, A.__armazem);
   delete arm["cron:metas-seed"]; delete arm["cron:sync-fila"];
   const A2 = criarAparelho("mac", srv, {storage: arm});
-  ok(filaMeta(A2).length === 0, "7. rodar de novo nao sobe nada: a trocada ja tem o texto novo", filaMeta(A2));
+  ok(filaMeta(A2).length === 0, "9. rodar de novo nao sobe nada", filaMeta(A2));
 
-  /* O OUTRO APARELHO, partindo do mesmo estado, troca o mesmo: o estado
-     compartilhado continua com uma linha por meta, e o valor e o mesmo. */
+  /* O OUTRO APARELHO, partindo do mesmo estado, chega as mesmas chaves. */
   const B = criarAparelho("iphone", srv, {storage: inicial()}).__conectar();
   await B.SYNC.drenarFila();
-  ok(linhasNov().length === 1 && linhasNov()[0].valor.t === R.novo["2026-11"][0],
-     "8. dois aparelhos: uma linha so, com o mesmo valor", linhasNov());
-  ok(B.getMetas("2026-11").filter(m => m.id === "art-2026-11-0").length === 1,
-     "   e uma meta so em cada aparelho");
-
-  /* O APARELHO QUE JA RECEBEU A TROCA DO OUTRO nao a republica nem a lista. */
-  const C = criarAparelho("terceiro", srv, {storage: Object.assign(inicial(), {
-    "cron:metas:2026-11": JSON.stringify([{id: "art-2026-11-0", t: R.novo["2026-11"][0], done: false,
-                                           em: linhasNov()[0].em}])
-  })});
-  ok(filaMeta(C).indexOf("2026-11/art-2026-11-0") < 0,
-     "9. a meta que chegou trocada do outro aparelho nao sobe de novo", filaMeta(C));
-  ok(((C.LS("cron:metas-seed-relatorio", null) || {}).intocadas || []).every(x => x.id !== "art-2026-11-0"),
-     "   nem entra na lista das nao tocadas");
+  ok(linha("2027-03/art-2027-03-0").length === 1 && linha("2027-03/art-2027-03-0")[0].valor.t === R.novo["2027-03"][0] &&
+     linha("2026-11/art-2026-11-0").length === 1,
+     "10. dois aparelhos: uma linha por meta, com o mesmo valor",
+     [linha("2027-03/art-2027-03-0"), linha("2026-11/art-2026-11-0")]);
 }
 
-console.log("\n=== 78. A semente da esteira: o titulo diz o mes, e a ordem e a do calendario (30/10/2026) ===");
+console.log("\n=== 78. A semente da esteira segue o PROFIX (19/11/2026) ===");
 {
-  /* O `curto` do Hoje corta o titulo no ponto mediano, e o mes ordena o painel.
-     Uma peca que mudasse de mes so num dos dois diria um mes e ficaria noutro. */
+  /* Cada artigo do projeto no mes da sua meta, contado do PROFIX_INICIO; os de
+     fora no fim da fila, uma por mes depois do mes 48; o titulo sem o mes; a
+     semente na ordem do calendario; e o entrada.json publicado dizendo o mesmo. */
   const X = criarAparelho("leitor", criarServidor());
-  const P = vm.runInContext("PIPELINE_DEFAULT", X);
-  const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const errados = P.filter(p => !/^\d{4}-\d{2}$/.test(p.mes || "") ||
-                                p.t.slice(0, 6) !== MESES[Number(p.mes.slice(5, 7)) - 1] + " · ");
-  ok(errados.length === 0, "1. todo titulo da semente comeca pelo mes da peca, com o ponto mediano",
-     errados.map(p => p.id + " " + p.mes + " " + p.t));
-  const meses = P.map(p => p.mes);
-  ok(meses.every((m, i) => i === 0 || meses[i - 1] <= m), "2. a semente esta na ordem do calendario",
-     P.map(p => p.id + ":" + p.mes));
-  ok(new Set(P.map(p => p.id)).size === P.length, "3. sem id repetido");
+  const C = vm.runInContext("({P: PIPELINE_DEFAULT, T: PROFIX_ESTEIRA, D: ESTEIRA_DEPOIS, I: PROFIX_INICIO})", X);
+  const porId = {}; C.P.forEach(p => { porId[p.id] = p; });
+  const soma = (k, n) => { const [y, m] = k.split("-").map(Number); const d = new Date(y, m - 1 + n, 1);
+                           return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
+  ok(C.I === "2027-01", "1. o mes 1 do PROFIX, provisorio, e janeiro de 2027", C.I);
+  const fora = C.T.filter(e => !porId[e.id] || porId[e.id].mes !== soma(C.I, e.mes - 1));
+  ok(fora.length === 0, "2. cada artigo do projeto esta no mes da sua meta", fora);
+  const depois = C.D.map((id, i) => porId[id] && porId[id].mes === soma(C.I, 48 + i));
+  ok(depois.every(Boolean), "3. os de fora vao para o fim da fila, um por mes depois do mes 48",
+     C.D.map(id => id + ":" + (porId[id] || {}).mes));
+  const comMes = C.P.filter(p => /^(Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez) · /.test(p.t) && p.vida !== "arquivado");
+  ok(comMes.length === 0, "4. nenhum titulo vivo carrega o mes", comMes.map(p => p.id + " " + p.t));
+  const meses = C.P.map(p => p.mes);
+  ok(meses.every((m, i) => i === 0 || meses[i - 1] <= m), "5. a semente esta na ordem do calendario",
+     C.P.map(p => p.id + ":" + p.mes));
+  ok(new Set(C.P.map(p => p.id)).size === C.P.length, "6. sem id repetido");
+  ok(["a02", "a07"].every(id => porId[id] && porId[id].vida === "arquivado"),
+     "7. a a02 e a a07 nascem arquivadas");
+  const ent = JSON.parse(fs.readFileSync(path.join(RAIZ, "Cronograma", "entrada.json"), "utf8"));
+  const difere = ent.paineis.pipeline.filter(e => porId[e.id] && porId[e.id].vida !== "arquivado" &&
+    (e.mes !== porId[e.id].mes || e.t !== porId[e.id].t || e.n !== porId[e.id].n));
+  ok(difere.length === 0, "8. o entrada.json publicado diz o mesmo que a semente: titulo, nota e mes",
+     difere.map(e => e.id));
+  const semSemente = ent.paineis.pipeline.filter(e => !porId[e.id]).map(e => e.id);
+  ok(semSemente.length === 0, "   e nao tem peca que a semente nao conheca", semSemente);
+}
+
+console.log("\n=== 79. O mes sai do titulo, e a peca concluida sai da esteira para Encerrados (18/11/2026) ===");
+{
+  /* A esteira e uma fila: o que esta pronto sai dela. "Concluida" e o mesmo
+     projConcluido() do Hoje, calculado do andamento, e por isso nao ha campo
+     novo nem toque novo — a peca sai em todo aparelho porque o andamento ja
+     atravessa. O mes passa a ser lido do campo `mes`, e nao do titulo. */
+  const X = criarAparelho("leitor", criarServidor());
+  ok(X.tituloDaPeca({t: "Out · A genealogia", mes: "2026-10"}) === "A genealogia",
+     "1. o titulo de uma peca com mes aparece sem o prefixo");
+  ok(X.tituloDaPeca({t: "Mar · Outra coisa"}) === "Mar · Outra coisa",
+     "   sem `mes`, nada e cortado: um titulo de outro painel nao e mes nenhum");
+  ok(X.tituloDaPeca({t: "Como se Deus não existisse", mes: "2026-11"}) === "Como se Deus não existisse",
+     "   e o titulo que ja chega sem o mes fica como esta");
+  ok(X.mesAbrev("2026-11") === "nov/26" && X.mesAbrev("2027-01") === "jan/27" && X.mesAbrev("x") === "",
+     "2. o mes curto e o do subtitulo de sempre (nov/26)");
+  ok(X.dataCurta("2026-11-03T10:00:00.000Z") === "03/11/2026" && X.dataCurta("") === "",
+     "   e a data, dd/mm/aaaa");
+
+  /* Por id, e nao por posicao: a semente traz a02 e a07 arquivadas. A a03
+     ganha o prefixo antigo de proposito, para provar que a tela o tira. */
+  const projs = X.getProjs("pipeline");
+  const pr = projs.find(p => p.id === "a13");
+  pr.subs.forEach((x, i) => { x.st = 2; x.em = "2026-08-2" + i + "T12:00:00.000Z"; });
+  projs.find(p => p.id === "a03").t = "Set · " + projs.find(p => p.id === "a03").t;
+  X.setProjs("pipeline", projs);
+  const vivasAntes = X.vivos(projs).length, arqAntes = X.arquivados().length;
+  const alvo = {innerHTML: ""};
+  X.document.querySelectorAll = (sel) =>
+    (String(sel).indexOf('data-painel="pipeline"') >= 0 ? [alvo] : []);
+  X.renderPainel("pipeline");
+  ok(alvo.innerHTML.indexOf('data-proj="pipeline/' + pr.id + '"') < 0,
+     "3. a peca concluida nao aparece na esteira", pr.id);
+  ok(alvo.innerHTML.indexOf('data-proj="pipeline/a14"') >= 0,
+     "   e as outras continuam la");
+  const c = X.concluidas();
+  ok(c.length === 1 && c[0].projId === pr.id && c[0].quando === "2026-08-25",
+     "4. ela entra em Encerrados com a data da ULTIMA etapa concluida", c);
+  const sub = X.subDoPainel(X.painelDef("pipeline"));
+  ok(sub.indexOf((vivasAntes - 1) + " peças") === 0,
+     "5. o subtitulo da esteira conta so a fila, e nao e mais texto fixo", sub);
+  const a03 = X.getProjs("pipeline").find(p => p.id === "a03");
+  ok(alvo.innerHTML.indexOf('proj-mes">' + X.mesAbrev(a03.mes) + '<') >= 0,
+     "6. o cartao mostra o mes lido do campo `mes`", X.mesAbrev(a03.mes));
+  ok(alvo.innerHTML.indexOf(">" + a03.t + "<") < 0 &&
+     alvo.innerHTML.indexOf(">" + X.tituloDaPeca(a03) + "<") >= 0,
+     "   e o titulo aparece sem o prefixo do mes", a03.t);
+
+  const box = X.document.getElementById("arquivo");
+  X.renderArquivo();
+  ok(box.innerHTML.indexOf("concluída em 25/08/2026") >= 0,
+     "7. Encerrados mostra a data em que a peca ficou pronta", box.innerHTML.slice(0, 160));
+  ok(box.innerHTML.indexOf("cycleSub('pipeline','" + pr.id + "'") >= 0,
+     "   e as etapas dela, com o ponto que reabre");
+  const projs2 = X.getProjs("pipeline");
+  const arq = projs2.find(p => p.id === "a06");
+  arq.vida = "arquivado"; arq.vidaDesde = "2026-11-18";
+  X.setProjs("pipeline", projs2);
+  X.renderArquivo();
+  const html = box.innerHTML;
+  ok(html.indexOf("arquivado em 18/11/2026") >= 0,
+     "8. e o arquivado, com a data em que foi arquivado", html.slice(0, 160));
+  ok(html.indexOf("arquivado em 18/11/2026") < html.indexOf("concluída em 25/08/2026"),
+     "   o mais recente primeiro");
+  ok(X.resumoEncerrados() === "1 concluída · " + (arqAntes + 1) + " arquivados",
+     "   e o cabecalho conta os dois", X.resumoEncerrados());
+
+  X.cycleSub("pipeline", pr.id, pr.subs[pr.subs.length - 1].id);
+  ok(X.concluidas().length === 0, "9. reabrir uma etapa tira a peca de Encerrados", X.concluidas());
+  X.renderPainel("pipeline");
+  ok(alvo.innerHTML.indexOf('data-proj="pipeline/' + pr.id + '"') >= 0,
+     "   e ela volta para a esteira");
+
+  const tA03 = () => X.getProjs("pipeline").find(p => p.id === "a03").t;
+  const antes = tA03();
+  X.editProj("pipeline", "a03", X.tituloDaPeca(X.getProjs("pipeline").find(p => p.id === "a03")));
+  ok(tA03() === antes, "10. tocar no titulo e sair sem mudar nada nao grava a versao sem o mes", tA03());
+  X.editProj("pipeline", "a03", "Um titulo novo");
+  ok(tA03() === "Um titulo novo", "    e uma edicao de verdade continua gravando");
+
+  const L = X.getProjs("leituras");
+  L[0].subs.forEach(x => { x.st = 2; });
+  X.setProjs("leituras", L);
+  const alvoL = {innerHTML: ""};
+  X.document.querySelectorAll = (sel) =>
+    (String(sel).indexOf('data-painel="leituras"') >= 0 ? [alvoL] : []);
+  X.renderPainel("leituras");
+  ok(alvoL.innerHTML.indexOf('data-proj="leituras/' + L[0].id + '"') >= 0,
+     "11. nos outros paineis o bloco concluido fica onde esta");
+  ok(X.concluidas().every(x => x.pid === "pipeline"), "    e nao entra em Encerrados");
+  const pc = X.pecaDoMes();
+  ok(!!pc && !/^[A-Za-z]{3} · /.test(pc.curto), "12. o Hoje mostra o titulo da peca sem o mes", pc && pc.curto);
 }
 
 console.log("\n==============================================================");

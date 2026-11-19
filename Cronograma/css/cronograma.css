@@ -133,6 +133,20 @@
   .proj-prog{flex:none;font-size:11px;letter-spacing:.04em;color:var(--muted);
     background:var(--paper-2);border:1px solid var(--line);border-radius:20px;padding:2px 8px;}
   .proj.ativo .proj-prog{color:var(--gold);border-color:var(--gold-soft);}
+  /* O mes da peca, lido do campo `mes`, ao lado do contador (18/11/2026). */
+  .proj-meta{flex:none;display:flex;align-items:center;gap:6px;}
+  /* Encerrados: a peca concluida abre e mostra as etapas, para poder reabrir. */
+  details.enc-proj{border-top:1px solid var(--line);}
+  details.enc-proj:first-child{border-top:none;}
+  details.enc-proj > summary.reg-i{list-style:none;cursor:pointer;padding:7px 0;border-top:none;
+    flex-direction:row;align-items:flex-start;}
+  details.enc-proj > summary::-webkit-details-marker{display:none;}
+  .enc-ver{flex:none;font-size:11px;color:var(--muted);}
+  details.enc-proj[open] .enc-ver{color:var(--gold);}
+  .enc-corpo{padding:0 0 8px;}
+  .enc-dica{font-size:11px;color:var(--muted);padding:2px 0 6px;}
+  /* O botao restaurar herdava o width:100% do .add-row e espremia o titulo. */
+  .add-row.enc-volta{flex:none;width:auto;margin:0;padding:4px 10px;align-self:center;}
   .add-sub{width:100%;text-align:left;background:none;border:none;color:var(--muted);
     font-family:var(--sans);font-size:12px;padding:6px 2px 2px 30px;cursor:pointer;}
   .add-sub:active{color:var(--ink-soft);}
