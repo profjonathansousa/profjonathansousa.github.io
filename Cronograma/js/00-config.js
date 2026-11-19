@@ -27,7 +27,7 @@ const AVISOS = {
   VAPID: "BFtj6rzJSQXtACGAi-aX4-o8K-Ezr7GqIx6qz3zYuTjmGPhbaERTyxWHi3SotPKvBVVB71nMslj-cqTOmjKURJM"
 };
 
-const APP_VERSION = "2026-11-19-esteira-profix";
+const APP_VERSION = "2026-11-19-sincronia-estrutura";
 /* `link` e `painel` NAO sao a mesma coisa, e a diferenca e a Fase 2 inteira.
 
    `painel` e so o botao: leva ao trilho e nao escolhe nada.
@@ -649,6 +649,9 @@ var PRIO_MIGRADO_KEY = "cron:prio-feito-migrado";
    instante como prova de que a marca "ja viaja". Era verdade enquanto havia
    dois caminhos; deixou de ser quando sobrou um. */
 var PUBLICADO_ONLINE_KEY = "cron:publicado-online";
+/* A publicacao unica da estrutura que estava so neste aparelho (19/11/2026):
+   pecas arquivadas e itens feitos a mao. Ver publicarEstruturaAntiga(). */
+var ESTRUTURA_PUBLICADA_KEY = "cron:estrutura-publicada";
 const RELOGIO_KEY = "cron:relogio";
 /* Um relogio de aparelho errado, e depois corrigido, deixaria a marca gravada
    no futuro — e dali em diante todo toque daqui venceria todo toque do outro

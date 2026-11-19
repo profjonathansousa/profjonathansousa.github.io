@@ -147,6 +147,9 @@
   .enc-dica{font-size:11px;color:var(--muted);padding:2px 0 6px;}
   /* O botao restaurar herdava o width:100% do .add-row e espremia o titulo. */
   .add-row.enc-volta{flex:none;width:auto;margin:0;padding:4px 10px;align-self:center;}
+  /* O marcador de submissao (19/11/2026). */
+  .enc-acao{padding:2px 0 6px;}
+  .reg-t b.enc-sub{font-weight:600;color:var(--gold);}
   .add-sub{width:100%;text-align:left;background:none;border:none;color:var(--muted);
     font-family:var(--sans);font-size:12px;padding:6px 2px 2px 30px;cursor:pointer;}
   .add-sub:active{color:var(--ink-soft);}

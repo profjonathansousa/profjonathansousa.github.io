@@ -979,7 +979,8 @@ function concluidas(){
     if(!P.concluidosSaem) return;
     vivos(getProjs(P.id) || []).forEach(function(p){
       if(!projConcluido(p)) return;
-      fora.push({pid:P.id, projId:p.id, t:tituloDaPeca(p), quando:dataDeConclusao(P.id, p)});
+      fora.push({pid:P.id, projId:p.id, t:tituloDaPeca(p), quando:dataDeConclusao(P.id, p),
+                 submetida:p.submetida || ""});
     });
   });
   return fora;

@@ -1411,7 +1411,7 @@ console.log("\n=== 35. O que a 9C-2 NAO mudou ===");
      "13. os tres da 9C, os quatro da 9D e os dois da 9E", dominiosOnline);
   const app = fs.readFileSync(path.join(RAIZ, "Cronograma", "js", "40-app.js"), "utf8");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "estrutura_proj", "estrutura_sub", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),  /* onze desde 19/11/2026: a estrutura ganhou aplicador */
      "    e os seis tem aplicador registrado", assinados);
 }
 
@@ -1660,7 +1660,7 @@ console.log("\n=== 41. Legado e online no mesmo ato, e o que nao mudou (9C-3) ==
   ok(JSON.stringify(dominios) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
      "os nove dominios de estado escrevem online", dominios);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "estrutura_proj", "estrutura_sub", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),  /* onze desde 19/11/2026: a estrutura ganhou aplicador */
      "   e os nove tem aplicador registrado", assinados);
 }
 
@@ -1994,7 +1994,7 @@ console.log("\n=== 49. O que a 9D NAO mudou (9D) ===");
        .every(d => online.indexOf(d) < 0),
      "O. e a ESTRUTURA nao foi antecipada: ela espera o merge de tres vias", online);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "estrutura_proj", "estrutura_sub", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),  /* onze desde 19/11/2026: a estrutura ganhou aplicador */
      "   e os nove tem aplicador registrado", assinados);
 }
 
@@ -2203,7 +2203,7 @@ console.log("\n=== 54. Um escritor, um merge, e o que a 9D.2 NAO mudou ===");
        .every(d => online.indexOf(d) < 0),
      "e nenhum dominio ainda nao autorizado foi antecipado", online);
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "estrutura_proj", "estrutura_sub", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),  /* onze desde 19/11/2026: a estrutura ganhou aplicador */
      "e os nove tem aplicador registrado", assinados);
 
   /* Legado e online no mesmo ato, com o mesmo ISO. */
@@ -2410,7 +2410,7 @@ console.log("\n=== 58. Offline, marca propria, e o que a 9D.3 NAO mudou ===");
   ok(/assinarRegistro\(aplicarRegistroOnline\)/.test(app),
      "ele tem caminho proprio, registrado pelo assinarRegistro");
   const assinados = (app.match(/assinarDominio\("(\w+)"/g) || []).map(x => x.match(/"(\w+)"/)[1]).sort();
-  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),
+  ok(JSON.stringify(assinados) === JSON.stringify(["dispensa", "estrutura_proj", "estrutura_sub", "evento", "item", "meta", "prioridade", "retomada", "rotina", "toefl", "triagem"]),  /* onze desde 19/11/2026: a estrutura ganhou aplicador */
      "e os dominios de estado agora sao nove", assinados);
 
   /* SEM MERGE, SEM RELOGIO, SEM LAPIDE — e a ausencia e o desenho. */
@@ -2882,9 +2882,11 @@ console.log("\n=== 65. O guia do TOEFL online, e a estrutura que a 9E NAO fez (9
     ok(/tocarItem\(/.test(corpoDe(render, f)), "   " + f + " passa pelo funil");
   });
 
-  /* A ESTRUTURA NAO ENTROU, e a ausencia e deliberada. */
-  ok(!/salvarAlteracao\(\s*"estrutura_/.test(render + regrasSrc + nucleo),
-     "estrutura_proj e estrutura_sub NAO foram conectadas");
+  /* A ESTRUTURA FICOU FORA DA 9E, de proposito: esperava o merge de tres vias.
+     Desde 19/11/2026 ela entra — o nome, o arquivamento da peca e a submissao —,
+     e so pelos dois escritores proprios. */
+  ok(/escreverEstruturaOnline\("estrutura_proj"/.test(render) && /escreverEstruturaOnline\("estrutura_sub"/.test(render),
+     "estrutura_proj e estrutura_sub estao conectadas desde 19/11/2026, pelo escreverEstruturaOnline");
   const SQL = fs.readFileSync(path.join(RAIZ, "sql", "cron_estado.sql"), "utf8");
   ok(/cron_estrutura_base/.test(SQL), "a cron_estrutura_base continua no esquema, intacta");
   ok(/grant select\s+on public\.cron_estrutura_base/.test(SQL),
@@ -3168,15 +3170,17 @@ console.log("\n=== 69. Arquivar virou `vida`, e a posicao foi aposentada (9G-0 B
   ok(acha(B, pr.id, subId).vida === "ativo", "e isso tambem atravessa");
   ok(A.vivos(proj(A, pr.id).subs).some(x => x.id === subId), "a peca volta aos vivos");
 
-  /* PROJETO: arquiva local, e nao viaja — estrutura_proj nao tem `vida`. */
+  /* PROJETO: desde 19/11/2026 arquivar a peca tambem viaja, pela linha
+     `painel/projeto#vida` do dominio estrutura_proj. */
   const linhasAntes = srv.linhas.length;
   A.delProj("pipeline", pr.id);
   await A.SYNC.drenarFila();
   ok(proj(A, pr.id).vida === "arquivado", "o projeto arquiva por vida tambem",
      proj(A, pr.id).vida);
   ok(A.vivos(A.getProjs("pipeline")).every(p => p.id !== pr.id), "e sai dos vivos");
-  ok(srv.linhas.length === linhasAntes,
-     "e NAO viaja: nao ha dominio online para estrutura", srv.linhas.length - linhasAntes);
+  const lv = srv.linhas.find(x => x.dominio === "estrutura_proj" && x.chave === "pipeline/" + pr.id + "#vida");
+  ok(srv.linhas.length === linhasAntes + 1 && !!lv && lv.valor.vida === "arquivado",
+     "e viaja: uma linha `#vida` no estrutura_proj", lv && lv.valor);
   A.restaurarProj("pipeline", pr.id);
   ok(proj(A, pr.id).vida === "ativo", "e restaurar o projeto e o mesmo campo de volta");
 }
@@ -4018,7 +4022,7 @@ console.log("\n=== 79. O mes sai do titulo, e a peca concluida sai da esteira pa
      "8. e o arquivado, com a data em que foi arquivado", html.slice(0, 160));
   ok(html.indexOf("arquivado em 18/11/2026") < html.indexOf("concluída em 25/08/2026"),
      "   o mais recente primeiro");
-  ok(X.resumoEncerrados() === "1 concluída · " + (arqAntes + 1) + " arquivados",
+  ok(X.resumoEncerrados() === "1 concluída, 1 não submetida · " + (arqAntes + 1) + " arquivados",
      "   e o cabecalho conta os dois", X.resumoEncerrados());
 
   X.cycleSub("pipeline", pr.id, pr.subs[pr.subs.length - 1].id);
@@ -4046,6 +4050,118 @@ console.log("\n=== 79. O mes sai do titulo, e a peca concluida sai da esteira pa
   ok(X.concluidas().every(x => x.pid === "pipeline"), "    e nao entra em Encerrados");
   const pc = X.pecaDoMes();
   ok(!!pc && !/^[A-Za-z]{3} · /.test(pc.curto), "12. o Hoje mostra o titulo da peca sem o mes", pc && pc.curto);
+}
+
+console.log("\n=== 80. A estrutura que voce decide atravessa aparelhos (19/11/2026) ===");
+{
+  /* O nome da peca e da etapa, o arquivamento da peca, a submissao e o item
+     feito a mao: cada um numa linha propria do estrutura_proj/estrutura_sub,
+     com o relogio de sempre e uma guarda a mais contra a publicacao. */
+  const srv = criarServidor();
+  const A = criarAparelho("mac", srv).__conectar();
+  const B = criarAparelho("celular", srv).__conectar();
+  await B.SYNC.assinarMudancas();
+  const proj = (X, id) => (X.getProjs("pipeline") || []).find(p => p.id === id);
+  const sub = (X, pid, sid) => ((proj(X, pid) || {}).subs || []).find(x => x.id === sid);
+  const linha = (dom, k) => srv.linhas.find(l => l.dominio === dom && l.chave === k);
+
+  A.editProj("pipeline", "a13", "A politeia antes da queda (revista)");
+  await A.SYNC.drenarFila();
+  ok(proj(B, "a13").t === "A politeia antes da queda (revista)", "1. o nome dado no Mac chega ao celular",
+     proj(B, "a13").t);
+  const l1 = linha("estrutura_proj", "pipeline/a13");
+  ok(!!l1 && l1.valor.t === "A politeia antes da queda (revista)" && !l1.valor.origem,
+     "   numa linha do estrutura_proj, sem a marca de item manual", l1 && l1.valor);
+  ok(proj(A, "a13").tEm === l1.em && proj(B, "a13").tEm === l1.em,
+     "   e os dois aparelhos guardam o instante do nome", [proj(A, "a13").tEm, proj(B, "a13").tEm, l1.em]);
+
+  A.editSub("pipeline", "a13", "a13-1", "Tese em 1 parágrafo, revista");
+  await A.SYNC.drenarFila();
+  ok(sub(B, "a13", "a13-1").t === "Tese em 1 parágrafo, revista", "2. o nome da etapa tambem",
+     sub(B, "a13", "a13-1").t);
+
+  B.delProj("pipeline", "a14");
+  await B.SYNC.drenarFila();
+  await A.SYNC.carregarEstado();
+  ok(proj(A, "a14").vida === "arquivado", "3. arquivar a peca no celular arquiva no Mac", proj(A, "a14").vida);
+  ok(!!linha("estrutura_proj", "pipeline/a14#vida"), "   pela linha `#vida`");
+  B.restaurarProj("pipeline", "a14");
+  await B.SYNC.drenarFila();
+  await A.SYNC.carregarEstado();
+  ok(proj(A, "a14").vida === "ativo", "   e restaurar tambem atravessa", proj(A, "a14").vida);
+
+  A.marcarSubmetida("pipeline", "a01", true);
+  await A.SYNC.drenarFila();
+  ok(proj(B, "a01").submetida === A.ymd(A.now), "4. a submissao marcada no Mac chega ao celular",
+     proj(B, "a01").submetida);
+  A.marcarSubmetida("pipeline", "a01", false);
+  await A.SYNC.drenarFila();
+  ok(proj(B, "a01").submetida === "", "   e desfazer tambem", proj(B, "a01").submetida);
+  ok(proj(B, "a13").t === "A politeia antes da queda (revista)" && proj(B, "a14").vida === "ativo",
+     "   cada decisao na sua linha: uma nao apaga a outra");
+
+  A.addProj("pipeline");
+  const novo = A.getProjs("pipeline").filter(p => p.origem === "manual").pop();
+  A.editProj("pipeline", novo.id, "Resenha para a Horizonte");
+  A.addSub("pipeline", novo.id);
+  const novoSub = proj(A, novo.id).subs[0];
+  A.editSub("pipeline", novo.id, novoSub.id, "Ler o número inteiro");
+  A.cycleSub("pipeline", novo.id, novoSub.id);
+  await A.SYNC.drenarFila();
+  ok(!!proj(B, novo.id) && proj(B, novo.id).t === "Resenha para a Horizonte" && proj(B, novo.id).origem === "manual",
+     "5. o item feito a mao nasce no outro aparelho", proj(B, novo.id));
+  ok(!!sub(B, novo.id, novoSub.id) && sub(B, novo.id, novoSub.id).t === "Ler o número inteiro",
+     "   com a etapa feita a mao", sub(B, novo.id, novoSub.id));
+  ok(sub(B, novo.id, novoSub.id).st === 1, "   e com o andamento dela", sub(B, novo.id, novoSub.id).st);
+
+  /* A GUARDA CONTRA A PUBLICACAO: o nome que a publicacao escreveu nao e
+     desfeito por uma linha mais velha que ela. */
+  const C = criarAparelho("terceiro", srv);
+  C.save("cron:entrada", {_gerado_em: "2026-11-19T12:29:26Z", paineis: {pipeline: [
+    {id: "a03", t: "Nome da publicação", mes: "2027-09"}]}});
+  C.mesclarEntrada();
+  ok(proj(C, "a03").t === "Nome da publicação" && proj(C, "a03").tEm === "2026-11-19T12:29:26.000Z",
+     "6. o nome escrito pela publicacao leva o instante dela", [proj(C, "a03").t, proj(C, "a03").tEm]);
+  C.aplicarEstruturaProjOnline({chave: "pipeline/a03", em: "2026-11-10T09:00:00.000Z", valor: {t: "Nome velho"}});
+  ok(proj(C, "a03").t === "Nome da publicação", "   e uma linha mais velha que ela nao o desfaz", proj(C, "a03").t);
+  C.aplicarEstruturaProjOnline({chave: "pipeline/a03", em: "2026-11-20T09:00:00.000Z", valor: {t: "Nome novo"}});
+  ok(proj(C, "a03").t === "Nome novo", "   enquanto uma edicao posterior vale", proj(C, "a03").t);
+
+  /* A LINHA QUE CHEGA ANTES DA PECA nao cria peca da publicacao, e e
+     reaplicada quando a publicacao a cria. */
+  const r0 = C.aplicarEstruturaProjOnline({chave: "pipeline/a99", em: "2099-01-01T00:00:00.000Z", valor: {t: "Nome dado antes"}});
+  ok(r0.length === 0 && !proj(C, "a99"), "7. linha de peca que o aparelho nao tem nao cria peca da publicacao");
+  const cache = C.LS("cron:sync-cache", {}) || {};
+  cache[C.SYNC.chave("estrutura_proj", "pipeline/a99")] = {valor: {t: "Nome dado antes"}, del: false,
+                                                             em: "2099-01-01T00:00:00.000Z", aparelho: "x"};
+  C.save("cron:sync-cache", cache);
+  C.save("cron:entrada", {_gerado_em: "2026-11-21T00:00:00Z", paineis: {pipeline: [
+    {id: "a99", t: "Nome da publicação", mes: "2031-05", subs: [{id: "a99-1", t: "Brainstorm"}]}]}});
+  C.mesclarEntrada();
+  ok(!!proj(C, "a99") && proj(C, "a99").t === "Nome dado antes",
+     "   e e reaplicada quando a publicacao cria a peca", proj(C, "a99") && proj(C, "a99").t);
+  ok(C.aplicarEstruturaProjOnline({chave: "pipeline/a03#qualquer", em: "2099-01-01T00:00:00.000Z", valor: {}}).length === 0,
+     "   campo desconhecido e ignorado");
+
+  /* A PUBLICACAO UNICA: o que so este aparelho sabia. */
+  const D = criarAparelho("celular-de-hoje", srv);
+  const psD = D.getProjs("pipeline");
+  psD.push({id: "p123", t: "Item que fiz a mao", origem: "manual", subs: [{id: "s1", t: "uma etapa", st: 0, origem: "manual"}]});
+  D.setProjs("pipeline", psD);
+  const r = D.publicarEstruturaAntiga();
+  const filaD = (D.LS("cron:sync-fila", []) || []).filter(x => x.dominio.indexOf("estrutura_") === 0);
+  const kD = filaD.map(x => x.dominio + ":" + x.chave).sort();
+  ok(r.correu && r.arquivadas === 2 && kD.indexOf("estrutura_proj:pipeline/a02#vida") > -1 &&
+     kD.indexOf("estrutura_proj:pipeline/a07#vida") > -1,
+     "8. a publicacao unica sobe as pecas arquivadas", [r, kD]);
+  const a07 = filaD.find(x => x.chave === "pipeline/a07#vida");
+  ok(a07.em === "2026-11-19T00:00:00.000Z",
+     "   com o instante do dia do arquivamento: qualquer decisao posterior continua vencendo", a07.em);
+  ok(kD.indexOf("estrutura_proj:pipeline/p123") > -1 && kD.indexOf("estrutura_sub:pipeline/p123/s1") > -1 &&
+     filaD.find(x => x.chave === "pipeline/p123").valor.origem === "manual",
+     "   e os itens feitos a mao, com a marca de manual", kD);
+  ok(kD.every(k => !/pipeline\/a1[34]$/.test(k)), "   e nao sobe nome de peca da publicacao", kD);
+  ok(D.publicarEstruturaAntiga().correu === false, "   uma vez so por aparelho");
 }
 
 console.log("\n==============================================================");

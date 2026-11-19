@@ -1070,6 +1070,20 @@ function escreverItemOnline(pid, projId, x, iso){
     return true;
   }catch(e){ try{ console.error("sync: item nao subiu:", e); }catch(e2){} return false; }
 }
+/* A estrutura que voce decide (19/11/2026): o nome de uma peca ou etapa, o
+   arquivamento de uma peca, a submissao. Mesma forma do escreverItemOnline: so
+   com a sincronia ligada, e com o instante que o aparelho ja usou. As chaves
+   estao descritas no 10-nucleo.js, junto dos aplicadores. */
+function escreverEstruturaOnline(dominio, chave, valor, iso){
+  try{
+    if(typeof SYNC === "undefined" || !SYNC.ligado()) return false;
+    SYNC.salvarAlteracao(dominio, chave, valor, {em: iso});
+    return true;
+  }catch(e){ try{ console.error("sync: estrutura nao subiu:", e); }catch(e2){} return false; }
+}
+/* O que a linha do nome leva: o nome e, se o item foi feito a mao, a marca que
+   autoriza o outro aparelho a cria-lo. */
+function valorDoNome(x){ return x.origem === "manual" ? {t: x.t, origem: "manual"} : {t: x.t}; }
 function tocarItem(pid, proj, x, de){
   var iso = logar(pid, proj, x, de, x.st);          /* registro datado */
   x.em = iso;                                        /* o MESMO instante */
@@ -1431,9 +1445,32 @@ function rotuloReg(o){
    botao restaurar, POR ID. A concluida e o projConcluido(), calculado do
    andamento: volta para a esteira quando uma etapa e reaberta, e por isso ela
    mostra as etapas com o mesmo ponto do painel. */
+/* O MARCADOR DE SUBMISSAO (19/11/2026). "Concluida" quer dizer pronta para
+   submeter; a submissao e outra decisao, e e ela que o PROFIX mede. Cada peca
+   concluida diz se ja foi submetida e, se for meta do projeto e ainda nao,
+   ate quando. Viaja pela linha `painel/projeto#submetida`. */
+function prazoDoProfix(projId){
+  try{
+    for(var i = 0; i < PROFIX_ESTEIRA.length; i++){
+      var e = PROFIX_ESTEIRA[i];
+      if(e.id === projId) return mesAbrev(mesDoProfix(e.mes)) + " (mês " + e.mes + " do PROFIX)";
+    }
+  }catch(e){}
+  return "";
+}
+function marcarSubmetida(pid, projId, sim){
+  var p=getProjs(pid), pr=acharProj(p, projId); if(!pr) return;
+  var nova = sim ? ymd(now) : "";
+  if((pr.submetida || "") === nova) return;
+  pr.submetida = nova; setProjs(pid, p);
+  escreverEstruturaOnline("estrutura_proj", pid + "/" + projId + "#submetida", {submetida: nova}, instanteISO());
+  renderArquivo();
+}
 function resumoEncerrados(){
-  var nA = arquivados().length, nC = concluidas().length, partes = [];
-  if(nC) partes.push(nC + (nC===1 ? " concluída" : " concluídas"));
+  var nA = arquivados().length, c = concluidas(), nC = c.length, partes = [];
+  var nNS = c.filter(function(it){ return !it.submetida; }).length;
+  if(nC) partes.push(nC + (nC===1 ? " concluída" : " concluídas") +
+                     (nNS ? ", " + nNS + (nNS===1 ? " não submetida" : " não submetidas") : ""));
   if(nA) partes.push(nA + (nA===1 ? " arquivado" : " arquivados"));
   return partes.length ? partes.join(" · ") : "nada encerrado";
 }
@@ -1455,9 +1492,17 @@ function renderArquivo(){
     if(e.tipo==="concluida"){
       var pr=acharProj(getProjs(it.pid), it.projId); if(!pr) return;
       var quando = e.quando ? "concluída em "+dataCurta(e.quando) : "concluída";
+      var prazo = prazoDoProfix(pr.id);
+      var marca = pr.submetida
+        ? '<b class="enc-sub">submetida em '+dataCurta(pr.submetida)+'</b>'
+        : '<i>não submetida</i>'+(prazo ? ' · submeter até '+escapeHtml(prazo) : '');
+      var botao = pr.submetida
+        ? '<button class="add-row enc-volta" onclick="marcarSubmetida(\''+it.pid+'\',\''+pr.id+'\',false)">desfazer a submissão</button>'
+        : '<button class="add-row enc-volta" onclick="marcarSubmetida(\''+it.pid+'\',\''+pr.id+'\',true)">marcar como submetida hoje</button>';
       h+='<details class="enc-proj"><summary class="reg-i"><span class="reg-t">'+escapeHtml(titulo)+
-         '<span>'+quando+' · '+painel+'</span></span><span class="enc-ver">etapas</span></summary>'+
-         '<div class="enc-corpo"><div class="enc-dica">Para reabrir, toque no ponto de uma etapa: a peça volta para a esteira.</div>';
+         '<span>'+quando+' · '+marca+'</span><span>'+painel+'</span></span><span class="enc-ver">etapas</span></summary>'+
+         '<div class="enc-corpo"><div class="enc-acao">'+botao+'</div>'+
+         '<div class="enc-dica">Para reabrir, toque no ponto de uma etapa: a peça volta para a esteira.</div>';
       vivos(pr.subs).forEach(function(x){
         normSub(x);
         if(x.vida==="inaplicavel") return;
@@ -1511,25 +1556,40 @@ function acharSub(p, projId, subId){
    o prefixo como se fosse uma edicao sua — e o merge de tres vias passaria a
    ve-la como mudanca local. Igual ao que a tela mostra e nao mudar nada. */
 function editProj(pid,projId,t){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
-  if(t.trim()===tituloDaPeca(pr))return;
-  pr.t=t.trim()||pr.t;setProjs(pid,p);}
-function editSub(pid,projId,subId,t){var p=getProjs(pid);var x=acharSub(p,projId,subId);if(!x)return;x.t=t.trim()||x.t;setProjs(pid,p);}
+  var novo=t.trim();
+  if(!novo||novo===tituloDaPeca(pr)||novo===pr.t)return;
+  /* O NOME VIAJA (19/11/2026), com o instante que a guarda do outro aparelho
+     compara (tEm). */
+  var iso=instanteISO();
+  pr.t=novo;pr.tEm=iso;setProjs(pid,p);
+  escreverEstruturaOnline("estrutura_proj", pid+"/"+projId, valorDoNome(pr), iso);}
+function editSub(pid,projId,subId,t){var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
+  var x=null;(pr.subs||[]).forEach(function(s){if(s.id===subId)x=s;});if(!x)return;
+  var novo=t.trim();
+  if(!novo||novo===x.t)return;
+  var iso=instanteISO();
+  x.t=novo;x.tEm=iso;setProjs(pid,p);
+  escreverEstruturaOnline("estrutura_sub", pid+"/"+projId+"/"+subId, valorDoNome(x), iso);}
 /* Remover deixa de destruir: vai para Encerrados e pode voltar. */
 /* ARQUIVAR E RESTAURAR VIRARAM MUDANCA DE CAMPO. A peca fica onde esta; o que
    muda e `vida`. Restaurar nao depende de posicao nenhuma — e o mesmo campo de
    volta para 'ativo'.
 
-   PROJETO fica LOCAL: `estrutura_proj` e {t, n, mes} e a estrutura ainda nao e
-   dominio online, entao nao ha por onde isso viajar. SUBITEM ATRAVESSA, e de
-   graca: `vida` ja e campo do dominio `item`, e o tocarItem ja o publica. */
+   SUBITEM ATRAVESSA desde a 9E: `vida` ja e campo do dominio `item`, e o
+   tocarItem ja o publica. PROJETO ATRAVESSA desde 19/11/2026, pela linha
+   `painel/projeto#vida` do dominio `estrutura_proj` (ver 10-nucleo.js). */
+function tocarVidaProj(pid,pr){
+  escreverEstruturaOnline("estrutura_proj", pid+"/"+pr.id+"#vida",
+                          {vida: pr.vida, vidaDesde: pr.vidaDesde || ""}, instanteISO());
+}
 function delProj(pid,projId){if(!confirm("Arquivar este item e tudo o que est\u00e1 dentro dele?\n\nNada \u00e9 apagado \u2014 ele vai para Encerrados, no fim da aba Trilhos, e pode ser restaurado."))return;
   var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
   pr.vida="arquivado";pr.vidaDesde=ymd(now);
-  setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
+  setProjs(pid,p);tocarVidaProj(pid,pr);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
 function restaurarProj(pid,projId){
   var p=getProjs(pid);var pr=acharProj(p,projId);if(!pr)return;
   pr.vida="ativo";pr.vidaDesde=ymd(now);
-  setProjs(pid,p);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
+  setProjs(pid,p);tocarVidaProj(pid,pr);renderPainel(pid);renderArquivo();renderTrilhos();sincronizarHoje(pid);}
 function delSub(pid,projId,subId){arquivarSub(pid,projId,subId,"arquivado");}
 function restaurarSub(pid,projId,subId){arquivarSub(pid,projId,subId,"ativo");}
 /* UM funil para os dois sentidos, e ele e o tocarItem — o mesmo que ja carrega
