@@ -224,30 +224,30 @@ function mexerEm(ctx, pid, projId, subId, diasAtras) {
 }
 ok(C.retomadas().length === 0, "projeto que nunca comecou NAO vira retomada",
    C.retomadas().map(r => r.projT));
-mexerEm(C, "pipeline", "a02", "a02-1", 30);
+mexerEm(C, "pipeline", "a13", "a13-1", 30);
 let r = C.retomadas();
-ok(r.length === 1 && r[0].projId === "a02", "projeto comecado e parado ha 30 dias aparece", r);
+ok(r.length === 1 && r[0].projId === "a13", "projeto comecado e parado ha 30 dias aparece", r);
 /* floor de dias inteiros: 30 dias menos alguns milissegundos e 29 dias
    COMPLETOS, e dizer 29 e mais honesto do que arredondar para cima. */
 ok(r[0].dias === 29 || r[0].dias === 30, "com a contagem certa", r[0].dias);
-ok(r[0].subT === C.estagioDoTrilho("pipeline", "a02").subT,
+ok(r[0].subT === C.estagioDoTrilho("pipeline", "a13").subT,
    "e o subtitulo e o estagio real do trilho", r[0].subT);
 mexerEm(C, "pipeline", "a03", "a03-1", 3);
 ok(C.retomadas().length === 1, "projeto mexido ha 3 dias nao aparece");
 /* decisao sua nao e esquecimento */
-let ps = C.getProjs("pipeline"), a02 = ps.find(x => x.id === "a02");
-a02.subs.forEach(x => { x.vida = "adiado"; });
+let ps = C.getProjs("pipeline"), a13 = ps.find(x => x.id === "a13");
+a13.subs.forEach(x => { x.vida = "adiado"; });
 C.setProjs("pipeline", ps);
 ok(C.retomadas().length === 0, "projeto que voce ADIOU nao vira retomada");
-ps = C.getProjs("pipeline"); a02 = ps.find(x => x.id === "a02");
-a02.subs.forEach(x => { x.vida = "abandonado"; });
+ps = C.getProjs("pipeline"); a13 = ps.find(x => x.id === "a13");
+a13.subs.forEach(x => { x.vida = "abandonado"; });
 C.setProjs("pipeline", ps);
 ok(C.retomadas().length === 0, "projeto que voce ABANDONOU nao vira retomada");
-ps = C.getProjs("pipeline"); a02 = ps.find(x => x.id === "a02");
-a02.subs.forEach(x => { x.vida = "ativo"; });
+ps = C.getProjs("pipeline"); a13 = ps.find(x => x.id === "a13");
+a13.subs.forEach(x => { x.vida = "ativo"; });
 C.setProjs("pipeline", ps);
 ok(C.retomadas().length === 1, "reativado, volta a ser lembrado");
-C.adiarRetomada("pipeline", "a02");
+C.adiarRetomada("pipeline", "a13");
 ok(C.retomadas().length === 0, "'agora nao' silencia por 14 dias");
 /* e nao promove nada sozinha */
 ok(C.prioridadesDoDia().manuais.length === 0,
@@ -421,12 +421,12 @@ console.log("\n=== 10b. A etapa 'estrela' fica visivel no Hoje ===");
 const S = criarAparelho("estrela");
 /* Desde 2026-10-20 a unica etapa 'estrela' da esteira e a 4b, do NotebookLM:
    as quatro antes dela sao fechadas aqui para que ela seja a corrente. */
-const psS = S.getProjs("pipeline"), prS = psS.find(p => p.id === "a02");
-prS.subs.forEach(x => { if (["a02-1", "a02-2", "a02-3", "a02-4"].indexOf(x.id) > -1) x.st = 2; });
+const psS = S.getProjs("pipeline"), prS = psS.find(p => p.id === "a14");
+prS.subs.forEach(x => { if (["a14-1", "a14-2", "a14-3", "a14-4"].indexOf(x.id) > -1) x.st = 2; });
 S.setProjs("pipeline", psS);
-const etS = S.estagioDoTrilho("pipeline", "a02");
-ok(etS.prova === "estrela", "a etapa corrente de a02 e uma 'estrela'", etS.prova);
-S.addPrioridadeTrilho("pipeline/a02");
+const etS = S.estagioDoTrilho("pipeline", "a14");
+ok(etS.prova === "estrela", "a etapa corrente de a14 e uma 'estrela'", etS.prova);
+S.addPrioridadeTrilho("pipeline/a14");
 S.renderHoje();
 const htmlS = S.document.getElementById("view-hoje").innerHTML;
 ok(/depende de voc/.test(htmlS), "e o cartao mostra o selo 'depende de voce'");
@@ -573,10 +573,10 @@ console.log("\n=== 14. Motor: o que NAO pode ser sugerido ===");
 const N = motorLimpo("motor2");
 /* concluido */
 gravar(N, "pipeline", ps => {
-  ps.find(p => p.id === "a02").subs.forEach(x => { x.st = 2; });
-  ps.find(p => p.id === "a02").mes = N.monthKey;              /* prazo colado */
+  ps.find(p => p.id === "a13").subs.forEach(x => { x.st = 2; });
+  ps.find(p => p.id === "a13").mes = N.monthKey;              /* prazo colado */
 });
-ok(!N.motorDePrioridades([]).some(x => x.projId === "a02"),
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a13"),
    "projeto CONCLUIDO nao aparece, nem com prazo vencendo",
    N.motorDePrioridades([]).map(x => x.projId));
 /* abandonado */
@@ -597,10 +597,10 @@ ok(!N.motorDePrioridades([]).some(x => x.projId === "a04"),
    N.motorDePrioridades([]).map(x => x.projId));
 /* inaplicavel em todas as etapas */
 gravar(N, "pipeline", ps => {
-  const p = ps.find(x => x.id === "a07");
+  const p = ps.find(x => x.id === "a14");
   p.mes = N.monthKey; p.subs.forEach(x => { x.vida = "inaplicavel"; });
 });
-ok(!N.motorDePrioridades([]).some(x => x.projId === "a07"),
+ok(!N.motorDePrioridades([]).some(x => x.projId === "a14"),
    "projeto so com etapas INAPLICAVEIS nao aparece");
 /* silenciado */
 gravar(N, "pipeline", ps => { ps.find(x => x.id === "a08").mes = N.monthKey; });
@@ -979,23 +979,23 @@ console.log("\n=== 31. Atencao, datas e Vagas ===");
 const RA = criarAparelho("rev8");
 /* projeto parado */
 const psA = RA.getProjs("pipeline");
-psA.find(p => p.id === "a02").subs[0].em =
+psA.find(p => p.id === "a13").subs[0].em =
   new Date(Date.now() - 25 * 86400000).toISOString();
-psA.find(p => p.id === "a02").subs[0].st = 1;
+psA.find(p => p.id === "a13").subs[0].st = 1;
 RA.setProjs("pipeline", psA);
 let revA = RA.revisaoDaSemana();
-ok(revA.atencao.paradas.some(x => x.projId === "a02"),
+ok(revA.atencao.paradas.some(x => x.projId === "a13"),
    "projeto parado 25 dias entra em Atencao", revA.atencao.paradas.map(x => x.projId));
 /* adiado e abandonado nao entram */
 let ps2 = RA.getProjs("pipeline");
-ps2.find(p => p.id === "a02").subs.forEach(x => { x.vida = "adiado"; });
+ps2.find(p => p.id === "a13").subs.forEach(x => { x.vida = "adiado"; });
 RA.setProjs("pipeline", ps2);
-ok(!RA.revisaoDaSemana().atencao.paradas.some(x => x.projId === "a02"),
+ok(!RA.revisaoDaSemana().atencao.paradas.some(x => x.projId === "a13"),
    "projeto ADIADO nao entra em Atencao");
 ps2 = RA.getProjs("pipeline");
-ps2.find(p => p.id === "a02").subs.forEach(x => { x.vida = "abandonado"; });
+ps2.find(p => p.id === "a13").subs.forEach(x => { x.vida = "abandonado"; });
 RA.setProjs("pipeline", ps2);
-ok(!RA.revisaoDaSemana().atencao.paradas.some(x => x.projId === "a02"),
+ok(!RA.revisaoDaSemana().atencao.paradas.some(x => x.projId === "a13"),
    "projeto ABANDONADO tambem nao");
 /* processo TOEFL: so o resumo */
 revA = RA.revisaoDaSemana();
@@ -1386,32 +1386,32 @@ const futura = (() => { const d = new Date(Date.now() + 10 * 86400000);
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); })();
 const vencida = "2020-01-01";
 const R6MG = criarAparelho("mig-ret", { storage: {
-  "cron:retomadas-adiadas": JSON.stringify({"pipeline/a01": futura, "pipeline/a02": vencida})
+  "cron:retomadas-adiadas": JSON.stringify({"pipeline/a01": futura, "pipeline/a13": vencida})
 }});
 const mapaMG = R6MG.LS("cron:retomadas-adiadas", {});
 ok(mapaMG["pipeline/a01"] && mapaMG["pipeline/a01"].ate === futura &&
    mapaMG["pipeline/a01"].em === "2026-01-01T00:00:00.000Z",
    "a futura virou {ate, em} com o piso RETOMADA_EM", mapaMG["pipeline/a01"]);
-ok(mapaMG["pipeline/a02"] && mapaMG["pipeline/a02"].ate === vencida,
-   "a vencida foi PRESERVADA no aparelho, convertida", mapaMG["pipeline/a02"]);
-/* Para que a proxima assercao signifique alguma coisa, a02 precisa ser
+ok(mapaMG["pipeline/a13"] && mapaMG["pipeline/a13"].ate === vencida,
+   "a vencida foi PRESERVADA no aparelho, convertida", mapaMG["pipeline/a13"]);
+/* Para que a proxima assercao signifique alguma coisa, a13 precisa ser
    candidato de verdade: sem isso ele nunca apareceria em retomadas() e o teste
    passaria sem testar nada. Parado ha 40 dias, com uma etapa aberta. */
-const psMG = R6MG.getProjs("pipeline"), a02MG = psMG.filter(p => p.id === "a02")[0];
+const psMG = R6MG.getProjs("pipeline"), a13MG = psMG.filter(p => p.id === "a13")[0];
 const velhoMG = new Date(Date.now() - 40 * 86400000).toISOString();
-a02MG.subs.forEach((x, i) => { x.st = i === 0 ? 1 : 0; x.em = velhoMG; x.vida = "ativo"; });
+a13MG.subs.forEach((x, i) => { x.st = i === 0 ? 1 : 0; x.em = velhoMG; x.vida = "ativo"; });
 R6MG.setProjs("pipeline", psMG);
-ok(R6MG.retomadas().some(r => r.projId === "a02"), "a vencida nao cala ninguem",
+ok(R6MG.retomadas().some(r => r.projId === "a13"), "a vencida nao cala ninguem",
    R6MG.retomadas().map(r => r.projId));
-ok(mapaMG["pipeline/a02"].ate < R6MG.ymd(R6MG.now),
-   "a data da silenciada vencida ficou no passado", mapaMG["pipeline/a02"].ate);
+ok(mapaMG["pipeline/a13"].ate < R6MG.ymd(R6MG.now),
+   "a data da silenciada vencida ficou no passado", mapaMG["pipeline/a13"].ate);
 /* 9G-2: a fila saiu. O que a migracao publica agora e a entrada na forma nova
    — {ate, em} —, e so a futura ganha instante. */
 /* As duas ficam convertidas; o que distingue e o `ate`: a vencida esta no
    passado e nao cala ninguem, e por isso a migracao nao a publica. */
 ok(mapaMG["pipeline/a01"].ate > R6MG.ymd(R6MG.now) &&
-   mapaMG["pipeline/a02"].ate < R6MG.ymd(R6MG.now),
-   "so a futura continua calando", {a01: mapaMG["pipeline/a01"].ate, a02: mapaMG["pipeline/a02"].ate});
+   mapaMG["pipeline/a13"].ate < R6MG.ymd(R6MG.now),
+   "so a futura continua calando", {a01: mapaMG["pipeline/a01"].ate, a13: mapaMG["pipeline/a13"].ate});
 ok(R6MG.migrarRetomadas() === 0, "e a migracao ja rodou: nao publica de novo");
 const antesMG = JSON.stringify(R6MG.LS("cron:retomadas-adiadas", {}));
 R6MG.migrarRetomadas();
